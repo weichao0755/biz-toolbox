@@ -1,0 +1,69 @@
+name: Sync ima & Deploy
+
+on:
+  schedule:
+    # 每天 2 次：UTC 02:00 / 10:00 = 北京时间 10:00 / 18:00
+    - cron: '0 2,10 * * *'
+  workflow_dispatch:
+
+# GitHub Pages 部署权限
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  sync-build-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync knowledge base from ima
+        env:
+          IMA_OPENAPI_CLIENTID: ${{ secrets.IMA_OPENAPI_CLIENTID }}
+          IMA_OPENAPI_APIKEY: ${{ secrets.IMA_OPENAPI_APIKEY }}
+        run: node sync-ima.mjs
+
+      - name: Detect content changes
+        id: changes
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "no changes"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changes detected"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build
+        if: steps.changes.outputs.changed == 'true'
+        run: npm run build
+
+      - name: Upload Pages artifact
+        if: steps.changes.outputs.changed == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+      - name: Deploy to GitHub Pages
+        if: steps.changes.outputs.changed == 'true'
+        id: deployment
+        uses: actions/deploy-pages@v4

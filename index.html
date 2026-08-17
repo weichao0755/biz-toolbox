@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>业务工具箱</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    // 全局错误捕获：Vue 挂载失败时把错误显示出来，避免静默白屏
+    window.__showErr = function (e) {
+      var box = document.createElement('div')
+      box.style.cssText = 'position:fixed;top:16px;left:16px;right:16px;z-index:99999;padding:16px 20px;background:#fff3f3;border:1px solid #d33;border-radius:8px;font-family:monospace;font-size:13px;color:#a00;white-space:pre-wrap;max-height:60vh;overflow:auto'
+      box.textContent = '页面加载出错：' + (e && e.message ? e.message : e)
+      if (e && e.stack) box.textContent += '\n\n' + e.stack
+      document.body.appendChild(box)
+    }
+    window.addEventListener('error', function (ev) { window.__showErr(ev.error || ev.message) })
+    window.addEventListener('unhandledrejection', function (ev) { window.__showErr(ev.reason) })
+  </script>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
