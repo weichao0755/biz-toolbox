@@ -9,8 +9,8 @@ export const KB_LINKS = [
     desc: '公司转让业务全流程：新手入门、业务知识、案例库、话术与工具、专家经验',
     color: '#2563eb',
     icon: '转',
-    // TODO: 替换为你的钉钉知识库首页链接（在钉钉文档里打开知识库，复制浏览器地址栏 URL）
-    url: 'https://alidocs.dingtalk.com/i/nodes/REPLACE_ME_TRANSFER',
+    // 转让公司知识库（钉钉知识库首页）
+    url: 'https://alidocs.dingtalk.com/i/spaces/l2AmoQwZwQ7Qlzdb/overview',
     hint: '钉钉文档 · 需钉钉账号登录后查看'
   },
   {
@@ -18,8 +18,8 @@ export const KB_LINKS = [
     desc: '高新技术企业认定：评估标准、申报流程、政策解读、案例与话术',
     color: '#1d9e75',
     icon: '高',
-    // TODO: 替换为你的钉钉知识库首页链接
-    url: 'https://alidocs.dingtalk.com/i/nodes/REPLACE_ME_HITECH',
+    // 高新业务知识库（钉钉知识库首页）
+    url: 'https://alidocs.dingtalk.com/i/spaces/l2AmoQ4O8EjQVzdb/overview',
     hint: '钉钉文档 · 需钉钉账号登录后查看'
   }
 ]
