@@ -10,7 +10,7 @@
     </div>
 
     <div class="top-row">
-      <RouterLink to="/tools/todo" class="card todo-panel">
+      <a href="tools/todo/index.html" target="_blank" rel="noopener" class="card todo-panel">
         <div class="todo-head">
           <div class="todo-title">
             <div class="todo-icon">
@@ -42,7 +42,7 @@
           <div class="todo-more" v-if="openCount > previewTodos.length">还有 {{ openCount - previewTodos.length }} 项…</div>
         </div>
         <div class="todo-empty" v-else>暂无待办，点这里去添加一条</div>
-      </RouterLink>
+      </a>
 
       <div class="grid grid-side">
         <RouterLink to="/knowledge" class="entry card">

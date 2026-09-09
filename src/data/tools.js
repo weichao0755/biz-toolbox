@@ -151,7 +151,8 @@ export const TOOLS = [
       <line x1="8" y1="17" x2="13" y2="17"/>
     `),
     url: 'tools/todo/index.html',
-    component: EmbeddedToolView
+    component: EmbeddedToolView,
+    newTab: true // 待办工具新窗口打开，与首页「进入待办」摘要卡片行为保持一致
   },
   {
     path: '/tools/huashu',
