@@ -4,43 +4,82 @@
       "name": "新手入门",
       "color": "#378add",
       "docs": [
-        { "title": "入职第一周指南", "file": "onboarding/first-week.md" },
-        { "title": "业务流程总览", "file": "onboarding/process-overview.md" },
-        { "title": "新人必学清单", "file": "onboarding/checklist.md" }
+        {
+          "title": "入职第一周指南",
+          "file": "onboarding/onboarding/first-week.md"
+        },
+        {
+          "title": "业务流程总览",
+          "file": "onboarding/onboarding/process-overview.md"
+        },
+        {
+          "title": "新人必学清单",
+          "file": "onboarding/onboarding/checklist.md"
+        }
       ]
     },
     {
       "name": "业务知识",
       "color": "#1d9e75",
       "docs": [
-        { "title": "公司转让全流程", "file": "business/transfer-process.md" },
-        { "title": "核心政策法规速览", "file": "business/laws.md" },
-        { "title": "常见公司类型与转让要点", "file": "business/company-types.md" },
-        { "title": "材料清单与注意事项", "file": "business/materials.md" }
+        {
+          "title": "公司转让全流程",
+          "file": "business/business/transfer-process.md"
+        },
+        {
+          "title": "核心政策法规速览",
+          "file": "business/business/laws.md"
+        },
+        {
+          "title": "常见公司类型与转让要点",
+          "file": "business/business/company-types.md"
+        },
+        {
+          "title": "材料清单与注意事项",
+          "file": "business/business/materials.md"
+        }
       ]
     },
     {
       "name": "案例库",
       "color": "#ba7517",
       "docs": [
-        { "title": "成交案例：股权转让方案设计", "file": "cases/case-equity.md" },
-        { "title": "失败复盘：资料不全导致延期", "file": "cases/case-fail.md" }
+        {
+          "title": "成交案例：股权转让方案设计",
+          "file": "cases/cases/case-equity.md"
+        },
+        {
+          "title": "失败复盘：资料不全导致延期",
+          "file": "cases/cases/case-fail.md"
+        }
       ]
     },
     {
       "name": "话术与工具",
       "color": "#d4537e",
       "docs": [
-        { "title": "客户咨询应答话术", "file": "scripts/faq-scripts.md" },
-        { "title": "报价与合同模板", "file": "scripts/templates.md" }
+        {
+          "title": "客户咨询应答话术",
+          "file": "scripts/scripts/faq-scripts.md"
+        },
+        {
+          "title": "报价与合同模板",
+          "file": "scripts/scripts/templates.md"
+        }
       ]
     },
     {
       "name": "专家经验",
       "color": "#534ab7",
       "docs": [
-        { "title": "资深顾问避坑指南", "file": "experts/pitfalls.md" },
-        { "title": "进阶学习路径", "file": "experts/learning-path.md" }
+        {
+          "title": "资深顾问避坑指南",
+          "file": "experts/experts/pitfalls.md"
+        },
+        {
+          "title": "进阶学习路径",
+          "file": "experts/experts/learning-path.md"
+        }
       ]
     }
   ]
