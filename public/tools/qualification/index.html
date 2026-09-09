@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>建筑工程资质办理查询助手</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#faf7f2;color:#2a2118;min-height:100vh}
+header{background:linear-gradient(120deg,#fffdf9,#fdf3e3,#fbeccb);color:#2a2118;padding:16px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header h1{font-size:19px}
+header .sub{font-size:12px;color:#6b5d4a}
+.gear-btn{border:1px solid #ece3d6;border-radius:8px;padding:6px 12px;font-size:13px;background:#fffefb;color:#2a2118;cursor:pointer;font-family:inherit;white-space:nowrap;margin-left:auto}
+.gear-btn:hover{background:rgba(255,255,255,.25)}
+.wrap{max-width:1000px;margin:22px auto;padding:0 16px;display:flex;gap:18px;align-items:flex-start}
+.side{width:230px;background:#fff;border-radius:12px;padding:12px;box-shadow:0 1px 3px rgba(180,120,40,.06);position:sticky;top:16px;flex-shrink:0}
+.side .step-item{display:flex;align-items:center;gap:8px;padding:10px 12px;font-size:13px;border-radius:8px;color:#3a3228;cursor:pointer;margin-bottom:2px}
+.side .step-item .num{width:20px;height:20px;border-radius:50%;background:#f2e6d8;color:#6b5d4a;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:bold}
+.side .step-item.active{background:#e0901a;color:#fff;font-weight:bold}
+.side .step-item.active .num{background:#fff;color:#e0901a}
+.side .step-item.done .num{background:#16A34A;color:#fff}
+.main{flex:1;background:#fff;border-radius:12px;padding:26px 28px;box-shadow:0 1px 3px rgba(180,120,40,.06);min-height:520px}
+.main h2{font-size:17px;color:#7a3e07;margin-bottom:4px}
+.main .hint{font-size:12px;color:#9a8a72;margin-bottom:16px;line-height:1.7}
+.sel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:10px}
+.sel-item{border:1.5px solid #f2e6d8;border-radius:10px;padding:12px 8px;text-align:center;font-size:13px;cursor:pointer;background:#fff;transition:all .15s}
+.sel-item:hover{border-color:#e0901a;background:#fdf4e6}
+.sel-item.active{border-color:#e0901a;background:#e0901a;color:#fff;font-weight:bold}
+.tools{display:flex;gap:8px;margin-top:16px;align-items:center;flex-wrap:wrap}
+.btn{border:none;border-radius:8px;padding:9px 20px;font-size:13.5px;cursor:pointer;font-family:inherit}
+.btn-primary{background:#b45309;color:#fff}.btn-primary:hover{background:#b45309}
+.btn-green{background:#16A34A;color:#fff}.btn-green:hover{background:#15803D}
+.btn-ghost{background:#fffefb;color:#2a2118;border:1px solid #ece3d6}.btn-ghost:hover{background:#fbf5ea;border-color:#e0901a}
+.btn-orange{background:#D97706;color:#fff}.btn-orange:hover{background:#B45309}
+.result-area{margin-top:8px}
+.info-card{background:#fff;border:1px solid #f2e6d8;border-radius:10px;padding:16px;margin-bottom:14px}
+.info-card h3{font-size:15px;color:#7a3e07;margin-bottom:10px;border-left:4px solid #e0901a;padding-left:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.info-card h3 .tag{font-size:11px;background:#fbeccb;color:#92400e;padding:2px 8px;border-radius:10px;font-weight:normal}
+.info-card table{width:100%;border-collapse:collapse;font-size:12.5px;margin:6px 0}
+.info-card th{background:#fdf4e6;color:#7a3e07;padding:7px 9px;text-align:left;font-weight:600}
+.info-card td{padding:7px 9px;border-bottom:1px solid #faf7f2;vertical-align:top}
+.duration-box{font-size:15px;font-weight:700;color:#92400e;background:#fdf4e6;border:1px solid #f6e0b8;border-radius:8px;padding:10px 14px;line-height:1.7}
+.duration-note{font-size:11.5px;color:#6b5d4a;margin-top:6px;line-height:1.7}
+.proc-step{display:flex;gap:10px;margin:8px 0}
+.proc-step .pn{width:24px;height:24px;border-radius:50%;background:#e0901a;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:bold}
+.proc-step .pc{flex:1;font-size:13px;line-height:1.7}
+.proc-step .pc b{color:#7a3e07}
+.block-item{background:#FEF3F2;border:1px solid #FECACA;border-left:4px solid #DC2626;border-radius:8px;padding:10px 13px;margin:8px 0;font-size:13px;line-height:1.7}
+.block-item b{color:#991B1B}
+.alt-card{background:#F0FDF4;border:1px solid #BBF7D0;border-left:4px solid #16A34A;border-radius:10px;padding:14px;margin:14px 0}
+.alt-card h3{color:#15803D;border-left:none;padding-left:0}
+.alt-card p{font-size:13px;line-height:1.8;margin-top:4px}
+.verify-box{background:#faf7f2;border:1px solid #f2e6d8;border-radius:10px;padding:14px;margin:14px 0}
+.verify-box .vhead{display:flex;align-items:center;gap:8px;font-size:13px;color:#4B5560;margin-bottom:8px;flex-wrap:wrap}
+.verify-box .vhead .dot{width:8px;height:8px;border-radius:50%;background:#16A34A}
+.verify-box .vhead .dot.working{background:#F59E0B;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.verify-box .vbody{font-size:13px;line-height:1.8;color:#2a2118;white-space:pre-wrap}
+.verify-box .vbody .src{font-size:11.5px;color:#6b5d4a;margin-top:8px;white-space:normal}
+.verify-box .vbody .src a{color:#e0901a;text-decoration:none}
+.disclaimer{font-size:11.5px;color:#9a8a72;background:#F9FAFB;border-radius:6px;padding:8px 10px;margin-top:10px;line-height:1.6}
+.ai-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;gap:12px}
+.ai-loading .spinner{width:36px;height:36px;border:3px solid #f2e6d8;border-top-color:#e0901a;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ai-status{font-size:12.5px;color:#6b5d4a;text-align:center;line-height:1.7}
+.badge{display:inline-block;font-size:11px;padding:2px 9px;border-radius:10px;font-weight:600;vertical-align:middle}
+.badge-green{background:#DCFCE7;color:#15803D}
+.badge-yellow{background:#FEF3C7;color:#B45309}
+.badge-gray{background:#faf7f2;color:#6b5d4a}
+.badge-red{background:#FEE2E2;color:#B91C1C}
+.draft-json{width:100%;height:300px;border:1px solid #e8dcd0;border-radius:8px;padding:10px;font-family:Consolas,Monaco,monospace;font-size:12px;line-height:1.6;resize:vertical;background:#faf7f2}
+.check-row{display:flex;align-items:center;gap:8px;font-size:13px;color:#3a3228;margin:12px 0}
+.check-row input{width:15px;height:15px;accent-color:#e0901a}
+.first-card{background:#fdf4e6;border:1px solid #f6e0b8;border-left:4px solid #e0901a;border-radius:10px;padding:14px;margin:14px 0}
+.first-card h3{color:#92400e;font-size:15px;margin-bottom:8px;border:none;padding-left:0}
+.first-card p{font-size:13px;line-height:1.8;color:#3a3228}
+.warn-card{background:#FFFBEB;border:1px solid #FDE68A;border-left:4px solid #D97706;border-radius:10px;padding:14px;margin:14px 0}
+.warn-card h3{color:#92400E;font-size:15px;margin-bottom:8px;border:none;padding-left:0}
+.warn-card p{font-size:13px;line-height:1.8;color:#78350F}
+.fb-block{background:#FFFDF5;border:1px solid #FDE68A;border-radius:10px;padding:14px;margin:12px 0}
+.fb-block .fb-note{font-size:12.5px;color:#B45309;background:#FEF3C7;border-radius:6px;padding:7px 10px;margin-bottom:10px;line-height:1.7}
+.tag-yellow{font-size:11px;background:#FEF3C7;color:#B45309;padding:2px 8px;border-radius:10px;font-weight:normal}
+.modal-bg{position:fixed;inset:0;background:rgba(42,26,10,.45);display:none;z-index:50}
+.modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:14px;padding:24px;width:560px;max-width:94vw;height:min(620px,88vh);box-sizing:border-box;z-index:51;display:none;flex-direction:column;box-shadow:0 10px 40px rgba(42,33,24,.15)}
+.modal h3{margin-bottom:12px;font-size:15px;flex-shrink:0}
+#modalBody{flex:1;overflow:auto;min-height:0}
+.fitem{margin-bottom:14px}
+.fitem label{display:block;font-size:12.5px;color:#4a4035;margin-bottom:4px}
+.fitem input,.fitem select{width:100%;padding:8px 10px;border:1px solid #e8dcd0;border-radius:8px;font-size:13.5px;font-family:inherit;background:#fff}
+.fitem .src-note{font-size:11px;color:#9a8a72;margin-top:3px;line-height:1.5}
+.fitem .divider{border-top:1px solid #f2e6d8;margin:14px 0}
+/* AI 配置弹窗统一视觉 */
+.ai-head{display:flex;align-items:center;justify-content:space-between;margin:-20px -22px 16px;padding:16px 22px;background:linear-gradient(120deg,#fffdf9,#fdf3e3,#fbeccb);border-radius:14px 14px 0 0;color:#2a2118;border-bottom:1px solid #ece3d6}
+.ai-head h3{margin:0;font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px}
+.ai-head h3::before{content:'⚙';font-size:15px;opacity:.9}
+.ai-warn{background:#fff4f4;border:1px solid #f9c5c6;border-left:4px solid #e5484d;color:#b42318;font-size:12px;padding:12px 14px;border-radius:10px;line-height:1.6;margin-bottom:16px}
+.ai-warn b{color:#b42318}
+.ai-section{background:#faf7f2;border:1px solid #faf4ea;border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.ai-section-title{font-size:12.5px;font-weight:700;color:#2a1a0a;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.ai-section-title::before{content:'';width:4px;height:14px;background:linear-gradient(180deg,#e0901a,#b45309);border-radius:2px}
+.ai-actions{display:flex;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid #faf4ea;justify-content:flex-end}
+.ai-actions .btn{padding:8px 18px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;border:1px solid transparent;transition:.15s}
+.ai-actions .btn-primary{background:linear-gradient(135deg,#b45309,#e0901a);color:#fff;border:none}
+.ai-actions .btn-primary:hover{filter:brightness(1.1)}
+.ai-actions .btn-ghost{background:#fff;color:#3a3228;border-color:#e8dcd0}
+.ai-actions .btn-ghost:hover{border-color:#e0901a;color:#2a1a0a;background:#fbf5ea}
+footer{text-align:center;color:#9a8a72;font-size:12px;padding:20px}
+@media(max-width:760px){.wrap{flex-direction:column}.side{width:100%;position:static;display:flex;flex-wrap:wrap}.side .step-item{width:auto}}
+</style>
+</head>
+<body>
+<header>
+  <h1>建筑工程资质办理查询助手</h1>
+  <span class="sub">选省市·选资质·看条件流程卡点·安许配套·区市国三级优先·联网验证最新政策</span>
+  <button class="gear-btn" onclick="openConfig()">⚙ AI 配置</button>
+</header>
+<div class="wrap">
+  <div class="side" id="sideNav"></div>
+  <div class="main" id="mainArea"></div>
+</div>
+<div class="modal-bg" id="modalBg" onclick="closeModal()"></div>
+<div class="modal" id="modal"><h3 id="modalTitle"></h3><div id="modalBody"></div></div>
+<footer>信息仅供参考，以当地住建主管部门最新公告为准 · 数据标注政策依据与更新时间 · 本地录入数据可导出提交共享库</footer>
+<script>
+// ========== 配置 ==========
+let aiConfig={platform:"volcengine",apiKey:"",model:"doubao-seed-2-1-pro-260628"};
+const DEFAULT_SEARCH_KEY=""; // 博查搜索 Key 请在「⚙ 配置」面板填写，勿硬编码入库
+const DEFAULT_AI_KEY=""; // 团队 API Key 请在「AI 配置」面板填写，勿硬编码入库
+let searchConfig={provider:"bocha",key:""};
+const AI_PLATFORMS={
+  deepseek:{name:"DeepSeek",url:"https://api.deepseek.com/chat/completions",models:[{id:"deepseek-v4-flash",name:"deepseek-v4-flash（快速·推荐）"},{id:"deepseek-chat",name:"deepseek-chat（V3）"}],text:true},
+  zhipu:{name:"智谱GLM",url:"https://open.bigmodel.cn/api/paas/v4/chat/completions",models:[{id:"glm-4-flash",name:"glm-4-flash（免费）"},{id:"glm-4-plus",name:"glm-4-plus"}],text:true},
+  qwen:{name:"通义千问",url:"https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",models:[{id:"qwen-turbo",name:"qwen-turbo"},{id:"qwen-plus",name:"qwen-plus"}],text:true},
+  hunyuan:{name:"腾讯混元",url:"https://api.hunyuan.cloud.tencent.com/v1/chat/completions",models:[{id:"hunyuan-turbo-s",name:"hunyuan-turbo-s（均衡·推荐）"},{id:"hunyuan-lite",name:"hunyuan-lite（免费）"}],text:true},
+  baidu:{name:"百度千帆",url:"https://qianfan.baidubce.com/v2/chat/completions",models:[{id:"ernie-speed-128k",name:"ernie-speed-128k（免费）"}],text:true},
+  ifly:{name:"讯飞星火",url:"https://spark-api-open.xf-yun.com/v1/chat/completions",models:[{id:"spark-lite",name:"spark-lite（免费）"}],text:true},
+  volcengine:{name:"火山引擎方舟",url:"https://ark.cn-beijing.volces.com/api/v3/chat/completions",models:[{id:"doubao-seed-2-1-pro-260628",name:"doubao-seed-2-1-pro（最强）"},{id:"doubao-seed-2-1-turbo-260628",name:"doubao-seed-2-1-turbo（快速）"},{id:"doubao-1-5-pro-32k-250115",name:"doubao-1-5-pro-32k（轻量）"}],text:true},
+    custom:{name:"自定义",url:"",models:[],text:true}
+};
+const AI_REQUIRED_CAPS={text:true};
+function loadConfig(){
+  try{const c=JSON.parse(localStorage.getItem("qual_ai_config")||"{}");
+    let pf=c.provider||c.platform||"volcengine";
+    /* 兼容旧 key 'tencent'，已统一为 hunyuan */
+    if(pf==='tencent' && !AI_PLATFORMS.tencent){ pf='hunyuan'; }
+    aiConfig.platform=pf;
+    aiConfig.apiKey=c.key||c.apiKey||"";
+    aiConfig.model=c.model||"";
+  }catch(e){}
+  try{const s=JSON.parse(localStorage.getItem("qual_search_config")||"{}");
+    searchConfig.provider=s.provider||"bocha";
+    searchConfig.key=s.key||DEFAULT_SEARCH_KEY;
+  }catch(e){}
+  searchConfig.key=searchConfig.key||DEFAULT_SEARCH_KEY;
+  aiConfig.platform=aiConfig.platform||"volcengine";
+  aiConfig.model=aiConfig.model||"doubao-seed-2-1-pro-260628";
+  aiConfig.apiKey=aiConfig.apiKey||DEFAULT_AI_KEY;
+}
+// ========== 数据层（GitHub 共享 + 本地录入双层） ==========
+// 共享层：public/data/qualification-data.json（GitHub 仓库，团队只读）
+// 本地层：localStorage qref_local_data（个人录入，可导出提交共享库）
+const SHARED_DATA_URL="../../data/qualification-data.json";
+const LS_SHARED_CACHE="qref_shared_cache";
+const LS_LOCAL_DATA="qref_local_data";
+const CACHE_TTL=24*3600*1000;
+
+function loadSharedCache(){
+  try{const c=JSON.parse(localStorage.getItem(LS_SHARED_CACHE)||"null");
+    if(c&&c.data)return c;
+  }catch(e){}
+  return null;
+}
+async function loadSharedData(){
+  const cache=loadSharedCache();
+  let freshData=null;
+  try{
+    const resp=await fetch(SHARED_DATA_URL+"?t="+Date.now());
+    if(resp.ok){
+      freshData=await resp.json();
+      const cachedVer=cache&&cache.data&&cache.data._meta&&cache.data._meta.version;
+      const freshVer=freshData&&freshData._meta&&freshData._meta.version;
+      const expired=!cache||Date.now()-cache.ts>=CACHE_TTL;
+      // 版本升级或缓存过期时立即刷新；否则继续用缓存保证速度
+      if(expired||!cachedVer||cachedVer!==freshVer){
+        localStorage.setItem(LS_SHARED_CACHE,JSON.stringify({ts:Date.now(),data:freshData}));
+        return freshData;
+      }
+    }
+  }catch(e){/* 本地 file:// 或离线，降级缓存 */}
+  return cache?cache.data:(freshData||null);
+}
+function loadLocalData(){
+  try{return JSON.parse(localStorage.getItem(LS_LOCAL_DATA)||"{}");}catch(e){return {};}
+}
+function saveLocalData(obj){
+  localStorage.setItem(LS_LOCAL_DATA,JSON.stringify(obj));
+}
+function qualKey(provName,city,qualId,level,dist){
+  return dist?provName+"_"+city+"_"+dist+"_"+qualId+"_"+level:provName+"_"+city+"_"+qualId+"_"+level;
+}
+// 政策过渡期等级降级映射：目标等级（新标准甲/乙级）查无数据时，回退到旧版对应等级沿用数据
+// 改革对应：甲级=原一级；乙级=原二级+三级合并。数组按接近程度排序
+const LEVEL_FALLBACK={"甲级":["一级","二级","三级"],"乙级":["二级","三级"]};
+// 三级数据层级：区级 > 市级 > 国标（国家标准）。dist 可选，为空则跳过区级
+async function getQualData(provName,city,qualId,level,dist){
+  const shared=await loadSharedData();
+  const local=loadLocalData();
+  function queryOne(lv){
+    const ck=qualKey(provName,city,qualId,lv,dist);
+    const ckCity=qualKey(provName,city,qualId,lv);
+    const dk="_default_"+qualId+"_"+lv;
+    const base={ck,dk,level:lv,sharedVersion:(shared&&shared._meta&&shared._meta.version)||""};
+    if(dist&&shared&&shared[ck])return Object.assign(base,{rec:shared[ck],source:"云端共享 · 区级数据",srcType:"cloud",scope:"区级"});
+    if(shared&&shared[ckCity])return Object.assign(base,{rec:shared[ckCity],source:"云端共享 · 城市数据",srcType:"cloud",scope:"市级"});
+    if(shared&&shared[dk])return Object.assign(base,{rec:shared[dk],source:"云端共享 · 国家标准",srcType:"cloud",scope:"国标"});
+    if(dist&&local[ck])return Object.assign(base,{rec:local[ck],source:"本地录入 · 区级数据",srcType:"local",scope:"区级"});
+    if(local[ckCity])return Object.assign(base,{rec:local[ckCity],source:"本地录入 · 城市数据",srcType:"local",scope:"市级"});
+    if(local[dk])return Object.assign(base,{rec:local[dk],source:"本地录入 · 国家标准",srcType:"local",scope:"国标"});
+    return Object.assign(base,{rec:null,source:"",srcType:"",scope:""});
+  }
+  const main=queryOne(level);
+  if(main.rec)return Object.assign(main,{fallback:[]});
+  const fallback=[];
+  for(const lv of (LEVEL_FALLBACK[level]||[])){
+    const r=queryOne(lv);
+    if(r.rec)fallback.push(r);
+  }
+  return Object.assign(main,{fallback});
+}
+function downloadJSON(obj,filename){
+  const blob=new Blob([JSON.stringify(obj,null,2)],{type:"application/json;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+function exportLocalData(){
+  const local=loadLocalData();
+  const keys=Object.keys(local).filter(k=>!k.startsWith("_"));
+  const defKeys=Object.keys(local).filter(k=>k.startsWith("_default_"));
+  if(!keys.length&&!defKeys.length){alert("本地暂无录入数据。首次查询某城市某资质时系统会自动生成录入草稿，确认保存后即可在此导出。");return;}
+  const out={_meta:{
+    exportedAt:new Date().toISOString().slice(0,10),
+    from:"qualification 工具本地录入导出",
+    keyRule:"区级 key = 省名_市名_区名_资质ID_等级；城市级 key = 省名_市名_资质ID_等级；_default_ 开头为国家标准（三级优先级：区级>市级>国标）",
+    count:keys.length+defKeys.length,
+    contributeNote:"将下方数据合并到仓库 public/data/qualification-data.json（保留原 _meta 与已有记录），更新 _meta.updatedAt/version 后提交即可全员共享"
+  }};
+  keys.forEach(k=>out[k]=local[k]);
+  defKeys.forEach(k=>out[k]=local[k]);
+  downloadJSON(out,"qualification-local-export.json");
+  alert("已导出。请将导出的 JSON 内容合并提交到团队仓库 public/data/qualification-data.json，即可全员共享。");
+}
+// ========== 目录数据 ==========
+const PROVINCES=[
+  {code:"11",name:"北京市",cities:["北京市"]},{code:"12",name:"天津市",cities:["天津市"]},
+  {code:"31",name:"上海市",cities:["上海市"]},{code:"50",name:"重庆市",cities:["重庆市"]},
+  {code:"13",name:"河北省",cities:["石家庄市","唐山市","保定市","廊坊市"]},
+  {code:"14",name:"山西省",cities:["太原市","大同市"]},
+  {code:"21",name:"辽宁省",cities:["沈阳市","大连市"]},
+  {code:"32",name:"江苏省",cities:["南京市","苏州市","无锡市","南通市"]},
+  {code:"33",name:"浙江省",cities:["杭州市","宁波市","温州市"]},
+  {code:"34",name:"安徽省",cities:["合肥市"]},
+  {code:"35",name:"福建省",cities:["福州市","厦门市"]},
+  {code:"36",name:"江西省",cities:["南昌市"]},
+  {code:"37",name:"山东省",cities:["济南市","青岛市","烟台市"]},
+  {code:"41",name:"河南省",cities:["郑州市","洛阳市"]},
+  {code:"42",name:"湖北省",cities:["武汉市"]},
+  {code:"43",name:"湖南省",cities:["长沙市"]},
+  {code:"44",name:"广东省",cities:["广州市","深圳市","珠海市","佛山市","东莞市"]},
+  {code:"45",name:"广西壮族自治区",cities:["南宁市"]},
+  {code:"46",name:"海南省",cities:["海口市"]},
+  {code:"51",name:"四川省",cities:["成都市"]},
+  {code:"52",name:"贵州省",cities:["贵阳市"]},
+  {code:"53",name:"云南省",cities:["昆明市"]},
+  {code:"61",name:"陕西省",cities:["西安市"]},
+  {code:"62",name:"甘肃省",cities:["兰州市"]},
+  {code:"63",name:"青海省",cities:["西宁市"]},
+  {code:"64",name:"宁夏回族自治区",cities:["银川市"]},
+  {code:"65",name:"新疆维吾尔自治区",cities:["乌鲁木齐市"]},
+  {code:"22",name:"吉林省",cities:["长春市"]},
+  {code:"23",name:"黑龙江省",cities:["哈尔滨市"]},
+  {code:"15",name:"内蒙古自治区",cities:["呼和浩特市"]},
+  {code:"54",name:"西藏自治区",cities:["拉萨市"]}
+];
+const QUAL_CATEGORIES=[
+  {id:"zongbao",name:"施工总承包",icon:"🏗️",quals:[
+    {id:"jianzhu",name:"建筑工程",levels:["甲级","乙级"]},
+    {id:"shizheng",name:"市政公用工程",levels:["甲级","乙级"]},
+    {id:"gonglu",name:"公路工程",levels:["甲级","乙级"]},
+    {id:"tielu",name:"铁路工程",levels:["甲级","乙级"]},
+    {id:"gangkou",name:"港口与航道工程",levels:["甲级","乙级"]},
+    {id:"shuidian",name:"水利水电工程",levels:["甲级","乙级"]},
+    {id:"dianli",name:"电力工程",levels:["甲级","乙级"]},
+    {id:"kuangshan",name:"矿山工程",levels:["甲级","乙级"]},
+    {id:"yejin",name:"冶金工程",levels:["甲级","乙级"]},
+    {id:"shiyouhua",name:"石油化工工程",levels:["甲级","乙级"]},
+    {id:"tongxin",name:"通信工程",levels:["甲级","乙级"]},
+    {id:"jidian",name:"机电工程",levels:["甲级","乙级"]}
+  ]},
+  {id:"zhuanbao",name:"专业承包",icon:"🔧",quals:[
+    {id:"diji",name:"地基基础工程",levels:["甲级","乙级"]},
+    {id:"qizhong",name:"起重设备安装工程",levels:["甲级","乙级"]},
+    {id:"yubanhunningtu",name:"预拌混凝土",levels:["不分等级"]},
+    {id:"dianzi",name:"电子与智能化工程",levels:["甲级","乙级"]},
+    {id:"xiaofang",name:"消防设施工程",levels:["甲级","乙级"]},
+    {id:"fangshui",name:"防水防腐保温工程",levels:["甲级","乙级"]},
+    {id:"qiaoliang",name:"桥梁工程",levels:["甲级","乙级"]},
+    {id:"suidao",name:"隧道工程",levels:["甲级","乙级"]},
+    {id:"gangjiegou",name:"钢结构工程",levels:["甲级","乙级"]},
+    {id:"mobanjiaoshou",name:"模板脚手架",levels:["不分等级"]},
+    {id:"zhuangxiu",name:"建筑装修装饰工程",levels:["甲级","乙级"]},
+    {id:"jidiananzhuang",name:"建筑机电安装工程",levels:["甲级","乙级"]},
+    {id:"muqiang",name:"建筑幕墙工程",levels:["甲级","乙级"]},
+    {id:"gujian",name:"古建筑工程",levels:["甲级","乙级"]},
+    {id:"zhaoming",name:"城市及道路照明工程",levels:["甲级","乙级"]},
+    {id:"gonglulumian",name:"公路路面工程",levels:["甲级","乙级"]},
+    {id:"gongluluji",name:"公路路基工程",levels:["甲级","乙级"]},
+    {id:"gonglujiaotong",name:"公路交通工程",levels:["甲级","乙级"]},
+    {id:"tieludianwu",name:"铁路电务工程",levels:["甲级","乙级"]},
+    {id:"tielupugui",name:"铁路铺轨架梁工程",levels:["甲级","乙级"]},
+    {id:"tieludianqihua",name:"铁路电气化工程",levels:["甲级","乙级"]},
+    {id:"jichangchangdao",name:"机场场道工程",levels:["甲级","乙级"]},
+    {id:"minkong",name:"民航空管工程及机场弱电系统工程",levels:["甲级","乙级"]},
+    {id:"mujizhuhang",name:"机场目视助航工程",levels:["甲级","乙级"]},
+    {id:"gangkouhaian",name:"港口与海岸工程",levels:["甲级","乙级"]},
+    {id:"hangdao",name:"航道工程",levels:["甲级","乙级"]},
+    {id:"tonghangjianzhu",name:"通航建筑物工程",levels:["甲级","乙级"]},
+    {id:"ganghangshebei",name:"港航设备安装及水上交管工程",levels:["甲级","乙级"]},
+    {id:"shuijinshu",name:"水工金属结构制作与安装工程",levels:["甲级","乙级"]},
+    {id:"shuilidianji",name:"水利水电机电安装工程",levels:["甲级","乙级"]},
+    {id:"hehuzhengzhi",name:"河湖整治工程",levels:["甲级","乙级"]},
+    {id:"shubian",name:"输变电工程",levels:["甲级","乙级"]},
+    {id:"hegongcheng",name:"核工程",levels:["甲级","乙级"]},
+    {id:"haiyangshiyou",name:"海洋石油工程",levels:["甲级","乙级"]},
+    {id:"huanbao",name:"环保工程",levels:["甲级","乙级"]},
+    {id:"tezhong",name:"特种工程",levels:["不分等级"]}
+  ]},
+  {id:"zhuanye",name:"专业作业",icon:"👷",quals:[
+    {id:"laowu",name:"施工劳务",levels:["不分等级"]}
+  ]}
+];
+// 有区级数据的城市（选完城市后可进一步选择区/县，可选）。区级 key = 省_市_区_资质ID_等级
+const CITY_DISTRICTS={
+  "广州市":["天河区","海珠区","黄埔区","花都区","增城区","越秀区","从化区","白云区","番禺区","南沙区","荔湾区"],
+  "深圳市":["福田区","罗湖区","南山区","宝安区","龙岗区","龙华区","盐田区","坪山区","光明区","大鹏新区"]
+};
+// ========== 安全生产许可证（安许）配套模板 ==========
+// 建筑企业须「资质+安许」双证齐全方可承接工程；安许为企业级证件（省级审批），三类人员数量按资质类别+等级确定。
+// 记录里若带 safetyPermit 字段则优先使用（可覆盖/定制），否则按下方模板生成。
+function getSafePermit(catId,level,rec){
+  if(rec&&rec.safetyPermit)return rec.safetyPermit;
+  const cNum=catId==="zongbao"?(level==="甲级"?4:3):(catId==="zhuanbao"?(level==="甲级"?3:2):2);
+  const bNote=catId==="zhuanye"?"劳务资质无建造师要求，B证不考核":"B证（项目负责人）按企业资质对应建造师数量配备（一人一证）";
+  return {
+    basis:"《安全生产许可证条例》（国务院令第397号）、《建筑施工企业、工程项目安全生产管理机构设置及安全生产管理人员配备办法》（建质规〔2025〕3号）",
+    conditions:[
+      {item:"三类人员（A/B/C证）",value:`A证（企业主要负责人）≥2人：法定代表人必配，另含技术负责人或分管安全生产副总；${bNote}；C证（专职安全员）≥${cNum}人（涉及起重设备另增配1名机械类C1）`},
+      {item:"特种作业人员",value:"电工、焊工、架子工等特种作业人员持特种作业操作证，按承接项目配备"},
+      {item:"社保要求",value:"三类人员申报前连续缴纳1个月社保，缴费单位与申报单位一致（补缴不认，退休人员按当地规定）"},
+      {item:"安全制度",value:"安全生产责任制、规章制度、操作规程、应急预案及演练记录、安全管理机构设置文件"},
+      {item:"安全投入",value:"保证安全生产条件所需资金投入的证明"}
+    ],
+    process:[
+      {step:"人员配置",desc:"配齐A/B/C三类人员并连续缴纳1个月社保，法定代表人必须持A证"},
+      {step:"材料申报",desc:"登录省政务服务网/三库一平台，选择「建筑施工企业安全生产许可证核发」，上传营业执照、资质证书、三类人员证书、社保、安全制度、安全投入证明"},
+      {step:"审核发证",desc:"住建部门审核（7-45个工作日），通过后下载电子证书"},
+      {step:"延期维护",desc:"证书有效期3年，届满前3个月申请延期；符合条件可免审延期"}
+    ],
+    blockPoints:[
+      {point:"三类人员不足",desc:`C证人数是硬指标（本资质≥${cNum}人），社保须连续1个月且单位一致，补缴不认`},
+      {point:"法定代表人A证",desc:"法定代表人未持A证直接退件，多地已纳入动态核查（海南/福建/浙江等）"},
+      {point:"安许与资质缺一不可",desc:"无安许不能承接施工业务，资质+安许才是完整许可；安许过期未续须重新申请并暂停施工"}
+    ],
+    duration:"审批7-45个工作日；建议与资质申报同步启动，全流程1-2个月；有效期3年，届满前3个月申请延期",
+    policyNo:"建质规〔2025〕3号",
+    required:true
+  };
+}
+// ========== 步骤导航 ==========
+let state={step:1,prov:"",city:"",dist:"",catId:"",qualId:"",level:""};
+const STEPS=[{n:1,t:"选择省份"},{n:2,t:"选择城市"},{n:3,t:"选择资质类别"},{n:4,t:"选择具体资质"},{n:5,t:"查看结果"}];
+function renderSide(){
+  const el=document.getElementById("sideNav");
+  el.innerHTML=STEPS.map(s=>{
+    const cls=state.step===s.n?"active":(state.step>s.n?"done":"");
+    return `<div class="step-item ${cls}" onclick="goStep(${s.n})"><span class="num">${state.step>s.n?"✓":s.n}</span>${s.t}</div>`;
+  }).join("");
+}
+function goStep(n){
+  if(n>state.step&&!canGo(n))return;
+  state.step=n;renderSide();renderMain();
+}
+function canGo(n){
+  if(n===2)return !!state.prov;
+  if(n===3)return !!state.city;
+  if(n===4)return !!state.catId;
+  if(n===5)return !!state.qualId&&!!state.level;
+  return true;
+}
+function renderMain(){
+  const el=document.getElementById("mainArea");
+  if(state.step===1)el.innerHTML=renderStep1();
+  else if(state.step===2)el.innerHTML=renderStep2();
+  else if(state.step===3)el.innerHTML=renderStep3();
+  else if(state.step===4)el.innerHTML=renderStep4();
+  else if(state.step===5)renderResult();
+}
+function renderStep1(){
+  return `<h2>第 1 步 · 选择省份</h2><div class="hint">选择要办理资质的省份（决定审批权限和地方政策差异）</div>
+  <div class="sel-grid">${PROVINCES.map(p=>`<div class="sel-item ${state.prov===p.code?'active':''}" onclick="pickProv('${p.code}')">${p.name}</div>`).join("")}</div>`;
+}
+function pickProv(code){state.prov=code;state.city="";state.dist="";state.step=2;renderSide();renderMain();}
+function renderStep2(){
+  const p=PROVINCES.find(x=>x.code===state.prov);
+  const hasDist=!state.city?false:!!(CITY_DISTRICTS[state.city]&&CITY_DISTRICTS[state.city].length);
+  const distHtml=hasDist?`
+    <h3 style="font-size:14px;color:#7a3e07;margin-top:18px">选择区/县（可选）<span class="tag" style="font-size:11px;background:#fbeccb;color:#92400e;padding:2px 8px;border-radius:10px;font-weight:normal">该市部分资质按区执行不同标准，选区可命中更精确的区级数据</span></h3>
+    <div class="sel-grid" style="grid-template-columns:repeat(auto-fill,minmax(90px,1fr))">${CITY_DISTRICTS[state.city].map(d=>`<div class="sel-item ${state.dist===d?'active':''}" onclick="pickDist('${d}')">${d}</div>`).join("")}</div>
+    <div class="tools"><button class="btn btn-ghost" onclick="skipDist()">跳过 · 按市级标准查询</button></div>`:"";
+  return `<h2>第 2 步 · 选择城市</h2><div class="hint">已选省份：${p.name} · 选择城市（区级标准优先于城市、城市优先于国标）</div>
+  <div class="sel-grid">${p.cities.map(c=>`<div class="sel-item ${state.city===c?'active':''}" onclick="pickCity('${c}')">${c}</div>`).join("")}</div>
+  ${distHtml}
+  <div class="tools"><button class="btn btn-ghost" onclick="state.step=1;renderSide();renderMain()">上一步</button></div>`;
+}
+function pickCity(c){
+  state.city=c;state.dist="";
+  if(CITY_DISTRICTS[c]&&CITY_DISTRICTS[c].length){
+    renderSide();renderMain(); // 停留本步，显示区/县选择
+  }else{
+    state.step=3;renderSide();renderMain();
+  }
+}
+function pickDist(d){state.dist=d;state.step=3;renderSide();renderMain();}
+function skipDist(){state.dist="";state.step=3;renderSide();renderMain();}
+function renderStep3(){
+  return `<h2>第 3 步 · 选择资质类别</h2><div class="hint">建筑工程资质分三大类，选择要办理的类别</div>
+  <div class="sel-grid">${QUAL_CATEGORIES.map(c=>`<div class="sel-item ${state.catId===c.id?'active':''}" onclick="pickCat('${c.id}')">${c.icon}<br>${c.name}</div>`).join("")}</div>
+  <div class="tools"><button class="btn btn-ghost" onclick="state.step=2;renderSide();renderMain()">上一步</button></div>`;
+}
+function pickCat(id){state.catId=id;state.step=4;renderSide();renderMain();}
+function renderStep4(){
+  const cat=QUAL_CATEGORIES.find(x=>x.id===state.catId);
+  return `<h2>第 4 步 · 选择具体资质</h2><div class="hint">已选类别：${cat.name} · 选择资质名称</div>
+  <div class="sel-grid">${cat.quals.map(q=>`<div class="sel-item ${state.qualId===q.id?'active':''}" onclick="pickQual('${q.id}')">${q.name}<br><span style="font-size:11px;color:#6b5d4a">${q.levels.join("/")}</span></div>`).join("")}</div>
+  <div class="tools"><button class="btn btn-ghost" onclick="state.step=3;renderSide();renderMain()">上一步</button></div>`;
+}
+function pickQual(id){
+  state.qualId=id;
+  const cat=QUAL_CATEGORIES.find(c=>c.id===state.catId);
+  const q=cat.quals.find(x=>x.id===id);
+  if(q.levels.length===1){state.level=q.levels[0];state.step=5;renderSide();renderMain();}
+  else{showLevelPicker(q.levels);}
+}
+function showLevelPicker(levels){
+  openModal("选择等级",`<div class="sel-grid">${levels.map(l=>`<div class="sel-item" onclick="pickLevel('${l}')">${l}</div>`).join("")}</div>`);
+}
+function pickLevel(l){state.level=l;closeModal();state.step=5;renderSide();renderMain();}
+// ========== 结果渲染（共享+本地双层） ==========
+function curInfo(){
+  const provName=PROVINCES.find(p=>p.code===state.prov).name;
+  const cat=QUAL_CATEGORIES.find(c=>c.id===state.catId);
+  const qual=cat.quals.find(q=>q.id===state.qualId);
+  const catLabel=cat.id==='zongbao'?'施工总承包':(cat.id==='zhuanbao'?'专业承包':'专业作业');
+  return {provName,cat,qual,catLabel,title:`${qual.name}${catLabel}（${state.level}）`};
+}
+async function renderResult(){
+  const el=document.getElementById("mainArea");
+  const {provName,qual,catLabel,title}=curInfo();
+  const loc=provName+" · "+state.city+(state.dist?" · "+state.dist:"");
+  el.innerHTML=`<h2>${title}</h2><div class="hint">办理地：${loc} · <span style="color:#e0901a">正在加载数据…</span></div>
+    <div class="verify-box"><div class="vhead"><span class="dot working"></span><span>读取云端共享库 + 本地录入数据中…</span></div></div>`;
+  const data=await getQualData(provName,state.city,state.qualId,state.level,state.dist);
+  if(!data.rec&&(!data.fallback||!data.fallback.length)){
+    renderFirstRecord();
+    firstRecordFlow();
+    return;
+  }
+  if(!data.rec&&data.fallback&&data.fallback.length){
+    renderFallback(data);
+    return;
+  }
+  const {rec,source,srcType,sharedVersion,scope}=data;
+  const srcBadge=srcType==="cloud"
+    ?`<span class="badge badge-green">云端共享</span>${scope?`<span class="badge badge-gray">${scope}数据</span>`:""}${sharedVersion?`<span class="badge badge-gray">库版本 ${sharedVersion}</span>`:""}`
+    :`<span class="badge badge-yellow">本地录入</span>${scope?`<span class="badge badge-gray">${scope}数据</span>`:""}`;
+  el.innerHTML=`<h2>${title}</h2>
+    <div class="hint">办理地：${loc} ${srcBadge} <span style="color:#6b5d4a">数据验证于 ${rec.verifiedAt||"未知"}</span></div>
+    ${renderRecCards(rec,provName,state.level,srcBadge,false,state.catId)}
+    <div class="verify-box" id="verifyBox"><div class="vhead"><span class="dot working" id="vDot"></span><span id="vStatus">正在联网验证最新政策…</span></div><div class="vbody" id="vBody"><div class="ai-loading"><div class="spinner"></div><div class="ai-status">博查搜索最新公告 + 比对政策文号，通常 5-15 秒</div></div></div></div>
+    <div class="tools">
+      <button class="btn btn-ghost" onclick="state.step=4;renderSide();renderMain()">重新选择资质</button>
+      <button class="btn btn-primary" onclick="reVerify()">重新验证</button>
+      <button class="btn btn-green" onclick="saveRecord()">保存到生成记录</button>
+      <button class="btn btn-orange" onclick="exportLocalData()">导出本地录入</button>
+    </div>`;
+  verifyFreshness(rec,provName,qual,catLabel);
+}
+// 信息卡渲染（主数据与降级数据共用；isFallback=true 时按旧版沿用口径展示）
+function renderRecCards(rec,provName,levelTag,srcBadge,isFallback,catId){
+  const okText=isFallback
+    ?`该资质在${provName}按现行沿用体系（旧版「${levelTag}」标准）可申请办理。当前处于资质改革过渡期（2026-2027），该地暂未发布新版「${state.level}」材料，旧版证书在过渡期内继续有效，企业可自愿申请按新标准换证。<br><span style="color:#B45309">注意：以下为旧版标准，与新版「${state.level}」条件不同，正式办理请以官方最新公告为准。</span>`
+    :`该资质在${provName}可正常申请办理。审批权限：<b>${getApprover(provName)}</b>。当前处于资质改革过渡期，各地按新标准（甲/乙级）执行，原三级资质可换领乙级。<br><span style="color:#6b5d4a">具体是否在办以联网验证结果为准。</span>`;
+  const safe=getSafePermit(catId||state.catId,state.level,rec);
+  const safeHtml=`<div class="info-card" style="border-left:4px solid #D97706"><h3>⑥ 配套安全生产许可证（安许） <span class="tag">资质+安许=完整许可</span>${safe.required?'<span class="badge badge-red">必须</span>':''}</h3>
+    <div class="fb-note">建筑企业须「资质 + 安全生产许可证」双证齐全方可承接施工业务。安许为企业级证件（一个企业一本，覆盖其全部资质），由<b>省级住建部门</b>审批，与资质绑定办理。</div>
+    <table><tr><th style="width:30%">项目</th><th>标准要求</th></tr>${(safe.conditions||[]).map(c=>`<tr><td>${c.item}</td><td>${c.value}</td></tr>`).join("")}</table>
+    <div style="margin-top:10px"><b style="color:#7a3e07;font-size:13px">办理流程：</b></div>${(safe.process||[]).map((p,i)=>`<div class="proc-step"><span class="pn" style="background:#D97706">${i+1}</span><div class="pc"><b>${p.step}</b>：${p.desc}</div></div>`).join("")}
+    <div style="margin-top:10px"><b style="color:#7a3e07;font-size:13px">主要卡点：</b></div>${(safe.blockPoints||[]).map(b=>`<div class="block-item"><b>${b.point}</b><br>${b.desc}</div>`).join("")}
+    <div class="duration-box" style="margin-top:10px">${safe.duration||"未标注"}</div>
+    <div class="disclaimer">依据：${safe.basis||"未标注"} · 政策文号：${safe.policyNo||"未标注"}</div></div>`;
+  return `
+    <div class="info-card"><h3>① 是否可办理 <span class="tag">${provName} · ${levelTag}</span>${isFallback?`<span class="badge badge-gray">旧版沿用</span>`:""}</h3>
+      <p style="font-size:13px;line-height:1.9">${okText}</p></div>
+    <div class="info-card"><h3>② 预计办理时长 ${isFallback?`<span class="tag tag-yellow">旧版 ${levelTag}</span>`:""}</h3>
+      <div class="duration-box">${rec.duration||"未标注（过渡期各地口径差异大，请以当地住建部门受理时限为准）"}</div>
+      <p class="duration-note">官方审批时限为法定工作日上限，实际全流程周期包含前期人员/净资产/业绩准备。各地执行差异较大，以当地住建部门受理口径为准。</p></div>
+    <div class="info-card"><h3>③ 办理条件 ${isFallback?`<span class="tag tag-yellow">旧版 ${levelTag}</span>`:""}</h3><table><tr><th style="width:30%">项目</th><th>标准要求</th></tr>${(rec.conditions||[]).map(c=>`<tr><td>${c.item}</td><td>${c.value}</td></tr>`).join("")}</table>
+      <div class="disclaimer">依据：${rec.standardBasis||"未标注"} · 政策文号：${rec.policyNo||"未标注"}</div></div>
+    <div class="info-card"><h3>④ 办理流程</h3>${(rec.process||[]).map((p,i)=>`<div class="proc-step"><span class="pn">${i+1}</span><div class="pc"><b>${p.step}</b>：${p.desc}</div></div>`).join("")}</div>
+    <div class="info-card"><h3>⑤ 预计卡点</h3>${(rec.blockPoints||[]).map(b=>`<div class="block-item"><b>${b.point}</b><br>${b.desc}</div>`).join("")}</div>
+    ${safeHtml}
+    <div class="alt-card"><h3>💡 替代方案</h3><p>${rec.altSuggestion||"未标注"}</p></div>`;
+}
+// 等级降级视图：目标等级无数据，但有旧版（一/二/三级）沿用数据时展示
+function renderFallback(data){
+  const el=document.getElementById("mainArea");
+  const {provName,qual,catLabel,title}=curInfo();
+  const {fallback,sharedVersion}=data;
+  const loc=provName+" · "+state.city+(state.dist?" · "+state.dist:"");
+  const badges=fallback.map(f=>f.level).join(" / ");
+  const fbHtml=fallback.map(f=>{
+    const srcBadge=f.srcType==="cloud"
+      ?`<span class="badge badge-green">云端共享</span>${f.scope?`<span class="badge badge-gray">${f.scope}数据</span>`:""}${sharedVersion?`<span class="badge badge-gray">库版本 ${sharedVersion}</span>`:""}`
+      :`<span class="badge badge-yellow">本地录入</span>${f.scope?`<span class="badge badge-gray">${f.scope}数据</span>`:""}`;
+    return `<div class="fb-block">
+      <div class="fb-note">↳ 以下为<b>旧版「${f.level}」</b>标准材料（${f.rec.policyNo||"未标注"}）——非「${state.level}」新标准，供过渡期参考，请勿混淆</div>
+      ${renderRecCards(f.rec,provName,f.level,srcBadge,true,state.catId)}
+    </div>`;
+  }).join("");
+  el.innerHTML=`<h2>${title}</h2>
+    <div class="hint">办理地：${loc} <span class="badge badge-yellow">旧版沿用</span></div>
+    <div class="warn-card">
+      <h3>⚠️ 政策过渡期 · 「${state.level}」最新材料暂未发布</h3>
+      <p>「${qual.name}${catLabel}（${state.level}）」的最新办理材料在${provName}${state.city}暂未检索到公开信息——该地目前仍沿用旧版《建筑业企业资质标准》（建市〔2014〕159号）办理体系（一级/二级/三级），新版材料尚未公布。</p>
+      <p style="margin-top:8px">已自动降级展示以下<b>旧版对应等级</b>材料：<b>${badges}</b>。新旧对应关系：<b>甲级 = 原一级</b>；<b>乙级 = 原二级+三级合并</b>。正式办理请以${getApprover(provName)}最新公告为准。</p>
+    </div>
+    ${fbHtml}
+    <div class="verify-box"><div class="vhead"><span class="dot" style="background:#9a8a72"></span><span>降级数据未自动联网验证（目标等级无数据时优先展示旧版沿用，省去无效搜索）。可点击「重新验证」手动核对旧版标准是否仍为当地现行口径。</span></div></div>
+    <div class="tools">
+      <button class="btn btn-ghost" onclick="state.step=4;renderSide();renderMain()">重新选择资质</button>
+      <button class="btn btn-primary" onclick="reVerify()">重新验证</button>
+      <button class="btn btn-green" onclick="saveRecord()">保存到生成记录</button>
+      <button class="btn btn-orange" onclick="exportLocalData()">导出本地录入</button>
+    </div>`;
+}
+function renderFirstRecord(){
+  const el=document.getElementById("mainArea");
+  const {provName,qual,catLabel,title}=curInfo();
+  const loc=provName+" · "+state.city+(state.dist?" · "+state.dist:"");
+  el.innerHTML=`<h2>${title}</h2>
+    <div class="hint">办理地：${loc} · <span class="badge badge-gray">尚无数据</span></div>
+    <div class="first-card"><h3>📝 首次录入</h3>
+      <p>共享库与本地均无「${state.city}${state.dist?" · "+state.dist:""} · ${qual.name}${catLabel}（${state.level}）」的数据。系统将自动联网搜索最新政策并生成<b>录入草稿</b>，核对后保存到本机（localStorage）；保存后可将数据导出，提交到团队共享库，全员即可复用。</p>
+      <p style="margin-top:8px;font-size:12.5px;color:#B45309">💡 若该地处于<b>政策过渡期</b>（如仅公布旧版一/二/三级材料，未公布「${state.level}」新版材料）：可先在下方录入<b>旧版对应等级</b>数据（保存时勾选对应等级录入，或把 key 改为旧版等级如「一级」）。之后查询该资质「${state.level}」时，系统会自动降级展示旧版材料并给出过渡期提醒。</p>
+      <div id="draftArea"><div class="ai-loading"><div class="spinner"></div><div class="ai-status">博查搜索 + AI 生成录入草稿中…（5-15秒）</div></div></div>
+    </div>
+    <div class="tools">
+      <button class="btn btn-ghost" onclick="state.step=4;renderSide();renderMain()">重新选择资质</button>
+      <button class="btn btn-orange" onclick="exportLocalData()">导出本地录入</button>
+    </div>`;
+}
+// ========== 首次录入流程（博查 + AI 生成草稿 → 预览 → 保存本地） ==========
+async function firstRecordFlow(){
+  const {provName,qual,catLabel}=curInfo();
+  if(!searchConfig.key){
+    document.getElementById("draftArea").innerHTML=`<p style="font-size:13px;color:#DC2626;margin-top:10px">未配置博查搜索 Key，无法自动生成录入草稿。<br><br>点击右上角「⚙ 配置」填写博查搜索 API Key（open.bochaai.com，新用户免费 2000 次），或手动在下方填写数据：</p>
+      <textarea class="draft-json" id="draftJson">{"policyNo":"","standardBasis":"","duration":"","conditions":[{"item":"企业净资产","value":""},{"item":"技术负责人","value":""},{"item":"注册建造师","value":""}],"process":[{"step":"前期准备","desc":""}],"blockPoints":[{"point":"","desc":""}],"altSuggestion":""}</textarea>
+      <div class="check-row"><input type="checkbox" id="draftNation"><label for="draftNation">同时作为国家标准（_default_）共享（该城市数据与其他城市差异较小时勾选）</label></div>
+      <div class="tools"><button class="btn btn-primary" onclick="saveDraft()">保存录入</button></div>`;
+    return;
+  }
+  const query=`${provName} ${state.city}${state.dist?" "+state.dist:""} ${qual.name}${catLabel} ${state.level} 资质 办理条件 流程 最新政策 住建厅`;
+  let results=[];
+  try{
+    results=await searchBocha(query);
+  }catch(e){
+    document.getElementById("draftArea").innerHTML=`<p style="font-size:13px;color:#DC2626;margin-top:10px">搜索出错：${e.message}</p>`;
+    return;
+  }
+  if(!results.length){
+    document.getElementById("draftArea").innerHTML=`<p style="font-size:13px;color:#B45309;margin-top:10px">未搜到相关结果，请人工查询 ${provName} 住建厅官网后手动录入：</p>
+      <textarea class="draft-json" id="draftJson">{"policyNo":"","standardBasis":"","duration":"","conditions":[{"item":"企业净资产","value":""},{"item":"技术负责人","value":""},{"item":"注册建造师","value":""}],"process":[{"step":"前期准备","desc":""}],"blockPoints":[{"point":"","desc":""}],"altSuggestion":""}</textarea>
+      <div class="check-row"><input type="checkbox" id="draftNation"><label for="draftNation">同时作为国家标准（_default_）共享</label></div>
+      <div class="tools"><button class="btn btn-primary" onclick="saveDraft()">保存录入</button></div>`;
+    return;
+  }
+  const context=results.map((r,i)=>`[${i+1}] ${r.title}\n来源：${r.site}（${r.date}）\n${r.summary}`).join("\n\n");
+  const prompt=`请基于以下搜索结果，为「${provName}${state.city}」办理「${qual.name}${catLabel}（${state.level}）」资质生成结构化录入数据。严格只输出一个 JSON 对象，不要输出任何其他文字。格式：
+{"policyNo":"最新政策文号，如建市〔2014〕159号","standardBasis":"政策依据全称","duration":"预计办理时长（官方审批时限+实际全流程周期）","conditions":[{"item":"项目名","value":"标准要求"}],"process":[{"step":"步骤名","desc":"说明"}],"blockPoints":[{"point":"卡点名称","desc":"说明"}],"altSuggestion":"替代方案建议"}
+要求：duration 写明官方审批时限与全流程预计周期；conditions 至少 5 项（企业净资产/技术负责人/注册建造师/职称或技工/社保等），process 3-5 步，blockPoints 3-5 条。只基于搜索结果提取，搜不到的字段填"未查到"。`;
+  let aiText="";
+  try{
+    aiText=await aiExtract(prompt,context);
+  }catch(e){
+    document.getElementById("draftArea").innerHTML=`<p style="font-size:13px;color:#B45309;margin-top:10px">AI 提取失败（${e.message}），已改为显示搜索摘要，请人工整理后录入：</p>
+      ${results.slice(0,6).map((r,i)=>`<div style="margin:8px 0;padding:8px;border-bottom:1px solid #faf7f2;font-size:12px"><b>[${i+1}] ${r.title}</b><br><span style="color:#6b5d4a">${r.site} · ${r.date||""}</span><br>${r.summary}</div>`).join("")}
+      <textarea class="draft-json" id="draftJson">{"policyNo":"","standardBasis":"","duration":"","conditions":[{"item":"企业净资产","value":""},{"item":"技术负责人","value":""},{"item":"注册建造师","value":""}],"process":[{"step":"前期准备","desc":""}],"blockPoints":[{"point":"","desc":""}],"altSuggestion":""}</textarea>
+      <div class="check-row"><input type="checkbox" id="draftNation"><label for="draftNation">同时作为国家标准（_default_）共享</label></div>
+      <div class="tools"><button class="btn btn-primary" onclick="saveDraft()">保存录入</button></div>`;
+    return;
+  }
+  const parsed=parseAIJson(aiText);
+  const draft=parsed?JSON.stringify(parsed,null,2):aiText;
+  document.getElementById("draftArea").innerHTML=`<p style="font-size:12.5px;color:#16A34A;margin:6px 0 10px">✅ 录入草稿已生成（依据 ${results.length} 条搜索结果）。请核对下方 JSON，可手动修改后保存。</p>
+    <textarea class="draft-json" id="draftJson">${draft.replace(/</g,"&lt;")}</textarea>
+    <div class="check-row"><input type="checkbox" id="draftNation"><label for="draftNation">同时作为国家标准（_default_）共享（该城市数据与其他城市差异较小时勾选）</label></div>
+    <div class="tools">
+      <button class="btn btn-primary" onclick="saveDraft()">💾 保存录入到本地</button>
+      <button class="btn btn-ghost" onclick="firstRecordFlow()">重新生成草稿</button>
+    </div>
+    <div class="src" style="font-size:11.5px;color:#6b5d4a;margin-top:8px"><b>参考来源：</b>${results.slice(0,4).map((r,i)=>`<br>[${i+1}] <a href="${r.url}" target="_blank">${r.title}</a> · ${r.site} · ${r.date||"无日期"}`).join("")}</div>`;
+}
+function saveDraft(){
+  const el=document.getElementById("draftJson");
+  if(!el){alert("草稿区不存在");return;}
+  const obj=parseAIJson(el.value);
+  if(!obj){alert("JSON 格式错误，请检查（可用 {} 包裹，字段间用逗号分隔）");return;}
+  const isNation=document.getElementById("draftNation")&&document.getElementById("draftNation").checked;
+  const {provName}=curInfo();
+  const key=isNation?"_default_"+state.qualId+"_"+state.level:qualKey(provName,state.city,state.qualId,state.level,state.dist);
+  const local=loadLocalData();
+  obj.policyNo=obj.policyNo||"未标注";
+  obj.standardBasis=obj.standardBasis||"未标注";
+  obj.verifiedAt=new Date().toISOString().slice(0,10);
+  obj.savedFrom="local";
+  local[key]=obj;
+  saveLocalData(local);
+  alert("已保存到本地浏览器（"+(state.dist?state.dist+"区级":"市级")+"）。点击「导出本地录入」可把数据提交到团队共享库，全员即可复用。");
+  renderResult();
+}
+// ========== 最新性验证（博查比对政策文号） ==========
+async function reVerify(){
+  const {provName,qual,catLabel}=curInfo();
+  const data=await getQualData(provName,state.city,state.qualId,state.level,state.dist);
+  const target=data.rec?data:((data.fallback&&data.fallback[0])||null);
+  if(!target||!target.rec){alert("该资质暂无数据，请重新进入查看首录流程");return;}
+  verifyFreshness(target.rec,provName,qual,catLabel,target.level||state.level);
+}
+async function verifyFreshness(rec,provName,qual,catLabel,level){
+  const vStatus=document.getElementById("vStatus");
+  const vBody=document.getElementById("vBody");
+  const vDot=document.getElementById("vDot");
+  if(!vStatus)return;
+  const lv=level||state.level;
+  const isFallbackVerify=lv!==state.level;
+  if(!searchConfig.key){
+    vDot.className="dot";vDot.style.background="#9a8a72";
+    vStatus.textContent="未配置博查搜索 Key · 已跳过最新性验证";
+    vBody.innerHTML=`<p style="font-size:13px;color:#6b5d4a">当前显示数据基于「${rec.policyNo||"未标注"}」（${rec.verifiedAt||"未知时间"}验证）。点击右上角「⚙ 配置」填写博查搜索 API Key 后可自动验证是否为最新。<br><br>博查新用户注册即送免费 2000 次额度：open.bochaai.com → API Keys。</p>`;
+    return;
+  }
+  const query=`${provName} ${state.city}${state.dist?" "+state.dist:""} ${qual.name}${catLabel} ${lv} 资质 最新 通知 公告 政策 住建厅`;
+  vStatus.textContent=`最新性验证${isFallbackVerify?`（旧版「${lv}」沿用）`:""} · 第 1/2 步 博查搜索最新公告…`;
+  vBody.innerHTML=`<div class="ai-loading"><div class="spinner"></div><div class="ai-status">搜索：${query}</div></div>`;
+  let results=[];
+  try{
+    results=await searchBocha(query);
+  }catch(e){
+    vDot.className="dot";vDot.style.background="#DC2626";
+    vStatus.textContent="搜索失败";
+    vBody.innerHTML=`<p style="font-size:13px;color:#DC2626">搜索出错：${e.message}（当前数据仍有效，基于 ${rec.policyNo||"未标注"}）</p>`;
+    return;
+  }
+  if(!results.length){
+    vDot.className="dot";vDot.style.background="#9a8a72";
+    vStatus.textContent="未搜到相关结果 · 未能验证";
+    vBody.innerHTML=`<p style="font-size:13px;color:#6b5d4a">博查未返回相关结果。当前数据基于「${rec.policyNo||"未标注"}」（${rec.verifiedAt||""}验证），建议人工查询当地住建厅官网确认。</p>`;
+    return;
+  }
+  const context=results.map((r,i)=>`[${i+1}] ${r.title}\n来源：${r.site}（${r.date}）\n${r.summary}`).join("\n\n");
+  const prompt=`请基于以下搜索结果，找出「${qual.name}${catLabel}（${lv}）」资质在「${provName}${state.city}」相关的最新政策文件信息。严格只输出一个 JSON 对象：{"policyNo":"最新政策文号（如 建市〔2014〕159号 / XX省住建厅XX号），搜不到填 未查到","title":"文件名称","org":"发布机构","date":"发布时间或公告时间"}。只基于搜索结果，不要编造。`;
+  let newNo=null,newTitle="";
+  try{
+    const txt=await aiExtract(prompt,context);
+    const j=parseAIJson(txt);
+    if(j&&j.policyNo&&j.policyNo!=="未查到"&&j.policyNo!==""){newNo=j.policyNo;newTitle=(j.title||"")+" · "+(j.org||"");}
+  }catch(e){/* 走下方失败分支 */}finally{
+    const recNo=(rec.policyNo||"").trim();
+    const fbPrefix=isFallbackVerify?`<p style="font-size:12.5px;color:#B45309;margin-bottom:6px">⚠️ 正在验证的是<b>旧版「${lv}」沿用数据</b>（非「${state.level}」新标准）。若检索到新标准公告，说明该地可能已切换新标准，请以最新公告为准。</p>`:"";
+    const srcHtml=`<div class="src"><b>信息来源：</b>${results.slice(0,5).map((r,i)=>`<br>[${i+1}] <a href="${r.url}" target="_blank">${r.title}</a> · ${r.site} · ${r.date||"无日期"}`).join("")}</div>`;
+    if(newNo){
+      if(recNo&&(newNo.includes(recNo)||recNo.includes(newNo))){
+        vDot.className="dot";vDot.style.background="#16A34A";
+        vStatus.textContent="✅ 信息最新 · 文号比对通过";
+        vBody.innerHTML=`${fbPrefix}当前数据基于「${recNo}」，与最新检索结果一致，截至 ${new Date().toLocaleDateString("zh-CN")} 无需更新。${srcHtml}`;
+      }else{
+        vDot.className="dot";vDot.style.background="#D97706";
+        vStatus.textContent=`⚠️ 检索到新政策信息：${newNo}`;
+        vBody.innerHTML=`${fbPrefix}本地数据依据「${recNo||"未标注"}」，最新检索出现「${newNo}」（${newTitle}）。<b>建议人工核实 ${provName} 住建厅最新公告后更新数据</b>——更新方式：可点击右上角「⚙ 配置」→ 暂无在线更新，可人工修改后走「本地录入 → 导出 → 提交共享库」链路。${srcHtml}`;
+      }
+    }else{
+      vDot.className="dot";vDot.style.background="#9a8a72";
+      vStatus.textContent="未能自动比对文号";
+      vBody.innerHTML=`${fbPrefix}AI 未能从搜索结果提取到明确文号。当前数据基于「${recNo||"未标注"}」（${rec.verifiedAt||""}验证），以下为最新检索结果，请人工核对：${srcHtml}`;
+    }
+  }
+}
+function getApprover(provName){
+  if(["北京市","天津市","上海市","重庆市"].includes(provName))return provName+"住建委（省级）";
+  return "省级住建厅 / 部分委托市级住建局";
+}
+// ========== 联网与 AI 工具函数 ==========
+async function searchBocha(query){
+  if(!searchConfig.key)throw new Error("未配置博查搜索 API Key");
+  const resp=await fetch("https://api.bochaai.com/v1/web-search",{
+    method:"POST",
+    headers:{"Authorization":"Bearer "+searchConfig.key,"Content-Type":"application/json"},
+    body:JSON.stringify({query:query,freshness:"oneYear",summary:true,count:8})
+  });
+  if(!resp.ok)throw new Error("搜索请求失败："+resp.status);
+  const data=await resp.json();
+  const wd=data.data||data;
+  const arr=(wd.webPages&&wd.webPages.value)||[];
+  return arr.map(v=>({title:v.name,url:v.url,summary:v.summary||v.snippet||"",date:v.datePublished||"",site:v.siteName||""}));
+}
+async function aiExtract(prompt,context){
+  const pf=AI_PLATFORMS[aiConfig.platform]||AI_PLATFORMS.deepseek;
+  const url=pf.url||aiConfig.baseUrl;
+  const model=aiConfig.model||pf.models[0].id;
+  if(!aiConfig.apiKey)throw new Error("未配置 AI API Key");
+  const resp=await fetch(url,{
+    method:"POST",
+    headers:{"Content-Type":"application/json","Authorization":"Bearer "+aiConfig.apiKey},
+    body:JSON.stringify({model:model,messages:[{role:"system",content:"你是建筑工程资质办理政策分析助手。基于用户提供的搜索结果提取信息，只提取不编造，搜不到的标注'未查到'。"},{role:"user",content:prompt+"\n\n搜索结果：\n"+context}],temperature:0.2,stream:false})
+  });
+  if(!resp.ok)throw new Error("AI 请求失败："+resp.status);
+  const data=await resp.json();
+  return data.choices[0].message.content;
+}
+function parseAIJson(text){
+  if(!text)return null;
+  try{return JSON.parse(text);}catch(e){}
+  const m=text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if(m){try{return JSON.parse(m[1]);}catch(e){}}
+  const s=text.indexOf("{");
+  const e2=text.lastIndexOf("}");
+  if(s>=0&&e2>s){try{return JSON.parse(text.slice(s,e2+1));}catch(e){}}
+  return null;
+}
+// ========== 生成记录 ==========
+function saveRecord(){
+  const {provName,cat,qual}=curInfo();
+  const rec={time:Date.now(),prov:provName,city:state.city,dist:state.dist||"",qualName:qual.name,cat:cat.name,level:state.level};
+  let list=[];
+  try{list=JSON.parse(localStorage.getItem("qref_records_v1")||"[]");}catch(e){}
+  list=list.filter(r=>!(r.prov===rec.prov&&r.city===rec.city&&(r.dist||"")===(rec.dist||"")&&r.qualName===rec.qualName&&r.level===rec.level));
+  list.unshift(rec);
+  if(list.length>30)list=list.slice(0,30);
+  localStorage.setItem("qref_records_v1",JSON.stringify(list));
+  alert("已保存到生成记录");
+}
+// ========== 配置 ==========
+function openConfig(){
+  const pf=AI_PLATFORMS[aiConfig.platform]||AI_PLATFORMS.deepseek;
+  const platformOptions=Object.keys(AI_PLATFORMS).filter(k=>{
+    const p=AI_PLATFORMS[k];
+    for(const cap in AI_REQUIRED_CAPS){ if(AI_REQUIRED_CAPS[cap] && !p[cap]) return false; }
+    return true;
+  }).map(k=>`<option value="${k}" ${aiConfig.platform===k?'selected':''}>${AI_PLATFORMS[k].name}</option>`).join("");
+  openModal("",`
+    <div class="ai-head"><h3>AI 接口配置（本工具独立）</h3></div>
+    <div class="ai-section">
+      <div class="ai-section-title">AI 连接</div>
+      <div class="fitem"><label>AI 平台 <span style="font-size:11px;color:#8a7a62;font-weight:400">仅列出支持文本生成的平台</span></label><select id="cfgPlatform" onchange="updateModelOptions()">${platformOptions}</select></div>
+      <div class="fitem"><label>AI 模型</label><select id="cfgModel">${(pf.models||[]).map(m=>`<option value="${m.id}" ${aiConfig.model===m.id?'selected':''}>${m.name}</option>`).join("")}</select></div>
+      <div class="fitem"><label>AI API Key</label><input type="password" id="cfgKey" value="${aiConfig.apiKey||''}" placeholder="sk-... / ark-..."></div>
+    </div>
+    <div class="ai-section">
+      <div class="ai-section-title">联网验证</div>
+      <div class="fitem"><label>博查搜索 API Key</label><input type="password" id="cfgSearchKey" value="${searchConfig.key||''}" placeholder="sk-...（用于联网验证最新政策）"><div class="src-note">博查开放平台 open.bochaai.com → API Keys → 新建。新用户免费 2000 次，每次验证约消耗 1 次。</div></div>
+    </div>
+    <div class="ai-section">
+      <div class="ai-section-title">数据共享（贡献团队）</div>
+      <div class="src-note">本工具数据为「云端共享（仓库 JSON 只读）+ 本地录入（localStorage）」双层结构。首次查询无数据时自动生成录入草稿保存到本地；点击下方按钮导出本地录入 JSON，将内容合并提交到团队仓库 <b>public/data/qualification-data.json</b>（更新 _meta.updatedAt 与 version），全员即可复用。</div>
+      <div style="margin-top:10px"><button class="btn btn-orange" onclick="exportLocalData()">导出本地录入数据</button></div>
+    </div>
+    <div class="ai-actions"><button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="saveConfig()">保存</button></div>`);
+}
+function updateModelOptions(){
+  const p=document.getElementById("cfgPlatform").value;
+  const pf=AI_PLATFORMS[p]||AI_PLATFORMS.deepseek;
+  document.getElementById("cfgModel").innerHTML=(pf.models||[]).map(m=>`<option value="${m.id}">${m.name}</option>`).join("");
+}
+function saveConfig(){
+  aiConfig.platform=document.getElementById("cfgPlatform").value;
+  aiConfig.model=document.getElementById("cfgModel").value;
+  aiConfig.apiKey=document.getElementById("cfgKey").value.trim();
+  searchConfig.key=document.getElementById("cfgSearchKey").value.trim();
+  localStorage.setItem("qual_ai_config",JSON.stringify({provider:aiConfig.platform,key:aiConfig.apiKey,model:aiConfig.model}));
+  localStorage.setItem("qual_search_config",JSON.stringify({provider:"bocha",key:searchConfig.key}));
+  closeModal();
+  if(state.step===5)renderResult();
+}
+function openModal(title,body){
+  document.getElementById("modalTitle").textContent=title;
+  document.getElementById("modalBody").innerHTML=body;
+  document.getElementById("modalBg").style.display="block";
+  document.getElementById("modal").style.display="flex";
+  document.body.style.overflow="hidden";
+}
+function closeModal(){
+  document.getElementById("modalBg").style.display="none";
+  document.getElementById("modal").style.display="none";
+  document.body.style.overflow="";
+}
+loadConfig();
+renderSide();
+renderMain();
+</script>
+</body>
+</html>

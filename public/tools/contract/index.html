@@ -1,0 +1,1717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>合同生成助手</title>
+<script src="./docx.umd.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#faf7f2;color:#2a2118;font-size:14px}
+  .wrap{max-width:980px;margin:0 auto;padding:20px 16px 60px}
+  .header{background:linear-gradient(120deg,#fffdf9,#fdf3e3,#fbeccb);color:#2a2118;border-radius:12px;padding:22px 26px;margin-bottom:18px;position:relative;padding-right:150px}
+  .header h1{font-size:20px;display:flex;align-items:center;gap:8px}
+  .header p{font-size:12.5px;color:#6b5d4a;margin-top:6px}
+  .rec-btn{position:absolute;top:50%;right:24px;transform:translateY(-50%);background:#fffefb;color:#2a2118;border:1px solid #ece3d6;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;transition:.15s}
+  .rec-btn:hover{background:#fbf5ea;border-color:#e0901a}
+  /* AI 配置弹窗统一视觉 */
+  .ai-head{display:flex;align-items:center;justify-content:space-between;margin:-20px -22px 16px;padding:16px 22px;background:linear-gradient(120deg,#fffdf9,#fdf3e3,#fbeccb);border-radius:14px 14px 0 0;color:#2a2118;border-bottom:1px solid #ece3d6}
+  .ai-head h3{margin:0;font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .ai-head h3::before{content:'⚙';font-size:15px;opacity:.9}
+  .ai-close{background:#fffefb;border:1px solid #ece3d6;width:28px;height:28px;border-radius:8px;font-size:15px;color:#2a2118;cursor:pointer;line-height:1;transition:.15s}
+  .ai-close:hover{background:#fbf5ea;border-color:#e0901a}
+  .ai-section{background:#faf7f2;border:1px solid #faf4ea;border-radius:12px;padding:14px 16px;margin-bottom:14px}
+  .ai-section-title{font-size:12.5px;font-weight:700;color:#3a2410;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .ai-section-title::before{content:'';width:4px;height:14px;background:linear-gradient(180deg,#f0a93c,#3a2410);border-radius:2px}
+  .ai-actions{display:flex;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid #faf4ea;justify-content:flex-end}
+  .ai-actions .btn{padding:8px 18px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;border:1px solid transparent;transition:.15s}
+  .ai-actions .btn-primary{background:linear-gradient(135deg,#b45309,#e0901a);color:#fff;border:none}
+  .ai-actions .btn-primary:hover{filter:brightness(1.1)}
+  .ai-actions .btn-ghost{background:#fff;color:#3a3228;border-color:#e8dcd0}
+  .ai-actions .btn-ghost:hover{border-color:#f0a93c;color:#3a2410;background:#fbf5ea}
+  /* 生成记录弹窗 */
+  .rec-bg{position:fixed;inset:0;background:rgba(42,26,10,.45);z-index:90;display:none}
+  .rec-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:14px;padding:20px 22px;width:560px;max-width:94vw;height:min(600px,86vh);z-index:91;display:none;flex-direction:column;box-shadow:0 10px 40px rgba(42,33,24,.18)}
+  .rec-modal h3{margin:0 0 12px;font-size:15.5px;color:#3a2410}
+  .rec-body{flex:1;overflow:auto;min-height:0;padding-right:4px}
+  .rec-row{display:flex;align-items:center;gap:10px;border:1px solid #f2e6d8;border-radius:10px;padding:11px 13px;margin-bottom:10px;background:#fffefb}
+  .rec-row .rec-t{font-size:13.5px;font-weight:600;color:#2a2118;margin-bottom:3px}
+  .rec-row .rec-s{font-size:12px;color:#8a7a62}
+  .rec-ops{margin-left:auto;display:flex;gap:6px;flex-shrink:0}
+  .rec-badge{display:inline-block;font-size:10.5px;border-radius:9px;padding:1px 7px;margin-left:6px;vertical-align:1px;font-weight:600}
+  .rec-empty{background:#faf7f2;border-left:4px solid #9a8a72;border-radius:6px;padding:12px 14px;font-size:12.5px;color:#4a4035;line-height:1.7}
+  .rec-tip{font-size:12px;color:#8a7a62;margin-bottom:10px}
+  .steps-bar{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+  .step-chip{flex:1;min-width:96px;background:#fff;border:1px solid #efe6d8;border-radius:8px;padding:8px 10px;font-size:12px;color:#6b5d4a;cursor:pointer;transition:.2s;text-align:center}
+  .step-chip .no{display:inline-block;width:18px;height:18px;line-height:18px;border-radius:50%;background:#f2e6d8;color:#6b5d4a;font-size:11px;margin-right:4px}
+  .step-chip.active{border-color:#e0901a;color:#2a2118;font-weight:600;background:#fffefb;box-shadow:inset 3px 0 0 #b45309}
+  .step-chip.active .no{background:#e0901a;color:#fff}
+  .step-chip.done{border-color:#a7d7c5;color:#2f855a}
+  .step-chip.done .no{background:#38a169;color:#fff}
+  .card{background:#fffefb;border:1px solid #ece3d6;border-radius:12px;padding:24px 26px;box-shadow:0 1px 3px rgba(180,120,40,.06);margin-bottom:16px}
+  .card h2{font-size:16px;color:#3a2410;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+  .card .sub{font-size:12.5px;color:#8a7a62;margin-bottom:18px}
+  .type-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+  .type-card{border:2px solid #f2e6d8;border-radius:10px;padding:18px 16px;cursor:pointer;transition:.2s;background:#faf7f2}
+  .type-card:hover{border-color:#cdb389}
+  .type-card.sel{border-color:#7a3e07;background:#fbf5ea;box-shadow:0 2px 8px rgba(44,82,130,.12)}
+  .type-card.disabled{opacity:.55;cursor:not-allowed;filter:grayscale(.35)}
+  .type-card.disabled:hover{border-color:#f2e6d8}
+  .tag-dev{display:inline-block;background:#f6efe3;color:#8a7a62;font-size:10.5px;border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:2px}
+  .type-card .ico{font-size:26px}
+  .type-card .t{font-size:15px;font-weight:600;color:#3a2410;margin:8px 0 5px}
+  .type-card .d{font-size:12px;color:#8a7a62;line-height:1.6}
+  .type-card .fields{margin-top:8px;font-size:11.5px;color:#7a3e07}
+  .scenario-box{display:flex;gap:12px;margin-top:16px;padding:14px;background:#faf7f2;border:1px dashed #e3d4ba;border-radius:10px}
+  .scenario-btn{flex:1;padding:12px 14px;border:1.5px solid #e8dcd0;border-radius:8px;background:#fff;cursor:pointer;text-align:center;transition:.15s}
+  .scenario-btn .st{font-size:14px;font-weight:600;color:#3a2410;display:block}
+  .scenario-btn .sd{font-size:11.5px;color:#8a7a62;margin-top:4px;display:block;line-height:1.5}
+  .scenario-btn.sel{border-color:#7a3e07;background:#fbf5ea;box-shadow:0 1px 5px rgba(44,82,130,.1)}
+  .frow{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  .fg{margin-bottom:14px}
+  .fg label{display:block;font-size:12.5px;color:#4a4035;margin-bottom:5px;font-weight:500}
+  .fg label .req{color:#dc2626;margin-left:2px}
+  .fg input[type=text],.fg input[type=date],.fg select,.fg textarea{width:100%;border:1px solid #e8dcd0;border-radius:7px;padding:9px 11px;font-size:13.5px;font-family:inherit;background:#fff;transition:.15s;color:#2a2118}
+  .fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:#7a3e07;box-shadow:0 0 0 3px rgba(44,82,130,.1)}
+  .fg input[readonly]{background:#faf7f2;color:#6b5d4a}
+  .fg textarea{resize:vertical;min-height:70px}
+  .fg .hint{font-size:11.5px;color:#9a8a72;margin-top:4px}
+  .sec-title{font-size:13.5px;font-weight:600;color:#3a2410;border-left:3px solid #7a3e07;padding-left:9px;margin:20px 0 14px}
+  .sec-title.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .btn-row{display:flex;justify-content:space-between;margin-top:22px;gap:12px}
+  .btn{border:none;border-radius:8px;padding:11px 26px;font-size:14px;cursor:pointer;font-family:inherit;transition:.15s}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn-primary{background:#b45309;color:#fff}
+  .btn-primary:hover:not(:disabled){background:#3a2410}
+  .btn-ghost{background:#fff;color:#4a4035;border:1px solid #e8dcd0}
+  .btn-ghost:hover{border-color:#cdb389;color:#3a2410}
+  .btn-danger{background:#fee2e2;color:#b91c1c;border:1px solid #fecaca}
+  .btn-danger:hover{background:#fecaca}
+  .kind-row{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+  .kind-btn{padding:6px 18px;border:1.5px solid #e8dcd0;border-radius:7px;background:#fff;color:#4a4035;font-size:12.5px;cursor:pointer;font-family:inherit;transition:.15s}
+  .kind-btn.sel{border-color:#7a3e07;background:#fbf5ea;color:#3a2410;font-weight:600}
+  .default-btn{margin-left:auto;padding:7px 16px;border:none;border-radius:7px;background:linear-gradient(135deg,#7a3e07,#3a2410);color:#fff;font-size:12.5px;cursor:pointer;font-family:inherit;transition:.15s}
+  .default-btn:hover{opacity:.92}
+  .mini-btn{border:1px solid #cdb389;background:#fff;color:#3a2410;border-radius:6px;padding:3px 12px;font-size:12px;cursor:pointer;font-family:inherit}
+  .mini-btn:hover{background:#fbf5ea}
+  .inst-row{display:grid;grid-template-columns:1.15fr 1fr 42px;gap:10px;align-items:end;margin-bottom:10px}
+  .inst-row .del{align-self:center;height:38px;border:1px solid #efe6d8;border-radius:7px;background:#fff;color:#c05252;cursor:pointer;font-size:15px;font-family:inherit}
+  .inst-row .del:hover{border-color:#dc2626;color:#dc2626}
+  .party-multi{border:1px solid #e8dcd0;border-radius:8px;padding:12px 14px;margin-bottom:10px;background:#f8fafd}
+  .party-multi .pm-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:wrap}
+  .party-multi .pm-title{font-weight:600;font-size:13px;color:#3a2410}
+  .party-multi .pm-kinds{display:inline-flex;border:1px solid #e8dcd0;border-radius:6px;overflow:hidden}
+  .party-multi .pm-kind{border:none;background:#fff;color:#8a7a62;cursor:pointer;font-size:12px;padding:3px 12px;font-family:inherit}
+  .party-multi .pm-kind.on{background:#7a3e07;color:#fff}
+  .party-multi .del{border:1px solid #efe6d8;border-radius:6px;background:#fff;color:#c05252;cursor:pointer;font-size:12px;padding:2px 10px;font-family:inherit}
+  .party-multi .del:hover{border-color:#dc2626;color:#dc2626}
+  .radio-row{display:flex;gap:22px;margin-top:6px;flex-wrap:wrap}
+  .radio-row label{display:flex;align-items:center;gap:6px;font-size:13px;color:#2a2118;cursor:pointer}
+  .radio-row input{accent-color:#7a3e07}
+  .clause-item{border:1px solid #efe6d8;border-radius:9px;padding:14px 16px;margin-bottom:12px;background:#faf7f2;position:relative}
+  .clause-item .del{position:absolute;right:12px;top:10px;border:none;background:none;color:#c05252;font-size:16px;cursor:pointer}
+  .clause-item .del:hover{color:#dc2626}
+  .add-clause{width:100%;border:1.5px dashed #d3c4a4;border-radius:9px;padding:11px;background:none;color:#7a3e07;font-size:13px;cursor:pointer;font-family:inherit}
+  .add-clause:hover{background:#fbf5ea}
+  .ai-settings{border:1px dashed #e3d4ba;background:#faf7f2;border-radius:9px;padding:12px 14px;margin-bottom:16px}
+  .ai-cfg-box{margin-top:12px;padding-top:12px;border-top:1px dashed #dbe2ec}
+  .ai-desc{margin-bottom:12px}
+  .ai-desc textarea{min-height:52px;background:#fbf6ec}
+  .ai-bar{display:flex;gap:8px;margin-top:8px}
+  .ai-out{margin-top:8px;font-size:12.5px;line-height:1.7}
+  .ai-out .ai-loading{color:#8a7a62}
+  .ai-out .ai-ok{color:#2f855a}
+  .ai-issue{border-left:3px solid #f2e6d8;background:#faf7f2;padding:6px 10px;margin-top:6px;border-radius:0 6px 6px 0;color:#4a4035}
+  .ai-issue.warn{border-color:#e6a23c;background:#fdf6ec;color:#8a5a17}
+  .ai-issue.ok{border-color:#38a169;background:#f0faf4;color:#2f855a}
+  .full-pay-tip{border:1px solid #b7e0cc;background:#f0faf4;color:#2f855a;border-radius:8px;padding:10px 14px;font-size:12.5px;margin:4px 0 6px}
+  .review-box{background:#faf7f2;border:1px solid #efe6d8;border-radius:9px;padding:18px 20px}
+  .review-box h3{font-size:14px;color:#3a2410;margin:14px 0 8px}
+  .review-box h3:first-child{margin-top:0}
+  .kv{display:flex;font-size:13px;padding:5px 0;border-bottom:1px dashed #eceff4}
+  .kv .k{width:150px;color:#8a7a62;flex-shrink:0}
+  .kv .v{color:#2a2118;word-break:break-all}
+  .gen-area{text-align:center;padding:10px 0 4px}
+  .gen-btn{background:linear-gradient(135deg,#7a3e07,#3a2410);color:#fff;border:none;border-radius:10px;padding:15px 60px;font-size:16px;cursor:pointer;font-family:inherit;letter-spacing:2px;transition:.2s}
+  .gen-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 16px rgba(30,58,95,.3)}
+  .gen-btn:disabled{opacity:.5;cursor:wait}
+  .ok-tip{margin-top:14px;font-size:13px;color:#2f855a;display:none}
+  .warn{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:8px;padding:10px 14px;font-size:12.5px;margin-bottom:14px}
+  .empty{color:#9a8a72;font-style:italic}
+  @media(max-width:640px){.frow,.frow3,.inst-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>📄 合同生成助手</h1>
+    <p>选择合同类型 → 填写甲乙方与标的信息 → 自动生成成品合同（Word）· 支持分期付款与自定义补充协议条款</p>
+    <button class="rec-btn" onclick="openContractAiCfgModal()">⚙ AI 配置</button>
+  <button class="rec-btn" onclick="openRecords()">📋 生成记录</button>
+  </div>
+  <div class="steps-bar" id="stepsBar"></div>
+  <div id="main"></div>
+</div>
+<div class="rec-bg" id="recModalBg" onclick="closeRecModal()"></div>
+<div class="rec-modal" id="recModal">
+  <div class="rec-body" id="recModalBody"></div>
+</div>
+<div class="rec-bg" id="aiCfgModalBg" onclick="closeAiCfgModal()"></div>
+<div class="rec-modal" id="aiCfgModal">
+  <div class="rec-body" id="aiCfgModalBody"></div>
+</div>
+
+<script>
+/* ============================================================
+   合同生成助手 · 单文件工具
+   流程：1 选择类型 → 2 甲乙方信息 → 3 合同要素 → 4 补充协议 → 5 生成
+   当前上线：收购公司合同（面向同行渠道 / 面向客户）
+   延后：委托出售合同、债务债权协议（入口保留，标"开发中"）
+   ============================================================ */
+
+const LS_KEY = 'contract_tool_data_v2'
+
+/* 金米启航默认信息（甲乙方「输入默认信息」按钮共用） */
+const JINMI = {
+  name: '深圳市金米启航企业服务有限公司',
+  creditCode: '91440300MAERJ8AP0E',
+  legalRep: '易俊威'
+}
+const AGENCY_NAME = JINMI.name
+
+/* 合同类型配置（available:false = 开发中）
+   aIsCompany/bIsPerson：锁定甲方/乙方主体类型（委托出售场景甲为中介机构、乙为自然人卖家） */
+const TYPES = {
+  acquisition: {
+    label: '收购公司合同',
+    docTitle: '收购公司合同',
+    ico: '🏢',
+    desc: '甲方（收购方）向乙方（出让方）收购目标公司股权，支持分期支付与补充协议',
+    roleA: '收购方', roleB: '出让方',
+    targetLabel: '标的公司名称',
+    targetPh: '如：深圳市XX科技有限公司',
+    hasAmount: true,
+    available: true
+  },
+  intermediary: {
+    label: '委托出售合同',
+    docTitle: '股权确认出售服务协议',
+    ico: '🤝',
+    desc: '自然人卖家委托金米启航出售公司100%股权的中介服务协议，含到手价承诺、服务期限、服务费用与违约责任',
+    roleA: '中介方', roleB: '委托方（出售方）',
+    targetLabel: '标的公司名称',
+    targetPh: '如：深圳市XX科技有限公司',
+    hasAmount: true,
+    available: true,
+    aIsCompany: true,      /* 甲方固定为企业法人（中介机构） */
+    bIsPerson: true        /* 乙方固定为自然人（公司100%股权持有者） */
+  },
+  debt: {
+    label: '债务债权协议',
+    docTitle: '股权转让所涉债权债务责任转让协议',
+    ico: '⚖️',
+    desc: '股权转让所涉债权债务责任转让协议，旧股东与新股东就营业执照变更日前后的债权债务责任进行分割，每个股东均需签署',
+    roleA: '公司旧股东', roleB: '公司新股东',
+    targetLabel: '标的公司名称',
+    targetPh: '如：深圳市XX科技有限公司',
+    hasAmount: false,
+    available: true,
+    multiParty: true      /* 支持多方股东签署（每个股东可为自然人或企业法人） */
+  }
+}
+
+const STEPS = [
+  {id:'type',  name:'选择类型'},
+  {id:'party', name:'甲乙方信息'},
+  {id:'terms', name:'合同要素'},
+  {id:'extra', name:'补充协议'},
+  {id:'gen',   name:'生成合同'}
+]
+
+function today(){
+  const d=new Date()
+  const p=n=>String(n).padStart(2,'0')
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())
+}
+function autoContractNo(){
+  const d=new Date()
+  const p=n=>String(n).padStart(2,'0')
+  const rnd=Math.floor(Math.random()*900+100)
+  return 'HT-'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+rnd
+}
+
+function emptyParty(){ return { kind:'company', name:'', creditCode:'', legalRep:'', idNo:'', address:'', phone:'' } }
+function emptyState(){
+  return {
+    step: 0,
+    type: '',
+    scenario: 'peer',                 /* peer=面向同行渠道 client=面向客户 */
+    partyA: emptyParty(),             /* 甲方：收购方 */
+    partyB: emptyParty(),             /* 乙方：出让方 */
+    partiesA: [],                      /* 债务债权：公司旧股东列表（多人签署） */
+    partiesB: [],                      /* 债务债权：公司新股东列表（多人签署） */
+    terms: {
+      target:'',                      /* 标的公司名称 */
+      price:'',                       /* 交易价格（收购）/ 甲方承诺到手价格（委托出售）（元） */
+      serviceDays:'30',               /* 委托出售：中介服务期限（工作日） */
+      aContact:{ name:'郑伟超', phone:'15989082969', email:'461362657@qq.com' },  /* 委托出售：甲方接收通知联系方式 */
+      payMode:'inst',                 /* 支付方式：inst=分期 full=全款（签订当日付清） */
+      installments:[],                /* 分期：[{node,amount}]，金额单位元 */
+      changeHandling:'no',            /* 出让方是否负责所有变更手续：yes/no */
+      changeDate:''                   /* 债务债权：营业执照变更生效日期 */
+    },
+    extra: { clauses: [] },
+    meta: { contractNo:autoContractNo(), signDate:today(), signPlace:'深圳市' }
+  }
+}
+
+let state = loadState()
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(LS_KEY)
+    if(raw){
+      const s = JSON.parse(raw)
+      if(!s || typeof s!=='object') return emptyState()
+      const base = emptyState()
+      const m = {}
+      m.step = 0
+      m.type = TYPES[s.type] ? s.type : ''
+      m.scenario = s.scenario==='client' ? 'client' : 'peer'
+      m.partyA = Object.assign({}, base.partyA, s.partyA||{})
+      m.partyB = Object.assign({}, base.partyB, s.partyB||{})
+      m.terms = Object.assign({}, base.terms, s.terms||{})
+      m.terms.payMode = (s.terms&&s.terms.payMode)==='full' ? 'full' : 'inst'
+      m.terms.serviceDays = String((s.terms&&s.terms.serviceDays)||'') || '30'
+      m.terms.aContact = Object.assign({}, base.terms.aContact, (s.terms&&s.terms.aContact)||{})
+      m.terms.installments = Array.isArray(s.terms&&s.terms.installments)
+        ? s.terms.installments.filter(x=>x&&typeof x==='object').map(x=>({node:String(x.node||''),amount:String(x.amount||'')}))
+        : []
+      m.terms.changeDate = String((s.terms&&s.terms.changeDate)||'')
+      m.partiesA = Array.isArray(s.partiesA) ? s.partiesA.filter(x=>x&&typeof x==='object').map(x=>Object.assign({},emptyParty(),x,{kind:x.kind==='company'?'company':'person'})) : []
+      m.partiesB = Array.isArray(s.partiesB) ? s.partiesB.filter(x=>x&&typeof x==='object').map(x=>Object.assign({},emptyParty(),x,{kind:x.kind==='company'?'company':'person'})) : []
+      m.extra = { clauses: Array.isArray(s.extra&&s.extra.clauses) ? s.extra.clauses.filter(c=>c&&(c.title||c.content)).map(c=>({title:String(c.title||''),content:String(c.content||''),aiDesc:String(c.aiDesc||'')})) : [] }
+      m.meta = Object.assign({}, base.meta, s.meta||{})
+      if(!m.meta.contractNo) m.meta.contractNo = autoContractNo()
+      return m
+    }
+  }catch(e){ console.error('[loadState]', e) }
+  return emptyState()
+}
+function saveState(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)) }
+  catch(e){ alert('保存失败：本地存储空间不足，请减少内容后重试') }
+}
+
+/* ============ 渲染 ============ */
+function esc(s){ return String(s??'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])) }
+function val(s){ return esc(s||'') }
+
+function renderNav(){
+  const bar = document.getElementById('stepsBar')
+  bar.innerHTML = STEPS.map((st,i)=>{
+    const cls = i===state.step ? 'active' : (i<state.step ? 'done' : '')
+    const no = i<state.step ? '✓' : (i+1)
+    const clickable = i<=state.step || (i>0 && i<4 && state.type)
+    return `<div class="step-chip ${cls}" ${clickable?`onclick="gotoStep(${i})"`:''} style="${clickable?'':'opacity:.5;cursor:default'}"><span class="no">${no}</span>${st.name}</div>`
+  }).join('')
+}
+function gotoStep(i){ state.step=i; saveState(); renderNav(); renderStep(); window.scrollTo({top:0,behavior:'smooth'}) }
+
+function field(obj,key,label,opt={}){
+  const v = val(obj[key])
+  const ro = opt.readonly?'readonly':''
+  const type = opt.type||'text'
+  const hint = opt.hint?`<div class="hint">${opt.hint}</div>`:''
+  const req = opt.req?'<span class="req">*</span>':''
+  const ph = opt.placeholder?`placeholder="${esc(opt.placeholder)}"`:''
+  const group = obj===state.partyA?'partyA':obj===state.partyB?'partyB':obj===state.terms?'terms':obj===state.meta?'meta':'extra'
+  return `<div class="fg"><label>${label}${req}</label><input type="${type}" id="f_${key}" value="${v}" ${ph} ${ro} oninput="setVal('${group}','${key}',this.value)">${hint}</div>`
+}
+function areaField(obj,key,label,opt={}){
+  const v = val(obj[key])
+  const hint = opt.hint?`<div class="hint">${opt.hint}</div>`:''
+  const req = opt.req?'<span class="req">*</span>':''
+  return `<div class="fg"><label>${label}${req}</label><textarea id="f_${key}" placeholder="${esc(opt.placeholder||'')}" oninput="setVal('terms','${key}',this.value)">${v}</textarea>${hint}</div>`
+}
+function setVal(group,key,v){
+  state[group][key]=v
+  saveState()
+}
+
+function renderStep(){
+  const main = document.getElementById('main')
+  try{
+    main.innerHTML = [
+      stepType, stepParty, stepTerms, stepExtra, stepGen
+    ][state.step]()
+  }catch(e){
+    main.innerHTML = `<div class="card"><div class="warn">渲染异常：${esc(e.message)}，请刷新页面重试。</div></div>`
+    console.error(e)
+  }
+}
+
+/* ---- 步骤 1：合同类型 ---- */
+function stepType(){
+  const cards = Object.entries(TYPES).map(([k,t])=>{
+    const sel = state.type===k
+    const disabled = !t.available
+    const click = disabled ? '' : `onclick="pickType('${k}')"`
+    return `<div class="type-card ${sel?'sel':''} ${disabled?'disabled':''}" ${click}>
+      <div class="ico">${t.ico}</div>
+      <div class="t">${t.label}${disabled?'<span class="tag-dev">开发中</span>':''}</div>
+      <div class="d">${t.desc}</div>
+      <div class="fields">${t.hasAmount?'含金额条款字段':'无需填写金额'}</div>
+    </div>`
+  }).join('')
+  const scenHtml = state.type==='acquisition' ? `
+    <div class="scenario-box">
+      <div class="scenario-btn ${state.scenario==='peer'?'sel':''}" onclick="setScenario('peer')">
+        <span class="st">面向同行渠道</span>
+        <span class="sd">我方（金米启航）向同行收购公司，甲方默认为我方，点「输入默认信息」一键填入</span>
+      </div>
+      <div class="scenario-btn ${state.scenario==='client'?'sel':''}" onclick="setScenario('client')">
+        <span class="st">面向客户</span>
+        <span class="sd">客户向出让方收购公司，甲方为客户（手动填写，也可用默认信息）</span>
+      </div>
+    </div>` : ''
+  return `
+  <div class="card">
+    <h2>① 选择合同类型</h2>
+    <div class="sub">请选择需要生成的合同类型，选定后开始填写</div>
+    <div class="type-grid">${cards}</div>
+    ${scenHtml}
+    <div class="btn-row"><span></span><button class="btn btn-primary" ${state.type?'':'disabled'} onclick="gotoStep(1)">下一步：填写甲乙方信息 →</button></div>
+  </div>`
+}
+function pickType(k){
+  if(!TYPES[k] || !TYPES[k].available) return
+  state.type = k
+  saveState()
+  renderNav(); renderStep()
+}
+function setScenario(sc){
+  if(state.type!=='acquisition') return
+  state.scenario = sc==='client' ? 'client' : 'peer'
+  saveState(); renderStep()
+}
+
+/* ---- 步骤 2：甲乙方 ---- */
+function partyBlock(pre, roleLabel, opts={}){
+  const o = state[pre]
+  const isPerson = o.kind==='person'
+  const lockKind = opts.lockKind || ''
+  const nameLabel = isPerson ? '姓名' : '公司名称'
+  const idLabel = isPerson ? '身份证号' : '统一社会信用代码'
+  const dis = (k)=> lockKind && lockKind!==k ? 'disabled style="opacity:.55;cursor:default"' : ''
+  const lockHint = lockKind ? `<span class="hint" style="display:inline;margin-left:8px">${lockKind==='company'?'本协议甲方为中介服务机构，固定企业法人':'本协议乙方为公司股权持有者，固定自然人'}</span>` : ''
+  return `<div class="sec-title">${pre==='partyA'?'甲方':'乙方'}信息（${roleLabel}）</div>
+  <div class="kind-row">
+    <button class="kind-btn ${!isPerson?'sel':''}" ${dis('company')} onclick="setKind('${pre}','company')">企业法人</button>
+    <button class="kind-btn ${isPerson?'sel':''}" ${dis('person')} onclick="setKind('${pre}','person')">自然人</button>
+    ${opts.noDefault?'':`<button class="default-btn" onclick="fillDefault('${pre}')" title="填入深圳市金米启航企业服务有限公司默认信息">输入默认信息</button>`}
+    ${lockHint}
+  </div>
+  <div class="frow">
+    ${field(o,'name',nameLabel,{req:1,placeholder:isPerson?'如：张三':'如：深圳市金米启航企业服务有限公司'})}
+    ${field(o, isPerson?'idNo':'creditCode', idLabel, {req:1,placeholder:isPerson?'18 位身份证号码':'91 开头的 18 位代码'})}
+  </div>
+  <div class="frow">
+    ${isPerson ? '' : field(o,'legalRep','法定代表人',{req:1,placeholder:'姓名'})}
+    ${field(o,'phone','联系电话',{})}
+  </div>
+  ${field(o,'address', isPerson?'住址':'公司地址', {placeholder:'注册/通讯地址'})}`
+}
+
+/* 债务债权 · 多方签署（动态添加/删除股东，每个股东可为自然人或企业法人） */
+function partyBlockMulti(side, idx, roleLabel){
+  const arr = state[side]                    /* 'partiesA' | 'partiesB' */
+  const o = arr[idx]
+  if(!o) return ''
+  const isPerson = o.kind!=='company'
+  return `<div class="party-multi">
+    <div class="pm-head">
+      <span class="pm-title">${roleLabel} ${idx+1}（${isPerson?'自然人':'企业法人'}）</span>
+      <span class="pm-kinds">
+        <button class="pm-kind ${isPerson?'on':''}" onclick="setPartyKind('${side}',${idx},'person')">自然人</button>
+        <button class="pm-kind ${!isPerson?'on':''}" onclick="setPartyKind('${side}',${idx},'company')">企业法人</button>
+      </span>
+      ${arr.length>1 ? `<button class="del" onclick="delParty('${side}',${idx})" title="删除此签署人">✕ 删除</button>` : ''}
+    </div>
+    ${isPerson ? `
+    <div class="frow">
+      <div class="fg"><label>姓名<span class="req">*</span></label><input type="text" value="${val(o.name)}" placeholder="如：张三" oninput="upParty('${side}',${idx},'name',this.value)"></div>
+      <div class="fg"><label>身份证号<span class="req">*</span></label><input type="text" value="${val(o.idNo)}" placeholder="18 位身份证号码" oninput="upParty('${side}',${idx},'idNo',this.value)"></div>
+    </div>` : `
+    <div class="frow">
+      <div class="fg"><label>公司名称<span class="req">*</span></label><input type="text" value="${val(o.name)}" placeholder="如：深圳市XX投资有限公司" oninput="upParty('${side}',${idx},'name',this.value)"></div>
+      <div class="fg"><label>统一社会信用代码<span class="req">*</span></label><input type="text" value="${val(o.creditCode)}" placeholder="18 位信用代码" oninput="upParty('${side}',${idx},'creditCode',this.value)"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>法定代表人</label><input type="text" value="${val(o.legalRep)}" placeholder="如：李四" oninput="upParty('${side}',${idx},'legalRep',this.value)"></div>
+      <div class="fg"><label>联系电话</label><input type="text" value="${val(o.phone)}" placeholder="手机号码" oninput="upParty('${side}',${idx},'phone',this.value)"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>注册地址</label><input type="text" value="${val(o.address)}" placeholder="注册/通讯地址" oninput="upParty('${side}',${idx},'address',this.value)"></div>
+    </div>`}
+    ${isPerson ? `
+    <div class="frow">
+      <div class="fg"><label>联系电话</label><input type="text" value="${val(o.phone)}" placeholder="手机号码" oninput="upParty('${side}',${idx},'phone',this.value)"></div>
+      <div class="fg"><label>联系地址</label><input type="text" value="${val(o.address)}" placeholder="通讯地址" oninput="upParty('${side}',${idx},'address',this.value)"></div>
+    </div>` : ''}
+  </div>`
+}
+function addParty(side){ state[side].push(Object.assign(emptyParty(),{kind:'person'})); saveState(); renderStep() }
+function delParty(side, idx){ if(state[side].length<=1) return; state[side].splice(idx,1); saveState(); renderStep() }
+function upParty(side, idx, key, v){ if(state[side][idx]) state[side][idx][key]=v; saveState() }
+function setPartyKind(side, idx, kind){
+  const o = state[side][idx]; if(!o) return
+  o.kind = kind==='company' ? 'company' : 'person'
+  if(o.kind==='company'){ o.idNo='' } else { o.creditCode=''; o.legalRep='' }
+  saveState(); renderStep()
+}
+function ensureParties(){
+  if(state.type==='debt'){
+    if(!state.partiesA.length) state.partiesA.push(Object.assign(emptyParty(),{kind:'person'}))
+    if(!state.partiesB.length) state.partiesB.push(Object.assign(emptyParty(),{kind:'person'}))
+  }
+}
+
+/* 债务债权 · 甲乙方信息（多方股东签署） */
+function stepPartyDebt(){
+  ensureParties()
+  return `
+  <div class="card">
+    <h2>② 甲乙方信息</h2>
+    <div class="sub">债务债权协议 · 甲方为公司旧股东、乙方为公司新股东，各方均可有多个股东签署（每个股东可选择自然人或企业法人，自然人签字捺印、企业法人盖章）</div>
+    <div class="sec-title" style="margin-top:14px">甲方：公司旧股东
+      <button class="mini-btn" onclick="addParty('partiesA')">＋ 添加旧股东</button>
+      <span style="font-weight:400;color:#8a7a62;font-size:11.5px">共 ${state.partiesA.length} 位</span>
+    </div>
+    ${state.partiesA.map((p,i)=>partyBlockMulti('partiesA',i,'旧股东')).join('')}
+    <div class="sec-title" style="margin-top:18px">乙方：公司新股东
+      <button class="mini-btn" onclick="addParty('partiesB')">＋ 添加新股东</button>
+      <span style="font-weight:400;color:#8a7a62;font-size:11.5px">共 ${state.partiesB.length} 位</span>
+    </div>
+    ${state.partiesB.map((p,i)=>partyBlockMulti('partiesB',i,'新股东')).join('')}
+    <div class="sec-title" style="margin-top:18px">签署信息</div>
+    <div class="frow3">
+      ${field(state.meta,'contractNo','合同编号',{hint:'留空则自动生成'})}
+      ${field(state.meta,'signDate','签订日期',{type:'date'})}
+      ${field(state.meta,'signPlace','签订地点',{})}
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="gotoStep(0)">← 上一步</button>
+      <button class="btn btn-primary" ${state.partiesA.every(p=>p.name)&&state.partiesB.every(p=>p.name)?'':'disabled'} onclick="gotoStep(2)">下一步：合同要素 →</button>
+    </div>
+  </div>`
+}
+
+function stepParty(){
+  const t = TYPES[state.type]||TYPES.acquisition
+  if(state.type==='debt') return stepPartyDebt()
+  const lockA = t.aIsCompany ? 'company' : (t.aIsPerson ? 'person' : '')
+  const lockB = t.bIsCompany ? 'company' : (t.bIsPerson ? 'person' : '')
+  const hint = state.type==='intermediary'
+    ? '甲方为中介服务机构（默认金米启航），乙方为公司100%股权持有者（自然人卖家，签字捺印）。'
+    : state.scenario==='client'
+      ? '面向客户：甲方为收购方（客户），乙方为出让方。'
+      : '面向同行：甲方为我方（金米启航），乙方为出让方（同行）。'
+  return `
+  <div class="card">
+    <h2>② 甲乙方信息</h2>
+    <div class="sub">${t.label} · ${hint}未锁定的主体可在「企业法人 / 自然人」间切换，输入框标题与合同表述随之变化；点「输入默认信息」自动填入金米启航信息</div>
+    ${partyBlock('partyA', t.roleA, {lockKind:lockA})}
+    ${partyBlock('partyB', t.roleB, {lockKind:lockB, noDefault:!!lockB})}
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="gotoStep(0)">← 上一步</button>
+      <button class="btn btn-primary" ${state.partyA.name&&state.partyB.name?'':'disabled'} onclick="gotoStep(2)">下一步：合同要素 →</button>
+    </div>
+  </div>`
+}
+function setKind(pre,k){
+  const t = TYPES[state.type]
+  const lock = pre==='partyA' ? (t&&t.aIsCompany?'company':(t&&t.aIsPerson?'person':'')) : (t&&t.bIsCompany?'company':(t&&t.bIsPerson?'person':''))
+  if(lock && lock!==k) return
+  state[pre].kind = k==='person' ? 'person' : 'company'
+  saveState(); renderStep()
+}
+function fillDefault(pre){
+  const o = state[pre]
+  o.kind = 'company'
+  o.name = JINMI.name
+  o.creditCode = JINMI.creditCode
+  o.legalRep = JINMI.legalRep
+  saveState(); renderStep()
+}
+
+/* ---- 步骤 3：合同要素 ---- */
+function instRows(){
+  const arr = state.terms.installments
+  if(!arr.length){
+    return '<div class="kv empty" style="padding:8px 0">尚未设置分期，可点「默认两期」自动生成，或手动添加</div>'
+  }
+  return arr.map((x,i)=>`
+    <div class="inst-row">
+      <div class="fg"><label>第${i+1}期 · 支付节点</label><input type="text" value="${val(x.node)}" placeholder="如：本合同签订后 7 个工作日内" oninput="upInst(${i},'node',this.value)"></div>
+      <div class="fg"><label>第${i+1}期 · 金额（元）</label><input type="text" value="${val(x.amount)}" placeholder="如：250000" oninput="upInst(${i},'amount',this.value)"><div class="hint" id="instUp${i}">${priceHint(x.amount)}</div></div>
+      <button class="del" onclick="delInst(${i})" title="删除本期">✕</button>
+    </div>`).join('')
+}
+function stepTerms(){
+  if(state.type==='intermediary') return stepTermsIntermediary()
+  if(state.type==='debt') return stepTermsDebt()
+  const isFull = state.terms.payMode==='full'
+  return `
+  <div class="card">
+    <h2>③ 合同要素</h2>
+    <div class="sub">填写收购核心要素；价格单位为「元」，自动附带人民币大写。带 * 为必填项</div>
+    <div class="frow">
+      ${field(state.terms,'target','标的公司名称',{req:1,placeholder:'如：深圳市XX科技有限公司'})}
+      <div class="fg"><label>交易价格（元）<span class="req">*</span></label><input type="text" value="${val(state.terms.price)}" placeholder="如：500000" oninput="upPrice(this.value)"><div class="hint" id="priceUp">${priceHint(state.terms.price)}</div></div>
+    </div>
+    <div class="sec-title top">支付方式
+      <button class="mini-btn" ${isFull?'':'style="background:#fbf5ea;border-color:#7a3e07;color:#3a2410;font-weight:600"'} onclick="setPayMode('inst')">🔄 分期支付</button>
+      <button class="mini-btn" ${isFull?'style="background:#fbf5ea;border-color:#7a3e07;color:#3a2410;font-weight:600"':''} onclick="setPayMode('full')">💰 全款支付</button>
+      <span style="font-weight:400;color:#8a7a62;font-size:11.5px">全款：本合同签订当日支付全部款项</span>
+    </div>
+    ${isFull
+      ? '<div class="kv full-pay-tip">💡 已选择「全款支付」：合同将约定甲方于本合同签订当日一次性支付全部收购价款人民币 '+(priceHint(state.terms.price).replace('大写：','')||'——')+'</div>'
+      : `<div class="sec-title top" style="margin-top:0">分期期数
+          <button class="mini-btn" onclick="defaultInst()">⚡ 默认两期</button>
+          <button class="mini-btn" onclick="addInst()">＋ 添加一期</button>
+          <span style="font-weight:400;color:#8a7a62;font-size:11.5px">默认两期：自动生成 2 期结构，金额与节点均可修改</span>
+        </div>
+        ${instRows()}`}
+    <div class="sec-title" style="margin-top:18px">变更手续</div>
+    <div class="fg">
+      <label>出让方是否负责所有变更手续？<span class="hint" style="display:inline;margin-left:6px">选「是」后，合同正文将改为由乙方负责办理全部变更手续流程</span></label>
+      <div class="radio-row">
+        <label><input type="radio" name="changeHandling" value="yes" ${state.terms.changeHandling==='yes'?'checked':''} onchange="setVal('terms','changeHandling','yes')"> 是，乙方负责所有变更手续</label>
+        <label><input type="radio" name="changeHandling" value="no" ${state.terms.changeHandling!=='yes'?'checked':''} onchange="setVal('terms','changeHandling','no')"> 否，双方配合办理</label>
+      </div>
+    </div>
+    <div class="sec-title">签署信息</div>
+    <div class="frow3">
+      ${field(state.meta,'contractNo','合同编号',{hint:'留空则自动生成'})}
+      ${field(state.meta,'signDate','签订日期',{type:'date'})}
+      ${field(state.meta,'signPlace','签订地点',{})}
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="gotoStep(1)">← 上一步</button>
+      <button class="btn btn-primary" ${state.terms.target?'':'disabled'} onclick="gotoStep(3)">下一步：补充协议 →</button>
+    </div>
+  </div>`
+}
+/* 委托出售合同 · 合同要素（到手价 / 服务期限 / 甲方接收通知联系方式） */
+function stepTermsIntermediary(){
+  const tm = state.terms
+  const ac = tm.aContact||{}
+  const cfield = (obj,key,label,opt={})=>{
+    const v = val(obj[key])
+    const hint = opt.hint?`<div class="hint">${opt.hint}</div>`:''
+    const req = opt.req?'<span class="req">*</span>':''
+    const ph = opt.placeholder?`placeholder="${esc(opt.placeholder)}"`:''
+    return `<div class="fg"><label>${label}${req}</label><input type="text" value="${v}" ${ph} oninput="upContact('${key}',this.value)">${hint}</div>`
+  }
+  return `
+  <div class="card">
+    <h2>③ 合同要素</h2>
+    <div class="sub">填写委托出售核心要素；价格为甲方承诺乙方的「到手价格」（元），自动附带人民币大写。带 * 为必填项</div>
+    <div class="frow">
+      ${field(tm,'target','标的公司名称',{req:1,placeholder:'如：深圳市XX科技有限公司'})}
+      <div class="fg"><label>甲方承诺到手价格（元）<span class="req">*</span></label><input type="text" value="${val(tm.price)}" placeholder="如：500000" oninput="upPrice(this.value)"><div class="hint" id="priceUp">${priceHint(tm.price)}</div><div class="hint">中介服务费 = 转让价款 − 到手价格，由甲方代收转让款后直接扣除</div></div>
+    </div>
+    <div class="frow">
+      ${field(tm,'serviceDays','中介服务期限（工作日）',{req:1,placeholder:'如：30'})}
+      <div class="fg"><label>&nbsp;</label><div class="hint" style="padding-top:8px">期限届满乙方未明确解除的，服务期限自动续展30个工作日</div></div>
+    </div>
+    <div class="sec-title">甲方接收通知联系方式（写入「通知及送达」条款）</div>
+    <div class="frow3">
+      ${cfield(ac,'name','联系人',{req:1,placeholder:'如：郑伟超'})}
+      ${cfield(ac,'phone','联系电话',{req:1,placeholder:'如：15989082969'})}
+      ${cfield(ac,'email','邮箱地址',{req:1,placeholder:'如：xxx@qq.com'})}
+    </div>
+    <div class="sec-title">签署信息</div>
+    <div class="frow3">
+      ${field(state.meta,'contractNo','合同编号',{hint:'留空则自动生成'})}
+      ${field(state.meta,'signDate','签订日期',{type:'date'})}
+      ${field(state.meta,'signPlace','签订地点',{})}
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="gotoStep(1)">← 上一步</button>
+      <button class="btn btn-primary" ${tm.target&&tm.price?'':'disabled'} onclick="gotoStep(3)">下一步：补充协议 →</button>
+    </div>
+  </div>`
+}
+/* 债务债权 · 合同要素（标的公司名称 + 营业执照变更生效日期） */
+function stepTermsDebt(){
+  const tm = state.terms
+  return `
+  <div class="card">
+    <h2>③ 合同要素</h2>
+    <div class="sub">填写债权债务责任转让协议核心要素。带 * 为必填项</div>
+    <div class="sec-title top">标的公司</div>
+    <div class="frow">
+      ${field(tm,'target','标的公司名称',{req:1,placeholder:'如：深圳市XX科技有限公司'})}
+    </div>
+    <div class="sec-title">营业执照变更生效日期</div>
+    <div class="frow">
+      <div class="fg"><label>营业执照变更生效日期<span class="req">*</span></label><input type="date" value="${val(tm.changeDate)}" oninput="setVal('terms','changeDate',this.value)"><div class="hint">以该日期为界：变更日前的债权债务由甲方（旧股东）承继清偿；变更日后由乙方（新股东）负责</div></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="gotoStep(1)">← 上一步</button>
+      <button class="btn btn-primary" ${tm.target&&tm.changeDate?'':'disabled'} onclick="gotoStep(3)">下一步：补充协议 →</button>
+    </div>
+  </div>`
+}
+function upContact(k,v){
+  state.terms.aContact[k]=v
+  saveState()
+}
+function setPayMode(m){
+  state.terms.payMode = m==='full' ? 'full' : 'inst'
+  saveState(); renderStep()
+}
+function upPrice(v){
+  state.terms.price = v
+  saveState()
+  const el = document.getElementById('priceUp')
+  if(el) el.textContent = priceHint(v)
+  const tip = document.querySelector('.full-pay-tip')
+  if(tip) tip.textContent = '💡 已选择「全款支付」：合同将约定甲方于本合同签订当日一次性支付全部收购价款人民币 '+(priceHint(v).replace('大写：','')||'——')
+}
+function defaultInst(){
+  state.terms.installments = [
+    { node:'本合同签订后 7 个工作日内', amount:'' },
+    { node:'标的公司工商变更登记完成之日起 3 个工作日内', amount:'' }
+  ]
+  saveState(); renderStep()
+}
+function addInst(){ state.terms.installments.push({node:'',amount:''}); saveState(); renderStep() }
+function delInst(i){ state.terms.installments.splice(i,1); saveState(); renderStep() }
+function upInst(i,k,v){
+  state.terms.installments[i][k]=v
+  saveState()
+  if(k==='amount'){
+    const el = document.getElementById('instUp'+i)
+    if(el) el.textContent = priceHint(v)
+  }
+}
+
+/* ---- 步骤 4：补充协议 ---- */
+function stepExtra(){
+  const cfg = loadAiCfg()
+  const cfgHint = cfg.key
+    ? `当前使用大模型：${providerName(cfg.provider)}（${cfg.model || '默认模型'}）`
+    : '当前使用内置智能引擎（离线可用）；如需调用大模型，请点击右侧「⚙ 配置 AI 接口」进行本工具独立配置'
+  const items = state.extra.clauses.map((c,i)=>`
+    <div class="clause-item">
+      <button class="del" title="删除该条款" onclick="delClause(${i})">✕</button>
+      <div class="fg"><label>条款标题</label><input type="text" value="${val(c.title)}" placeholder="如：特别约定 / 排他条款 / 费用承担" oninput="upClause(${i},'title',this.value)"></div>
+      <div class="ai-desc">
+        <label>🎯 描述你想约定的内容 <span class="hint" style="display:inline;margin-left:6px">AI 将按本合同风格自动生成正式条款（也可直接手动填写下方内容）</span></label>
+        <textarea placeholder="如：想约定乙方在交割完成后 7 个工作日内配合办理过户手续，逾期每天按交易总价款的万分之五支付违约金" oninput="upClause(${i},'aiDesc',this.value)">${val(c.aiDesc)}</textarea>
+        <div class="ai-bar">
+          <button class="mini-btn" id="aiGenBtn${i}" onclick="aiGen(${i})">✨ AI 生成条款</button>
+          <button class="mini-btn" onclick="aiCheck(${i})">🔍 合规检查</button>
+        </div>
+        <div class="ai-out" id="aiOut${i}"></div>
+      </div>
+      <div class="fg" style="margin-bottom:0"><label>条款内容（AI 生成后自动填入，可继续修改）</label><textarea placeholder="输入该条款的具体内容，将原样写入合同" oninput="upClause(${i},'content',this.value)">${val(c.content)}</textarea></div>
+    </div>`).join('')
+  return `
+  <div class="card">
+    <h2>④ 补充协议（可选）</h2>
+    <div class="sub">可添加自定义补充条款，内容将作为「补充条款」章节写入合同正文末尾；支持 AI 生成与合规检查，不需要可直接跳过</div>
+    <div class="ai-settings" style="padding:10px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <span class="hint">⚙️ ${cfgHint}</span>
+        <button class="mini-btn" onclick="toggleContractAiCfg()">${cfg.key?'⚙ 修改 AI 接口':'⚙ 配置 AI 接口'}</button>
+      </div>
+      <div id="contractAiCfgBox" style="display:none;margin-top:12px;border-top:1px dashed #e0d4bd;padding-top:12px">
+        <div class="fg"><label>服务商</label><select id="cacPf" onchange="contractAiCfgOnProvider()">${aiCfgOptionsHtml(cfg.provider)}</select></div>
+        <div class="fg"><label>API Key</label><input id="cacKey" type="text" value="${val(cfg.key)}" placeholder="sk-... / ark-..."></div>
+        <div class="fg"><label>Base URL（可选）</label><input id="cacUrl" type="text" value="${val(cfg.baseUrl||'')}" placeholder="留空用服务商默认地址"></div>
+        <div class="fg"><label>模型</label><input id="cacModel" type="text" value="${val(cfg.model||'')}" placeholder="模型 ID"></div>
+        <div style="margin-top:10px"><button class="mini-btn" onclick="saveContractAiCfg()">保存配置</button></div>
+      </div>
+    </div>
+    ${items || '<div class="kv empty" style="padding:14px 0">暂无补充条款</div>'}
+    <button class="add-clause" onclick="addClause()">＋ 添加补充条款</button>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="gotoStep(2)">← 上一步</button>
+      <button class="btn btn-primary" onclick="gotoStep(4)">下一步：生成合同 →</button>
+    </div>
+  </div>`
+}
+function addClause(){ state.extra.clauses.push({title:'',content:'',aiDesc:''}); saveState(); renderStep() }
+function delClause(i){ state.extra.clauses.splice(i,1); saveState(); renderStep() }
+function upClause(i,k,v){ state.extra.clauses[i][k]=v; saveState() }
+
+/* ============================================================
+   补充协议 AI 辅助：内置智能引擎 + 可选大模型接口
+   本工具独立配置，key：contract_ai_cfg（不与其它工具共享）
+   ============================================================ */
+const AI_CFG_KEY = 'contract_ai_cfg'
+const DEFAULT_AI_KEY = '' // 团队 API Key 请在「AI 配置」面板填写，勿硬编码入库
+const AI_PROVIDERS = {
+  deepseek:{ name:'DeepSeek',        baseUrl:'https://api.deepseek.com/v1',          model:'deepseek-v4-flash',        text:true },
+  silicon: { name:'硅基流动',         baseUrl:'https://api.siliconflow.cn/v1',        model:'Qwen/Qwen2.5-7B-Instruct', text:true },
+  zhipu:   { name:'智谱 GLM',         baseUrl:'https://open.bigmodel.cn/api/paas/v4', model:'glm-4-flash',              text:true },
+  moonshot:{ name:'月之暗面 Moonshot', baseUrl:'https://api.moonshot.cn/v1',          model:'moonshot-v1-8k',           text:true },
+  qwen:    { name:'阿里云百炼(通义)', baseUrl:'https://dashscope.aliyun.com/compatible-mode/v1', model:'qwen-turbo',       text:true },
+  hunyuan: { name:'腾讯混元',         baseUrl:'https://api.hunyuan.cloud.tencent.com/v1',       model:'hunyuan-turbo-s',    text:true },
+  baidu:   { name:'百度千帆',         baseUrl:'https://qianfan.baidubce.com/v2',               model:'ernie-speed-128k',   text:true },
+  ifly:    { name:'讯飞星火',         baseUrl:'https://spark-api-open.xf-yun.com/v1',           model:'spark-lite',         text:true },
+  volcengine:{ name:'火山引擎方舟',     baseUrl:'https://ark.cn-beijing.volces.com/api/v3',    model:'doubao-seed-2-1-pro-260628', text:true },
+  custom:  { name:'自定义（OpenAI 兼容）', baseUrl:'',                                model:'',                         text:true }
+}
+const AI_REQUIRED_CAPS = { text:true }
+function loadAiCfg(){
+  try{
+    const raw = localStorage.getItem(AI_CFG_KEY) || '{}'
+    const cfg = Object.assign({ provider:'volcengine', key:DEFAULT_AI_KEY, baseUrl:'', model:'doubao-seed-2-1-pro-260628' }, JSON.parse(raw))
+    if(!cfg.key) cfg.key = DEFAULT_AI_KEY
+    /* 兼容旧 key 'tencent'，已统一为 hunyuan */
+    if(cfg.provider==='tencent' && !AI_PROVIDERS.tencent){ cfg.provider='hunyuan'; if(!cfg.model) cfg.model=AI_PROVIDERS.hunyuan.model }
+    return cfg
+  }catch(e){ return { provider:'volcengine', key:DEFAULT_AI_KEY, baseUrl:'', model:'doubao-seed-2-1-pro-260628' } }
+}
+function providerName(k){ return (AI_PROVIDERS[k]&&AI_PROVIDERS[k].name) || k || '未设置' }
+
+/* 本工具独立 AI 接口配置（内联面板） */
+function aiCfgOptionsHtml(selected){
+  return Object.keys(AI_PROVIDERS).filter(k => {
+    const p = AI_PROVIDERS[k]
+    for(const cap in AI_REQUIRED_CAPS){ if(AI_REQUIRED_CAPS[cap] && !p[cap]) return false }
+    return true
+  }).map(k=>{
+    const p = AI_PROVIDERS[k]
+    return '<option value="'+k+'" '+(selected===k?'selected':'')+'>'+p.name+'</option>'
+  }).join('')
+}
+function toggleContractAiCfg(){
+  const b = document.getElementById('contractAiCfgBox')
+  if(b) b.style.display = (b.style.display==='none' ? 'block' : 'none')
+}
+function contractAiCfgOnProvider(){
+  const k = document.getElementById('cacPf').value
+  const p = AI_PROVIDERS[k]
+  const modelEl = document.getElementById('cacModel')
+  if(p && modelEl) modelEl.value = p.model || ''
+  const urlEl = document.getElementById('cacUrl')
+  if(p && urlEl && p.baseUrl) urlEl.value = p.baseUrl
+}
+function saveContractAiCfg(){
+  const provider = document.getElementById('cacPf').value
+  const key = document.getElementById('cacKey').value.trim()
+  const baseUrl = document.getElementById('cacUrl').value.trim()
+  const model = document.getElementById('cacModel').value.trim()
+  try{ localStorage.setItem(AI_CFG_KEY, JSON.stringify({provider,key,baseUrl,model})) }catch(e){}
+  renderStep()
+  alert('AI 接口配置已保存（仅本工具生效）')
+}
+function openContractAiCfgModal(){
+  const cfg = loadAiCfg();
+  const body = document.getElementById('aiCfgModalBody');
+  const esc = function(s){ return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  body.innerHTML =
+    '<div class="ai-head"><h3>AI 接口配置（本工具独立）</h3><button class="ai-close" onclick="closeAiCfgModal()" aria-label="关闭">✕</button></div>'+
+    '<div class="ai-section"><div class="ai-section-title">连接信息</div>'+
+    '<div class="fg"><label>服务商 <span style="font-size:11px;color:#8a7a62;font-weight:400">仅列出支持文本生成的平台</span></label><select id="macPf" onchange="macOnProvider()">'+aiCfgOptionsHtml(cfg.provider)+'</select></div>'+
+    '<div class="fg"><label>API Key</label><input id="macKey" type="text" value="'+esc(cfg.key)+'" placeholder="sk-... / ark-..."></div>'+
+    '<div class="fg"><label>Base URL <span style="font-size:11px;color:#8a7a62;font-weight:400">OpenAI 兼容接口地址，留空使用服务商默认地址</span></label><input id="macUrl" type="text" value="'+esc(cfg.baseUrl)+'" placeholder="https://ark.cn-beijing.volces.com/api/v3"></div></div>'+
+    '<div class="ai-section"><div class="ai-section-title">模型设置</div>'+
+    '<div class="fg"><label>文本大模型 <span style="font-size:11px;color:#8a7a62;font-weight:400">生成/检查合同条款</span></label><input id="macModel" type="text" value="'+esc(cfg.model)+'" placeholder="模型 ID"></div></div>'+
+    '<div class="hint" style="margin:0 0 14px">配置仅本工具生效，不影响其他工具；留空则使用内置智能引擎。</div>'+
+    '<div class="ai-actions"><button class="btn btn-ghost" onclick="closeAiCfgModal()">取消</button><button class="btn btn-primary" onclick="saveContractAiCfgModal()">保存配置</button></div>';
+  document.getElementById('aiCfgModal').style.display='block';
+  document.getElementById('aiCfgModalBg').style.display='block';
+}
+function macOnProvider(){
+  const k = document.getElementById('macPf').value;
+  const p = AI_PROVIDERS[k];
+  const m = document.getElementById('macModel');
+  if(p && m) m.value = p.model || '';
+  const u = document.getElementById('macUrl');
+  if(p && u && p.baseUrl) u.value = p.baseUrl;
+}
+function saveContractAiCfgModal(){
+  const provider = document.getElementById('macPf').value;
+  const key = document.getElementById('macKey').value.trim();
+  const baseUrl = document.getElementById('macUrl').value.trim();
+  const model = document.getElementById('macModel').value.trim();
+  try{ localStorage.setItem(AI_CFG_KEY, JSON.stringify({provider:provider,key:key,baseUrl:baseUrl,model:model})) }catch(e){}
+  closeAiCfgModal();
+  renderStep();
+  alert('AI 接口配置已保存（仅本工具生效）');
+}
+function closeAiCfgModal(){
+  document.getElementById('aiCfgModal').style.display='none';
+  document.getElementById('aiCfgModalBg').style.display='none';
+}
+
+/* 监听本工具独立配置变更（同域 localStorage 事件） */
+window.addEventListener('storage', e=>{
+  if(e.key === AI_CFG_KEY) renderStep()
+})
+
+/* 内置智能引擎：按意图生成条款（按业务具体性排序，避免"支付违约金"误判为付款条款） */
+function aiGenLocal(desc){
+  const t = String(desc||'').replace(/\s+/g,'')
+  const has = (...ks)=>ks.some(k=>t.includes(k))
+  let title='补充约定', content=''
+  if(has('交割','过户','变更','登记','移交','交接','转让')){
+    title='交割与变更登记'
+    content='乙方应于本补充条款生效之日起10个工作日内，配合甲方及标的公司完成交割与相关变更登记手续，包括但不限于股东名册变更、工商变更登记、税务登记变更、银行账户信息变更及资质证照、印章的交接。因乙方原因未按期完成的，每逾期一日按交易总价款的万分之五向甲方支付违约金。'
+  }else if(has('保密','机密','不得泄露','商业秘密')){
+    title='保密义务'
+    content='双方对本补充条款内容及在合同履行过程中知悉的对方商业秘密、标的公司经营信息负有保密义务，未经对方书面同意不得向任何第三方披露（依法律法规或有权机关要求披露的除外）。本条款在合同终止或解除后持续有效，保密期限为合同终止后三年。'
+  }else if(has('违约','逾期','赔偿','违约金','损失')){
+    title='违约责任'
+    content='任何一方违反本补充条款约定的，应承担违约责任并赔偿对方因此遭受的直接经济损失。违约方逾期履行义务的，每逾期一日按未履行部分金额的万分之五向守约方支付违约金；逾期超过15个工作日的，守约方有权解除合同并要求违约方赔偿损失。'
+  }else if(has('付款','支付','价款','定金','尾款','转账','打款','到账')){
+    title='付款安排'
+    content='双方确认，本补充条款项下款项均以银行转账方式支付至收款方书面指定的银行账户。付款方应确保款项在约定的付款期限内足额到账；因付款方原因导致款项迟延到账的，按本合同违约责任条款执行。'
+  }else if(has('税费','发票','税')){
+    title='税费与发票'
+    content='因本补充条款项下交易所产生的税费，由双方按照法律法规的规定各自承担。收款方应在收到相应款项后向付款方开具合法有效的发票。'
+  }else if(has('争议','诉讼','仲裁','管辖','纠纷')){
+    title='争议解决'
+    content='因本补充条款引起的或与本补充条款有关的任何争议，双方应友好协商解决；协商不成的，任何一方均有权向合同签订地有管辖权的人民法院提起诉讼。'
+  }else if(has('期限','工作日','日内','天内','时间','截止')){
+    title='履行期限'
+    content='本补充条款项下各项义务的履行期限，均以本合同签订日期为起算日；期限届满日为法定节假日的，顺延至其后第一个工作日。'
+  }else if(has('生效','效力')){
+    title='生效与效力'
+    content='本补充条款自甲乙双方签字（盖章）之日起生效，与主合同具有同等法律效力。本补充条款与主合同约定不一致的，以本补充条款为准。'
+  }else if(has('通知','送达','联系方式')){
+    title='通知与送达'
+    content='双方确认以本合同载明的联系方式为有效送达方式，任何一方联系方式变更的，应提前书面通知对方。通知以专人送达、邮寄或电子邮件方式发出，专人送达的以签收之日视为送达，邮寄的以交邮后第三日视为送达。'
+  }else{
+    title='补充约定'
+    content='经甲乙双方协商一致，就本补充条款事项达成如下约定：双方应本着诚实信用原则全面履行本补充条款项下义务。本补充条款未尽事宜，由双方另行协商解决；协商不成的，按主合同争议解决条款处理。'
+  }
+  return { title, content }
+}
+/* 内置智能引擎：条款标题建议 */
+function aiSuggestTitle(desc){
+  return aiGenLocal(desc).title
+}
+/* 内置合规检查：风险模式库 */
+function aiCheckLocal(text){
+  const s = String(text||'').trim()
+  if(!s) return [{ level:'warn', msg:'条款内容为空，请先填写或生成内容后再检查。' }]
+  const issues=[]
+  const rules=[
+    { re:/不承担(任何)?责任|概不负责|一律不赔|免除.{0,6}责任|无需承担/gi, msg:'「不承担任何责任 / 概不负责」类表述可能构成《民法典》第497条规定的格式条款无效情形，建议改为限定性表述，如"因不可抗力等法定事由导致损失的，依法减免责任"。' },
+    { re:/口头|口头约定|口头承诺/gi, msg:'口头约定难以举证，建议全部以书面形式明确并签字确认。' },
+    { re:/放弃.{0,8}(诉权|起诉|诉讼|仲裁)|不得(起诉|诉讼|仲裁)|禁止维权/gi, msg:'约定放弃起诉/仲裁等救济权利违反法律规定，相关条款无效，建议删除。' },
+    { re:/无需(纳税|缴税|交税|缴纳)|不缴(税|费)|不承担税费|税费.{0,6}乙方?(全部|一律)/gi, msg:'纳税义务由法律法规强制规定，约定"无需缴税/税费一律由某方承担"可能无效并带来税务风险，建议改为"税费由双方依法各自承担，法律法规无明确规定的由双方协商"。' },
+    { re:/仲裁/gi, msg:'若约定仲裁解决争议，必须写明具体的仲裁机构全称（如"提交深圳国际仲裁院仲裁"），未写明仲裁机构的仲裁协议可能被认定无效。' },
+    { re:/管辖/gi, msg:'争议解决条款须明确约定管辖法院或仲裁机构（如"由合同签订地有管辖权的人民法院管辖"），避免约定不明导致条款无效。' },
+    { re:/立即|随时|尽快|及时/gi, msg:'"立即 / 随时 / 尽快"等表述不够明确，容易引发履约争议，建议改为具体期限（如"X 个工作日内"）。' },
+    { re:/永久|无条件|无限期|一律/gi, msg:'"永久 / 无条件 / 无限期"等绝对化表述可能显失公平，建议限定适用范围或期限。' },
+    { re:/自动(续约|延期|展期)/gi, msg:'"自动续约 / 自动延期"条款建议明确续约条件与通知期，避免未经确认自动延长合同关系。' },
+    { re:/代扣|直接抵扣|自行扣除/gi, msg:'涉及款项直接抵扣的约定，建议写明抵扣依据、金额与通知义务，避免争议。' },
+    { re:/个人|私人账户|私账/gi, msg:'约定向个人账户付款存在税务与合规风险，建议明确收款账户主体并与合同主体一致。' },
+    { re:/第三方(应|须|承担|负责|支付|保证)/gi, msg:'涉及第三方义务的约定，建议确保第三方知情或另行取得其书面同意。' }
+  ]
+  rules.forEach(r=>{ if(r.re.test(s)) issues.push({ level:'warn', msg:r.msg }) })
+  if(!/甲方|乙方|丙方|双方|一方|本公司|我方|对方/.test(s)) issues.push({ level:'warn', msg:'条款中未明确权利义务主体（甲方 / 乙方），建议明确约定由哪一方履行义务、享有权利。' })
+  if(/(每(日|天)|每日|逾期.{0,10}).{0,20}(万分之|百分之|千分之)\d*/.test(s)) issues.push({ level:'tip', msg:'违约金约定过高的，对方可依据《民法典》第585条请求人民法院或仲裁机构适当减少；建议约定在合理区间（如日万分之五以内）。' })
+  if(/高于|超过|大于/.test(s) && /市场价|评估价|评估值/.test(s)) issues.push({ level:'tip', msg:'涉及价格比较的约定，建议明确参考基准与确定方式，避免"高于市场价"等表述难以认定。' })
+  if(!issues.some(x=>x.level==='warn')) issues.push({ level:'ok', msg: issues.length ? '未发现明显合规风险。以上提示为优化建议（非风险阻断），建议仍由专业律师结合具体交易背景最终审定。' : '未发现明显合规风险。建议仍由专业律师结合具体交易背景最终审定。' })
+  return issues
+}
+/* 大模型接口调用（OpenAI 兼容） */
+async function aiCallLLM(messages){
+  const cfg = loadAiCfg()
+  if(!cfg.key || !cfg.model) return null
+  const base = cfg.baseUrl || (AI_PROVIDERS[cfg.provider] && AI_PROVIDERS[cfg.provider].baseUrl) || ''
+  const url = base.replace(/\/+$/,'') + '/chat/completions'
+  const res = await fetch(url, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+cfg.key },
+    body: JSON.stringify({ model: cfg.model, messages, temperature:0.3, max_tokens:1200 })
+  })
+  if(!res.ok) throw new Error('AI 接口错误：HTTP '+res.status)
+  const data = await res.json()
+  return (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || ''
+}
+let aiBusy = false
+async function aiGen(i){
+  const item = state.extra.clauses[i]
+  const desc = String(item.aiDesc||'').trim()
+  if(!desc){ alert('请先在「描述你想约定的内容」中输入需求'); return }
+  if(aiBusy) return
+  aiBusy = true
+  const btn = document.getElementById('aiGenBtn'+i)
+  const out = document.getElementById('aiOut'+i)
+  if(btn){ btn.disabled=true; btn.textContent='生成中…' }
+  if(out) out.innerHTML = '<div class="ai-loading">⏳ 正在生成条款…</div>'
+  try{
+    const cfg = loadAiCfg()
+    let content = ''
+    let usedLLM = false
+    if(cfg.key){
+      try{
+        content = await aiCallLLM([
+          { role:'system', content:'你是资深企业并购法律顾问。请根据用户描述，为一份《收购公司合同》生成一条补充条款。合同角色：甲方=收购方，乙方=出让方，标的=标的公司。要求：1) 语气严谨正式，符合中国法律文书风格；2) 使用"甲方""乙方""标的公司"等称谓；3) 包含具体期限、金额（元）、违约后果等可执行要素；4) 输出纯条款正文，不要标题、不要解释、不要Markdown符号，控制在200字以内。' },
+          { role:'user', content:desc }
+        ])
+        usedLLM = !!content
+      }catch(e){ console.warn('LLM 生成失败，回退内置引擎', e) }
+    }
+    if(!content){
+      const r = aiGenLocal(desc)
+      content = r.content
+      if(!item.title) item.title = r.title
+    }
+    if(!item.title) item.title = aiSuggestTitle(desc)
+    item.content = content.replace(/\n+/g,'').trim()
+    saveState(); renderStep()
+    const out2 = document.getElementById('aiOut'+i)
+    if(out2) out2.innerHTML = '<div class="ai-ok">✅ 条款已生成'+(usedLLM?'（大模型）':'（内置智能引擎）')+'并填入下方内容框，可继续修改。'+(cfg.key?'':' 未配置大模型接口，可点击「⚙ 配置 AI 接口」进行本工具独立配置以获得更优效果。')+'</div>'
+  }finally{
+    aiBusy = false
+  }
+}
+async function aiCheck(i){
+  const item = state.extra.clauses[i]
+  const text = String(item.content||'').trim()
+  if(!text){ alert('请先生成或填写条款内容，再执行合规检查'); return }
+  const out = document.getElementById('aiOut'+i)
+  if(out) out.innerHTML = '<div class="ai-loading">⏳ 正在审查条款合规性…</div>'
+  let issues = aiCheckLocal(text)
+  const cfg = loadAiCfg()
+  if(cfg.key){
+    try{
+      const r = await aiCallLLM([
+        { role:'system', content:'你是资深企业并购法律顾问。请审查下面这条合同补充条款是否存在法律风险、无效情形或与现行法律法规冲突之处。输出格式：每行一条，以"【问题】…"或"【建议】…"开头，最多5条；若未发现问题，仅输出"【无】未发现明显合规风险"。' },
+        { role:'user', content:text }
+      ])
+      if(r && r.trim()){
+        issues = r.split('\n').filter(x=>x.trim()).map(x=>({ level: x.includes('【无】')?'ok':'warn', msg:x.trim() }))
+      }
+    }catch(e){ console.warn('LLM 审查失败，使用内置规则', e) }
+  }
+  if(out){
+    out.innerHTML = '<div class="ai-ok" style="margin-bottom:6px">🔍 合规检查完成：</div>' +
+      issues.map(x=>`<div class="ai-issue ${x.level}">${x.level==='ok'?'✅':'⚠️'} ${x.msg}</div>`).join('')
+  }
+}
+
+/* ---- 步骤 5：生成 ---- */
+function stepGen(){
+  const t = TYPES[state.type]
+  const kv = (k,v)=>`<div class="kv"><span class="k">${k}</span><span class="v">${v?esc(v):'<span class="empty">未填写（合同中留空位）</span>'}</span></div>`
+  const clauses = state.extra.clauses.filter(c=>c.title||c.content)
+  const pInfo = (p)=> p.kind==='person'
+    ? kv('身份证号', p.idNo)+kv('住址', p.address)
+    : kv('信用代码', p.creditCode)+kv('法定代表人', p.legalRep)+kv('地址', p.address)
+  const priceUpTxt = priceHint(state.terms.price).startsWith('大写') ? priceHint(state.terms.price).replace('大写：','') : ''
+  const roleA = t ? t.roleA : '甲方（收购方）', roleB = t ? t.roleB : '乙方（出让方）'
+  /* 甲乙方信息展示（debt 类型支持多方股东） */
+  const partyKv = (p, prefix) => (p.kind==='company'
+    ? kv(prefix+'主体类型', '企业法人') + kv(prefix+'公司名称', p.name) + kv(prefix+'信用代码', p.creditCode) + kv(prefix+'法定代表人', p.legalRep) + kv(prefix+'联系电话', p.phone) + kv(prefix+'地址', p.address)
+    : kv(prefix+'主体类型', '自然人') + kv(prefix+'姓名', p.name) + kv(prefix+'身份证号', p.idNo) + kv(prefix+'联系电话', p.phone) + kv(prefix+'联系地址', p.address))
+  const partyAHtml = state.type==='debt'
+    ? state.partiesA.map((p,i)=>partyKv(p, '旧股东'+(i+1)+' ')).join('')
+    : kv('主体类型', state.partyA.kind==='person'?'自然人':'企业法人')+kv('名称/姓名', state.partyA.name)+pInfo(state.partyA)
+  const partyBHtml = state.type==='debt'
+    ? state.partiesB.map((p,i)=>partyKv(p, '新股东'+(i+1)+' ')).join('')
+    : kv('主体类型', state.partyB.kind==='person'?'自然人':'企业法人')+kv('名称/姓名', state.partyB.name)+pInfo(state.partyB)
+  let elemKv
+  if(state.type==='intermediary'){
+    const ac = state.terms.aContact||{}
+    elemKv = kv('标的公司名称', state.terms.target)
+      + kv('甲方承诺到手价格（元）', state.terms.price + (priceUpTxt?('（'+priceUpTxt+'）'):''))
+      + kv('中介服务期限（工作日）', state.terms.serviceDays)
+      + kv('通知联系人', ac.name) + kv('通知电话', ac.phone) + kv('通知邮箱', ac.email)
+  } else if(state.type==='debt'){
+    elemKv = kv('标的公司名称', state.terms.target)
+      + kv('营业执照变更生效日期', state.terms.changeDate)
+      + kv('旧股东人数', String(state.partiesA.length||0))
+      + kv('新股东人数', String(state.partiesB.length||0))
+  } else {
+    const instTxt = state.terms.payMode==='full'
+      ? '全款支付：本合同签订当日支付全部价款'
+      : (state.terms.installments.filter(x=>x.node||x.amount)
+          .map((x,i)=>'第'+(i+1)+'期：'+x.node+' / '+(x.amount||'—')+'元').join('；') || '未设置分期')
+    elemKv = kv('标的公司名称', state.terms.target)
+      + kv('交易价格（元）', state.terms.price + (priceUpTxt?('（'+priceUpTxt+'）'):''))
+      + kv('支付方式', instTxt)
+      + kv('变更手续', state.terms.changeHandling==='yes'?'是，乙方负责所有变更手续':'否，双方配合办理')
+  }
+  return `
+  <div class="card">
+    <h2>⑤ 确认并生成</h2>
+    <div class="sub">请核对以下信息，确认无误后点击生成</div>
+    <div class="review-box">
+      <h3>合同类型</h3>
+      ${kv('类型', t ? t.label + (state.type==='acquisition' ? '（'+(state.scenario==='client'?'面向客户':'面向同行渠道')+'）' : '') : '')}
+      <h3>${roleA}</h3>
+      ${partyAHtml}
+      <h3>${roleB}</h3>
+      ${partyBHtml}
+      <h3>合同要素</h3>
+      ${elemKv}
+      ${kv('合同编号', state.meta.contractNo)}${kv('签订日期', state.meta.signDate)}${kv('签订地点', state.meta.signPlace)}
+      <h3>补充条款</h3>
+      ${clauses.length ? clauses.map(c=>`<div class="kv"><span class="k">${esc(c.title||'补充条款')}</span><span class="v">${esc(c.content||'（未填内容）')}</span></div>`).join('') : '<div class="kv"><span class="k">补充条款</span><span class="v empty">无</span></div>'}
+    </div>
+    <div class="gen-area">
+      <button class="gen-btn" id="genBtn" onclick="doGenerate()">生成合同（Word）</button>
+      <div class="ok-tip" id="okTip">✅ 合同已生成并开始下载，请查收下载文件</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="gotoStep(3)">← 返回修改</button>
+      <button class="btn btn-ghost" onclick="if(confirm('清空全部已填信息重新开始？')){state=emptyState();saveState();renderNav();renderStep()}">清空重填</button>
+    </div>
+  </div>`
+}
+
+/* ============================================================
+   合同正文模板（收购公司合同 · 通用标准版，待用户提供实际版本后替换）
+   ============================================================ */
+function blank(v){ const s=String(v||'').trim(); return s ? s : '＿＿＿＿＿＿＿＿' }
+
+/* 金额转人民币大写（100 → 壹佰元整；1234.56 → 壹仟贰佰叁拾肆元伍角陆分） */
+const CN_D = ['零','壹','贰','叁','肆','伍','陆','柒','捌','玖']
+function rmbUpper(n){
+  n = Math.round((Number(n)||0)*100)/100
+  if(!(n>0)) return '零元整'
+  const intPart = Math.floor(n)
+  const dec = Math.round((n-intPart)*100)
+  function four(x){
+    if(x===0) return ''
+    let s='', added=false
+    const q=Math.floor(x/1000), b=Math.floor(x%1000/100), t=Math.floor(x%100/10), o=x%10
+    if(q){ s+=CN_D[q]+'仟' }
+    if(b){ s+=CN_D[b]+'佰' }
+    else if(!added && q && (t||o)){ s+='零'; added=true }
+    if(t){ s+=CN_D[t]+'拾' }
+    else if(!added && (q||b) && o){ s+='零'; added=true }
+    if(o){ s+=CN_D[o] }
+    return s
+  }
+  function intCn(x){
+    if(x===0) return ''
+    const groups=[]
+    while(x>0){ groups.push(x%10000); x=Math.floor(x/10000) }
+    let s='', needZero=false
+    for(let i=groups.length-1;i>=0;i--){
+      const g=groups[i]
+      if(g===0){ needZero=true; continue }
+      if(s && (needZero || g<1000)) s+='零'
+      needZero=false
+      s+=four(g)+['','万','亿','万亿'][i]
+    }
+    return s
+  }
+  let s = intCn(intPart)
+  if(!s) s='零'
+  s+='元'
+  const jiao=Math.floor(dec/10), fen=dec%10
+  if(jiao===0 && fen===0) s+='整'
+  else if(jiao===0) s+='零'+CN_D[fen]+'分'
+  else if(fen===0) s+=CN_D[jiao]+'角整'
+  else s+=CN_D[jiao]+'角'+CN_D[fen]+'分'
+  return s
+}
+/* 表单金额预览文案：有效金额返回大写，否则提示 */
+function priceHint(v){
+  const t=String(v||'').trim()
+  if(!t) return '单位：元 · 输入后自动显示大写'
+  const n=Number(t)
+  if(t==='' || isNaN(n) || n<0) return '⚠ 请输入有效金额（元）'
+  return '大写：'+rmbUpper(n)
+}
+function cnDate(s){
+  if(!s) return '＿＿＿＿年＿＿月＿＿日'
+  const [y,m,d]=s.split('-'); return `${y}年${m}月${d}日`
+}
+
+/* 甲乙方信息行（按主体类型输出不同） */
+function partyInfoPara(p){
+  if(!p) return ''
+  if(p.kind==='person'){
+    return [
+      `身份证号：${blank(p.idNo)}`,
+      `住址：${blank(p.address)}`,
+      `联系电话：${blank(p.phone)}`
+    ].join('；')
+  }
+  return [
+    `统一社会信用代码：${blank(p.creditCode)}`,
+    `法定代表人：${blank(p.legalRep)}`,
+    `地址：${blank(p.address)}`,
+    `联系电话：${blank(p.phone)}`
+  ].join('；')
+}
+function partyHead(role,p){
+  return `${role}（${p&&p.kind==='person'?'自然人':'企业法人'}）：${(p&&p.name)||'＿＿＿＿＿＿＿＿'}`
+}
+
+function contractBody(){
+  const A = state.partyA, B = state.partyB, tm = state.terms
+  const tName = tm.target || '＿＿＿＿＿＿＿＿'
+
+  /* ===== 委托出售合同（股权确认出售服务协议）===== */
+  if(state.type==='intermediary'){
+    const days = String(tm.serviceDays||'').trim() || '30'
+    const ac = tm.aContact||{}
+    return [
+      {num:1, t:'协议说明', body:[
+        '本协议签订之前，各方当事人确认已经仔细阅读本协议全部条款，并经过充分协商，不存在对协议条款及用词理解的不一致。',
+        '本协议为格式协议文本。为体现协议双方当事人的自愿原则，本协议文本中相关条款后留有空白行，双方当事人可就协议未尽事宜自行约定或补充约定。',
+        '对协议文本中需选择的内容、空格部位的填写及其他需要添加或删除的内容，各方当事人应当协商一致确定。',
+        '在协议签订前，各方当事人应当提供订立本协议所需的相关资料及证明文件。',
+        '本协议生效后，各方当事人因对协议条款及用词不一致等发生纠纷时，应当通过协商解决。协商不能达成一致的，按照协议约定的争议解决途径向人民法院提起诉讼或向仲裁机构申请仲裁。'
+      ]},
+      {num:2, t:'协议双方', body:[
+        '2.1 甲方为在中华人民共和国境内合法登记设立并持续经营的公司法人，可提供公司转让交易的中介服务。',
+        `2.2 乙方为${tName}（以下简称"公司"）100%股权的持有者，有处置公司100%股权的权利。`
+      ]},
+      {num:3, t:'出让事项', body:[
+        '3.1 乙方确认自愿以出让公司100%股权的形式转让公司的所有权，本协议项下公司出让（售）均指公司100%股权出让。',
+        `3.2 本次公司出让甲方承诺乙方的到手价格为：人民币 ${blank(tm.price)} 元（大写：${rmbUpper(tm.price)}）。甲方保证乙方的到手价款不低于该价格。`,
+        '3.3 乙方确认本协议签订后，甲方为乙方此次公司出让的唯一中介方，乙方不得自行或通过其他第三方出售本协议项下公司。'
+      ]},
+      {num:4, t:'中介服务内容', body:[
+        '4.1 甲方接受乙方的股权出售意向委托，并作为本协议项下公司出让的中介方为乙方寻找合适的购买方，在平台上为乙方提供公司信息发布展示、撮合交易、客服支持、交易资金安全保障等互联网信息技术服务。',
+        '4.2 甲方向乙方准确传达购买方的真实意思表示。',
+        '4.3 甲方按乙方的指示向购买方提交所有要约，协助乙方与购买方订立股权转让合同。',
+        '4.4 甲方基于乙方的授权为其提供公司售卖信息的推广及配套的客服支持。',
+        '4.5 甲方应就公司交付及股权变更手续办理、应缴纳的费用等为乙方提供咨询服务。',
+        '4.6 甲方为乙方此次公司转让的唯一中介服务方，乙方不得自行或通过其他中介服务方发布该公司的出让信息。'
+      ]},
+      {num:5, t:'中介服务期限', body:[
+        `本协议约定的中介服务期限为${days}个工作日，服务期限届满后，乙方未明确表示协议解除的，服务期限自动续展30个工作日。若在本协议期限内，甲方已经促成乙方与购买方就公司转让事宜达成合意，但服务期限已经届满的，则本协议期限自动延长至股权转让合同签订之日。`
+      ]},
+      {num:6, t:'中介服务费用', body:[
+        '6.1 乙方确认，因甲方提供中介服务，乙方应向甲方支付中介服务费用，费用为甲方开展相关工作促成乙方转让该公司后转让价款与到手价款的差额部分。该部分费用由甲方从代乙方收取受让人支付的转让总价款中直接进行扣除。',
+        '6.2 在本协议签订后，乙方不能私下交易或通过其他中介方进行出让。如果乙方私下交易或通过其他中介方出让的，乙方仍应向甲方支付本次中介服务费用。'
+      ]},
+      {num:7, t:'甲方的权利义务', body:[
+        '7.1 甲方应帮助乙方拟出售公司及相应信息。',
+        '7.2 甲方应积极为乙方寻找公司购买方，并促成交易。',
+        '7.3 甲方应真实、全面地传达交易双方的要约、承诺信息，并在服务中为乙方争取最大权益。',
+        '7.4 甲方应积极协助乙方与购买方订立股权转让合同，促成交易事项达成。',
+        '7.5 甲方应在股权转让合同签订后，就公司交付及股权变更手续办理、应缴纳的费用等为乙方提供咨询服务。',
+        '7.6 甲方保证通过多种渠道为乙方寻找购买方并不定期向乙方告知进展情况，积极为公司出让提供机会。',
+        '7.7 甲方保证乙方公司出让价款不低于本协议约定的出让价款，但经乙方同意的除外。',
+        '7.8 甲方有权要求乙方提供拟出售股权、公司的相关信息及资料。',
+        '7.9 在本协议约定的期限内，如公司出现破产、吊销、解散等可能导致主体资格消灭或被工商行政管理局列入企业经营异常名录的情形时，甲方有权单方解除本协议。',
+        '7.10 甲方有权要求乙方支付本协议项下的中介服务费用。'
+      ]},
+      {num:8, t:'乙方的权利义务', body:[
+        '8.1 乙方非为公司100%股权的持有者时，乙方保证其为公司的实际控制人，可以在股权转让合同签订后配合办理完成股权转让的工商变更登记并进行公司交接。',
+        '8.2 乙方保证其具备订立和履行本协议的权利义务能力和行为能力。本协议的签订、履行不会侵犯任何第三人的合法权益。',
+        '8.3 在本协议约定的服务期限内，乙方承诺此次公司出让中涉及的股权没有设定质押、查封，无权属纠纷，未涉及诉讼。',
+        '8.4 乙方保证其提供的关于本次公司出让的所有资料真实合法有效，所做的陈述全部属实。',
+        '8.5 乙方保证在服务期限内公司经营状况正常。',
+        '8.6 在本协议约定的服务期限内，乙方不得私下与甲方中介介绍的购买方进行公司转让交易。如乙方私下与甲方中介介绍的购买方进行公司转让交易的，视为甲方的中介服务完成，乙方仍应向甲方支付中介服务费用。',
+        '8.7 乙方不得在未经甲方同意的情况下单方提高出让价格。',
+        '8.8 乙方有权要求甲方在出让价款不符合本协议要求或非因乙方原因导致的转让交易不能达成时，继续为其寻找购买方。'
+      ]},
+      {num:9, t:'违约责任', body:[
+        '9.1 甲乙双方应按照本协议的约定积极履行义务，任何一方对本协议任一条款的违反均视为违约，违约方应当向守约方承担违约责任。若因违约方的违约行为给守约方造成损失的，违约方还应承担损害赔偿责任。',
+        '9.2 若在委托期限内，乙方单方面提前终止或解除本协议的，则视为乙方构成根本违约，乙方需赔付因本次终止协议导致的直接经济损失。',
+        '9.3 本协议委托期限届满或协议解除后一年内，乙方无论通过何种途径直接或间接与经甲方介绍过的受让方进行公司转让的，视为甲方中介成功，乙方仍应向甲方支付中介服务费，并按照公司转让价款的30%向甲方支付违约金。',
+        '9.4 甲方未按照本协议第七条的相关约定为乙方提供中介服务的，乙方有权解除协议并要求甲方按照中介服务费用的30%向乙方支付违约金。',
+        '9.5 乙方未按照本协议第八条的相关约定履行义务导致公司交易事项不能完成，致使甲方无法收取买卖双方中介服务费用的，乙方应向甲方赔偿中介服务费用的损失。'
+      ]},
+      {num:10, t:'协议解除与终止', body:[
+        '10.1 协议期限届满后，本协议自动终止。',
+        '10.2 甲方可根据本协议相关条款的约定，单方解除本协议。',
+        '10.3 本协议项下约定的事项已全部办理完毕后，协议自动终止。',
+        '10.4 在协议有效期内，甲、乙双方均可提出解除协议的请求，经双方协商达成一致并签订书面协议后，本协议解除。'
+      ]},
+      {noNum:true, t:'补充约定', body:[
+        '乙方确认并承诺：',
+        '1、公司无负有债务，包括贷款、欠款及合同未支付款项等；',
+        '2、公司无涉及诉讼，包括审结的和在诉的；',
+        '3、公司无存在欠缴税款以及其他未缴罚款。'
+      ]},
+      {num:12, t:'争议解决', body:[
+        '本协议履行过程中发生争议的，双方应当友好协商解决。协商达成一致的，双方应当就协商事宜另行订立书面补充协议。协商不能达成一致的，任意一方可向协议签订地所在地人民法院提起诉讼。'
+      ]},
+      {num:13, t:'通知及送达', body:[
+        '在本协议期限内甲乙双方应及时将与履行本协议有关的信息及资料通知送达到对方。双方接收通知的联系人及联系方式发生变更时，应及时通知对方。如联系方式变更方未及时将变更后的联系方式通知对方，导致未能接收到对方送达的关于公司转让的相关通知而给联系方式变更方造成不利后果的，由联系方式变更方自行承担。',
+        `甲方接收通知的联系方式为：联系人：${blank(ac.name)}；联系电话：${blank(ac.phone)}；邮箱地址：${blank(ac.email)}。`,
+        '乙方接收通知的联系方式为本协议签署人的手机号码。'
+      ]},
+      {num:14, t:'其他', body:[
+        '14.1 本协议自双方签字盖章后生效。',
+        '14.2 本协议一式两份，甲乙双方各执一份，每份具有同等法律效力。',
+        '14.3 本协议的组成部分包括双方另行达成的补充协议、甲方需提供的资料。',
+        '14.4 在协议有效期内，甲、乙双方均可提出解除协议的请求，经双方协商达成一致并签订书面协议后，本协议解除。'
+      ]}
+    ]
+  }
+
+  /* ===== 债务债权协议（股权转让所涉债权债务责任转让协议）===== */
+  if(state.type==='debt'){
+    const changeDateTxt = tm.changeDate ? cnDate(tm.changeDate) : '＿＿＿＿年＿＿月＿＿日'
+    const totalParties = (state.partiesA.length||0) + (state.partiesB.length||0)
+    const copyCount = totalParties > 2 ? totalParties : 2
+    const cnCopy = ['一','二','三','四','五','六','七','八','九','十'][copyCount-1] || String(copyCount)
+    return [
+      {num:1, t:'债权债务责任分割', body:[
+        `经协商，${tName}（以下简称"公司"）原股东的全部出资均已转让给现任新股东，股东转让出资后，原股东不再享受股东权利，也不再承担股东义务。现就公司在股权转让之前经营过程中已经产生或可能产生的债权债务、经营风险等事项，双方特别约定及声明如下：`,
+        `以营业执照变更生效之日（${changeDateTxt}）为界，该日期之前所发生的公司转让之前遗留的以公司或公司股东名义对外负债、提供担保、发生侵权及各类应纳而未缴职工社保问题均与乙方无关，均由甲方承继并负责清偿；甲方未及时清偿的，由甲方承担相应法律和经济责任；如果不得已由转让后的公司先代为清偿或承担责任的，则乙方及转让后的公司有权要求甲方清偿并承担违约责任。`,
+        `公司营业执照变更生效之日（${changeDateTxt}）之后所新产生的债权债务、提供担保、发生侵权、劳务纠纷、对外负债、偷税漏税及各类因缴纳而未缴清的税费均与甲方无关，一切责任均由乙方负责。`
+      ]},
+      {num:2, t:'出资实缴责任', body:[
+        `公司转让后，甲方不再对出资实缴负责，一切出资实缴责任由乙方负责。`
+      ]},
+      {num:3, t:'声明与保证', body:[
+        `甲方（旧股东）在本次股权转让中声明：截止本协议订立及执照变更前，公司不存在对外未结清债权债务。甲方对此声明承担法律责任及后果。`
+      ]},
+      {num:4, t:'协议份数', body:[
+        `本声明一式${cnCopy}份，由甲乙双方各持一份，作为甲乙双方认定责任的法律凭证。`
+      ]},
+      {num:5, t:'协议生效', body:[
+        `本协议经甲乙双方签署后与双方所签署的股权转让协议同时生效。`
+      ]}
+    ]
+  }
+
+  /* ===== 收购公司合同 ===== */
+  const isFull = tm.payMode==='full'
+  const inst = (tm.installments||[]).filter(x=>String(x.node||'').trim()||String(x.amount||'').trim())
+  const instParas = isFull
+    ? [`本合同签订当日，甲方向乙方一次性支付全部收购价款，即人民币 ${blank(tm.price)} 元（大写：${rmbUpper(tm.price)}）。`]
+    : inst.map((x,i)=>`第${i+1}期：于「${blank(x.node)}」前，甲方向乙方支付人民币 ${blank(x.amount)} 元（大写：${rmbUpper(x.amount)}）${i===inst.length-1?'（尾款）':''}。`)
+  const bResponsible = tm.changeHandling==='yes'
+  return [
+    {num:1, t:'收购标的', body:[
+      `甲乙双方本着平等自愿、诚实信用的原则，依据《中华人民共和国民法典》及相关法律法规，就甲方向乙方收购${tName}（以下简称"标的公司"）股权事宜，经协商一致订立本合同，以资共同遵守。`,
+      `乙方同意将其持有的标的公司股权及对应股东权益转让给甲方，甲方同意受让。标的股权的具体比例以双方另行确认的《股权转让清单》为准。`
+    ]},
+    {num:2, t:'交易价格及支付方式', body:[
+      `经双方协商确定，本次收购的总交易价格为人民币 ${blank(tm.price)} 元（大写：${rmbUpper(tm.price)}）。`,
+      ...instParas,
+      `收购价款均以银行转账方式支付至乙方书面指定的银行账户。`
+    ]},
+    {num:3, t:'交割与变更登记', body: bResponsible ? [
+      `乙方负责办理本次股权收购所涉全部变更手续，包括但不限于：标的公司股东名册变更、工商变更登记、税务登记变更、银行账户信息变更、资质证照及印章交接等。`,
+      `乙方应于本合同签订后10个工作日内完成上述全部变更手续，并将标的股权完整登记至甲方或甲方指定主体名下。因乙方原因未按期完成变更手续的，每逾期一日按交易总价款的万分之五向甲方支付违约金。`,
+      `自全部变更手续完成之日起，甲方依法享有和承担标的股权对应的全部股东权利与义务。`
+    ] : [
+      `乙方应于收到全部收购价款后10个工作日内，配合标的公司及甲方办理标的股权的工商变更登记手续，将标的股权登记至甲方或甲方指定主体名下。`,
+      `自标的股权工商变更登记完成之日起，甲方依法享有和承担标的股权对应的股东权利与义务。`
+    ]},
+    {num:4, t:'过渡期安排', body:[
+      `自本合同签订之日起至股权交割完成期间为过渡期。过渡期内，乙方应保证标的公司正常经营，不得实施下列行为：处分标的公司重大资产、对外提供担保、新增重大债务、分配利润或进行利润输送、变更主营业务等可能对标的公司价值产生重大不利影响的行为。`
+    ]},
+    {num:5, t:'陈述与保证', body:[
+      `乙方保证其对标的公司股权拥有完全、有效的处分权，标的股权不存在质押、查封、冻结或其他任何权利限制，亦不存在任何第三方主张权利的情形。`,
+      `乙方保证标的公司提供的财务资料、债权债务清单真实、完整，不存在未披露的重大债务、对外担保、未决诉讼或行政处罚。`,
+      `甲方保证具有签署及履行本合同的合法资格与能力，并保证按约支付收购价款。`
+    ]},
+    {num:6, t:'税费承担', body:[
+      `因本合同项下股权收购所产生的税费，由双方按照法律法规的规定各自承担；法律法规无明确规定的，由双方协商承担。`
+    ]},
+    {num:7, t:'保密条款', body:[
+      `双方对本合同内容以及在磋商、履行过程中知悉的对方商业秘密、标的公司经营信息负有保密义务，未经对方书面同意不得向任何第三方披露（依法律法规或有权机关要求披露的除外）。本条款在本合同终止后继续有效。`
+    ]},
+    {num:8, t:'违约责任', body:[
+      `任何一方违反本合同约定，给对方造成损失的，应承担相应的赔偿责任。`,
+      `甲方逾期支付收购价款的，每逾期一日按未付款项的万分之五向乙方支付违约金；乙方违反陈述与保证或过渡期安排义务的，甲方有权解除本合同并要求乙方赔偿损失。`
+    ]},
+    {num:9, t:'争议解决', body:[
+      `因本合同引起的或与本合同有关的任何争议，双方应友好协商解决；协商不成的，任何一方均有权向合同签订地有管辖权的人民法院提起诉讼。`
+    ]},
+    {num:10, t:'其他约定', body:[
+      `本合同自双方签字（盖章）之日起生效。`,
+      `本合同一式贰份，甲乙双方各执壹份，具有同等法律效力。本合同的附件为本合同不可分割的组成部分，与本合同具有同等效力。`,
+      `本合同未尽事宜，由双方另行协商签订补充协议；补充协议与本合同具有同等法律效力。`
+    ]}
+  ]
+}
+
+/* ============================================================
+   docx 生成（传统简约合同风）
+   ============================================================ */
+function loadDocx(){
+  if(window.docx) return window.docx
+  throw new Error('docx 库未加载')
+}
+
+/* 生成前校验：确保合同正文不出现未填写的空白位（必填项都在工具中可填） */
+function validateBeforeGen(){
+  const T = TYPES[state.type]
+  const A=state.partyA, B=state.partyB, tm=state.terms
+  if(!T) return '请先在第 1 步选择合同类型'
+  const roleA = T.roleA||'甲方（收购方）', roleB = T.roleB||'乙方（出让方）'
+  /* 债务债权：校验多方股东 */
+  if(state.type==='debt'){
+    if(!state.partiesA.length) return '请至少添加一位公司旧股东（甲方）'
+    if(!state.partiesB.length) return '请至少添加一位公司新股东（乙方）'
+    for(let i=0;i<state.partiesA.length;i++){
+      const p=state.partiesA[i]
+      if(!String(p.name||'').trim()) return `请填写${roleA}（第${i+1}位）${p.kind==='company'?'公司名称':'姓名'}`
+      if(p.kind==='company'){ if(!String(p.creditCode||'').trim()) return `请填写${roleA}（第${i+1}位）统一社会信用代码` }
+      else if(!String(p.idNo||'').trim()) return `请填写${roleA}（第${i+1}位）身份证号`
+    }
+    for(let i=0;i<state.partiesB.length;i++){
+      const p=state.partiesB[i]
+      if(!String(p.name||'').trim()) return `请填写${roleB}（第${i+1}位）${p.kind==='company'?'公司名称':'姓名'}`
+      if(p.kind==='company'){ if(!String(p.creditCode||'').trim()) return `请填写${roleB}（第${i+1}位）统一社会信用代码` }
+      else if(!String(p.idNo||'').trim()) return `请填写${roleB}（第${i+1}位）身份证号`
+    }
+    if(!String(tm.target||'').trim()) return '请填写标的公司名称'
+    if(!String(tm.changeDate||'').trim()) return '请填写营业执照变更生效日期'
+    return ''
+  }
+  if(!String(A.name||'').trim()) return `请填写${roleA}名称/姓名`
+  if(!String(B.name||'').trim()) return `请填写${roleB}名称/姓名`
+  if(A.kind==='company' && !String(A.creditCode||'').trim()) return `请填写${roleA}统一社会信用代码`
+  if(B.kind==='company' && !String(B.creditCode||'').trim()) return `请填写${roleB}统一社会信用代码`
+  if(A.kind==='person' && !String(A.idNo||'').trim()) return `请填写${roleA}身份证号`
+  if(B.kind==='person' && !String(B.idNo||'').trim()) return `请填写${roleB}身份证号`
+  if(state.type==='intermediary'){
+    if(!String(tm.target||'').trim()) return '请填写标的公司名称'
+    const priceT=String(tm.price||'').trim(), priceN=Number(priceT)
+    if(!priceT || isNaN(priceN) || priceN<0) return '请填写有效的甲方承诺到手价格（元）'
+    const days=String(tm.serviceDays||'').trim(), daysN=Number(days)
+    if(!days || isNaN(daysN) || daysN<=0) return '请填写有效的中介服务期限（工作日）'
+    const ac=tm.aContact||{}
+    if(!String(ac.name||'').trim()) return '请填写甲方接收通知的联系人'
+    if(!String(ac.phone||'').trim()) return '请填写甲方接收通知的联系电话'
+    if(!String(ac.email||'').trim()) return '请填写甲方接收通知的邮箱地址'
+  } else if(state.type==='acquisition'){
+    if(!String(tm.target||'').trim()) return '请填写标的公司名称'
+    const priceT=String(tm.price||'').trim(), priceN=Number(priceT)
+    if(!priceT || isNaN(priceN) || priceN<0) return '请填写有效的交易价格（元）'
+    if(tm.payMode!=='full'){
+      const inst=(tm.installments||[]).filter(x=>String(x.node||'').trim()||String(x.amount||'').trim())
+      if(!inst.length) return '请设置分期期数（第 3 步），或选择「全款支付」'
+      for(const x of inst){
+        if(!String(x.node||'').trim()) return '分期支付节点不能为空，请补全各期信息（第 3 步）'
+        const amT=String(x.amount||'').trim(), amN=Number(amT)
+        if(!amT || isNaN(amN) || amN<0) return '分期金额必须为有效数字（元），请补全各期金额（第 3 步）'
+      }
+    }
+  }
+  return ''
+}
+
+async function doGenerate(){
+  const err = validateBeforeGen()
+  if(err){ alert(err); return }
+  const btn = document.getElementById('genBtn')
+  btn.disabled = true; btn.textContent = '正在生成…'
+  try{
+    const d = loadDocx()
+    const { Document, Packer, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle, Footer, PageNumber } = d
+    const T = TYPES[state.type]||TYPES.acquisition
+    const A = state.partyA, B = state.partyB, tm = state.terms, mt = state.meta
+
+    const FSong = { ascii:'Times New Roman', hAnsi:'Times New Roman', eastAsia:'宋体' }
+    const FHei  = { ascii:'Arial', hAnsi:'Arial', eastAsia:'黑体' }
+    const R = (text,o={}) => new TextRun({ text:String(text??''), font:o.font||FSong, size:o.size||24, bold:o.bold, color:o.color })
+    const bodyP = (text) => new Paragraph({
+      children:[R(text)],
+      alignment:AlignmentType.JUSTIFIED,
+      indent:{ firstLine:480 },
+      spacing:{ line:440, lineRule:'auto', after:80 }
+    })
+
+    const children = []
+
+    /* 合同编号：右上角 */
+    children.push(new Paragraph({
+      children:[R('合同编号：'+(mt.contractNo||'＿＿＿＿＿＿'),{size:21,color:'595959'})],
+      alignment:AlignmentType.RIGHT,
+      spacing:{ after:60 }
+    }))
+
+    /* 标题 */
+    children.push(new Paragraph({
+      children:[R(T.docTitle||T.label,{font:FHei,size:44,bold:true})],
+      alignment:AlignmentType.CENTER,
+      spacing:{ before:80, after:220, line:360, lineRule:'auto' }
+    }))
+
+    /* 甲乙方信息表格（标签右对齐、数值左对齐，自动对齐不漂移） */
+    const partyInfoTable = (role,p) => {
+      const isPerson = p && p.kind==='person'
+      const L = (text) => new TableCell({
+        width:{ size:28, type:WidthType.PERCENTAGE },
+        margins:{ top:40, bottom:40, left:0, right:100 },
+        children:[ new Paragraph({ children:[R(text+'：',{size:22,bold:true})], alignment:AlignmentType.RIGHT, spacing:{ line:320, lineRule:'auto' } }) ]
+      })
+      const V = (text) => new TableCell({
+        width:{ size:72, type:WidthType.PERCENTAGE },
+        margins:{ top:40, bottom:40, left:0, right:0 },
+        children:[ new Paragraph({ children:[R(text||'＿＿＿＿＿＿＿＿',{size:22})], spacing:{ line:320, lineRule:'auto' } }) ]
+      })
+      const rows = [ new TableRow({ children:[ L(role), V(((p&&p.name)||'＿＿＿＿＿＿＿＿') + '（' + (isPerson?'自然人':'企业法人') + '）') ] }) ]
+      if(isPerson){
+        if(p.idNo) rows.push(new TableRow({ children:[ L('身份证号'), V(p.idNo) ] }))
+        if(p.address) rows.push(new TableRow({ children:[ L('住址'), V(p.address) ] }))
+      } else {
+        if(p.creditCode) rows.push(new TableRow({ children:[ L('统一社会信用代码'), V(p.creditCode) ] }))
+        if(p.legalRep) rows.push(new TableRow({ children:[ L('法定代表人'), V(p.legalRep) ] }))
+        if(p.address) rows.push(new TableRow({ children:[ L('地址'), V(p.address) ] }))
+      }
+      if(p.phone) rows.push(new TableRow({ children:[ L('联系电话'), V(p.phone) ] }))
+      return new Table({
+        width:{ size:100, type:WidthType.PERCENTAGE },
+        borders:{
+          top:{style:BorderStyle.NONE,size:0,color:'FFFFFF'},
+          bottom:{style:BorderStyle.NONE,size:0,color:'FFFFFF'},
+          left:{style:BorderStyle.NONE,size:0,color:'FFFFFF'},
+          right:{style:BorderStyle.NONE,size:0,color:'FFFFFF'},
+          insideHorizontal:{style:BorderStyle.NONE,size:0,color:'FFFFFF'},
+          insideVertical:{style:BorderStyle.NONE,size:0,color:'FFFFFF'}
+        },
+        rows
+      })
+    }
+    if(state.type==='debt'){
+      /* 债务债权：多方股东，逐个输出信息表格 */
+      const pa = state.partiesA.length ? state.partiesA : [A]
+      const pb = state.partiesB.length ? state.partiesB : [B]
+      pa.forEach((p,i)=>{
+        children.push(partyInfoTable((T.roleA||'甲方')+'（第'+(i+1)+'位）', p))
+        children.push(new Paragraph({ spacing:{ after:80 } }))
+      })
+      children.push(new Paragraph({ spacing:{ after:120 } }))
+      pb.forEach((p,i)=>{
+        children.push(partyInfoTable((T.roleB||'乙方')+'（第'+(i+1)+'位）', p))
+        children.push(new Paragraph({ spacing:{ after:80 } }))
+      })
+      children.push(new Paragraph({ spacing:{ after:180 } }))
+    } else {
+      children.push(partyInfoTable(T.roleA||'甲方（收购方）', A))
+      children.push(new Paragraph({ spacing:{ after:120 } }))
+      children.push(partyInfoTable(T.roleB||'乙方（出让方）', B))
+      children.push(new Paragraph({ spacing:{ after:180 } }))
+    }
+    const introText = state.type==='intermediary'
+      ? `根据《中华人民共和国民法典》及相关法律法规，乙方就出售其持有的${tm.target||'标的公司'}100%股权事宜委托甲方提供中介服务，经双方协商达成一致，订立本协议，以资共同遵守。`
+      : state.type==='debt'
+        ? `经协商，${tm.target||'标的公司'}原股东的全部出资均已转让给现任新股东，股东转让出资后，原股东不再享受股东权利，也不再承担股东义务。现就公司在股权转让之前经营过程中已经产生或可能产生的债权债务、经营风险等事项，双方特别约定及声明如下：`
+        : `根据《中华人民共和国民法典》及相关法律法规，甲乙双方就${tm.target||'标的公司'}股权收购事宜，经平等协商达成一致，订立本合同，以资共同遵守。`
+    children.push(new Paragraph({
+      children:[R(introText,{size:24})],
+      alignment:AlignmentType.JUSTIFIED, indent:{firstLine:480}, spacing:{ line:360, lineRule:'auto', after:120 }
+    }))
+
+    /* 正文条款 */
+    const clauses = contractBody()
+    const extraClauses = state.extra.clauses.filter(c=>String(c.title||'').trim()||String(c.content||'').trim())
+    const allClauses = clauses.concat(extraClauses.length ? extraClauses.map(c=>({t:c.title||'补充约定', body:[String(c.content||'').trim()||'本条具体约定详见双方另行书面确认。']})) : [])
+    const CN = ['一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十']
+    let cnIdx = 0
+    allClauses.forEach((c)=>{
+      const noNum = c.noNum===true
+      let num = ''
+      if(!noNum){
+        num = c.num!=null ? (CN[c.num-1] || String(c.num)) : (CN[cnIdx] || String(cnIdx+1))
+        cnIdx++
+      }
+      children.push(new Paragraph({
+        children:[R((num?`第${num}条　`:'') + c.t,{font:FHei,size:24,bold:true})],
+        spacing:{ before:200, after:80, line:340, lineRule:'auto' },
+        keepNext:true
+      }))
+      c.body.forEach(t=>{ if(String(t||'').trim()) children.push(bodyP(t)) })
+    })
+
+    /* 签署栏 */
+    children.push(new Paragraph({ children:[R(state.type==='acquisition' ? '（以下无正文，为本合同签署页）' : '（以下无正文，为本协议签署页）',{size:21,color:'808080'})], alignment:AlignmentType.CENTER, spacing:{ before:400, after:200 } }))
+    const signCell = (role,p,cellWidth,forceWord) => {
+      const isPerson = p && p.kind==='person'
+      const signWord = forceWord || (isPerson ? (T.bIsPerson && role===T.roleB ? '签字捺印' : '签字') : '盖章')
+      const signLines = [
+        new Paragraph({ children:[R(`${role}（${signWord}）：${(p&&p.name)||'　　　　　　'}`,{size:24})], spacing:{ line:360, lineRule:'auto', after:200 } })
+      ]
+      if(isPerson){
+        if(p.idNo) signLines.push(new Paragraph({ children:[R('身份证号：'+p.idNo,{size:24})], spacing:{ line:360, lineRule:'auto', after:200 } }))
+      } else {
+        if(p.creditCode) signLines.push(new Paragraph({ children:[R('统一社会信用代码：'+p.creditCode,{size:24})], spacing:{ line:360, lineRule:'auto', after:200 } }))
+        signLines.push(new Paragraph({ children:[R('法定代表人或授权代表（签字）：',{size:24})], spacing:{ line:360, lineRule:'auto', after:200 } }))
+      }
+      if(p && p.address) signLines.push(new Paragraph({ children:[R('联系地址：'+p.address,{size:24})], spacing:{ line:360, lineRule:'auto', after:200 } }))
+      signLines.push(new Paragraph({ children:[R('签署日期：　　年　　月　　日',{size:24})], spacing:{ line:360, lineRule:'auto' } }))
+      return new TableCell({
+        width:{ size:cellWidth||50, type:WidthType.PERCENTAGE },
+        borders:{ top:{style:BorderStyle.NONE}, bottom:{style:BorderStyle.NONE}, left:{style:BorderStyle.NONE}, right:{style:BorderStyle.NONE} },
+        margins:{ top:120, bottom:120, left:160, right:160 },
+        children: signLines
+      })
+    }
+    const noBorder = { top:{style:BorderStyle.NONE}, bottom:{style:BorderStyle.NONE}, left:{style:BorderStyle.NONE}, right:{style:BorderStyle.NONE}, insideHorizontal:{style:BorderStyle.NONE}, insideVertical:{style:BorderStyle.NONE} }
+    if(state.type==='debt'){
+      /* 债务债权：每个股东单独签署块（单列全宽），自然人签字捺印 / 企业法人盖章 */
+      const pa = state.partiesA.length ? state.partiesA : [A]
+      const pb = state.partiesB.length ? state.partiesB : [B]
+      pa.forEach((p,i)=>{
+        children.push(new Table({ width:{ size:100, type:WidthType.PERCENTAGE }, borders:noBorder, rows:[ new TableRow({ children:[ signCell((T.roleA||'甲方')+'（第'+(i+1)+'位）', p, 100, (p.kind==='company'?'盖章':'签字捺印')) ] }) ] }))
+        children.push(new Paragraph({ spacing:{ after:300 } }))
+      })
+      pb.forEach((p,i)=>{
+        children.push(new Table({ width:{ size:100, type:WidthType.PERCENTAGE }, borders:noBorder, rows:[ new TableRow({ children:[ signCell((T.roleB||'乙方')+'（第'+(i+1)+'位）', p, 100, (p.kind==='company'?'盖章':'签字捺印')) ] }) ] }))
+        children.push(new Paragraph({ spacing:{ after:300 } }))
+      })
+    } else {
+      children.push(new Table({
+        width:{ size:100, type:WidthType.PERCENTAGE },
+        borders:noBorder,
+        rows:[ new TableRow({ children:[ signCell(T.roleA||'甲方（收购方）',A), signCell(T.roleB||'乙方（出让方）',B) ] }) ]
+      }))
+    }
+
+    const doc = new Document({
+      styles:{ default:{ document:{ run:{ font:FSong, size:24 } } } },
+      sections:[{
+        properties:{},
+        footers:{ default:new Footer({ children:[ new Paragraph({ alignment:AlignmentType.CENTER,
+          children:[ R('第 ',{size:18,color:'808080'}), new TextRun({children:[PageNumber.CURRENT],size:18,color:'808080',font:FSong}), R(' 页',{size:18,color:'808080'}) ] }) ] }) },
+        children
+      }]
+    })
+
+    const blob = await Packer.toBlob(doc)
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `${T.docTitle||T.label}-${(tm.target||'未命名').slice(0,20)}-${(mt.contractNo||'')}.docx`
+    document.body.appendChild(a); a.click(); a.remove()
+    setTimeout(()=>URL.revokeObjectURL(a.href),5000)
+    document.getElementById('okTip').style.display='block'
+    saveRecord()
+  }catch(e){
+    console.error(e)
+    alert('生成失败：'+(e&&e.message||e))
+  }finally{
+    btn.disabled=false; btn.textContent='生成合同（Word）'
+  }
+}
+
+/* ============ 生成记录（历史合同快照：载入数据 / 查看摘要 / 重新导出） ============ */
+const REC_KEY = 'contract_records_v1'
+const REC_LIMIT = 30
+function fmtTime(ts){
+  const d=new Date(ts), p=x=>String(x).padStart(2,"0")
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes())
+}
+function loadRecords(){
+  try{ const arr=JSON.parse(localStorage.getItem(REC_KEY)||"[]"); return Array.isArray(arr)?arr:[]; }catch(e){ return []; }
+}
+function findRecord(id){ return loadRecords().find(r=>r.id===id) || null; }
+function recSummary(){
+  const t = TYPES[state.type]||TYPES.acquisition
+  let parties
+  if(state.type==='debt'){
+    parties = '旧股东'+(state.partiesA.length||0)+'人 · 新股东'+(state.partiesB.length||0)+'人'
+  }else{
+    parties = (state.partyA.name||'甲方') + ' ↔ ' + (state.partyB.name||'乙方')
+  }
+  return { t, parties }
+}
+function saveRecord(){
+  try{
+    const { t, parties } = recSummary()
+    const rec = {
+      id: "r"+Date.now(),
+      time: Date.now(),
+      timeStr: fmtTime(Date.now()),
+      type: state.type,
+      typeName: t.label,
+      target: state.terms.target || "未命名标的",
+      parties,
+      contractNo: state.meta.contractNo || "",
+      signDate: state.meta.signDate || "",
+      snapshot: JSON.stringify(state)
+    }
+    let list = loadRecords().filter(x=>!(x.type===rec.type && x.target===rec.target && x.contractNo===rec.contractNo))
+    list.unshift(rec)
+    if(list.length > REC_LIMIT) list = list.slice(0, REC_LIMIT)
+    localStorage.setItem(REC_KEY, JSON.stringify(list))
+  }catch(e){ console.warn("saveRecord 失败", e) }
+}
+function openRecModal(h){
+  document.getElementById('recModalBody').innerHTML=h
+  document.getElementById('recModal').style.display='flex'
+  document.getElementById('recModalBg').style.display='block'
+  document.body.style.overflow='hidden'
+}
+function closeRecModal(){
+  document.getElementById('recModal').style.display='none'
+  document.getElementById('recModalBg').style.display='none'
+  document.body.style.overflow=''
+}
+function openRecords(){
+  const list = loadRecords()
+  let h = '<h3>📋 近期生成记录</h3>'
+  if(!list.length){
+    h += '<div class="rec-empty">暂无记录。<br>每次「生成合同（Word）」成功后会自动保存一条记录：可随时<b>📂 载入数据</b>修改后重新生成，避免重复填写。</div>'
+  }else{
+    h += '<div class="rec-tip">共 '+list.length+' 条 · 同类型同标的同编号保留最新一条 · 最多保留 '+REC_LIMIT+' 条</div>'
+    h += list.map(rec=>{
+      const typeBadge = '<span class="rec-badge" style="background:#fbeccb;color:#b45309">'+esc(rec.typeName)+'</span>'
+      return `<div class="rec-row">
+        <div style="min-width:0">
+          <div class="rec-t">${esc(rec.target)}${typeBadge}</div>
+          <div class="rec-s">🕐 ${rec.timeStr} · ${esc(rec.parties)}${rec.contractNo?' · 编号 '+esc(rec.contractNo):''}</div>
+        </div>
+        <div class="rec-ops">
+          <button class="btn btn-primary" onclick="loadRecord('${rec.id}')">📂 载入数据</button>
+          <button class="btn btn-ghost" onclick="viewRecord('${rec.id}')">📄 查看</button>
+          <button class="btn btn-danger" style="padding:5px 9px" onclick="delRecord('${rec.id}')">删</button>
+        </div>
+      </div>`
+    }).join('')
+  }
+  h += '<div style="margin-top:12px;text-align:right"><button class="btn btn-ghost" onclick="closeRecModal()">关闭</button></div>'
+  openRecModal(h)
+}
+function loadRecord(id){
+  const rec = findRecord(id); if(!rec) return
+  if(!confirm("将载入「"+rec.timeStr+"」记录的完整数据（覆盖当前表单），确定？")) return
+  try{
+    state = JSON.parse(rec.snapshot)
+    state.step = 4
+    saveState(); renderNav(); renderStep()
+    closeRecModal()
+    window.scrollTo({top:0,behavior:'smooth'})
+  }catch(e){ alert("载入失败："+e.message) }
+}
+function viewRecord(id){
+  const rec = findRecord(id); if(!rec) return
+  let h = '<h3>📄 历史合同记录</h3>'
+  h += '<div style="background:#fdf4e6;border-left:4px solid #e0901a;border-radius:6px;padding:10px 13px;font-size:12.5px;margin-bottom:12px;line-height:1.8">'
+  h += '<b>'+esc(rec.typeName)+'</b> · '+esc(rec.target)+' · 生成于 '+rec.timeStr+'</div>'
+  h += '<div class="kv"><span class="k">合同类型</span><span class="v">'+esc(rec.typeName)+'</span></div>'
+  h += '<div class="kv"><span class="k">标的公司</span><span class="v">'+esc(rec.target)+'</span></div>'
+  h += '<div class="kv"><span class="k">签约主体</span><span class="v">'+esc(rec.parties)+'</span></div>'
+  h += '<div class="kv"><span class="k">合同编号</span><span class="v">'+esc(rec.contractNo||'—')+'</span></div>'
+  h += '<div class="kv"><span class="k">签订日期</span><span class="v">'+esc(rec.signDate||'—')+'</span></div>'
+  h += '<div style="margin-top:10px;font-size:12.5px;color:#8a7a62">💡 点击「载入数据」可恢复该合同的全部填写内容，到生成步骤即可重新导出 Word。</div>'
+  h += '<div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">'
+  h += '<button class="btn btn-primary" onclick="loadRecord(\''+rec.id+'\')">📂 载入数据并重新生成</button>'
+  h += '<button class="btn btn-ghost" onclick="openRecords()">← 返回列表</button>'
+  h += '<button class="btn btn-ghost" onclick="closeRecModal()">关闭</button></div>'
+  openRecModal(h)
+}
+function delRecord(id){
+  if(!confirm("确定删除这条记录？")) return
+  localStorage.setItem(REC_KEY, JSON.stringify(loadRecords().filter(r=>r.id!==id)))
+  openRecords()
+}
+
+/* ============ 初始化 ============ */
+renderNav()
+renderStep()
+saveState()
+</script>
+</body>
+</html>

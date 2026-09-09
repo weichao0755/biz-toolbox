@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>话术快捷回复</title>
+<style>
+  :root{
+    --bg:#faf7f2;
+    --surface:#fffefb;
+    --surface-2:#fbf5ea;
+    --border:#ece3d6;
+    --border-2:#d4c4a8;
+    --text:#2a2118;
+    --text-2:#6b5d4a;
+    --text-3:#9ca3af;
+    --accent:#b45309;
+    --accent-2:#e0901a;
+    --accent-grad:linear-gradient(135deg,#e0901a,#b45309);
+    --shadow:0 2px 8px rgba(180,120,40,.06);
+    --shadow-hover:0 6px 18px rgba(180,120,40,.12);
+    --red:#dc2626;
+    --green:#16a34a;
+    --blue:#2563eb;
+    --purple:#5f3dc4;
+    --gold:#f59e0b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text)}
+  .wrap{max-width:1080px;margin:0 auto;padding:18px 16px 60px}
+
+  /* 顶栏 */
+  .topbar{background:linear-gradient(120deg,#fffdf9,#fdf3e3 48%,#fbeccb);color:var(--text);border-radius:14px;padding:18px 22px;margin-bottom:16px;box-shadow:var(--shadow-hover);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;position:relative;overflow:hidden;border:1px solid rgba(224,144,26,.22)}
+  .topbar::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(180,120,40,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(180,120,40,.06) 1px,transparent 1px);background-size:28px 28px;pointer-events:none}
+  .topbar>*{position:relative;z-index:1}
+  .topbar h1{margin:0;font-size:20px;letter-spacing:1px;color:var(--text)}
+  .topbar p{margin:5px 0 0;font-size:12.5px;color:var(--text-2);line-height:1.5}
+  .topbar .top-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .pill{font-size:12px;background:rgba(180,83,9,.12);color:var(--accent);padding:5px 12px;border-radius:20px;font-weight:600}
+
+  /* 布局 */
+  .layout{display:grid;grid-template-columns:230px 1fr;gap:14px;align-items:start}
+  @media(max-width:760px){.layout{grid-template-columns:1fr}}
+
+  /* 侧栏 */
+  .sidebar{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:var(--shadow)}
+  .sidebar h3{margin:0 0 10px;font-size:13px;color:var(--text-2);font-weight:600;display:flex;justify-content:space-between;align-items:center}
+
+  /* 分类树 */
+  .cat-tree{display:flex;flex-direction:column;gap:1px}
+  .cat-row{display:flex;align-items:center;gap:6px;padding:7px 6px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--text);transition:.12s;position:relative}
+  .cat-row:hover{background:var(--surface-2)}
+  .cat-row.active{background:#fff7e6;color:var(--accent);font-weight:600}
+  .cat-row .arrow{width:14px;height:14px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-3);flex-shrink:0}
+  .cat-row .arrow:hover{color:var(--accent)}
+  .cat-row .arrow.leaf{color:transparent;pointer-events:none}
+  .cat-row .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+  .cat-row .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cat-row .cnt{font-size:10px;color:var(--text-2);background:var(--surface-2);padding:1px 6px;border-radius:10px;flex-shrink:0}
+  .cat-row.active .cnt{background:#fff1df;color:var(--accent)}
+  .cat-row .acts{display:flex;gap:2px;align-items:center;opacity:0;transition:.12s;flex-shrink:0}
+  .cat-row:hover .acts{opacity:1}
+  .cat-row .acts button{border:none;background:transparent;cursor:pointer;font-size:13px;color:var(--text-3);width:18px;height:18px;display:flex;align-items:center;justify-content:center;border-radius:4px;padding:0}
+  .cat-row .acts button:hover{background:var(--surface);color:var(--accent)}
+  .cat-row .acts button.del:hover{color:var(--red);background:#fee2e2}
+  .cat-children{display:flex;flex-direction:column;gap:1px;padding-left:12px;border-left:1px dashed var(--border);margin-left:6px}
+  .cat-inp{width:100%;padding:6px 8px;border:1px solid var(--accent);border-radius:7px;font-size:12.5px;outline:none;margin:2px 0;background:var(--surface)}
+  .add-cat{width:100%;margin-top:8px;background:var(--surface-2);border:1px dashed var(--border-2);color:var(--text-2);border-radius:9px;padding:8px;cursor:pointer;font-size:12.5px;font-weight:600}
+  .add-cat:hover{background:#f7ead4;color:var(--accent)}
+
+  /* 主区 */
+  .main{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;min-height:400px;box-shadow:var(--shadow)}
+  .main-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+  .main-head h2{margin:0;font-size:16px;color:var(--text)}
+  .main-head .sub{font-size:12px;color:var(--text-2);margin-top:2px}
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .search{width:240px;padding:9px 12px;border:1px solid var(--border);border-radius:9px;font-size:13px;outline:none;background:var(--surface)}
+  .search:focus{border-color:var(--accent-2);box-shadow:0 0 0 3px rgba(224,144,26,.15)}
+  .btn{border:none;border-radius:9px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit}
+  .btn-primary{background:var(--accent-grad);color:#fff}
+  .btn-primary:hover{background:linear-gradient(135deg,#c25b0a,#9c4708);transform:translateY(-1px)}
+  .btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+  .btn-ghost:hover{background:var(--surface-2);border-color:var(--border-2)}
+  .btn-sm{padding:5px 10px;font-size:12px;border-radius:7px}
+
+  /* 变量提示条 */
+  .var-bar{display:flex;align-items:center;gap:6px;margin-bottom:12px;padding:8px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;font-size:12px;color:var(--text-2);flex-wrap:wrap}
+  .var-bar b{color:var(--text)}
+  .var-bar .chip-var{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:14px;background:#fff7e6;color:var(--accent);font-weight:600;cursor:pointer;border:1px dashed var(--border-2)}
+  .var-bar .chip-var:hover{background:#f7ead4}
+  .var-bar .link{color:var(--accent);font-weight:600;cursor:pointer;text-decoration:none;margin-left:auto}
+  .var-bar .link:hover{text-decoration:underline}
+
+  /* 话术卡片 */
+  .script-list{display:flex;flex-direction:column;gap:10px}
+  .script{display:flex;gap:12px;padding:13px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);transition:.12s;position:relative}
+  .script:hover{border-color:var(--accent-2);box-shadow:var(--shadow-hover)}
+  .script .swatch{width:6px;align-self:stretch;border-radius:4px;flex-shrink:0}
+  .script .body{flex:1;min-width:0}
+  .script .topline{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap}
+  .script .title{font-size:14.5px;font-weight:600;color:var(--text)}
+  .script .code{font-size:11px;font-family:ui-monospace,Consolas,monospace;background:var(--surface-2);color:var(--accent);padding:1px 7px;border-radius:8px;font-weight:700}
+  .script .tag{font-size:11px;padding:1px 8px;border-radius:10px;background:var(--surface-2);color:var(--text-2)}
+  .script .content{font-size:13px;color:var(--text-2);line-height:1.6;white-space:pre-wrap;word-break:break-word;max-height:88px;overflow:hidden;position:relative}
+  .script .content::after{content:'';position:absolute;left:0;right:0;bottom:0;height:24px;background:linear-gradient(transparent,var(--surface))}
+  .script.expanded .content{max-height:none}
+  .script.expanded .content::after{display:none}
+  .script .expand{font-size:11.5px;color:var(--accent);cursor:pointer;margin-top:3px;display:inline-block}
+  .script .acts{display:flex;flex-direction:column;gap:6px;align-items:center;flex-shrink:0}
+  .copy-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 14px;border-radius:10px;background:var(--accent-grad);color:#fff;border:none;cursor:pointer;font-size:12px;font-weight:700;transition:.15s;font-family:inherit}
+  .copy-btn:hover{background:linear-gradient(135deg,#c25b0a,#9c4708);transform:translateY(-1px)}
+  .copy-btn svg{width:16px;height:16px}
+  .copy-img-btn{border:none;border-radius:8px;padding:6px 10px;background:#fff7e6;color:var(--accent);border:1px solid var(--border-2);cursor:pointer;font-size:11px;font-weight:600;display:flex;align-items:center;gap:3px;font-family:inherit;white-space:nowrap}
+  .copy-img-btn:hover{background:#f7ead4;border-color:var(--accent-2)}
+  .mini-acts{display:flex;gap:4px}
+  .icon-btn{border:none;background:none;cursor:pointer;font-size:14px;padding:4px;border-radius:6px;color:var(--text-2);width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+  .icon-btn:hover{background:var(--surface-2);color:var(--text)}
+  .icon-btn.danger:hover{color:var(--red);background:#fee2e2}
+  .icon-btn.fav{color:#f59e0b}
+  .icon-btn.fav.off{color:var(--text-3)}
+
+  .empty{text-align:center;color:var(--text-2);padding:40px 0;font-size:13px}
+  .empty b{color:var(--accent)}
+
+  /* 模态框 */
+  .modal{display:none;position:fixed;inset:0;background:rgba(42,26,10,.45);z-index:100;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
+  .modal.show{display:flex}
+  .modal-box{background:var(--surface);border-radius:16px;width:100%;max-width:560px;padding:20px;box-shadow:0 20px 50px rgba(42,26,10,.25);border:1px solid var(--border)}
+  .modal-box h3{margin:0 0 16px;font-size:17px;color:var(--text)}
+  .fg{margin-bottom:12px}
+  .fg label{display:block;font-size:12.5px;color:var(--text-2);margin-bottom:5px;font-weight:600}
+  .fg input,.fg select,.fg textarea{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:9px;font-size:14px;outline:none;background:var(--surface);color:var(--text);font-family:inherit}
+  .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent-2);box-shadow:0 0 0 3px rgba(224,144,26,.15)}
+  .fg textarea{min-height:120px;resize:vertical;line-height:1.6}
+  .fg .hint{font-size:11px;color:var(--text-3);margin-top:4px}
+
+  /* 图片（编辑区 + 卡片缩略图） */
+  .img-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+  .img-thumb{position:relative;width:74px;height:74px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:var(--surface-2)}
+  .img-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .img-thumb .rm{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center}
+  .img-thumb .rm:hover{background:var(--red)}
+  .img-add{width:74px;height:74px;border:1px dashed var(--border-2);border-radius:8px;background:var(--surface-2);color:var(--text-2);cursor:pointer;font-size:24px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .img-add:hover{color:var(--accent);border-color:var(--accent);background:#f7ead4}
+  .script .imgs{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+  .script .imgs .thumb{width:52px;height:52px;border-radius:7px;overflow:hidden;border:1px solid var(--border);cursor:pointer;position:relative;background:var(--surface-2)}
+  .script .imgs .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .script .imgs .thumb:hover{border-color:var(--accent)}
+  .script .imgs .thumb .n{position:absolute;bottom:2px;right:2px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;padding:0 4px;border-radius:6px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .modal-acts{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+
+  /* 变量管理列表 */
+  .var-list{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow:auto;margin-bottom:12px}
+  .var-row{display:flex;gap:8px;align-items:center;padding:6px 8px;border:1px solid var(--border);border-radius:8px}
+  .var-row .k{font-size:12px;font-family:ui-monospace,Consolas,monospace;background:var(--surface-2);color:var(--accent);padding:2px 8px;border-radius:7px;font-weight:700;flex-shrink:0}
+  .var-row input{flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:7px;font-size:12.5px;outline:none;background:var(--surface)}
+  .var-row input:focus{border-color:var(--accent-2)}
+  .var-row button{border:none;background:#fee2e2;color:var(--red);width:24px;height:24px;border-radius:6px;cursor:pointer;flex-shrink:0}
+
+  /* toast */
+  .toast{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--text);color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;transition:.25s;z-index:200;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <h1>话术快捷回复</h1>
+      <p>三级分类管理话术 · 拼音首字母/关键词秒搜 · 一键复制粘贴到微信/QQ · 变量自动替换</p>
+    </div>
+    <div class="top-right">
+      <span class="pill" id="todayLabel"></span>
+      <span class="pill">已复制 <b id="copyCount">0</b> 次</span>
+      <button class="btn btn-ghost btn-sm" onclick="openVarsModal()">⚙ 变量</button>
+      <button class="btn btn-ghost btn-sm" onclick="openDataModal()">⇅ 导入/导出</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- 侧栏 -->
+    <div class="sidebar">
+      <h3>分类</h3>
+      <div class="cat-tree">
+        <div class="cat-row active" data-cat="all" onclick="selectCat('all')"><span class="dot" style="background:#6b7280"></span><span class="name">全部</span><span class="cnt" id="cntAll"></span></div>
+        <div class="cat-row" data-cat="fav" onclick="selectCat('fav')"><span class="dot" style="background:var(--gold)"></span><span class="name">★ 收藏</span><span class="cnt" id="cntFav"></span></div>
+        <div class="cat-row" data-cat="none" onclick="selectCat('none')"><span class="dot" style="background:#9ca3af"></span><span class="name">未分类</span><span class="cnt" id="cntNone"></span></div>
+        <div id="customCats"></div>
+      </div>
+      <button class="add-cat" id="addCatBtn" onclick="addCatClick()">＋ 新建一级分类</button>
+    </div>
+
+    <!-- 主区 -->
+    <div class="main">
+      <div class="main-head">
+        <div>
+          <h2 id="catTitle">全部话术</h2>
+          <div class="sub">点击话术卡片或「复制」按钮，即可复制到剪贴板</div>
+        </div>
+        <div class="toolbar">
+          <input class="search" id="search" placeholder="搜索：拼音首字母 / 关键词 / 快捷码" oninput="renderScripts()">
+          <button class="btn btn-primary" onclick="openScriptModal()">＋ 新建话术</button>
+        </div>
+      </div>
+
+      <div class="var-bar">
+        <b>变量</b>
+        <span class="chip-var" onclick="openVarsModal()">{客户称呼}</span>
+        <span class="chip-var" onclick="openVarsModal()">{公司名}</span>
+        <span class="chip-var" onclick="openVarsModal()">{金额}</span>
+        <span class="chip-var" onclick="openVarsModal()">{日期}</span>
+        <span class="link" onclick="openVarsModal()">管理变量 ›</span>
+      </div>
+
+      <div class="script-list" id="scriptList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 话术编辑模态框 -->
+<div class="modal" id="scriptModal">
+  <div class="modal-box">
+    <h3 id="scriptModalTitle">新建话术</h3>
+    <div class="fg">
+      <label>标题 *（简短好记，如「转让报价」）</label>
+      <input id="fTitle" placeholder="话术标题">
+    </div>
+    <div class="row2">
+      <div class="fg">
+        <label>快捷码（拼音首字母，如 zrbj）</label>
+        <input id="fCode" placeholder="选填，如 zrbj">
+      </div>
+      <div class="fg">
+        <label>标签（逗号分隔，选填）</label>
+        <input id="fTags" placeholder="如：转让,ICP,收款">
+      </div>
+    </div>
+    <div class="fg">
+      <label>所属分类（最多三级）</label>
+      <div class="row3">
+        <select id="fCat1" onchange="onCat1Change()"><option value="">无</option></select>
+        <select id="fCat2" onchange="onCat2Change()"><option value="">无</option></select>
+        <select id="fCat3"><option value="">无</option></select>
+      </div>
+      <div class="hint">话术会挂在选中的最深一级分类下</div>
+    </div>
+    <div class="fg">
+      <label>话术正文 *</label>
+      <textarea id="fContent" placeholder="话术内容。可用变量：{客户称呼} {公司名} {金额} {日期} …"></textarea>
+      <div class="hint">变量写法：{客户称呼}、{公司名}、{金额}、{日期}，复制时会自动替换或提示填写</div>
+    </div>
+    <div class="fg">
+      <label>图片（选填，可发给客户的图）</label>
+      <div class="img-list" id="fImages"></div>
+      <button class="img-add" id="imgAddBtn" onclick="addImageClick()" title="上传图片">＋</button>
+      <input type="file" id="imgFile" accept="image/*" multiple style="display:none" onchange="onImagePick(event)">
+      <div class="hint">点击「＋」上传，或直接把图片粘贴（Ctrl+V）进来；自动压缩保存。复制话术时可单独复制图片发微信。</div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeScriptModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveScript()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 变量管理模态框 -->
+<div class="modal" id="varsModal">
+  <div class="modal-box">
+    <h3>变量管理</h3>
+    <div class="fg"><label>我的变量（复制时自动替换，值留空则复制时临时填写）</label></div>
+    <div class="var-list" id="varList"></div>
+    <div class="row3">
+      <input id="vKey" placeholder="变量名，如 客户称呼" oninput="varKeyInput()">
+      <input id="vVal" placeholder="默认值，如 老板">
+      <button class="btn btn-primary" onclick="addVar()">＋ 添加</button>
+    </div>
+    <div class="fg"><div class="hint">变量名会自动加上花括号，正文里写 {客户称呼} 即可被替换。{日期} 为内置变量，自动填当天日期。</div></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeVarsModal()">完成</button>
+    </div>
+  </div>
+</div>
+
+<!-- 复制前补全变量模态框 -->
+<div class="modal" id="fillModal">
+  <div class="modal-box">
+    <h3>补充信息后复制</h3>
+    <div class="fg"><label>以下变量没有默认值，请填写后复制（留空则保留原样）</label></div>
+    <div id="fillList"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeFillModal()">取消</button>
+      <button class="btn btn-primary" onclick="confirmFill()">复制</button>
+    </div>
+  </div>
+</div>
+
+<!-- 导入导出模态框 -->
+<div class="modal" id="dataModal">
+  <div class="modal-box">
+    <h3>导入 / 导出话术库</h3>
+    <div class="fg"><label>导出</label><button class="btn btn-ghost" onclick="exportData()">⬇ 导出全部话术（JSON）</button></div>
+    <div class="fg"><label>导入</label><input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(event)"><button class="btn btn-ghost" onclick="document.getElementById('importFile').click()">⬆ 选择文件导入</button><div class="hint">导入会覆盖当前话术库，建议先导出备份。团队共享：一人导出，其他人导入即可同步话术。</div></div>
+    <div class="modal-acts"><button class="btn btn-primary" onclick="closeDataModal()">关闭</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ 存储 key ============
+const STORE_KEY = 'huashu_v1';
+const CAT_KEY = 'huashu_cats_v1';
+const VAR_KEY = 'huashu_vars_v1';
+const FAV_KEY = 'huashu_favs_v1';
+const STAT_KEY = 'huashu_stats_v1';
+
+// ============ 拼音首字母映射（财税/业务 + 常用字）============
+const PY_GROUPS = {
+  a:'啊阿埃挨哎唉哀皑癌蔼矮艾碍爱隘鞍氨安俺按暗岸胺案肮昂盎凹敖熬翱袄傲奥懊澳',
+  b:'芭捌扒叭吧笆八疤巴拔跋靶把耙坝霸罢爸白柏百摆佰败拜稗斑班搬扳般颁板版扮拌伴瓣半办绊邦帮梆榜膀绑棒磅蚌镑傍谤苞胞包褒剥薄雹保堡饱宝抱报暴豹鲍爆杯碑悲卑北辈背贝钡倍狈备惫焙被奔苯本笨崩绷甭泵蹦迸逼鼻比鄙笔彼碧蓖蔽毕毙毖币庇痹闭敝弊必辟壁臂避陛鞭边编贬扁便变卞辨辩辫遍标彪膘表鳖憋别瘪彬斌濒滨宾摈兵冰柄丙秉饼炳病并玻菠播拨钵波博勃搏铂箔伯帛舶脖膊渤泊驳捕卜哺补埠不布步簿部怖擦猜裁材才财睬踩采彩菜蔡餐参蚕残惭惨灿苍舱仓沧藏操糙槽曹草厕策侧册测层蹭插叉茬茶查碴搽察岔差诧拆柴豺搀掺蝉馋谗缠铲产阐颤昌猖场尝常长偿肠厂敞畅唱倡超抄钞朝嘲潮巢吵炒车扯撤掣彻澈郴臣辰尘晨忱沉陈趁衬撑称城橙成呈乘程惩澄诚承逞骋秤吃痴持匙池迟弛驰耻齿侈尺赤翅斥炽充冲虫崇宠抽酬畴踌稠愁筹仇绸瞅丑臭初出橱厨躇锄雏滁除楚础储矗搐触处揣川穿椽传船喘串疮窗幢床闯创吹炊捶锤垂春椿醇唇淳纯蠢戳绰疵茨磁雌辞慈瓷词此刺赐次聪葱囱匆从丛凑粗醋簇促蹿篡窜摧崔催脆瘁粹淬翠村存寸磋撮搓措挫错',
+  c:'搭达答瘩打大呆歹傣戴带殆代贷袋待逮怠耽担丹单郸掸胆旦氮但惮淡诞弹蛋当挡党荡档刀捣蹈倒岛祷导到稻悼道盗德得的蹬灯登等瞪凳邓堤低滴迪敌笛狄涤翟嫡抵底地蒂第帝弟递缔颠掂滇碘点典靛垫电佃甸店惦奠淀殿碉叼雕凋刁掉吊钓调跌爹碟蝶迭谍叠丁盯叮钉顶鼎锭定订丢东冬董懂动栋侗恫冻洞兜抖斗陡豆逗痘都督毒犊独读堵睹赌杜镀肚度渡妒端短锻段断缎堆兑队对墩吨蹲敦顿囤钝盾遁掇哆多夺垛躲朵跺舵剁惰堕',
+  d:'蛾峨鹅俄额讹娥恶厄扼遏鄂饿恩而儿耳尔饵洱二贰',
+  e:'发罚筏伐乏阀法珐藩帆番翻樊矾钒繁凡烦反返范贩犯饭泛坊芳方肪房防妨仿访纺放菲非啡飞肥匪诽吠肺废沸费芬酚吩氛分纷坟焚汾粉奋份忿愤粪丰封枫蜂峰锋风疯烽逢冯缝讽奉凤佛否夫敷肤孵扶拂辐幅氟符伏俘服浮涪福袱弗甫抚辅俯釜斧脯腑府腐赴副覆赋复傅付阜父腹负富讣附妇缚咐',
+  f:'噶嘎该改概钙盖溉干甘杆柑竿肝赶感秆敢赣冈刚钢缸肛纲岗港杠篙皋高膏羔糕搞镐稿告哥歌搁戈鸽胳疙割革葛格蛤阁隔铬个各给根跟耕更庚羹埂耿梗工攻功恭龚供躬公宫弓巩汞拱贡共钩勾沟苟狗垢构购够辜菇咕箍估沽孤姑鼓古蛊骨谷股故顾固雇刮瓜剐寡挂褂乖拐怪棺关官冠观管馆罐惯灌贯光广逛瑰规圭硅归龟闺轨鬼诡癸桂柜跪贵刽辊滚棍锅郭国果裹过',
+  g:'哈骸孩海氨亥害骇酣憨邯韩含涵寒函喊罕翰撼捍旱憾悍焊汗汉夯杭航壕嚎豪毫郝好耗号浩呵喝荷菏核禾和何合盒貉阂河涸赫褐鹤贺嘿黑痕很狠恨哼亨横衡恒轰哄烘虹鸿洪宏弘红喉侯猴吼厚候后呼乎忽瑚壶葫胡蝴狐糊湖弧虎唬护互沪户花哗华猾滑画划化话槐徊怀淮坏欢环桓还缓换患唤痪豢焕涣宦幻荒慌黄磺蝗簧皇凰惶煌晃幌恍谎灰挥辉徽恢蛔回毁悔慧卉惠晦贿秽会烩汇讳诲绘荤昏婚魂浑混豁活伙火获或惑霍货祸',
+  h:'击圾基机畸稽积箕肌饥迹激讥鸡姬绩缉吉极棘辑籍集及急疾汲即嫉级挤几脊己蓟技冀季伎祭剂悸济寄寂计记既忌际妓继纪嘉枷夹佳家加荚颊贾甲钾假稼价架驾嫁歼监坚尖笺间煎兼肩艰奸缄茧检柬碱硷拣捡简俭剪减荐槛鉴践贱见键箭件健舰剑饯渐溅涧建僵姜将浆江疆蒋桨奖讲匠酱降蕉椒礁焦胶交郊浇骄娇搅铰矫侥脚狡角饺缴绞剿教酵轿较叫窖揭接皆秸街阶截劫节桔杰捷睫竭洁结解姐戒藉芥界借介疥诫届巾筋斤金今津襟紧锦仅谨进靳晋禁近烬浸尽劲荆兢茎睛晶鲸京惊精粳经井警景颈静境敬镜径痉靖竟竞净炯窘揪究纠玖韭久灸九酒厩救旧臼舅咎就疚鞠拘狙疽居驹菊局咀矩举沮聚拒据巨具距踞锯俱句惧炬剧捐鹃娟倦眷卷绢撅攫抉掘倔爵觉决诀绝均菌钧军君峻俊竣浚郡骏',
+  j:'喀咖卡咯开揩楷凯慨刊堪勘坎砍看康慷糠扛抗亢炕考拷烤靠坷苛柯棵磕颗科壳咳可渴克刻客课肯啃垦恳坑吭空恐孔控抠口扣寇枯哭窟苦酷库裤夸垮挎跨胯块筷侩快宽款匡筐狂框矿眶旷况亏盔岿窥葵奎魁傀馈愧溃坤昆捆困括扩廓阔',
+  k:'垃拉喇蜡腊辣啦莱来赖蓝婪栏拦篮阑兰澜谰揽览懒缆烂滥琅榔狼廊郎朗浪捞劳牢老佬姥酪烙涝勒乐雷镭蕾磊累儡垒擂肋类泪棱楞冷厘梨犁黎篱狸离漓理李里鲤礼莉荔吏栗丽厉励砾历利傈例俐痢立粒沥隶力璃哩俩联莲连镰廉怜涟帘敛脸链恋炼练粮凉梁粱良两辆量晾亮谅撩聊僚疗燎寥辽潦了撂镣廖料列裂烈劣猎琳林磷霖临邻鳞淋凛赁吝拎玲菱零龄铃伶羚凌灵陵岭领另令溜琉榴硫馏留刘瘤流柳六龙聋咙笼窿隆垄拢陇楼娄搂篓漏陋芦卢颅庐炉掳卤虏鲁麓碌露路赂鹿潞禄录陆戮驴吕铝侣旅履屡缕虑氯律率滤绿峦挛孪滦卵乱掠略抡轮伦仑沦纶论萝螺罗逻锣箩骡裸落洛骆络',
+  l:'妈麻玛码蚂马骂嘛吗埋买麦卖迈脉瞒馒蛮满蔓曼慢漫谩芒茫盲氓忙莽猫茅锚毛矛铆卯茂冒帽貌贸么玫枚梅酶霉煤没眉媒镁每美昧寐妹媚门闷们萌蒙檬盟锰猛梦孟眯醚靡糜迷谜弥米秘觅泌蜜密幂棉眠绵冕免勉娩缅面苗描瞄藐秒渺庙妙蔑灭民抿皿敏悯闽明螟鸣铭名命谬摸摹蘑模膜磨摩魔抹末莫墨默沫漠寞陌谋牟某拇牡亩姆母墓暮幕募慕木目睦牧穆',
+  m:'拿哪呐钠那娜纳氖乃奶耐奈南男难囊挠脑恼闹淖呢馁内嫩能妮霓倪泥尼拟你匿腻逆溺蔫拈年碾撵捻念娘酿鸟尿捏聂孽啮镊镍涅您柠狞凝宁拧泞牛扭钮纽脓浓农弄奴努怒女暖虐疟挪懦糯诺',
+  n:'哦欧鸥殴藕呕偶沤',
+  o:'啪趴爬帕怕琶拍排牌徘湃派攀潘盘磐盼畔判叛乓庞旁耪胖抛咆刨炮袍跑泡呸胚培裴赔陪配佩沛喷盆砰抨烹澎彭蓬棚硼篷膨朋鹏捧碰坯砒霹批披劈琵毗啤脾疲皮匹痞僻屁譬篇偏片骗飘漂瓢票撇瞥拼频贫品聘乒坪苹萍平凭瓶评屏坡泼颇婆破魄迫粕剖扑铺仆莆葡菩蒲埔朴圃普浦谱曝瀑',
+  p:'期欺栖戚妻七凄漆柒沏其棋奇歧畦崎脐齐旗祈祁骑起岂乞企启契砌器气迄弃汽泣讫掐恰洽牵扦钎铅千迁签仟谦乾黔钱钳前潜遣浅谴堑嵌欠歉枪呛腔羌墙蔷强抢橇锹敲悄桥瞧乔侨巧鞘撬翘峭俏窍切茄且怯窃钦侵亲秦琴勤芹擒禽寝沁青轻氢倾卿清擎晴氰情顷请庆琼穷秋丘邱球求囚酋泅趋区蛆曲躯屈驱渠取娶龋趣去圈颧权醛泉全痊拳犬券劝缺炔瘸却鹊榷确雀裙群',
+  q:'然燃冉染瓤壤攘嚷让饶扰绕惹热仁人忍韧任认刃妊纫扔仍日戎茸蓉荣融熔溶容绒冗揉柔肉茹蠕儒孺如辱乳汝入褥软阮蕊瑞锐闰润若弱',
+  r:'撒洒萨腮鳃塞赛三叁伞散桑嗓丧搔骚扫嫂瑟色涩森僧莎砂杀刹沙纱傻啥煞筛晒珊苫杉山删煽衫闪陕擅赡膳善汕扇缮墒伤商赏晌上尚裳梢捎稍烧芍勺韶少哨邵绍奢赊蛇舌舍赦摄射慑涉社设砷申呻伸身深娠绅神沈审婶甚肾慎渗声生甥牲升绳省盛剩胜圣师失狮施湿诗尸虱十石拾时什食蚀实识史矢使屎驶始式示士世柿事拭誓逝势是嗜噬适仕侍释饰氏市恃室视试收手首守寿授售受瘦兽蔬枢梳殊抒输叔舒淑疏书赎孰熟薯暑曙署蜀黍鼠属术述树束戍竖墅庶数漱恕刷耍摔衰甩帅栓拴霜双爽谁水睡税吮瞬顺舜说硕朔烁斯撕嘶思私司丝死肆寺嗣四伺似饲巳松耸怂颂送宋讼诵搜艘擞嗽苏酥俗素速粟僳塑溯宿诉肃酸蒜算虽隋随绥髓碎岁穗遂隧祟孙损笋蓑梭唆缩琐索锁所',
+  s:'塌他它她塔獭挞蹋踏胎苔抬台泰酞太态汰坍摊贪瘫滩坛檀痰潭谭谈坦毯袒碳探叹炭汤塘搪堂棠膛唐糖倘躺淌趟烫掏涛滔绦萄桃逃淘陶讨套特藤腾疼誊梯剔踢锑提题蹄啼体替嚏惕涕剃屉天添填田甜恬舔腆挑条迢眺跳贴铁帖厅听烃汀廷停亭庭挺艇通桐酮瞳同铜彤童桶捅筒统痛偷投头透凸秃突图徒途涂屠土吐兔湍团推颓腿蜕褪退吞屯臀拖托脱鸵陀驮驼椭妥拓唾',
+  t:'挖哇蛙洼娃瓦袜歪外豌弯湾玩顽丸烷完碗挽晚皖惋宛婉万腕汪王亡枉网往旺望忘妄威巍微危韦违桅围唯惟为潍维苇萎委伟伪尾纬未蔚味畏胃喂魏位渭谓尉慰卫瘟温蚊文闻纹吻稳紊问嗡翁瓮挝蜗涡窝我斡卧握沃巫呜钨乌污诬屋无芜梧吾吴毋武五捂午舞伍侮坞戊雾晤物勿务悟误昔熙析西硒矽晰嘻吸锡牺稀息希悉膝夕惜熄烯溪汐犀檄袭席习媳喜铣洗系隙戏细瞎虾匣霞辖暇峡侠狭下厦夏吓掀锨先仙鲜纤咸贤衔舷闲涎弦嫌显险现献县腺馅羡宪陷限线相厢镶香箱襄湘乡翔祥详想响享项巷橡像向象萧硝霄削哮嚣销消宵淆晓小孝校肖啸笑效楔些歇蝎鞋协挟携邪斜胁谐写械卸蟹懈泄泻谢屑薪芯锌欣辛新忻心信衅星腥猩惺兴刑型形邢行醒幸杏性姓兄凶胸匈汹雄熊休修羞朽嗅锈秀袖绣墟戌需虚嘘须徐许蓄酗叙旭序畜恤絮婿绪续轩喧宣悬旋玄选癣眩绚靴薛学穴雪血勋熏循旬询寻驯巡殉汛训讯逊迅',
+  x:'压押鸦鸭呀丫芽牙蚜崖衙涯雅哑亚讶焉咽阉烟淹盐严研蜒岩延言颜阎炎沿奄掩眼衍演艳堰燕厌砚雁唁彦焰宴谚验殃央鸯秧杨扬佯疡羊洋阳氧仰痒养样漾邀腰妖瑶摇尧遥窑谣姚咬舀药要耀椰噎耶爷野冶也页掖业叶曳腋夜液一壹医揖铱依伊衣颐夷遗移仪胰疑沂宜姨彝椅蚁倚已乙矣以艺抑易邑屹亿役臆逸肄疫亦裔意毅忆义益溢诣议谊译异翼翌绎茵荫因殷音阴姻吟银淫寅饮尹引隐印英樱婴鹰应缨莹萤营荧蝇迎赢盈影颖硬映哟拥佣臃痈庸雍踊蛹咏泳涌永恿勇用幽优悠忧尤由邮铀犹油游酉有友右佑釉诱又幼迂淤于盂榆虞愚舆余俞逾鱼愉渝渔隅予娱雨与屿禹宇语羽玉域芋郁吁遇喻峪御愈欲狱育誉浴寓裕预豫驭鸳渊冤元垣袁原援辕园员圆猿源缘远苑愿怨院曰约越跃钥岳粤月悦阅耘云郧匀陨允运蕴酝晕韵孕匝',
+  y:'匝杂栽哉灾宰载再在咱攒暂赞赃脏葬遭糟凿藻枣早澡蚤躁噪造皂灶燥责择则泽贼怎增憎曾赠扎喳渣札轧铡闸眨栅榨咋乍炸诈摘斋宅窄债寨瞻毡詹粘沾盏斩辗崭展蘸栈占战站湛绽樟章彰漳张掌涨杖丈帐账仗胀瘴障招昭找沼赵照罩兆肇召遮折哲蛰辙者锗蔗这浙珍斟真甄砧臻贞针侦枕疹诊震振镇阵蒸挣睁征狰争怔整拯正政帧症郑证芝枝支吱蜘知肢脂汁之织职直植殖执值侄址指止趾只旨纸志挚掷至致置帜峙制智秩稚质炙痔滞治窒中盅忠钟衷终种肿重仲众舟周州洲诌粥轴肘帚皱骤昼珠株蛛朱猪诸诛逐竹烛煮拄瞩嘱主著柱助蛀贮铸筑住注祝驻抓爪拽专砖转撰赚篆桩庄装妆撞壮状椎锥追赘坠缀谆准捉拙卓桌琢茁酌啄着灼浊兹咨资姿滋淄孜紫仔籽滓子自渍字鬃棕踪宗综总纵邹走奏揍租足卒族祖诅阻组钻纂嘴醉最罪尊遵昨左佐柞做作坐座',
+  z:''
+};
+
+// 建立 字符 -> 首字母 映射
+const PY_MAP = {};
+Object.keys(PY_GROUPS).forEach(ch => {
+  const s = PY_GROUPS[ch] || '';
+  for(let i=0;i<s.length;i++){ PY_MAP[s[i]] = ch; }
+});
+
+// 汉字串 -> 拼音首字母串（非汉字原样保留并转小写）
+function toPinyinInitial(str){
+  let out = '';
+  for(const c of String(str||'')){
+    if(PY_MAP[c]) out += PY_MAP[c];
+    else out += c.toLowerCase();
+  }
+  return out;
+}
+
+// ============ 状态 ============
+let scripts = [];   // {id, title, code, content, cat, tags:[], color, createdAt, updatedAt}
+let cats = [];      // {id, name, color, level, parentId, collapsed}
+let vars = {};      // {key: value}
+let favs = [];      // [id]
+let stats = { copy: 0 };
+let currentCat = 'all';
+let searchQ = '';
+let editingId = null;
+let addingSubCatTo = null;
+let editingImages = []; // 编辑中的图片 base64 数组
+
+function safeGet(k, d){ try{ const v = JSON.parse(localStorage.getItem(k)); return v===null||v===undefined?d:v; }catch(e){ return d; } }
+function safeSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } }
+function uid(p){ return p + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function todayCN(){ const d=new Date(); return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`; }
+
+// ============ 默认数据 ============
+function defaultCats(){
+  return [
+    {id:'open', name:'开场白', color:'#3b82f6', level:1, parentId:null, collapsed:false},
+    {id:'transfer', name:'转让业务', color:'#8b5cf6', level:1, parentId:null, collapsed:false},
+    {id:'icp', name:'ICP资质', color:'#06b6d4', level:1, parentId:null, collapsed:false},
+    {id:'medical', name:'医疗器械', color:'#10b981', level:1, parentId:null, collapsed:false},
+    {id:'price', name:'报价收款', color:'#f59e0b', level:1, parentId:null, collapsed:false},
+    {id:'follow', name:'跟进售后', color:'#ef4444', level:1, parentId:null, collapsed:false}
+  ];
+}
+
+function defaultScripts(){
+  const now = Date.now();
+  return [
+    {id:uid('s'), title:'开场白', code:'kcb', cat:'open', tags:['开场','介绍'], color:'#3b82f6', createdAt:now, content:'您好{客户称呼}，我是{公司名}的小金，专注公司转让和资质办理多年。请问您是想收购一家现成的公司，还是有资质方面的需求？我帮您快速匹配。'},
+    {id:uid('s'), title:'转让业务介绍', code:'zrjs', cat:'transfer', tags:['转让','介绍'], color:'#8b5cf6', createdAt:now, content:'我们主要做一线城市的公司转让和资质办理，ICP、医疗器械、短剧三证、建筑工程资质都有现成的老执照（3年以上），手续齐全、可随时过户。您有具体想要的类型或城市吗？'},
+    {id:uid('s'), title:'ICP资质', code:'icp', cat:'icp', tags:['ICP','资质'], color:'#06b6d4', createdAt:now, content:'ICP 我们这边有现成的（含3年以上老执照），过户周期快、手续齐全。价格根据执照年限和经营范围有所不同。您打算做哪类业务？我帮您推荐合适的。'},
+    {id:uid('s'), title:'医疗器械资质', code:'ylqx', cat:'medical', tags:['医疗','资质'], color:'#10b981', createdAt:now, content:'医疗器械资质我们有现成的经营许可证，含二类/三类备案，执照年限老、经营范围全。需要确认下您要经营的具体品类，我帮您精准匹配。'},
+    {id:uid('s'), title:'报价话术', code:'bj', cat:'price', tags:['报价'], color:'#f59e0b', createdAt:now, content:'{客户称呼}，您看中的这家公司，价格是 ¥{金额}，包含过户、变更等全部手续。这个价格在同类里性价比很高了，您要是今天能定，我帮您再争取个优惠。'},
+    {id:uid('s'), title:'收定金', code:'dj', cat:'price', tags:['定金','收款'], color:'#f59e0b', createdAt:now, content:'确认合作的话，需要先付 ¥{金额} 定金锁定公司，我们这边就开始走流程，定金到账后尽快完成过户。您看方便什么时候安排？'},
+    {id:uid('s'), title:'催办跟进', code:'cb', cat:'follow', tags:['跟进','催办'], color:'#ef4444', createdAt:now, content:'{客户称呼}，打扰了。上次跟您聊的那家公司，目前还有另一位客户也在看，您这边考虑得怎么样了？需要的话我帮您先做个预留。'},
+    {id:uid('s'), title:'售后回访', code:'sh', cat:'follow', tags:['售后','回访'], color:'#ef4444', createdAt:now, content:'{客户称呼}，公司过户已经办妥，相关证照您都收到了吗？后续代账、报税这些如果有需要，我这边也可以一起帮您对接，有任何问题随时找我。'},
+    {id:uid('s'), title:'价格异议处理', code:'jgyy', cat:'price', tags:['异议','议价'], color:'#f59e0b', createdAt:now, content:'理解您的顾虑。这个价格主要贵在执照年限和经营范围上，老执照（3年以上）在银行开户、业务投标上都更占优势。您要是觉得合适，我可以再帮您申请一点优惠。'},
+    {id:uid('s'), title:'结束语', code:'jsw', cat:'follow', tags:['结束','留资'], color:'#ef4444', createdAt:now, content:'好的{客户称呼}，那我这边先帮您留意合适的资源，有进展第一时间通知您。您也可以加我微信，方便随时沟通。'}
+  ];
+}
+
+function defaultVars(){
+  return {
+    '客户称呼':'老板',
+    '公司名':'金米启航',
+    '业务类型':'公司转让',
+    '金额':'',
+    '联系人':''
+  };
+}
+
+function migrateCats(){
+  cats.forEach(c=>{
+    if(!c.level) c.level = 1;
+    if(c.parentId === undefined) c.parentId = null;
+    if(c.collapsed === undefined) c.collapsed = false;
+  });
+  // 给旧数据补 sort 字段（按当前数组顺序）
+  cats.forEach((c, i)=>{ if(c.sort === undefined || c.sort === null) c.sort = i; });
+}
+
+function nextSort(parentId){
+  const siblings = getChildren(parentId);
+  if(!siblings.length) return 0;
+  return Math.max(...siblings.map(c=>c.sort||0)) + 1;
+}
+
+function load(){
+  scripts = safeGet(STORE_KEY, null);
+  cats = safeGet(CAT_KEY, null);
+  vars = safeGet(VAR_KEY, null);
+  favs = safeGet(FAV_KEY, []);
+  stats = safeGet(STAT_KEY, {copy:0});
+  if(!scripts){ scripts = defaultScripts(); safeSet(STORE_KEY, scripts); }
+  if(!cats){ cats = defaultCats(); safeSet(CAT_KEY, cats); }
+  if(!vars){ vars = defaultVars(); safeSet(VAR_KEY, vars); }
+  migrateCats();
+}
+function saveScripts(){ safeSet(STORE_KEY, scripts); }
+function saveCats(){ safeSet(CAT_KEY, cats); }
+function saveVars(){ safeSet(VAR_KEY, vars); }
+function saveFavs(){ safeSet(FAV_KEY, favs); }
+function saveStats(){ safeSet(STAT_KEY, stats); }
+
+// ============ 分类树工具 ============
+function getChildren(parentId){ return cats.filter(c=>c.parentId===parentId).sort((a,b)=>(a.sort||0)-(b.sort||0)); }
+function getDescendants(id){
+  const out = [];
+  getChildren(id).forEach(c=>{ out.push(c.id); out.push(...getDescendants(c.id)); });
+  return out;
+}
+function getPath(id){
+  const path = [];
+  let c = cats.find(x=>x.id===id);
+  while(c){ path.unshift(c); c = cats.find(x=>x.id===c.parentId); }
+  return path;
+}
+function getCatName(id){ const c=cats.find(x=>x.id===id); return c?c.name:''; }
+function getCatColor(id){ const c=cats.find(x=>x.id===id); return c?c.color:''; }
+function getFullCatName(id){ return getPath(id).map(c=>c.name).join(' / '); }
+function countScriptsInTree(id){ return scripts.filter(s=>s.cat===id || getDescendants(id).includes(s.cat)).length; }
+function isDescendant(childId, parentId){
+  const c = cats.find(x=>x.id===childId);
+  if(!c) return false;
+  if(c.parentId===parentId) return true;
+  if(!c.parentId) return false;
+  return isDescendant(c.parentId, parentId);
+}
+
+// ============ 渲染 ============
+function renderSidebar(){
+  document.getElementById('cntAll').textContent = scripts.length;
+  document.getElementById('cntFav').textContent = favs.length;
+  document.getElementById('cntNone').textContent = scripts.filter(s=>!s.cat).length;
+  document.getElementById('customCats').innerHTML = buildCatTreeHtml(null, 0);
+  document.querySelectorAll('.sidebar .cat-row').forEach(n=>{
+    n.classList.toggle('active', n.dataset.cat===currentCat);
+  });
+}
+
+function buildCatTreeHtml(parentId, depth){
+  const children = getChildren(parentId);
+  if(!children.length) return '';
+  const wrapClass = depth===0 ? 'cat-tree' : 'cat-children';
+  let html = `<div class="${wrapClass}">`;
+  children.forEach((c, idx)=>{
+    const hasChildren = getChildren(c.id).length > 0;
+    const arrow = hasChildren ? (c.collapsed ? '▸' : '▾') : '';
+    const arrowClass = hasChildren ? '' : 'leaf';
+    const active = currentCat===c.id ? 'active' : '';
+    const cnt = countScriptsInTree(c.id);
+    const showAdd = c.level < 3;
+    const showUp = idx > 0;
+    const showDown = idx < children.length - 1;
+    html += `
+      <div class="cat-row ${active}" data-cat="${c.id}" onclick="selectCat('${c.id}')">
+        <span class="arrow ${arrowClass}" onclick="event.stopPropagation();toggleCollapse('${c.id}')">${arrow}</span>
+        <span class="dot" style="background:${c.color}"></span>
+        <span class="name" title="${esc(c.name)}">${esc(c.name)}</span>
+        <span class="cnt">${cnt}</span>
+        <span class="acts">
+          ${showUp?`<button class="sort" title="上移" onclick="event.stopPropagation();moveCat('${c.id}',-1)">↑</button>`:''}
+          ${showDown?`<button class="sort" title="下移" onclick="event.stopPropagation();moveCat('${c.id}',1)">↓</button>`:''}
+          ${showAdd?`<button title="添加子分类" onclick="event.stopPropagation();addSubCatClick('${c.id}')">＋</button>`:''}
+          <button class="del" title="删除" onclick="event.stopPropagation();delCat('${c.id}')">✕</button>
+        </span>
+      </div>`;
+    if(hasChildren && !c.collapsed){
+      html += buildCatTreeHtml(c.id, depth+1);
+    }
+    if(addingSubCatTo===c.id){
+      html += `<input class="cat-inp" id="newSubCatInp" placeholder="${c.level>=2?'三级分类':'二级分类'}名，回车确认" onkeydown="if(event.key==='Enter')createSubCat()" onblur="cancelSubCatInp()">`;
+    }
+  });
+  html += '</div>';
+  return html;
+}
+
+function filteredScripts(){
+  let arr = scripts.slice();
+  if(currentCat==='all'){}
+  else if(currentCat==='fav') arr = arr.filter(s=>favs.includes(s.id));
+  else if(currentCat==='none') arr = arr.filter(s=>!s.cat);
+  else {
+    const allowed = new Set([currentCat, ...getDescendants(currentCat)]);
+    arr = arr.filter(s=>allowed.has(s.cat));
+  }
+
+  if(searchQ){
+    const q = searchQ.trim().toLowerCase();
+    const qpi = q.replace(/\s+/g,'');
+    arr = arr.filter(s=>{
+      const title = (s.title||'').toLowerCase();
+      const content = (s.content||'').toLowerCase();
+      const code = (s.code||'').toLowerCase();
+      const tags = (s.tags||[]).join(' ').toLowerCase();
+      const titlePi = toPinyinInitial(s.title||'');
+      return title.includes(q) || content.includes(q) || code.includes(q) || tags.includes(q) || (qpi && titlePi.includes(qpi));
+    });
+  }
+  // 排序：收藏优先，然后按创建时间倒序
+  arr.sort((a,b)=>{
+    const fa = favs.includes(a.id)?1:0, fb = favs.includes(b.id)?1:0;
+    if(fa!==fb) return fb-fa;
+    return (b.createdAt||0)-(a.createdAt||0);
+  });
+  return arr;
+}
+
+function renderScripts(){
+  renderSidebar();
+  const el = document.getElementById('scriptList');
+  const arr = filteredScripts();
+  if(!arr.length){
+    el.innerHTML = `<div class="empty">${searchQ ? '没有匹配的话术' : '暂无话术，点击右上角「＋ 新建话术」开始'}<br><br><b>小技巧</b>：搜索框输入拼音首字母（如 zr 搜「转让」），或直接输关键词</div>`;
+    return;
+  }
+  el.innerHTML = arr.map(s=>scriptHtml(s)).join('');
+}
+
+function scriptHtml(s){
+  const isFav = favs.includes(s.id);
+  const catPath = getFullCatName(s.cat);
+  const color = s.color || getCatColor(s.cat) || '#f59e0b';
+  const tags = (s.tags||[]).map(x=>`<span class="tag">${esc(x)}</span>`).join('');
+  const imgs = (s.images||[]);
+  const imgsHtml = imgs.length ? `<div class="imgs">${imgs.map((d,i)=>`
+    <div class="thumb" title="点击下载图片" onclick="downloadImage('${s.id}',${i})">
+      <img src="${d}" alt="">
+      ${imgs.length>1?`<span class="n">${i+1}</span>`:''}
+    </div>`).join('')}</div>` : '';
+  const copyImgBtn = imgs.length ? `<button class="copy-img-btn" onclick="copyImages('${s.id}')" title="复制图片到剪贴板，去微信粘贴">📷 复制图</button>` : '';
+  return `<div class="script" id="script-${s.id}">
+    <div class="swatch" style="background:${color}"></div>
+    <div class="body">
+      <div class="topline">
+        <span class="title">${esc(s.title)}</span>
+        ${s.code?`<span class="code">${esc(s.code)}</span>`:''}
+        ${catPath&&currentCat==='all'?`<span class="tag" style="background:#eff6ff;color:${color}">${esc(catPath)}</span>`:''}
+        ${tags}
+      </div>
+      ${s.content?`<div class="content">${esc(s.content)}</div>`:''}
+      ${imgsHtml}
+      ${s.content?`<span class="expand" onclick="toggleExpand('${s.id}')">展开/收起</span>`:''}
+    </div>
+    <div class="acts">
+      ${s.content?`<button class="copy-btn" onclick="copyScript('${s.id}')" title="复制到剪贴板">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        复制
+      </button>`:''}
+      ${copyImgBtn}
+      <div class="mini-acts">
+        <button class="icon-btn fav ${isFav?'':'off'}" title="收藏" onclick="toggleFav('${s.id}')">★</button>
+        <button class="icon-btn" title="编辑" onclick="openScriptModal('${s.id}')">✎</button>
+        <button class="icon-btn danger" title="删除" onclick="delScript('${s.id}')">🗑</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleExpand(id){
+  document.getElementById('script-'+id).classList.toggle('expanded');
+}
+
+// ============ 分类操作 ============
+function selectCat(id){
+  currentCat = id;
+  const titles = {all:'全部话术', fav:'★ 收藏话术', none:'未分类话术'};
+  document.getElementById('catTitle').textContent = titles[id] || getFullCatName(id) || '话术';
+  renderScripts();
+}
+function toggleCollapse(id){
+  const c = cats.find(x=>x.id===id);
+  if(c){ c.collapsed = !c.collapsed; saveCats(); renderSidebar(); }
+}
+
+function addCatClick(){
+  addingSubCatTo = null;
+  const el = document.getElementById('addCatBtn');
+  el.outerHTML = `<input class="cat-inp" id="newCatInp" placeholder="一级分类名，回车确认" onkeydown="if(event.key==='Enter')createCat()" onblur="cancelCatInp()">`;
+  document.getElementById('newCatInp').focus();
+}
+function addSubCatClick(parentId){
+  const parent = cats.find(x=>x.id===parentId);
+  if(!parent || parent.level>=3){ alert('最多三级分类'); return; }
+  addingSubCatTo = parentId;
+  renderSidebar();
+  const inp = document.getElementById('newSubCatInp');
+  if(inp) inp.focus();
+}
+function createCat(){
+  const inp = document.getElementById('newCatInp');
+  const name = inp.value.trim();
+  if(name){
+    const colors = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16'];
+    cats.push({id:uid('c'), name, color:colors[cats.length%colors.length], level:1, parentId:null, collapsed:false, sort:nextSort(null)});
+    saveCats(); renderScripts();
+  }
+  cancelCatInp();
+}
+function createSubCat(){
+  const inp = document.getElementById('newSubCatInp');
+  const name = inp.value.trim();
+  const parent = cats.find(x=>x.id===addingSubCatTo);
+  if(name && parent){
+    const colors = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16'];
+    cats.push({id:uid('c'), name, color:parent.color||colors[cats.length%colors.length], level:parent.level+1, parentId:parent.id, collapsed:false, sort:nextSort(parent.id)});
+    parent.collapsed = false;
+    saveCats(); renderScripts();
+  }
+  addingSubCatTo = null;
+}
+function cancelCatInp(){
+  const inp = document.getElementById('newCatInp');
+  if(inp){ inp.outerHTML = `<button class="add-cat" id="addCatBtn" onclick="addCatClick()">＋ 新建一级分类</button>`; }
+}
+function cancelSubCatInp(){
+  addingSubCatTo = null;
+  renderSidebar();
+}
+function moveCat(id, dir){
+  const c = cats.find(x=>x.id===id);
+  if(!c) return;
+  const siblings = getChildren(c.parentId);
+  const idx = siblings.findIndex(x=>x.id===id);
+  if(idx < 0) return;
+  const targetIdx = idx + dir;
+  if(targetIdx < 0 || targetIdx >= siblings.length) return;
+  const target = siblings[targetIdx];
+  const tmp = c.sort;
+  c.sort = target.sort;
+  target.sort = tmp;
+  saveCats();
+  renderSidebar();
+}
+function delCat(id){
+  const c = cats.find(x=>x.id===id);
+  if(!c) return;
+  const descendants = getDescendants(id);
+  const allIds = new Set([id, ...descendants]);
+  if(descendants.length){
+    if(!confirm(`删除「${c.name}」及 ${descendants.length} 个子分类？这些分类下的话术会移入「未分类」。`)) return;
+  } else {
+    if(!confirm(`删除「${c.name}」？该分类下的话术会移入「未分类」。`)) return;
+  }
+  scripts.forEach(s=>{ if(allIds.has(s.cat)) s.cat=''; });
+  cats = cats.filter(x=>!allIds.has(x.id));
+  saveCats(); saveScripts();
+  if(currentCat===id || isDescendant(currentCat, id)) currentCat='all';
+  renderScripts();
+}
+
+// ============ 话术操作 ============
+function openScriptModal(id){
+  editingId = id || null;
+  document.getElementById('scriptModalTitle').textContent = id ? '编辑话术' : '新建话术';
+
+  // 初始化级联分类
+  initCatSelect();
+
+  if(id){
+    const s = scripts.find(x=>x.id===id);
+    document.getElementById('fTitle').value = s.title||'';
+    document.getElementById('fCode').value = s.code||'';
+    document.getElementById('fTags').value = (s.tags||[]).join(',');
+    document.getElementById('fContent').value = s.content||'';
+    editingImages = (s.images||[]).slice();
+    // 反填路径
+    const path = getPath(s.cat);
+    if(path[0]){ document.getElementById('fCat1').value = path[0].id; onCat1Change(); }
+    if(path[1]){ document.getElementById('fCat2').value = path[1].id; onCat2Change(); }
+    if(path[2]) document.getElementById('fCat3').value = path[2].id;
+  } else {
+    document.getElementById('fTitle').value = '';
+    document.getElementById('fCode').value = '';
+    document.getElementById('fTags').value = '';
+    document.getElementById('fContent').value = '';
+    editingImages = [];
+    // 默认选中当前分类
+    if(currentCat && currentCat!=='all' && currentCat!=='fav' && currentCat!=='none'){
+      const path = getPath(currentCat);
+      if(path[0]){ document.getElementById('fCat1').value = path[0].id; onCat1Change(); }
+      if(path[1]){ document.getElementById('fCat2').value = path[1].id; onCat2Change(); }
+      if(path[2]) document.getElementById('fCat3').value = path[2].id;
+      else if(path.length && path[path.length-1].level<3){
+        // 如果当前是叶子但未满三级，不自动占满，让用户选
+      }
+    }
+  }
+  renderEditImages();
+  document.getElementById('scriptModal').classList.add('show');
+  document.getElementById('fTitle').focus();
+}
+function closeScriptModal(){
+  document.getElementById('scriptModal').classList.remove('show');
+  editingId = null;
+  editingImages = [];
+}
+function initCatSelect(){
+  const s1 = document.getElementById('fCat1');
+  s1.innerHTML = '<option value="">无</option>' + getChildren(null).map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  document.getElementById('fCat2').innerHTML = '<option value="">无</option>';
+  document.getElementById('fCat3').innerHTML = '<option value="">无</option>';
+}
+function onCat1Change(){
+  const s1 = document.getElementById('fCat1').value;
+  const s2 = document.getElementById('fCat2');
+  const s3 = document.getElementById('fCat3');
+  if(s1){
+    s2.innerHTML = '<option value="">无</option>' + getChildren(s1).map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  } else {
+    s2.innerHTML = '<option value="">无</option>';
+  }
+  s3.innerHTML = '<option value="">无</option>';
+}
+function onCat2Change(){
+  const s2 = document.getElementById('fCat2').value;
+  const s3 = document.getElementById('fCat3');
+  if(s2){
+    s3.innerHTML = '<option value="">无</option>' + getChildren(s2).map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  } else {
+    s3.innerHTML = '<option value="">无</option>';
+  }
+}
+function getSelectedCat(){
+  return document.getElementById('fCat3').value || document.getElementById('fCat2').value || document.getElementById('fCat1').value || '';
+}
+function saveScript(){
+  const title = document.getElementById('fTitle').value.trim();
+  const content = document.getElementById('fContent').value.trim();
+  if(!title){ alert('请输入标题'); return; }
+  if(!content && !editingImages.length){ alert('请输入话术正文或添加图片'); return; }
+  const data = {
+    title,
+    code: document.getElementById('fCode').value.trim().toLowerCase(),
+    content,
+    cat: getSelectedCat(),
+    tags: document.getElementById('fTags').value.split(/[,，]/).map(s=>s.trim()).filter(Boolean),
+    images: editingImages.slice()
+  };
+  if(editingId){
+    const s = scripts.find(x=>x.id===editingId);
+    Object.assign(s, data, {updatedAt:Date.now()});
+  } else {
+    scripts.push({id:uid('s'), ...data, color:getCatColor(data.cat), createdAt:Date.now(), updatedAt:Date.now()});
+  }
+  saveScripts();
+  closeScriptModal();
+  renderScripts();
+}
+
+// ============ 图片处理 ============
+function renderEditImages(){
+  const el = document.getElementById('fImages');
+  el.innerHTML = editingImages.map((d,i)=>`
+    <div class="img-thumb">
+      <img src="${d}" alt="">
+      <button class="rm" title="删除" onclick="editingImages.splice(${i},1);renderEditImages()">✕</button>
+    </div>`).join('');
+}
+
+function addImageClick(){ document.getElementById('imgFile').click(); }
+
+function onImagePick(e){
+  const files = Array.from(e.target.files||[]);
+  e.target.value = '';
+  files.forEach(f=>{ compressImage(f).then(d=>{ editingImages.push(d); renderEditImages(); }); });
+}
+
+function compressImage(file, maxW=900, quality=0.82){
+  return new Promise(resolve=>{
+    const reader = new FileReader();
+    reader.onload = ev=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const scale = Math.min(1, maxW / img.width);
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0,0,w,h);
+        ctx.drawImage(img, 0, 0, w, h);
+        // 有透明背景的图用 png，否则 jpeg 更小
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = ()=>resolve('');
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// 粘贴图片：编辑话术弹窗打开时，Ctrl+V 可直接把截图/图片粘贴进来
+function onPasteImages(e){
+  const modal = document.getElementById('scriptModal');
+  if(!modal.classList.contains('show')) return;
+  const items = (e.clipboardData && e.clipboardData.items) || [];
+  let hasImg = false;
+  for(const it of items){
+    if(it.type && it.type.startsWith('image/')){
+      hasImg = true;
+      const file = it.getAsFile();
+      if(file){ compressImage(file).then(d=>{ if(d){ editingImages.push(d); renderEditImages(); } }); }
+    }
+  }
+  if(hasImg) e.preventDefault();
+}
+
+function copyImage(dataUrl){
+  return fetch(dataUrl).then(r=>r.blob()).then(blob=>{
+    return navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+  });
+}
+
+async function copyImages(id){
+  const s = scripts.find(x=>x.id===id);
+  if(!s || !(s.images||[]).length) return;
+  try{
+    const blobs = await Promise.all((s.images||[]).map(d=>fetch(d).then(r=>r.blob())));
+    const items = new ClipboardItem({'image/png': blobs[0]});
+    // 剪贴板通常一次一张图，这里复制第一张；多张时提示逐张复制
+    await navigator.clipboard.write([items]);
+    stats.copy = (stats.copy||0) + 1;
+    saveStats();
+    document.getElementById('copyCount').textContent = stats.copy;
+    showToast('图片已复制，去微信 Ctrl+V 粘贴');
+  }catch(e){
+    showToast('复制图片失败，请点击缩略图下载后手动发送');
+  }
+}
+
+function downloadImage(id, idx){
+  const s = scripts.find(x=>x.id===id);
+  const d = s && (s.images||[])[idx];
+  if(!d) return;
+  const a = document.createElement('a');
+  a.href = d;
+  a.download = `话术图片-${Date.now()}.jpg`;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function delScript(id){
+  if(!confirm('确认删除这条话术？')) return;
+  scripts = scripts.filter(s=>s.id!==id);
+  favs = favs.filter(f=>f!==id);
+  saveScripts(); saveFavs(); renderScripts();
+}
+function toggleFav(id){
+  if(favs.includes(id)) favs = favs.filter(f=>f!==id);
+  else favs.push(id);
+  saveFavs(); renderScripts();
+}
+
+// ============ 复制 ============
+async function copyText(text){
+  try{
+    await navigator.clipboard.writeText(text);
+    return true;
+  }catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position='fixed'; ta.style.left='-9999px'; ta.style.top='0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    let ok=false;
+    try{ ok = document.execCommand('copy'); }catch(e2){}
+    document.body.removeChild(ta);
+    return ok;
+  }
+}
+
+function fillVars(content){
+  const re = /\{([^{}]+)\}/g;
+  const missing = [];
+  let result = content.replace(re, (m, key)=>{
+    key = key.trim();
+    if(key==='日期') return todayCN();
+    if(vars[key] !== undefined && vars[key] !== '') return vars[key];
+    if(vars[key] !== undefined && vars[key] === '') { missing.push(key); return m; }
+    missing.push(key);
+    return m;
+  });
+  return {result, missing};
+}
+
+let pendingFill = {};
+
+function copyScript(id){
+  const s = scripts.find(x=>x.id===id);
+  if(!s) return;
+  const {result, missing} = fillVars(s.content);
+  const uniq = [...new Set(missing)];
+  if(uniq.length){
+    pendingFill = {content: s.content, keys: uniq};
+    const list = document.getElementById('fillList');
+    list.innerHTML = uniq.map(k=>`
+      <div class="fg">
+        <label>{${esc(k)}}</label>
+        <input class="fill-inp" data-key="${esc(k)}" placeholder="填写 {${esc(k)}} 的值，留空则保留原样">
+      </div>`).join('');
+    document.getElementById('fillModal').classList.add('show');
+    const first = list.querySelector('input'); if(first) first.focus();
+  } else {
+    doCopy(result);
+  }
+}
+
+function confirmFill(){
+  const inputs = document.querySelectorAll('#fillList .fill-inp');
+  const vals = {};
+  inputs.forEach(inp=>{ vals[inp.dataset.key] = inp.value.trim(); });
+  document.getElementById('fillModal').classList.remove('show');
+  let content = pendingFill.content;
+  pendingFill.keys.forEach(k=>{
+    if(vals[k]) content = content.split('{'+k+'}').join(vals[k]);
+  });
+  doCopy(content);
+}
+function closeFillModal(){ document.getElementById('fillModal').classList.remove('show'); pendingFill={}; }
+
+function doCopy(text){
+  copyText(text).then(ok=>{
+    stats.copy = (stats.copy||0) + 1;
+    saveStats();
+    document.getElementById('copyCount').textContent = stats.copy;
+    showToast(ok ? '已复制，去粘贴吧（Ctrl+V）' : '复制失败，请手动选中复制');
+  });
+}
+
+// ============ 变量管理 ============
+function openVarsModal(){
+  renderVarList();
+  document.getElementById('varsModal').classList.add('show');
+}
+function closeVarsModal(){ document.getElementById('varsModal').classList.remove('show'); }
+function renderVarList(){
+  const el = document.getElementById('varList');
+  const keys = Object.keys(vars);
+  if(!keys.length){ el.innerHTML = '<div class="empty" style="padding:12px">暂无变量，下方添加</div>'; return; }
+  el.innerHTML = keys.map(k=>`
+    <div class="var-row">
+      <span class="k">{${esc(k)}}</span>
+      <input value="${esc(vars[k])}" placeholder="默认值（留空则复制时询问）" oninput="vars['${esc(k)}']=this.value;saveVars()">
+      <button onclick="delVar('${esc(k)}')">✕</button>
+    </div>`).join('');
+}
+function addVar(){
+  let k = document.getElementById('vKey').value.trim();
+  const v = document.getElementById('vVal').value.trim();
+  if(!k){ alert('请输入变量名'); return; }
+  k = k.replace(/[{}]/g,'');
+  vars[k] = v;
+  saveVars();
+  document.getElementById('vKey').value='';
+  document.getElementById('vVal').value='';
+  renderVarList();
+}
+function delVar(k){
+  delete vars[k];
+  saveVars();
+  renderVarList();
+}
+function varKeyInput(){}
+
+// ============ 导入导出 ============
+function openDataModal(){ document.getElementById('dataModal').classList.add('show'); }
+function closeDataModal(){ document.getElementById('dataModal').classList.remove('show'); }
+function exportData(){
+  const payload = {app:'biz-toolbox-huashu', version:1, exportedAt:new Date().toISOString(), scripts, cats, vars};
+  const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const d = new Date();
+  const p = n=>String(n).padStart(2,'0');
+  const ts = `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`;
+  const a = document.createElement('a');
+  a.href = url; a.download = `话术库备份-${ts}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  showToast('已导出话术库');
+}
+function importData(e){
+  const f = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const obj = JSON.parse(reader.result);
+      if(!Array.isArray(obj.scripts) || !Array.isArray(obj.cats)){ alert('文件格式不正确：缺少 scripts / cats 字段'); return; }
+      scripts = obj.scripts; cats = obj.cats; vars = obj.vars||defaultVars();
+      saveScripts(); saveCats(); saveVars();
+      renderScripts();
+      showToast('导入成功，共 ' + scripts.length + ' 条话术');
+    }catch(err){ alert('导入失败：请选择正确的话术库备份文件'); }
+  };
+  reader.readAsText(f);
+}
+
+// ============ Toast ============
+let toastTimer = null;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+// ============ 快捷键 ============
+document.addEventListener('keydown', (e)=>{
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){
+    e.preventDefault();
+    document.getElementById('search').focus();
+  }
+  if(e.key==='Escape'){
+    document.querySelectorAll('.modal.show').forEach(m=>m.classList.remove('show'));
+    pendingFill={};
+  }
+});
+// 粘贴图片（编辑话术弹窗打开时生效）
+document.addEventListener('paste', onPasteImages);
+
+// ============ 初始化 ============
+load();
+document.getElementById('todayLabel').textContent = '今天 ' + todayCN();
+document.getElementById('copyCount').textContent = stats.copy || 0;
+selectCat('all');
+</script>
+</body>
+</html>

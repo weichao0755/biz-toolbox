@@ -8,7 +8,7 @@
     <div class="kb-grid">
       <a v-for="kb in links" :key="kb.name"
         class="kb-card" :href="kb.url" target="_blank" rel="noopener">
-        <div class="kb-icon" :style="{ background: kb.color + '1a', color: kb.color }">{{ kb.icon }}</div>
+        <div class="kb-icon" :style="{ background: kb.color + '1a', color: kb.color }" v-html="kb.iconSvg"></div>
         <div class="kb-info">
           <div class="kb-name">{{ kb.name }}</div>
           <div class="kb-desc">{{ kb.desc }}</div>
@@ -53,10 +53,10 @@ const links = KB_LINKS
   transform: translateY(-2px);
 }
 .kb-icon {
-  width: 52px; height: 52px; border-radius: 13px; flex-shrink: 0;
+  width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  font-size: 22px; font-weight: 600;
 }
+.kb-icon :deep(svg) { width: 22px; height: 22px; display: block; transform: scale(.72); }
 .kb-info { flex: 1; min-width: 0; }
 .kb-name { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
 .kb-desc { font-size: 12.5px; color: var(--text-2); line-height: 1.55; margin-bottom: 8px; }

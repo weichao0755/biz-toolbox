@@ -6,106 +6,130 @@
 <title>企业资质评估助手 - 网页版</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#F3F4F6;color:#1F2937;min-height:100vh}
-header{background:linear-gradient(135deg,#1E3A8A,#2563EB);color:#fff;padding:16px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#faf7f2;color:#2a2118;min-height:100vh}
+header{background:linear-gradient(120deg,#fffdf9,#fdf3e3,#fbeccb);color:#2a2118;padding:16px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 header h1{font-size:19px}
-header .sub{font-size:12px;opacity:.85}
+header .sub{font-size:12px;color:#6b5d4a}
 .type-tabs{display:flex;gap:6px;margin-left:auto}
-.type-tabs button{border:none;border-radius:8px;padding:8px 14px;font-size:13px;color:#D1D5DB;background:rgba(255,255,255,.12);cursor:pointer}
-.type-tabs button.active{background:#fff;color:#1E3A8A;font-weight:bold}
+.type-tabs button{border:1px solid #ece3d6;border-radius:8px;padding:8px 14px;font-size:13px;color:#6b5d4a;background:#fffefb;cursor:pointer}
+.type-tabs button.active{background:#fffefb;color:#b45309;border-color:#e0901a;font-weight:bold}
 .wrap{max-width:960px;margin:22px auto;padding:0 16px;display:flex;gap:18px;align-items:flex-start}
-.side{width:230px;background:#fff;border-radius:12px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.06);position:sticky;top:16px;flex-shrink:0}
-.side button{display:block;width:100%;text-align:left;border:none;background:none;padding:10px 12px;font-size:13px;border-radius:8px;color:#374151;cursor:pointer;margin-bottom:2px}
-.side button.active{background:#2563EB;color:#fff;font-weight:bold}
+.side{width:230px;background:#fff;border-radius:12px;padding:12px;box-shadow:0 1px 3px rgba(180,120,40,.06);position:sticky;top:16px;flex-shrink:0}
+.side button{display:block;width:100%;text-align:left;border:none;background:none;padding:10px 12px;font-size:13px;border-radius:8px;color:#3a3228;cursor:pointer;margin-bottom:2px}
+.side button.active{background:#e0901a;color:#fff;font-weight:bold}
 .side button.done::after{content:"✓";float:right;color:#16A34A;font-weight:bold}
 .side button.active.done::after{color:#fff}
-.main{flex:1;background:#fff;border-radius:12px;padding:26px 28px;box-shadow:0 1px 3px rgba(0,0,0,.06);min-height:520px}
-.main h2{font-size:17px;color:#1E3A8A;margin-bottom:4px}
-.main .hint{font-size:12px;color:#9CA3AF;margin-bottom:16px}
+.main{flex:1;background:#fff;border-radius:12px;padding:26px 28px;box-shadow:0 1px 3px rgba(180,120,40,.06);min-height:520px}
+.main h2{font-size:17px;color:#7a3e07;margin-bottom:4px}
+.main .hint{font-size:12px;color:#9a8a72;margin-bottom:16px}
 .frow{display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap}
 .fitem{flex:1;min-width:220px}
-.fitem label{display:block;font-size:12.5px;color:#4B5563;margin-bottom:4px}
-.fitem .src-note{display:block;font-size:11px;color:#94A3B8;margin:3px 0 2px;line-height:1.5}
-.step-help{background:#F0F9FF;border:1px solid #BAE6FD;border-left:4px solid #0EA5E9;border-radius:8px;padding:10px 13px;margin:6px 0 14px;font-size:12.5px;color:#0C4A6E;line-height:1.85}
-.step-help b{color:#0369A1}
-.step-help .h-m{font-weight:700;color:#075985;display:block;margin-bottom:3px}
+.fitem label{display:block;font-size:12.5px;color:#4a4035;margin-bottom:4px}
+.fitem .src-note{display:block;font-size:11px;color:#9a8a72;margin:3px 0 2px;line-height:1.5}
+.step-help{background:#fdf6ec;border:1px solid #f3d9ab;border-left:4px solid #e0901a;border-radius:8px;padding:10px 13px;margin:6px 0 14px;font-size:12.5px;color:#6b3e07;line-height:1.85}
+.step-help b{color:#a85509}
+.step-help .h-m{font-weight:700;color:#7a3e07;display:block;margin-bottom:3px}
 .list-scroll{overflow-x:auto}
-.fitem input,.fitem select{width:100%;padding:8px 10px;border:1px solid #D1D5DB;border-radius:8px;font-size:13.5px;font-family:inherit;background:#fff}
-.fitem input:focus,.fitem select:focus{outline:2px solid #93C5FD;border-color:#3B82F6}
+.fitem input,.fitem select{width:100%;padding:8px 10px;border:1px solid #e8dcd0;border-radius:8px;font-size:13.5px;font-family:inherit;background:#fff}
+.fitem textarea{width:100%;padding:8px 10px;border:1px solid #e8dcd0;border-radius:8px;font-size:13.5px;font-family:inherit;background:#fff;resize:vertical;min-height:72px;line-height:1.6}
+.fitem input:focus,.fitem select:focus,.fitem textarea:focus{outline:2px solid #f3c98a;border-color:#f0a93c}
 .fitem input.chk{width:auto;transform:scale(1.15);margin-right:6px}
 .tools{display:flex;gap:8px;margin-top:16px;align-items:center;flex-wrap:wrap}
 .btn{border:none;border-radius:8px;padding:9px 20px;font-size:13.5px;cursor:pointer;font-family:inherit}
-.btn-primary{background:#2563EB;color:#fff}
-.btn-primary:hover{background:#1D4ED8}
+.btn-primary{background:#b45309;color:#fff}
+.btn-primary:hover{background:#b45309}
 .btn-green{background:#16A34A;color:#fff}
 .btn-green:hover{background:#15803D}
-.btn-ghost{background:#E5E7EB;color:#374151}
-.btn-ghost:hover{background:#D1D5DB}
+.btn-ghost{background:#fffefb;color:#2a2118;border:1px solid #ece3d6}
+.btn-ghost:hover{background:#fbf5ea;border-color:#e0901a}
 .btn-danger{background:#FEE2E2;color:#DC2626}
 .spacer{flex:1}
 table.list{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
-table.list th{background:#EFF6FF;color:#1E3A8A;padding:8px;text-align:left;font-weight:600}
-table.list td{padding:7px 8px;border-bottom:1px solid #F3F4F6}
-table.list tr:hover{background:#F8FAFC}
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;z-index:50}
-.modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:14px;padding:24px;width:460px;max-width:94vw;z-index:51;display:none;box-shadow:0 10px 40px rgba(0,0,0,.2)}
-.modal h3{margin-bottom:12px;font-size:15px}
+table.list th{background:#fdf4e6;color:#7a3e07;padding:8px;text-align:left;font-weight:600}
+table.list td{padding:7px 8px;border-bottom:1px solid #faf7f2}
+table.list tr:hover{background:#faf7f2}
+.modal-bg{position:fixed;inset:0;background:rgba(42,26,10,.45);display:none;z-index:50}
+.modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:14px;padding:0;width:460px;max-width:94vw;height:min(620px,88vh);box-sizing:border-box;z-index:51;display:none;flex-direction:column;box-shadow:0 10px 40px rgba(42,33,24,.15)}
+.modal h3{margin-bottom:12px;font-size:15px;flex-shrink:0}
+#modalBody{flex:1;overflow:auto;min-height:0;padding:24px}
 .report{font-size:14px}
-.report .cover{background:linear-gradient(135deg,#1E3A8A,#2563EB);color:#fff;border-radius:12px;padding:26px;margin-bottom:16px}
+.report .cover{background:linear-gradient(120deg,#fffdf9,#fdf3e3,#fbeccb);color:#2a2118;border-radius:12px;padding:26px;margin-bottom:16px}
 .report .cover .t{font-size:22px;font-weight:bold;margin-bottom:4px}
 .report .cover .sc{font-size:44px;font-weight:bold;margin:8px 0 2px}
 .report .cover .bd{display:inline-block;padding:3px 14px;border-radius:20px;font-size:13px;font-weight:bold;margin-top:6px}
-.report .card{background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:16px;margin-bottom:14px}
-.report h3{font-size:15px;color:#1E3A8A;margin-bottom:10px;border-left:4px solid #2563EB;padding-left:8px}
+.report .card{background:#fffefb;border:1px solid #ece3d6;border:1px solid #f2e6d8;border-radius:10px;padding:16px;margin-bottom:14px}
+.report h3{font-size:15px;color:#7a3e07;margin-bottom:10px;border-left:4px solid #e0901a;padding-left:8px}
 .report table{width:100%;border-collapse:collapse;font-size:12.5px}
-.report td,.report th{padding:7px 9px;border-bottom:1px solid #E5E7EB;text-align:left}
-.report th{background:#EFF6FF}
+.report td,.report th{padding:7px 9px;border-bottom:1px solid #f2e6d8;text-align:left}
+.report th{background:#fdf4e6}
 .dim-row{display:flex;align-items:center;margin:8px 0;font-size:13px}
 .dim-name{width:150px;font-weight:600}
-.dim-bar{flex:1;height:14px;background:#E5E7EB;border-radius:7px;overflow:hidden;margin:0 8px}
+.dim-bar{flex:1;height:14px;background:#f2e6d8;border-radius:7px;overflow:hidden;margin:0 8px}
 .dim-fill{height:100%;border-radius:7px}
 .dim-score{width:60px;text-align:right;font-weight:bold}
-.dim-note{font-size:12px;color:#6B7280;margin:2px 0 8px 34px}
+.dim-note{font-size:12px;color:#6b5d4a;margin:2px 0 8px 34px}
 .diag{border-radius:8px;padding:11px 13px;margin:8px 0;font-size:13px}
 .diag ul{margin:5px 0 0 18px}
 .diag li{margin:3px 0}
 .ok{color:#16A34A;font-weight:bold}.bad{color:#DC2626;font-weight:bold}
-.phase{background:#F8FAFC;border:1px solid #E5E7EB;border-radius:10px;padding:12px 14px;margin:9px 0;font-size:13px}
-.phase b{color:#1E3A8A}
+.phase{background:#faf7f2;border:1px solid #f2e6d8;border-radius:10px;padding:12px 14px;margin:9px 0;font-size:13px}
+.phase b{color:#7a3e07}
 .phase ul{margin:6px 0 0 18px}
 .mats{columns:2;font-size:13px;margin-left:18px}
 .mats li{margin:3px 0}
-.ai-content{font-size:13.5px;line-height:1.9;color:#1F2937;white-space:pre-wrap;margin-top:8px}
+.ai-content{font-size:13.5px;line-height:1.9;color:#2a2118;white-space:pre-wrap;margin-top:8px}
 /* 申报方案 · 结构化排版（Markdown 渲染） */
-.plan-body{font-size:13.5px;line-height:1.95;color:#1F2937;margin-top:6px}
-.plan-body h2{font-size:15px;color:#1E3A8A;margin:16px 0 6px;padding-left:8px;border-left:4px solid #2563EB}
-.plan-body h3{font-size:14px;color:#1E3A8A;margin:12px 0 4px;padding-left:6px;border-left:3px solid #93C5FD}
-.plan-body h4{font-size:13.5px;color:#374151;margin:10px 0 4px;font-weight:700}
+.plan-body{font-size:13.5px;line-height:1.95;color:#2a2118;margin-top:6px}
+.plan-body h2{font-size:15px;color:#7a3e07;margin:16px 0 6px;padding-left:8px;border-left:4px solid #e0901a}
+.plan-body h3{font-size:14px;color:#7a3e07;margin:12px 0 4px;padding-left:6px;border-left:3px solid #f3c98a}
+.plan-body h4{font-size:13.5px;color:#3a3228;margin:10px 0 4px;font-weight:700}
 .plan-body p{margin:6px 0}
 .plan-body ul,.plan-body ol{margin:6px 0 6px 22px}
 .plan-body li{margin:3px 0}
 .plan-body table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}
-.plan-body th{background:#EFF6FF;color:#1E3A8A;padding:7px 9px;border-bottom:1px solid #E5E7EB;text-align:left;font-weight:600}
-.plan-body td{padding:7px 9px;border-bottom:1px solid #E5E7EB;text-align:left;vertical-align:top}
-.plan-body blockquote{background:#F8FAFC;border-left:4px solid #2563EB;padding:8px 12px;margin:8px 0;border-radius:0 6px 6px 0;color:#4B5563}
-.plan-body hr{border:none;border-top:1px solid #E5E7EB;margin:14px 0}
-.plan-body strong{color:#1E3A8A;font-weight:700}
+.plan-body th{background:#fdf4e6;color:#7a3e07;padding:7px 9px;border-bottom:1px solid #f2e6d8;text-align:left;font-weight:600}
+.plan-body td{padding:7px 9px;border-bottom:1px solid #f2e6d8;text-align:left;vertical-align:top}
+.plan-body blockquote{background:#faf7f2;border-left:4px solid #e0901a;padding:8px 12px;margin:8px 0;border-radius:0 6px 6px 0;color:#4a4035}
+.plan-body hr{border:none;border-top:1px solid #f2e6d8;margin:14px 0}
+.plan-body strong{color:#7a3e07;font-weight:700}
 .ai-tab{display:flex;gap:6px;margin-bottom:12px}
-.ai-tab button{border:none;border-radius:8px;padding:8px 16px;font-size:13px;background:#E5E7EB;color:#374151;cursor:pointer;font-family:inherit}
-.ai-tab button.active{background:#7C3AED;color:#fff;font-weight:bold}
-.ai-pre{background:#1F2937;color:#E5E7EB;border-radius:8px;padding:12px;font-size:12px;max-height:280px;overflow:auto;white-space:pre-wrap;font-family:Consolas,Monaco,monospace;line-height:1.5}
-.ai-area{width:100%;min-height:200px;border:1px solid #D1D5DB;border-radius:8px;padding:10px;font-size:13px;font-family:inherit;resize:vertical}
+.ai-tab button{border:none;border-radius:8px;padding:8px 16px;font-size:13px;background:#f2e6d8;color:#3a3228;cursor:pointer;font-family:inherit}
+.ai-tab button.active{background:#b45309;color:#fff;font-weight:bold}
+.ai-pre{background:#2a2118;color:#f2e6d8;border-radius:8px;padding:12px;font-size:12px;max-height:280px;overflow:auto;white-space:pre-wrap;font-family:Consolas,Monaco,monospace;line-height:1.5}
+.ai-area{width:100%;min-height:200px;border:1px solid #e8dcd0;border-radius:8px;padding:10px;font-size:13px;font-family:inherit;resize:vertical}
 .ai-switch{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:10px}
 .ai-switch input{transform:scale(1.15)}
 .modal{width:560px}
-footer{text-align:center;color:#9CA3AF;font-size:12px;padding:20px}
+/* AI 配置弹窗统一视觉 */
+.ai-head{display:flex;align-items:center;justify-content:space-between;margin:-24px -24px 16px;padding:16px 22px;background:linear-gradient(120deg,#fffdf9,#fdf3e3,#fbeccb);border-radius:14px 14px 0 0;color:#2a2118;border-bottom:1px solid #ece3d6}
+.ai-head h3{margin:0;font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px}
+.ai-head h3::before{content:'⚙';font-size:15px;opacity:.9}
+.ai-warn{background:#fff4f4;border:1px solid #f9c5c6;border-left:4px solid #e5484d;color:#b42318;font-size:12px;padding:12px 14px;border-radius:10px;line-height:1.6;margin-bottom:16px}
+.ai-warn b{color:#b42318}
+.ai-section{background:#faf7f2;border:1px solid #faf4ea;border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.ai-section-title{font-size:12.5px;font-weight:700;color:#7a3e07;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.ai-section-title::before{content:'';width:4px;height:14px;background:linear-gradient(180deg,#f0a93c,#7a3e07);border-radius:2px}
+.ai-actions{display:flex;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid #faf4ea;justify-content:flex-end}
+.ai-actions .btn{padding:8px 18px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;border:1px solid transparent;transition:.15s}
+.ai-actions .btn-primary{background:linear-gradient(135deg,#b45309,#e0901a);color:#fff;border:none}
+.ai-actions .btn-primary:hover{filter:brightness(1.1)}
+.ai-actions .btn-ghost{background:#fff;color:#3a3228;border-color:#e8dcd0}
+.ai-actions .btn-ghost:hover{border-color:#f0a93c;color:#7a3e07;background:#fdf4e6}
+/* AI 配置弹窗表单组 */
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:12.5px;color:#4a4035;margin-bottom:5px;font-weight:500}
+.fg label span{font-weight:400}
+.fg input[type=text],.fg select{width:100%;border:1px solid #e8dcd0;border-radius:7px;padding:9px 11px;font-size:13.5px;font-family:inherit;background:#fff;transition:.15s;color:#2a2118;box-sizing:border-box}
+.fg input:focus,.fg select:focus{outline:none;border-color:#e0901a;box-shadow:0 0 0 2px rgba(224,144,26,.12)}
+.fg input::placeholder{color:#9a8a72}
+footer{text-align:center;color:#9a8a72;font-size:12px;padding:20px}
 .ai-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;gap:12px}
-.ai-loading .spinner{width:36px;height:36px;border:3px solid #E5E7EB;border-top-color:#7C3AED;border-radius:50%;animation:spin .8s linear infinite}
+.ai-loading .spinner{width:36px;height:36px;border:3px solid #f2e6d8;border-top-color:#b45309;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.ai-stream{background:#1F2937;color:#E5E7EB;border-radius:8px;padding:14px;font-size:12.5px;max-height:380px;overflow:auto;white-space:pre-wrap;font-family:Consolas,Monaco,monospace;line-height:1.6;min-height:200px}
-.ai-stream::-webkit-scrollbar{width:6px}.ai-stream::-webkit-scrollbar-thumb{background:#4B5563;border-radius:3px}
-.ai-status{font-size:12.5px;color:#6B7280;text-align:center}
-.gear-btn{border:none;border-radius:8px;padding:6px 12px;font-size:13px;background:rgba(255,255,255,.15);color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap}
+.ai-stream{background:#2a2118;color:#f2e6d8;border-radius:8px;padding:14px;font-size:12.5px;max-height:46vh;overflow:auto;white-space:pre-wrap;font-family:Consolas,Monaco,monospace;line-height:1.6;min-height:120px}
+.ai-stream::-webkit-scrollbar{width:6px}.ai-stream::-webkit-scrollbar-thumb{background:#4a4035;border-radius:3px}
+.ai-status{font-size:12.5px;color:#6b5d4a;text-align:center}
+.gear-btn{border:1px solid #ece3d6;border-radius:8px;padding:6px 12px;font-size:13px;background:#fffefb;color:#2a2118;cursor:pointer;font-family:inherit;white-space:nowrap}
 .gear-btn:hover{background:rgba(255,255,255,.25)}
 @media(max-width:760px){.wrap{flex-direction:column}.side{width:100%;position:static;display:flex;flex-wrap:wrap}.side button{width:auto}}
 @media print{
@@ -113,13 +137,13 @@ footer{text-align:center;color:#9CA3AF;font-size:12px;padding:20px}
   body{background:#fff}
   .wrap{max-width:100%;margin:0;padding:0;display:block}
   .main{box-shadow:none;border-radius:0;padding:8px;min-height:auto}
-  .report .cover{background:#1E3A8A!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .report .card{border:1px solid #E5E7EB}
+  .report .cover{background:#7a3e07!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .report .card{border:1px solid #f2e6d8}
 }
 /* 生成记录 */
-.rec-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border:1px solid #E5E7EB;border-radius:10px;margin-bottom:10px;background:#fff}
-.rec-t{font-weight:600;font-size:13.5px;color:#1F2937;line-height:1.5}
-.rec-s{font-size:12px;color:#6B7280;margin-top:3px}
+.rec-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border:1px solid #f2e6d8;border-radius:10px;margin-bottom:10px;background:#fff}
+.rec-t{font-weight:600;font-size:13.5px;color:#2a2118;line-height:1.5}
+.rec-s{font-size:12px;color:#6b5d4a;margin-top:3px}
 .rec-ops{display:flex;gap:6px;flex-shrink:0;align-items:center}
 .rec-ops .btn{padding:5px 10px;font-size:12px;white-space:nowrap}
 .rec-badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:6px;font-weight:600;vertical-align:1px}
@@ -130,7 +154,7 @@ footer{text-align:center;color:#9CA3AF;font-size:12px;padding:20px}
 <header>
   <div><h1>企业资质评估助手</h1><div class="sub">高新技术企业 · 科技型中小企业 · 专精特新 一键评估</div></div>
   <div class="type-tabs" id="typeTabs"></div>
-  <button class="gear-btn" onclick="openAiSettings()">⚙️ AI设置</button>
+  <button class="gear-btn" onclick="openAiConfigDialog()">⚙ AI 配置</button>
   <button class="gear-btn" onclick="openRecords()">📋 记录</button>
 </header>
 
@@ -142,7 +166,7 @@ footer{text-align:center;color:#9CA3AF;font-size:12px;padding:20px}
 <div class="modal-bg" id="modalBg" onclick="closeModal()"></div>
 <div class="modal" id="modal"><div id="modalBody"></div></div>
 
-<footer>评分数据仅存本机浏览器 · AI分析时数据将发送至你配置的AI平台 · 企业资质评估助手 v2.9.1</footer>
+<footer>评分数据仅存本机浏览器 · AI 接口在本工具内独立配置 · 企业资质评估助手 v2.9.2</footer>
 
 <script>
 /* docx.min.js 内联 */
@@ -163,6 +187,7 @@ const STEPS = {
       ["field","所属技术领域","select",["电子信息","生物与新医药","航空航天","新材料","高技术服务","新能源与节能","资源与环境","先进制造与自动化"],"对照《国家重点支持的高新技术领域》八大领域选择"],
       ["staff_total","职工总人数","number","","来源：上年度社保缴纳/个税申报人数、企业花名册"],
       ["staff_tech","科技人员数","number","","来源：科技人员名单（岗位职责+社保佐证），无台账可按项目参与人估算"],
+      ["supplement","补充信息（自由填写）","textarea","可填写：客户特殊诉求、已具备的资源/材料、敏感点、希望方案强调的方向等。AI 生成申报方案时会充分考虑这些内容。","这些内容会直接影响 AI 生成的申报方案"],
     ]},
     {title:"知识产权清单",
      hint:"知识产权是高新认定 30 分评分核心。向客户收集【知识产权证书】，或让客户登录国家知识产权局官网/中国版权保护中心查询登记信息。\n· 取得方式：软著登记证书会注明「原始取得/继受取得」；专利看转让合同、著录项目变更；独占许可需提供合同（须 5 年以上）——自主研发得分最高。\n· 授权状态：受理中/审查中的【不计分】，只有拿到证书（已授权）才算数。\n· 是否核心支撑：该知识产权是否直接用于公司主营产品/服务的技术实现（决定 8 分档）。\n· 类型：发明专利、集成电路布图设计等 I 类得分更高；实用新型/外观设计/软著属 II 类，在高新认定中【只能使用一次】（上年度已用于申报高新的不能重复使用）。",
@@ -218,11 +243,13 @@ const STEPS = {
      fields:[
       ["name","企业名称","text","","来源：营业执照"],
       ["city","企业所在城市(如:北京)","text","","来源：营业执照注册地址"],
+      ["founded","成立日期(如2023-05-10)","text","","来源：营业执照成立日期（自动判定注册满一年，部分省份要求）"],
       ["staff_total","职工总人数","number","","来源：上年度社保/个税申报人数"],
       ["staff_tech","科技人员数","number","","来源：科技人员名单（岗位+社保佐证）"],
       ["apply_year","期望申请年份","text","","留空则按当前年份规划；填写后围绕该年份规划（如填2027年，则财务数据按2026年度口径；年份可自由填写任意未来年份）"],
       ["revenue","上年度销售收入(元)","number","","来源：审计报告/汇算清缴A100000"],
       ["assets","资产总额(元)","number","","来源：审计报告资产负债表"],
+      ["supplement","补充信息（自由填写）","textarea","可填写：客户特殊诉求、已具备的资源/材料、敏感点、希望方案强调的方向等。AI 生成申报方案时会充分考虑这些内容。","这些内容会直接影响 AI 生成的申报方案"],
     ]},
     {title:"研发投入",
      hint:"· 研发费用：取审计报告研发费用明细，或汇算清缴《A107012 加计扣除表》，或研发费用辅助账（三者口径应一致）。\n· 成本费用支出总额 = 营业成本 + 销售费用 + 管理费用 + 财务费用（利润表科目相加）。\n· 评分规则：研发费占成本费用≥30% 或占营收≥6% 接近满分，占比越高分越高。",
@@ -257,11 +284,13 @@ const STEPS = {
       ["name","企业名称","text","","来源：营业执照"],
       ["city","企业所在城市(如:北京)","text","","来源：营业执照注册地址"],
       ["apply_year","期望申请年份","text","","留空则按当前年份规划；填写后围绕该年份的申报窗口定制方案（年份可自由填写任意未来年份）"],
-      ["market_years","细分市场经营年限(年)","number","","来源：成立时间+细分领域经营记录（需≥2年）"],
+      ["founded","成立日期(如2020-03-15)","text","","来源：营业执照成立日期（自动校验细分市场经营年限上限）"],
+      ["market_years","细分市场经营年限(年)","number","","来源：成立时间+细分领域经营记录（需≥2年，填了成立日期则自动按成立年限约束）"],
       ["revenue_last","上年度营业收入(元)","number","","来源：上年度审计报告"],
       ["rd_cost","上年度研发费用(元)","number","","来源：审计报告研发明细/加计扣除表（需≥100万）"],
       ["staff_total","职工总人数","number","","来源：上年度社保/个税申报人数"],
       ["rd_staff","研发人员数","number","","来源：研发人员名单（岗位职责+社保佐证）"],
+      ["supplement","补充信息（自由填写）","textarea","可填写：客户特殊诉求、已具备的资源/材料、敏感点、希望方案强调的方向等。AI 生成申报方案时会充分考虑这些内容。","这些内容会直接影响 AI 生成的申报方案"],
     ]},
     {title:"专业化指标",
      hint:"· 主营产品收入占比：销售台账/审计报告分产品收入归集（≥70% 拿满分）。\n· 近两年营收增长率：审计报告两个年度营业收入计算（≥15% 拿满分）。\n· 主营领域：对照《产业基础创新发展目录》等，重点产业链/工业六基/战新/未来产业得 5 分。\n· 细分市场地位：需要佐证材料——行业协会排名、客户数量对比、行业报告引用（全国前10 得 5 分）。",
@@ -368,6 +397,13 @@ function scoreGaoxin(d){
 
   const total=ipScore+ts+orgScore+growthScore;
   const vf=d.veto_flags||{};
+  // 注册满365天兜底：报告渲染前若已填成立日期则自动判定（≥365天），保证"待确认"能被自动消除
+  if(!vf.founded_ok && d.founded){
+    const _t=new Date(String(d.founded).trim()).getTime();
+    if(!isNaN(_t) && Date.now()-_t>=365*24*3600*1000) vf.founded_ok=true;
+  }
+  // 技术领域兜底：基本信息已选八大领域任一 → 视为已确认（选项本身即国家重点支持领域）
+  if(!vf.field_ok && d.field) vf.field_ok=true;
   const vetos=[];
   const pushV=(item,req,status,ok)=>vetos.push({item,require:req,status,ok});
   pushV("注册满365天","成立≥1年",vf.founded_ok?"已满足":"待确认",!!vf.founded_ok);
@@ -377,7 +413,7 @@ function scoreGaoxin(d){
   pushV("科技人员占比","≥10%",`${n(d.staff_tech)}/${n(d.staff_total)}=${tr.toFixed(0)}%`,tr>=10);
   const rd=[n(d.rd_0),n(d.rd_1),n(d.rd_2)], rdTotal=rd.reduce((a,b)=>a+b,0), revTotal=rev.reduce((a,b)=>a+b,0);
   const rdr=pct(rdTotal,revTotal), th=rev[2]>=2e8?3:5, gap=Math.max(0,revTotal*th/100-rdTotal);
-  pushV("研发费用占比",`三年研发费/营收≥${th}%`,`${rdr.toFixed(2)}%（缺口约${money(gap)}）`,rdTotal>0&&rdr>=th);
+  pushV("研发费用占比",`三年研发费/营收≥${th}%`,`${rdr.toFixed(2)}%（${rdTotal>0&&rdr>=th?"已达标":"存在缺口，需补充归集"}）`,rdTotal>0&&rdr>=th);
   const htr=pct(d.high_tech_rev,rev[2]);
   pushV("高新收入占比","≥60%（近一年）",d.high_tech_rev?`${htr.toFixed(1)}%`:"未填报",d.high_tech_rev>0&&htr>=60);
   pushV("无重大违法","近一年无重大违法",vf.no_violation?"已确认":"待确认",!!vf.no_violation);
@@ -416,14 +452,16 @@ function scoreKexiao(d){
   pushC("职工总数","≤500人",`${n(d.staff_total)}人`,n(d.staff_total)<=500);
   pushC("销售收入","≤2亿元",money(rev),rev<=2e8);
   pushC("资产总额","≤2亿元",money(n(d.assets)),n(d.assets)<=2e8);
+  const kx_fy=foundedYears(d.founded);
+  conds.push({item:"注册成立满一年",require:"≥1年（部分省份要求）",status:kx_fy===null?"未填（可填成立日期自动判定）":`${kx_fy.toFixed(1)}年`,ok:kx_fy===null||kx_fy>=1,soft:true});
   const dr=d.direct||{};
   const dOk=dr.gaoxin_cert||dr.nat_award3||dr.prov_rd_org||dr.std_lead;
   const direct=[["有效期内高新技术企业",dr.gaoxin_cert],["近5年国家级科技奖励≥3项",dr.nat_award3],["省部级以上研发机构",dr.prov_rd_org],["近5年主导制定标准",dr.std_lead]].map(x=>({name:x[0],ok:!!x[1]}));
-  const condOk=conds.every(c=>c.ok);
+  const condOk=conds.filter(c=>!c.soft).every(c=>c.ok);
   let summary;
   if(dOk) summary=`符合直通车条件（免评分），评价得分 ${total.toFixed(0)}/100`;
   else if(condOk&&total>=60) summary=`评价得分 ${total.toFixed(0)}/100 ≥60分，符合科小入库条件`;
-  else if(!condOk) summary=`基本条件不满足（${conds.filter(c=>!c.ok).map(c=>c.item).join("、")}），不符合入库条件`;
+  else if(!condOk) summary=`基本条件不满足（${conds.filter(c=>!c.ok&&!c.soft).map(c=>c.item).join("、")}），不符合入库条件`;
   else summary=`评价得分 ${total.toFixed(0)}/100，未达60分，需提升${(60-total).toFixed(0)}分`;
   return {type:"kexiao",typeName:"科技型中小企业评价",qualified:condOk&&(dOk||total>=60),total:Math.round(total),passLine:60,
     dimensions:dims,conds,direct,directOk:dOk,diagnoses:diags,summary,meta:{tech_ratio:tr}};
@@ -463,18 +501,21 @@ function scoreZjtx(d){
   const total=prof+refine+special+innov;
   const conds=[];
   const pushC=(item,req,status,ok)=>conds.push({item,require:req,status,ok});
-  pushC("细分市场经营","≥2年",`${my}年`,my>=2);
+  const zj_fy=foundedYears(d.founded);
+  const myEff = zj_fy!==null ? Math.min(my, zj_fy) : my;   // 细分市场经营年限不可能超过成立年限
+  pushC("细分市场经营","≥2年",`${(Math.round(myEff*10)/10)}年${zj_fy!==null&&my>zj_fy?"（超成立年限，按成立年限计）":""}`,myEff>=2);
+  if(zj_fy!==null&&zj_fy<2) conds.push({item:"注册成立年限",require:"≥2年（成立不满2年必不满足细分市场要求）",status:`${zj_fy.toFixed(1)}年`,ok:zj_fy>=2,soft:true});
   const rdCond=rd>=1e6&&(rr>=3||rsr>=10);
   pushC("研发费用","≥100万且占营收≥3%（或研发人员≥10%）",`${money(rd)}，占营收${rr.toFixed(1)}%`,rdCond);
   pushC("上年度营业收入","≥1000万元",money(rev),rev>=1e7);
   const dr=d.direct||{};
   const dOk=dr.nat_award||dr.prov_award||dr.std_lead||dr.nq_listed;
   const direct=[["近2年国家级科技奖励(前三)",dr.nat_award],["近2年省级科技奖励(前三)",dr.prov_award],["近2年主导国际标准",dr.std_lead],["2020年后新三板挂牌",dr.nq_listed]].map(x=>({name:x[0],ok:!!x[1]}));
-  const condOk=conds.every(c=>c.ok);
+  const condOk=conds.filter(c=>!c.soft).every(c=>c.ok);
   let summary;
   if(dOk) summary=`符合创新直通条件（免评分），综合得分 ${total.toFixed(0)}/100`;
   else if(condOk&&total>=60) summary=`综合得分 ${total.toFixed(0)}/100 ≥60分，符合专精特新中小企业认定条件`;
-  else if(!condOk) summary=`认定条件不满足（${conds.filter(c=>!c.ok).map(c=>c.item).join("、")}），暂不符合申报资格`;
+  else if(!condOk) summary=`认定条件不满足（${conds.filter(c=>!c.ok&&!c.soft).map(c=>c.item).join("、")}），暂不符合申报资格`;
   else summary=`综合得分 ${total.toFixed(0)}/100，未达60分，需提升${(60-total).toFixed(0)}分`;
   return {type:"zjtx",typeName:"专精特新中小企业认定",qualified:condOk&&(dOk||total>=60),total:Math.round(total),passLine:60,
     dimensions:dims,conds,direct,directOk:dOk,diagnoses:diags,summary,meta:{rd_ratio:rr}};
@@ -484,6 +525,62 @@ function selVal(raw,def){ if(raw==null||raw==="")return def;
   m=String(raw).match(/^(\d+)$/); if(m)return +m[1];
   const map={"全国前10":3,"全国前20":2,"国家级":3,"省级":2,"市级":1,"四级":4,"三级":3,"二级":2,"一级":1};
   for(const k in map){ if(String(raw).indexOf(k)>=0)return map[k]; } return def; }
+/* ============ 延伸服务推荐（内部销售用） ============
+   评估完成后，把「诊断短板」映射为可向客户推荐、可收费的服务产品；
+   当前类型不达标时，提示转向评估/申报其他资质类型。 */
+const PRODUCTS={
+  ip:{name:"知识产权申请规划",tag:"补短板 · 可收费",desc:"软著/实用新型打包申请、发明专利申请布局，快速补齐评分短板",trigger:"知识产权/科技成果评分不足"},
+  rd:{name:"研发台账建立与调账",tag:"补短板 · 可收费",desc:"研发费用辅助账建立、加计扣除口径调账，把零散投入规范成可申报凭证",trigger:"研发费用不足或缺乏规范化台账"},
+  staff:{name:"研发人员体系搭建",tag:"补短板 · 可收费",desc:"研发岗位梳理、人员名单与社保归集，提升科技人员占比",trigger:"科技/研发人员占比不足"},
+  org:{name:"研发管理制度文件包",tag:"补短板 · 可收费",desc:"立项/辅助账/核算/激励四套制度文件定制（微型企业2-3页/份）",trigger:"研发组织管理材料缺失"},
+  trans:{name:"科技成果转化材料整理",tag:"补短板 · 可收费",desc:"合同、发票、收入流水、验收报告归集整理，凑足转化项",trigger:"科技成果转化项数不足"},
+  fin:{name:"财务规范与专项审计",tag:"补短板 · 可收费",desc:"财务口径梳理、研发费用专项审计报告（高新/科小申报必备）",trigger:"财务成长性/研发费口径不达标"},
+  apply:{name:"资质申报全流程代办",tag:"达标 · 申报",desc:"当前类型已达标，承接材料整理+系统填报+进度跟进，一单到底",trigger:"当前资质评估达标"},
+  grow:{name:"梯度培育规划",tag:"培育 · 等窗口",desc:"年限或数据暂不达标，制定培育时间表，先做科小/高新打基础",trigger:"成立年限或数据暂不满足"}
+};
+const PRODUCT_RULES=[
+  {pid:"ip",  keys:["知识产权","科技成果项"]},
+  {pid:"rd",  keys:["研发费用","研发投入","研发台账","加计扣除","研发费占比"]},
+  {pid:"staff",keys:["科技人员","研发人员占比"]},
+  {pid:"org", keys:["研发组织","管理制度","材料待补齐"]},
+  {pid:"trans",keys:["科技成果转化"]},
+  {pid:"fin", keys:["成长性","销售增长","净资产"]}
+];
+const OTHER_TYPES={gaoxin:"高新技术企业",kexiao:"科技型中小企业",zjtx:"专精特新中小企业"};
+function recommendProducts(r,d){
+  const recs=[];
+  const text=(r.diagnoses||[]).map(x=>x.title+" "+(x.points||[]).join(" ")).join("|")+"|"+(r.conds||r.vetos||[]).map(c=>c.item+" "+c.require+" "+c.status).join("|");
+  for(const rule of PRODUCT_RULES){
+    if(rule.keys.some(k=>text.indexOf(k)>=0) && !recs.some(o=>o.pid===rule.pid)){
+      recs.push({pid:rule.pid,name:PRODUCTS[rule.pid].name,tag:PRODUCTS[rule.pid].tag,desc:PRODUCTS[rule.pid].desc,trigger:PRODUCTS[rule.pid].trigger});
+    }
+  }
+  if(r.qualified && !recs.some(o=>o.pid==="apply")) recs.push({pid:"apply",name:PRODUCTS.apply.name,tag:PRODUCTS.apply.tag,desc:PRODUCTS.apply.desc,trigger:PRODUCTS.apply.trigger});
+  if(!r.qualified){
+    const yearFail=(r.conds||r.vetos||[]).some(c=>String(c.item).indexOf("成立")>=0||String(c.item).indexOf("年限")>=0);
+    recs.push({pid:"grow",name:PRODUCTS.grow.name,tag:PRODUCTS.grow.tag,desc:PRODUCTS.grow.desc,trigger:PRODUCTS.grow.trigger+(yearFail?"（当前成立年限不足）":"")});
+  }
+  return recs;
+}
+function prodCardHtml(r,d){
+  const recs=recommendProducts(r,d);
+  const list=recs.map((p,i)=>`<div style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px dashed #f2e6d8;font-size:13px">
+    <span style="width:22px;height:22px;border-radius:7px;background:#b45309;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">${i+1}</span>
+    <div style="flex:1;min-width:0">
+      <div><b>${esc(p.name)}</b> <span style="font-size:11px;color:#b45309;background:#faf4ea;padding:1px 8px;border-radius:20px;margin-left:6px">${esc(p.tag)}</span></div>
+      <div style="color:#3a3228;margin-top:2px">${esc(p.desc)}</div>
+      <div style="color:#9a8a72;font-size:12px;margin-top:2px">触发：${esc(p.trigger)}</div>
+    </div>
+  </div>`).join("");
+  const others=Object.keys(OTHER_TYPES).filter(k=>k!==atype).map(k=>
+    `<button class="btn btn-ghost" style="margin:4px 8px 0 0" onclick="switchType('${k}')">→ 评估${OTHER_TYPES[k]}</button>`).join("");
+  return `<div class="card" style="border:1px dashed #f3d6a8">
+    <h3>🛒 延伸服务推荐 <span style="font-size:11px;color:#b45309;background:#faf4ea;padding:2px 10px;border-radius:20px">内部使用 · 销售参考</span></h3>
+    <div style="font-size:12px;color:#6b5d4a;margin-bottom:6px">根据本次评估短板自动匹配可向客户推荐并收费的服务；客户当前不符合本资质时，可转向其他类型评估。</div>
+    ${list||'<div style="color:#9a8a72;font-size:13px;padding:6px 0">暂无明显的补短板服务（评估数据较完整），可直接进入「申报方案」。</div>'}
+    <div style="margin-top:8px;font-size:12px;color:#6b5d4a"><b>客户不符合当前类型？</b> ${others||""}</div>
+  </div>`;
+}
 /* 申报年度工具：apply_year 表单字段 -> 数值；recommendYear 按「一次通过」原则推荐申报年度 */
 function applyYearOf(d){
   const y=parseInt(d.apply_year,10);
@@ -502,6 +599,13 @@ function money(v){ v=n(v);
   if(Math.abs(v)>=1e4)return (v/1e4).toLocaleString("zh-CN",{maximumFractionDigits:2})+"万";
   return v.toLocaleString("zh-CN",{maximumFractionDigits:0}); }
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+/* 成立年限（年）：按成立日期与当前日期差值计算；未填/格式错返回 null */
+function foundedYears(fd){
+  if(!fd) return null;
+  const t=new Date(String(fd).trim()).getTime();
+  if(isNaN(t)) return null;
+  return (Date.now()-t)/(365.25*24*3600*1000);
+}
 
 /* ============ 渲染 ============ */
 function render(){
@@ -529,7 +633,13 @@ function saveStep(){
   });
   // 归一化评分引擎依赖字段（兼容历史结构，确保勾选/填写真实生效）
   if(atype==="gaoxin"){
-    d.veto_flags={founded_ok:!!d.vf_founded, field_ok:!!d.vf_field, no_violation:!!d.vf_violation};
+    // 注册满365天：优先按成立日期自动判定（≥365天），未填日期时回退手动勾选
+    let foundedOk=!!d.vf_founded;
+    if(d.founded){
+      const _t=new Date(String(d.founded).trim()).getTime();
+      if(!isNaN(_t)) foundedOk=(Date.now()-_t)>=365*24*3600*1000;
+    }
+    d.veto_flags={founded_ok:foundedOk, field_ok:!!d.vf_field||!!d.field, no_violation:!!d.vf_violation};
     d.high_tech_rev=n(d.ht_rev);
   }
   if(atype==="kexiao") d.direct={gaoxin_cert:!!d.d_gaoxin_cert, nat_award3:!!d.d_nat_award3, prov_rd_org:!!d.d_prov_rd_org, std_lead:!!d.d_std_lead};
@@ -557,7 +667,7 @@ function renderStep(){
       const tds=step.list.map(f=>`<td>${esc(it[f[0]]||"")}</td>`).join("");
       return `<tr onclick="editItem(${idx})">${tds}<td><button class="btn btn-danger" style="padding:3px 8px" onclick="event.stopPropagation();delItem(${idx})">删</button></td></tr>`;
     }).join("");
-    html+=`<div class="list-scroll"><table class="list"><tr>${step.list.map(f=>`<th>${esc(f[1])}</th>`).join("")}<th></th></tr>${rows||'<tr><td colspan="99" style="color:#9CA3AF;text-align:center">暂无记录，点击"添加"录入</td></tr>'}</table></div>`;
+    html+=`<div class="list-scroll"><table class="list"><tr>${step.list.map(f=>`<th>${esc(f[1])}</th>`).join("")}<th></th></tr>${rows||'<tr><td colspan="99" style="color:#9a8a72;text-align:center">暂无记录，点击"添加"录入</td></tr>'}</table></div>`;
     html+='<button class="btn btn-primary" onclick="openAdd()">＋ 添加</button>';
     if(step.extra){
       step.extra.forEach(ex=>{
@@ -585,6 +695,9 @@ function fieldHtml(f,d){
   if(f[2]==="select"){
     const opts=f[3].map(o=>`<option ${String(o)===String(v)?"selected":""}>${esc(o)}</option>`).join("");
     return `<div class="fitem"><label>${esc(f[1])}</label><select id="f_${k}">${opts}</select>${note}</div>`;
+  }
+  if(f[2]==="textarea"){
+    return `<div class="fitem" style="flex-basis:100%"><label>${esc(f[1])}</label><textarea id="f_${k}" rows="3" placeholder="${esc(f[3]||'')}">${esc(v??"")}</textarea>${note}</div>`;
   }
   const isNum=f[2]==="number";
   const ph=(f[0]==="apply_year")?` placeholder="如 2027，可填任意未来年份（留空则按当前年份规划）"`:"";
@@ -619,8 +732,30 @@ function saveItem(idx){
   if(idx>=0) list[idx]=it; else list.push(it);
   persist(); closeModal(); renderStep();
 }
-function showModal(h){ document.getElementById("modalBody").innerHTML=h; document.getElementById("modal").style.display="block"; document.getElementById("modalBg").style.display="block"; }
-function closeModal(){ document.getElementById("modal").style.display="none"; document.getElementById("modalBg").style.display="none"; }
+let _bodyOverflow='';
+function showModal(h){
+  const modal=document.getElementById("modal"), body=document.body;
+  document.getElementById("modalBody").innerHTML=h;
+  modal.style.display="flex";
+  document.getElementById("modalBg").style.display="block";
+  _bodyOverflow=body.style.overflow;
+  body.style.overflow="hidden";
+}
+function closeModal(){
+  document.getElementById("modal").style.display="none";
+  document.getElementById("modalBg").style.display="none";
+  document.body.style.overflow=_bodyOverflow;
+}
+(function trapModalScroll(){
+  const el=document.getElementById("modalBody");
+  if(!el) return;
+  el.addEventListener('wheel',function(e){
+    const d=e.deltaY, st=el.scrollTop, sh=el.scrollHeight, ch=el.clientHeight;
+    const atTop=(st===0 && d<0), atBottom=(st+ch>=sh && d>0);
+    if(atTop || atBottom){ e.preventDefault(); e.stopPropagation(); }
+  },{passive:false});
+  el.addEventListener('touchmove',function(e){ e.stopPropagation(); },{passive:false});
+})();
 
 /* ============ 报告生成 ============ */
 function engine(){ saveStep(); const d=data[atype];
@@ -643,13 +778,13 @@ function genReport(){
   const AY=recommendYear(r,d);
   const weakList=r.diagnoses.filter(x=>x.level!=="green").map(x=>`<li>${esc(x.title)}</li>`).join("")||"<li>补齐认定条件</li>";
   const strategyCard = !r.qualified
-    ? `<div class="card"><h3>申报策略建议</h3><div class="diag" style="background:#EFF6FF;border-left:4px solid #2563EB"><b>按「一次通过」原则，建议申报年度：${AY} 年</b><div style="margin-top:6px">当前未达认定条件，建议先补齐短板再申报（补强路径与时间表详见下方申报方案）：</div><ul style="margin:8px 0 0 20px;font-size:13px">${weakList}</ul><div style="margin-top:6px;font-size:12px;color:#6B7280">若 ${AY} 年数据仍无法补齐，可再顺延至 ${AY+1} 年，确保一次通过。</div></div></div>`
+    ? `<div class="card"><h3>申报策略建议</h3><div class="diag" style="background:#fdf4e6;border-left:4px solid #e0901a"><b>按「一次通过」原则，建议申报年度：${AY} 年</b><div style="margin-top:6px">当前未达认定条件，建议先补齐短板再申报（补强路径与时间表详见下方申报方案）：</div><ul style="margin:8px 0 0 20px;font-size:13px">${weakList}</ul><div style="margin-top:6px;font-size:12px;color:#6b5d4a">若 ${AY} 年数据仍无法补齐，可再顺延至 ${AY+1} 年，确保一次通过。</div></div></div>`
     : `<div class="card"><h3>申报策略建议</h3><div class="diag" style="background:#F0FDF4;border-left:4px solid #16A34A"><b>按「一次通过」原则，建议申报年度：${AY} 年</b><div style="margin-top:6px">当前已达标，可围绕 ${AY} 年申报窗口倒排准备：财务口径 → 材料补齐 → 专项审计 → 系统填报（详见下方申报方案）。</div></div></div>`;
   const aiCard = d._aiResult
     ? `<div class="card"><h3>申报方案</h3><div class="plan-body">${mdToHtml(d._aiResult)}</div></div>`
     : `<div class="card"><h3>申报方案</h3><div class="diag" style="background:#F0FDF4;border-left:4px solid #16A34A">评估结论与达标差距已在上方呈现。申报方案需结合贵司所在城市（${esc(d.city||"待填写")}）的当地政策、奖励标准与申报时间窗口定制，点击下方「✍️ 生成申报方案」一键生成可交付客户的完整方案。</div></div>`;
   /* salesCard 已移至独立页面（销售方案 step） */
-  const directHtml=r.direct?`<div class="card"><h3>创新直通车检查</h3><div class="diag" style="background:#EFF6FF"><b>${r.directOk?"已满足直通车条件，免评分直接认定":"未满足直通车条件，走评分通道"}</b></div><ul style="margin:8px 0 0 20px;font-size:13px">${r.direct.map(x=>`<li class="${x.ok?'ok':'bad'}">${x.ok?"✓":"○"} ${esc(x.name)}</li>`).join("")}</ul></div>`:"";
+  const directHtml=r.direct?`<div class="card"><h3>创新直通车检查</h3><div class="diag" style="background:#fdf4e6"><b>${r.directOk?"已满足直通车条件，免评分直接认定":"未满足直通车条件，走评分通道"}</b></div><ul style="margin:8px 0 0 20px;font-size:13px">${r.direct.map(x=>`<li class="${x.ok?'ok':'bad'}">${x.ok?"✓":"○"} ${esc(x.name)}</li>`).join("")}</ul></div>`:"";
   document.getElementById("mainArea").innerHTML=`
     <div class="report">
       <div class="cover">
@@ -662,11 +797,12 @@ function genReport(){
         <div style="margin-top:8px;font-size:13px;opacity:.9">建议申报年度：${recommendYear(r,d)} 年${d.apply_year?`（期望 ${d.apply_year} 年）`:""}</div>
       </div>
       <div class="card"><h3>评分总览</h3>${bars}</div>
-      <div class="card"><h3>评分明细</h3><table><tr><th>维度</th><th>满分</th><th>得分</th></tr>${r.dimensions.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.max}</td><td><b>${x.score}</b></td></tr>`).join("")}<tr style="background:#F8FAFC;font-weight:bold"><td>综合得分</td><td>100</td><td>${r.total}</td></tr></table></div>
+      <div class="card"><h3>评分明细</h3><table><tr><th>维度</th><th>满分</th><th>得分</th></tr>${r.dimensions.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.max}</td><td><b>${x.score}</b></td></tr>`).join("")}<tr style="background:#faf7f2;font-weight:bold"><td>综合得分</td><td>100</td><td>${r.total}</td></tr></table></div>
       <div class="card"><h3>${r.vetos?"一票否决检查":"认定条件检查"}</h3><table><tr><th>检查项</th><th>要求</th><th>现状</th><th>结论</th></tr>${checks}</table></div>
       ${directHtml}
       <div class="card"><h3>诊断与提升建议</h3>${diag}</div>
       ${strategyCard}
+      ${prodCardHtml(r,d)}
       ${aiCard}
       <div class="card"><h3>申报材料清单</h3><ul class="mats">${mats}</ul></div>
       <div class="tools">
@@ -675,7 +811,7 @@ function genReport(){
         <button class="btn" style="background:#16A34A;color:#fff" onclick="openAiDialog()">✍️ ${d._aiResult?'更新申报方案':'生成申报方案'}</button>
         <span class="spacer"></span>
         <button class="btn btn-green" id="wordBtn" onclick="downloadWordText()">⬇ 下载Word</button>
-        <button class="btn" style="background:#7C3AED;color:#fff" onclick="goStep(STEPS[atype].length-1)">📋 销售方案 →${d._salesResult?' ✓':''}</button>
+        <button class="btn" style="background:#b45309;color:#fff" onclick="goStep(STEPS[atype].length-1)">📋 销售方案 →${d._salesResult?' ✓':''}</button>
       </div>
     </div>`;
   window.scrollTo({top:0,behavior:"smooth"});
@@ -686,14 +822,14 @@ function genSalesPage(){
   const d=data[atype];
   const reportIdx=STEPS[atype].length-2;
   let html=`<h2>销售方案</h2>`;
-  html+=`<div class="diag" style="background:#F5F0FF;border-left:4px solid #7C3AED;font-size:13px;margin-bottom:12px"><b>内部使用</b> · 本页面内容仅供销售团队参考，不会包含在申报方案Word导出中。</div>`;
+  html+=`<div class="diag" style="background:#faf4ea;border-left:4px solid #b45309;font-size:13px;margin-bottom:12px"><b>内部使用</b> · 本页面内容仅供销售团队参考，不会包含在申报方案Word导出中。</div>`;
   if(d._salesResult){
-    html+=`<div class="card"><h3 style="color:#7C3AED">📋 销售方方案（内部话术）</h3><div class="plan-body">${mdToHtml(d._salesResult)}</div></div>`;
-    html+=`<div class="tools"><button class="btn btn-ghost" onclick="goStep(${reportIdx})">← 返回申报方案</button><span class="spacer"></span><button class="btn" style="background:#7C3AED;color:#fff" onclick="downloadSalesWord()">⬇ 下载销售方案Word</button><button class="btn btn-ghost" onclick="openSalesDialog()">🔄 重新生成</button></div>`;
+    html+=`<div class="card"><h3 style="color:#b45309">📋 销售方方案（内部话术）</h3><div class="plan-body">${mdToHtml(d._salesResult)}</div></div>`;
+    html+=`<div class="tools"><button class="btn btn-ghost" onclick="goStep(${reportIdx})">← 返回申报方案</button><span class="spacer"></span><button class="btn" style="background:#b45309;color:#fff" onclick="downloadSalesWord()">⬇ 下载销售方案Word</button><button class="btn btn-ghost" onclick="openSalesDialog()">🔄 重新生成</button></div>`;
   }else{
-    html+=`<div class="card"><h3 style="color:#7C3AED">📋 销售方方案（内部话术）</h3>`;
-    html+=`<div class="diag" style="background:#F5F0FF;border-left:4px solid #7C3AED">销售方方案是基于申报评估结果，由AI生成的内部销售话术，包含：<br><b>1. 方案讲解</b> — 企业现状与补强维度<br><b>2. 我们可以做什么</b> — 全流程交付内容<br><b>3. 我们的优势</b> — 差异化竞争力<br><b>4. 截杀话术</b> — 优惠促单策略<br><b>5. FAQ</b> — 常见问题应对<br><br>点击下方按钮生成，生成后可下载Word文档。</div></div>`;
-    html+=`<div class="tools"><button class="btn btn-ghost" onclick="goStep(${reportIdx})">← 返回申报方案</button><span class="spacer"></span><button class="btn" style="background:#7C3AED;color:#fff" onclick="openSalesDialog()">📋 生成销售方方案</button></div>`;
+    html+=`<div class="card"><h3 style="color:#b45309">📋 销售方方案（内部话术）</h3>`;
+    html+=`<div class="diag" style="background:#faf4ea;border-left:4px solid #b45309">销售方方案是基于申报评估结果，由AI生成的内部销售话术，包含：<br><b>1. 方案讲解</b> — 企业现状与补强维度<br><b>2. 我们可以做什么</b> — 全流程交付内容<br><b>3. 我们的优势</b> — 差异化竞争力<br><b>4. 截杀话术</b> — 优惠促单策略<br><b>5. FAQ</b> — 常见问题应对<br><br>点击下方按钮生成，生成后可下载Word文档。</div></div>`;
+    html+=`<div class="tools"><button class="btn btn-ghost" onclick="goStep(${reportIdx})">← 返回申报方案</button><span class="spacer"></span><button class="btn" style="background:#b45309;color:#fff" onclick="openSalesDialog()">📋 生成销售方方案</button></div>`;
   }
   document.getElementById("mainArea").innerHTML=html;
   window.scrollTo({top:0,behavior:"smooth"});
@@ -702,7 +838,7 @@ function genSalesPage(){
 function mdInline(s){
   s=esc(s);
   s=s.replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>");
-  s=s.replace(/`([^`]+)`/g,"<code style='background:#F3F4F6;padding:1px 5px;border-radius:4px;font-size:12px'>$1</code>");
+  s=s.replace(/`([^`]+)`/g,"<code style='background:#faf7f2;padding:1px 5px;border-radius:4px;font-size:12px'>$1</code>");
   return s;
 }
 function mdToHtml(md){
@@ -754,7 +890,7 @@ function actionPlan(r,d){
     const gap=r.meta.rd_gap||0, tn=r.meta.trans_n||0, AY=recommendYear(r,d);
     return [
       ["阶段一 · 申报决策与年度锁定（"+(AY-1)+"年Q4）",[`① 确定建议申报年度：${AY}年（目标一次通过；若届时仍有短板可再顺延至${AY+1}年）。`,"② 锁定当地申报批次窗口（高企通常每年2-3批、4-9月，以当地科技部门当年通知为准）。",`③ 与客户确认${AY}年度财务数据可获取性，倒排专项审计时间。`]],
-      ["阶段二 · 财务口径与研发费用归集（"+(AY-1)+"年Q4至"+AY+"年1月）",[`① 确认高新技术产品/服务收入构成，申报近一年占比须≥60%（约${money(d.high_tech_rev||0)}元口径）。`,`② 建立研发费用辅助账，按工时比例归集科技人员薪酬，近三年合计需≥${money(gap)}元。`,"③ 编制各年度研发项目立项决议书。"]],
+      ["阶段二 · 财务口径与研发费用归集（"+(AY-1)+"年Q4至"+AY+"年1月）",["① 确认高新技术产品/服务收入构成，申报近一年占比须≥60%。","② 建立研发费用辅助账，按工时比例归集科技人员薪酬，使三年研发费用占比达到要求。","③ 编制各年度研发项目立项决议书。"]],
       ["阶段三 · 知识产权与成果补充（"+(AY-1)+"年Q3至"+AY+"年2月）",["① 软著按业务模块拆分命名，扩充至6项以上（软著授权约1-3个月，须预留周期）。","② 准备使用证据：界面截图、用户协议、上线时间、后台数据。","③ 发明专利列入长期布局（周期12-18个月），不影响当期申报但利于复审。",`④ 梳理近三年转化项目（当前${tn}项 → 目标≥15项冲刺25-30分），每项配合同/发票/验收凭证。`]],
       ["阶段四 · 制度与人员材料（"+(AY-1)+"年Q4至"+AY+"年2月）",["① 四套制度文件模板化输出。","② 研发部门挂牌+场地照片+设备清单；辅助账归档。","③ 科技人员名单与社保佐证，占比≥10%。"]],
       ["阶段五 · 专项审计与系统申报（"+AY+"年3-6月）",[`① 出具${AY}年申报口径的研发费用专项审计报告、高新产品收入专项审计报告。`,"② 组装申报材料，按当地批次窗口系统填报提交。","③ 答辩准备：业务增长说明、研发活动真实性说明。"]],
@@ -1103,62 +1239,108 @@ async function downloadSalesWord(){
 }
 
 
-/* ============ AI 深度分析（直连DeepSeek/智谱/Moonshot/通义 + 手动桥接回退） ============ */
+/* ============ AI 深度分析（本工具独立配置：hightech_ai_config） ============ */
 let aiConfig = {};
-try { aiConfig = JSON.parse(localStorage.getItem("qual_ai_config")||"{}"); } catch(e){}
-aiConfig.platform = aiConfig.platform || "deepseek";
-aiConfig.model = aiConfig.model || "deepseek-chat";
+const DEFAULT_AI_KEY = ""; // 团队 API Key 请在「AI 配置」面板填写，勿硬编码入库
+const AI_CFG_KEY = "hightech_ai_config";
+(function loadGlobalAiCfg(){
+  try{
+    const raw = localStorage.getItem(AI_CFG_KEY) || "{}";
+    const c = JSON.parse(raw);
+    /* 配置结构 {provider,key,baseUrl,model} → 本工具结构 {platform,apiKey,url,model} */
+    let pf = c.provider || (c.platform) || "volcengine";
+    /* 兼容旧 key 'tencent'，已统一为 hunyuan */
+    if(pf==='tencent' && !AI_PLATFORMS.tencent){ pf='hunyuan'; }
+    aiConfig.platform = pf;
+    aiConfig.apiKey = c.key || c.apiKey || "";
+    aiConfig.model = c.model || c.model || "";
+    aiConfig.baseUrl = c.baseUrl || "";
+  }catch(e){}
+})();
+aiConfig.platform = aiConfig.platform || "volcengine";
+aiConfig.apiKey = aiConfig.apiKey || DEFAULT_AI_KEY;
+aiConfig.model = aiConfig.model || "doubao-seed-2-1-pro-260628";
 aiConfig.desens = aiConfig.desens !== false;
 let aiTabIdx = 0;
 
 const AI_PLATFORMS = {
   deepseek:{name:"DeepSeek",url:"https://api.deepseek.com/chat/completions",
-    models:[{id:"deepseek-chat",name:"deepseek-chat（V3·快速便宜·推荐）"},{id:"deepseek-reasoner",name:"deepseek-reasoner（R1·深度推理）"}],
-    keySite:"platform.deepseek.com → API Keys",freeNote:"注册即送500万token免费额度"},
+    models:[{id:"deepseek-chat",name:"deepseek-chat（V3·推荐·稳定）"},{id:"deepseek-reasoner",name:"deepseek-reasoner（R1·深度推理）"}],
+    llm:true, keySite:"platform.deepseek.com → API Keys",freeNote:"注册即送500万token免费额度"},
   zhipu:{name:"智谱GLM",url:"https://open.bigmodel.cn/api/paas/v4/chat/completions",
     models:[{id:"glm-4-flash",name:"glm-4-flash（免费·快速）"},{id:"glm-4-plus",name:"glm-4-plus（增强版）"}],
-    keySite:"open.bigmodel.cn → API Keys",freeNote:"glm-4-flash 完全免费"},
+    llm:true, keySite:"open.bigmodel.cn → API Keys",freeNote:"glm-4-flash 完全免费"},
   moonshot:{name:"Moonshot (Kimi)",url:"https://api.moonshot.cn/v1/chat/completions",
     models:[{id:"moonshot-v1-8k",name:"moonshot-v1-8k（8K上下文）"},{id:"moonshot-v1-32k",name:"moonshot-v1-32k（32K上下文）"}],
-    keySite:"platform.moonshot.cn → API Key",freeNote:"新用户赠送15元额度"},
+    llm:true, keySite:"platform.moonshot.cn → API Key",freeNote:"新用户赠送15元额度"},
   qwen:{name:"通义千问",url:"https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
     models:[{id:"qwen-turbo",name:"qwen-turbo（快速·便宜）"},{id:"qwen-plus",name:"qwen-plus（均衡）"},{id:"qwen-max",name:"qwen-max（最强）"}],
-    keySite:"dashscope.console.aliyun.com → API-KEY",freeNote:"新用户赠送100万token"},
+    llm:true, keySite:"dashscope.console.aliyun.com → API-KEY",freeNote:"新用户赠送100万token"},
+  silicon:{name:"硅基流动",url:"https://api.siliconflow.cn/v1/chat/completions",
+    models:[{id:"Qwen/Qwen2.5-7B-Instruct",name:"Qwen2.5-7B-Instruct"}],
+    llm:true, keySite:"cloud.siliconflow.cn → API 密钥",freeNote:"新用户赠送额度"},
+  hunyuan:{name:"腾讯混元",url:"https://api.hunyuan.cloud.tencent.com/v1/chat/completions",
+    models:[{id:"hunyuan-turbo-s",name:"hunyuan-turbo-s（均衡·推荐）"},{id:"hunyuan-lite",name:"hunyuan-lite（免费·100万/年）"}],
+    llm:true, keySite:"console.cloud.tencent.com/hunyuan → API密钥",freeNote:"100万 token/年 免费额度"},
+  baidu:{name:"百度千帆",url:"https://qianfan.baidubce.com/v2/chat/completions",
+    models:[{id:"ernie-speed-128k",name:"ernie-speed-128k（永久免费）"}],
+    llm:true, keySite:"cloud.baidu.com → 千帆 → API Key",freeNote:"ERNIE-Speed 永久免费不限量"},
+  ifly:{name:"讯飞星火",url:"https://spark-api-open.xf-yun.com/v1/chat/completions",
+    models:[{id:"spark-lite",name:"spark-lite（永久免费）"}],
+    llm:true, keySite:"xfyun.cn → 星火 → APIPassword",freeNote:"spark-lite 永久免费不限量"},
+  volcengine:{name:"火山引擎方舟",url:"https://ark.cn-beijing.volces.com/api/v3/chat/completions",
+    models:[{id:"doubao-seed-2-1-pro-260628",name:"doubao-seed-2-1-pro（最强）"},{id:"doubao-seed-2-1-turbo-260628",name:"doubao-seed-2-1-turbo（快速）"},{id:"doubao-1-5-pro-32k-250115",name:"doubao-1-5-pro-32k（轻量）"}],
+    llm:true, keySite:"console.volcengine.com → 方舟 → API Key",freeNote:"可填公开模型ID或自建 ep-xxxx 接入点"},
+    custom:{name:"自定义",url:"",models:[],llm:true, keySite:"",freeNote:""}
 };
-
-function saveAiCfg(){ localStorage.setItem("qual_ai_config", JSON.stringify(aiConfig)); }
-
-function openAiSettings(){
-  const cur = aiConfig.platform || "deepseek";
-  const pf = AI_PLATFORMS[cur];
-  let h = '<h3>⚙️ AI 分析设置</h3>';
-  h += '<div class="diag" style="background:#F0FDF4;border-left:4px solid #16A34A;font-size:12px;margin-bottom:14px">';
-  h += '配置后，填完表点「✍️ 生成申报方案」即可<b>一键直连</b>AI平台生成个性化方案，无需复制粘贴。<br>';
-  h += 'API Key 仅存储在<b>本机浏览器</b>中，不上传任何服务器。</div>';
-  h += '<div class="fitem" style="margin-bottom:12px"><label>AI 平台</label><select id="cfg_pf" onchange="onPfChange()">';
+const AI_REQUIRED_CAPS = { llm:true };
+/* 直连请求 URL：优先使用共享配置的 baseUrl（自定义兼容），否则回退平台默认 */
+function aiRequestUrl(){
+  const pf = AI_PLATFORMS[aiConfig.platform] || AI_PLATFORMS.deepseek;
+  if(aiConfig.baseUrl){
+    const b = String(aiConfig.baseUrl).replace(/\/+$/,'');
+    if(/\/chat\/completions$/i.test(b)) return b;
+    return b + "/chat/completions";
+  }
+  return pf.url;
+}
+function aiPfName(){ return (AI_PLATFORMS[aiConfig.platform]||AI_PLATFORMS.deepseek).name; }
+function aiPfModel(){ return aiConfig.model || (AI_PLATFORMS[aiConfig.platform]||AI_PLATFORMS.deepseek).models[0].id; }
+/* 本工具独立 AI 接口配置（不再依赖平台首页） */
+function openAiConfigDialog(){
+  let h = '<div class="ai-head"><h3>AI 接口配置（本工具独立）</h3></div>';
+  h += '<div class="ai-warn"><b>信息说明</b>：本工具的 AI 接口独立配置，仅对本工具生效，不会同步到其它工具或平台首页。</div>';
+  h += '<div class="ai-section"><div class="ai-section-title">连接信息</div>';
+  h += '<div class="fg"><label>服务商 <span style="font-size:11px;color:#8a7a62;font-weight:400">仅列出支持文本生成的平台</span></label><select id="aiCfgPf" onchange="aiCfgOnProvider()">';
   for(const k in AI_PLATFORMS){
-    h += '<option value="'+k+'"'+(k===cur?' selected':'')+'>'+AI_PLATFORMS[k].name+'</option>';
+    if(k === "custom") continue;
+    const p = AI_PLATFORMS[k];
+    let ok = true;
+    for(const cap in AI_REQUIRED_CAPS){ if(AI_REQUIRED_CAPS[cap] && !p[cap]){ ok=false; break; } }
+    if(!ok) continue;
+    h += '<option value="'+k+'" '+(aiConfig.platform===k?'selected':'')+'>'+p.name+'</option>';
   }
   h += '</select></div>';
-  h += '<div class="fitem" style="margin-bottom:12px"><label>API Key</label><input type="password" id="cfg_key" value="'+esc(aiConfig.apiKey||"")+'" placeholder="sk-..."></div>';
-  h += '<div class="fitem" style="margin-bottom:12px"><label>模型</label><select id="cfg_model">'+pf.models.map(m=>'<option value="'+m.id+'"'+(m.id===(aiConfig.model||pf.defaultModel)?' selected':'')+'>'+m.name+'</option>').join('')+'</select></div>';
-  h += '<div class="diag" style="background:#EFF6FF;border-left:4px solid #2563EB;font-size:12px;margin-bottom:12px" id="cfg_note">';
-  h += '🔑 获取Key：<b>'+pf.keySite+'</b><br>'+pf.freeNote+'</div>';
-  h += '<div class="tools"><button class="btn btn-primary" onclick="saveSettings()">💾 保存设置</button><button class="btn btn-ghost" onclick="closeModal()">取消</button></div>';
+  h += '<div class="fg"><label>API Key</label><input id="aiCfgKey" type="text" value="'+esc(aiConfig.apiKey)+'" placeholder="sk-... / ark-..."></div>';
+  h += '<div class="fg"><label>Base URL <span style="font-size:11px;color:#8a7a62;font-weight:400">OpenAI 兼容接口地址，留空使用服务商默认地址</span></label><input id="aiCfgUrl" type="text" value="'+esc(aiConfig.baseUrl||"")+'" placeholder="留空使用服务商默认地址"></div></div>';
+  h += '<div class="ai-section"><div class="ai-section-title">模型设置</div>';
+  h += '<div class="fg"><label>文本大模型 <span style="font-size:11px;color:#8a7a62;font-weight:400">生成申报方案</span></label><input id="aiCfgModel" type="text" value="'+esc(aiConfig.model||"")+'" placeholder="模型 ID"></div></div>';
+  h += '<div class="ai-actions"><button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="saveAiCfgFromDialog()">保存配置</button></div>';
   showModal(h);
 }
-function onPfChange(){
-  const k = document.getElementById("cfg_pf").value;
+function aiCfgOnProvider(){
+  const k = document.getElementById("aiCfgPf").value;
   const pf = AI_PLATFORMS[k];
-  document.getElementById("cfg_model").innerHTML = pf.models.map(m=>'<option value="'+m.id+'">'+m.name+'</option>').join('');
-  document.getElementById("cfg_note").innerHTML = '🔑 获取Key：<b>'+pf.keySite+'</b><br>'+pf.freeNote;
+  if(pf && pf.models && pf.models[0]) document.getElementById("aiCfgModel").value = pf.models[0].id;
 }
-function saveSettings(){
-  aiConfig.platform = document.getElementById("cfg_pf").value;
-  aiConfig.apiKey = document.getElementById("cfg_key").value.trim();
-  aiConfig.model = document.getElementById("cfg_model").value;
-  saveAiCfg(); closeModal();
-  if(aiConfig.apiKey) alert("✅ 设置已保存！现在可以一键 AI 深度分析了。");
+function saveAiCfgFromDialog(){
+  aiConfig.platform = document.getElementById("aiCfgPf").value;
+  aiConfig.apiKey = document.getElementById("aiCfgKey").value.trim();
+  aiConfig.baseUrl = document.getElementById("aiCfgUrl").value.trim();
+  aiConfig.model = document.getElementById("aiCfgModel").value.trim();
+  try{ localStorage.setItem(AI_CFG_KEY, JSON.stringify({provider:aiConfig.platform,key:aiConfig.apiKey,baseUrl:aiConfig.baseUrl,model:aiConfig.model})); }catch(e){}
+  closeModal();
+  alert("AI 接口配置已保存（仅本工具生效）");
 }
 
 function buildAiRequest(r, d, desens){
@@ -1178,7 +1360,7 @@ function buildAiRequest(r, d, desens){
   L.push("- 今天是：" + nowStr + "，即 " + year + " 年。");
   L.push("- 方案中所有时间规划（申报批次、材料准备周期、时间表、预计拿证时间）一律从今天起算，只能使用 " + year + " 年及之后的批次与日期，**严禁出现任何 " + year + " 年之前的年份或申报批次**（如" + lastYear + "年申请等表述一律禁止）。");
   L.push("- 期望申报年度：" + (d.apply_year ? d.apply_year + " 年" : "未指定（按当前年份 " + year + " 年规划）") + "。");
-  L.push("- **申报策略（最高原则·一次通过）**：方案以「大概率申请下来、一次通过」为第一原则。若当前条件与评分不足以一次通过，必须给出逐项补强路径（谁来做·做什么·怎么做·何时完成·交付什么材料）；若补强后仍无法在期望年度前完成（如软著/专利授权周期、研发费用归集、专项审计出具时间等），应明确【建议推迟申报】，并给出推荐申报年度 " + RY + " 年" + (RY!==AY?`（当前条件${r.qualified?"已达标但有受理中知识产权待授权":"未达标"}，建议顺延，确保一次通过）`:"") + "；全部时间规划围绕推荐申报年度倒排：材料补齐 → 专项审计 → 系统填报窗口 → 公示拿证。");
+  L.push("- **申报策略（最高原则·一次通过）**：方案以「大概率申请下来、一次通过」为第一原则。若当前条件与评分不足以一次通过，必须给出逐项补强路径（做什么·怎么做·何时完成·交付什么材料）；若补强后仍无法在期望年度前完成（如软著/专利授权周期、研发费用归集、专项审计出具时间等），应明确【建议推迟申报】，并给出推荐申报年度 " + RY + " 年" + (RY!==AY?`（当前条件${r.qualified?"已达标但有受理中知识产权待授权":"未达标"}，建议顺延，确保一次通过）`:"") + "；全部时间规划围绕推荐申报年度倒排：材料补齐 → 专项审计 → 系统填报窗口 → 公示拿证。");
   L.push("- 涉及财务数据的年度要写清具体会计年度：按推荐申报年度 " + RY + " 年计算，「近一年」指 " + (RY-1) + " 年度、「近三年」指 " + (RY-3) + "-" + (RY-1) + " 三个年度；申报口径若与当前年份不符，按 " + RY + " 年度政策执行。");
   L.push("");
   L.push("## 一、企业画像" + (desens?"（已脱敏）":""));
@@ -1207,6 +1389,33 @@ function buildAiRequest(r, d, desens){
     L.push("- 上年度营收 " + money(d.revenue_last) + "，研发费 " + money(d.rd_cost) + "（占营收 " + pct(d.rd_cost,d.revenue_last).toFixed(1) + "%）");
     L.push("- 职工 " + n(d.staff_total) + " 人，研发人员 " + n(d.rd_staff) + " 人");
   }
+  // 知识产权数量硬门槛（不同城市差异化，按申报年度对应政策执行）
+  const hasIp = atype==="gaoxin" ? (d.ips||[]).some(x=>x.status!=="受理中")
+              : atype==="kexiao" ? (d.ips||[]).some(x=>x.status!=="受理中")
+              : (n(d.ip_invention)>0 || n(d.ip_soft)>0);
+  if(!hasIp){
+    L.push("");
+    L.push("⚠️ **知识产权时间现实提醒（必须遵守）**：该企业当前【无任何已授权知识产权】。");
+    L.push("- 各类知识产权从申请到「拿证」的真实周期：软件著作权约 1-3 个月（可加急）、实用新型专利约 6-12 个月、外观设计约 4-6 个月、**发明专利约 1-3 年**；而**知识产权转让（受让/购买已授权证书）登记约 1-2 个月即可完成**。");
+    L.push("- 认定硬约束：高企/科小只认可「已授权（已拿证）」的知识产权，受理中/审查中一律不计分。");
+    L.push("- 落地要求：请先做**时间倒排**——若从今天起新申请、无法在推荐申报年度的申报截止日前拿证（尤其发明专利），必须明确建议「受让/购买已授权知识产权」，并提示受让需附转让合同/著录项目变更、部分地方对受让 IP 有年限要求；**严禁写「现在申请发明专利、明年第一批就申报」这类时间上不成立的方案**。");
+  }
+  // 知识产权数量硬门槛（无论有无 IP 都必须按门槛精确计算缺口，绝不能笼统给个数）
+  if(atype==="gaoxin" || atype==="kexiao"){
+    const ipsArr = d.ips||[];
+    const valid = ipsArr.filter(x=>x.status!=="受理中");
+    const cntI = valid.filter(x=>(x.type||"").includes("发明")||(x.type||"").includes("集成电路")||(x.type||"").includes("植物新品种")).length;
+    const cntII = valid.length - cntI;
+    const isSh = String(d.city||"").includes("上海");
+    L.push("");
+    L.push("📋 **知识产权数量硬门槛（必须按此精确计算并给出补强数量，禁止笼统给个数字）**：");
+    L.push("- 国标底线：「Ⅰ类知识产权≥1项」或「Ⅱ类知识产权≥6项」满足其一即可（Ⅱ类知识产权在高企认定中仅限使用1次）。");
+    if(isSh){
+      L.push("- 上海本地更严要求（"+city+"）：Ⅰ类≥1项 或 Ⅱ类≥6项，且必须与主营产品强相关；上海审核重点关注知识产权的**核心支撑度**和**权属清晰度**，纯软著通过率较低，建议优先布局Ⅰ类（发明专利）。");
+    }
+    L.push("- 该企业现状：已授权Ⅰ类 " + cntI + " 项 / Ⅱ类 " + cntII + " 项。");
+    L.push("- 必须按门槛计算缺口并给出**精确补强清单**——例如「Ⅰ类不足1项 → 补1项发明专利（自申请8个月走不到拿证→建议受让已授权发明）」、「Ⅱ类不足6项 → 需补N项软著/实用新型（N=6-已授权Ⅱ类数）」，并标注每项的**预计拿证日期**。**严禁只笼统写「建议申请5项知识产权」这种不达标或不明确的数字**。");
+  }
   L.push("");
   L.push("## 二、评分结果");
   L.push("| 维度 | 满分 | 得分 |");
@@ -1227,10 +1436,19 @@ function buildAiRequest(r, d, desens){
   L.push("1. **顾问手笔**：以资深申报顾问亲笔撰写的方式行文，全程称呼客户为「贵公司」；内容像咨询机构出具的项目建议书，专业、克制、可信。");
   L.push("2. **严禁AI痕迹**：正文不得出现「作为AI」「人工智能」「语言模型」「生成」「仅供参考」「综上所述」「总之」等表述，不写自我评价，不写客套话，不机械堆砌列表；每个段落都要有实际信息量。");
   L.push("3. **城市落地**：结合"+city+"当地的政策实际——该资质在当地的主管部门（科技局/经信局等）、奖励补贴标准、申报批次与时间窗口、当地评审关注点、省级特色化细则（如适用）；若某项不确定，写明「需以当地主管部门当年通知为准」或「建议提前与当地经办窗口电话确认」，不得编造数字。");
-  L.push("4. **数字落地**：涉及费用、研发投入、收入占比等给出具体测算数值（单位：元），并说明计算口径。");
-  L.push("5. **结构参考**：企业现状与达标差距 → 逐项补强措施（谁来做·做什么·怎么做·何时完成·交付什么材料）→ 分阶段实施时间表 → 申报材料清单 → 风险点与应对；可依企业情况调整，勿照搬模板。");
+  L.push("4. **数字落地**：涉及研发投入、收入占比、知识产权数量等给出具体测算数值与口径；不得编造费用、单价、补贴等金额数据。");
+  L.push("5. **结构参考**：企业现状与达标差距 → 逐项补强措施（做什么·怎么做·何时完成·交付什么材料）→ 分阶段实施时间表 → 申报材料清单 → 风险点与应对；可依企业情况调整，勿照搬模板。");
   L.push("6. **时间铁律**：今天是 " + year + " 年。分阶段时间表、申报批次、预计受理窗口全部从今天起算，只能出现 " + year + " 年及之后的日期；方案末尾的申报时间表必须明确写到具体年月（如" + year + "年X月），且不得早于当前月份。任何提及" + lastYear + "年及以前申报、拿证、批次的表述都是严重错误。");
-  L.push("7. 若存在一票否决项未满足，先给出突破路径与金额测算，再写其余内容。");
+  L.push("7. 若存在一票否决项未满足，先给出突破路径与时间安排，再写其余内容。");
+  L.push("8. **成品交付**：本方案是直接交给客户的成品文档，全文**严禁出现「责任人」「经办人」「我方」「销售」「内部」「XX顾问/老师负责」等体现中介内部人员分工的字段或表述**；补强措施一律写成中性客观表述（如「需在X月前取得XX证书」「建议贵公司完成XX」），不出现具体执行人的姓名或角色。");
+  L.push("9. **周期与可行性落地（最重要）**：方案必须真实可落地，不能脱离客户现实。①**严禁出现任何费用、单价、小计、合计、预算、金额区间、成本测算表**等任何成本信息——客户方案不写钱，具体报价由顾问后续与客户单线沟通；②**知识产权时间可行性倒排**：软著约 1-3 个月、实用新型约 6-12 个月、发明约 1-3 年、转让登记约 1-2 个月——凡从今天起新申请、赶不上申报截止日前拿证的（尤其发明专利），必须建议「受让/购买已授权知识产权」并写清受让需走的合同/著录变更流程，严禁写「现在申请发明专利、下个批次就申报」这类时间上不成立的方案；③每项补强动作只写「预计完成周期」，不写金额；④若补强后周期明显赶不上，应如实建议「推迟申报」或「先做科小/创新型中小企业等更易达成的资质」。⑤**金额白名单（唯一允许出现的金额）**：仅限企业现状财务数据——销售收入、研发费用、净资产、高新技术产品收入及占比（这些是客户自有历史数据，可出现在「企业现状」部分）。**严禁出现任何补强成本类金额**：知识产权购买/转让价、申请费、审计报告费用、服务费、材料费、申报杂费，以及「预计投入X万元」「约需X元」「费用测算表」「成本明细表」「报价」等任何表述——补强措施一律只讲动作与周期，不谈钱。");
+  if(d.supplement && String(d.supplement).trim()){
+    L.push("");
+    L.push("## 六、客户补充信息（最高优先级，必须充分考虑）");
+    L.push("客户在系统中额外补充了以下信息，这是客户的直接诉求。撰写方案时必须**充分考虑并体现到对应章节**，不得忽略、不得遗漏：");
+    L.push(String(d.supplement).trim());
+    L.push("（以上补充信息优先级最高：若与常规建议冲突，以客户补充诉求为优先，并在方案中给出兼顾或折中的处理说明。）");
+  }
   return L.join("\n");
 }
 
@@ -1309,6 +1527,14 @@ function buildSalesPrompt(r, d, desens){
   L.push("- 需要我们公司配合做什么？");
   L.push("要求：每个回答口语化、有理有据；遇到敏感问题（如价格、通过率）用转移焦点+给信心的方式回答，不要说大话。");
   L.push("");
+  L.push("### 六、内部费用参考（仅限销售内部参考，严禁直接念给客户）");
+  L.push("生成本项目完整的**内部费用测算与报价参考**，供销售谈单定价时用，**不得作为话术直接念给客户**。要求：");
+  L.push("1. **成本测算**：分项列出本项目各项成本及金额区间（单位：元）——知识产权布局（自申请/受让/购买，按类型与数量分别估算）、专项审计报告、材料制作与申报服务等；给出合计范围。");
+  L.push("2. **报价建议**：给出对外报价参考区间（元）与**最低可成交价**，说明毛利空间；结合客户得分与缺口大小，说明报价档位的取舍逻辑（缺口大、补强多的客户可适当上调，竞争激烈可下探到底价）。");
+  L.push("3. **费用结构话术**：给销售一套应对客户比价/砍价的内部口径——「这个费用包含哪几块」「为什么比别家贵/便宜」「哪些是硬成本不可再降」，帮销售守住价格底线。");
+  L.push("4. **让利权限**：明确哪些费用可以让、让到什么程度（如服务费折扣上限、可赠送的附加服务清单），保证成交价不低于最低可成交价。");
+  L.push("要求：金额必须给出具体数字区间，来源为行业常规行情，不得写「面议」；本节内容仅供销售内部参考，若某条信息不适合当面告知客户，请在话术部分自然回避。");
+  L.push("");
   L.push("## 格式要求");
   L.push("- 用 Markdown 输出，中文正文");
   L.push("- 每个部分用一级标题（#）开头");
@@ -1324,24 +1550,23 @@ function openAiDialog(){
   const d = data[atype];
   const hasKey = !!aiConfig.apiKey;
   const hasResult = !!d._aiResult;
-  const pfName = AI_PLATFORMS[aiConfig.platform||"deepseek"].name;
-  let h = '<h3>✍️ 申报方案生成</h3>';
+  let h = '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h3>✍️ 申报方案生成</h3><button class="btn btn-ghost" style="padding:6px 10px;font-size:12px" onclick="openAiConfigDialog()">⚙ 配置 AI 接口</button></div>';
   h += '<div class="ai-tab">';
-  h += '<button class="'+(aiTabIdx===0?'active':'')+'" onclick="aiSwitch(0)">⚡ '+(hasKey?'直连分析':'设置API')+'</button>';
+  h += '<button class="'+(aiTabIdx===0?'active':'')+'" onclick="aiSwitch(0)">⚡ '+(hasKey?'直连分析':'配置 AI')+'</button>';
   h += '<button class="'+(aiTabIdx===1?'active':'')+'" onclick="aiSwitch(1)">📋 手动桥接'+(hasResult?' ✓':'')+'</button>';
   h += '</div>';
   // Tab 0: Direct API
   h += '<div id="aipanel0" style="display:'+(aiTabIdx===0?'block':'none')+'">';
   if(!hasKey){
     h += '<div class="diag" style="background:#FFFBEB;border-left:4px solid #D97706;margin-bottom:12px">';
-    h += '尚未配置 API Key。点击下方按钮设置——支持 <b>DeepSeek / 智谱GLM / Moonshot / 通义千问</b>。<br>';
-    h += '<span style="font-size:12px;color:#6B7280">DeepSeek 注册即送500万token免费额度，智谱glm-4-flash完全免费。</span></div>';
-    h += '<button class="btn btn-primary" onclick="closeModal();openAiSettings()">⚙️ 前往设置</button>';
+    h += '尚未配置 API Key。本工具的 AI 接口独立配置，点击下方按钮填写服务商与 Key 即可启用（仅对本工具生效）。<br>';
+    h += '<span style="font-size:12px;color:#6b5d4a">支持 DeepSeek / 智谱GLM / Moonshot / 通义千问 / 硅基流动 / 自定义兼容接口。</span></div>';
+    h += '<button class="btn btn-primary" onclick="closeModal();openAiConfigDialog()">⚙ 配置 AI 接口</button>';
   } else {
     h += '<div class="diag" style="background:#F0FDF4;border-left:4px solid #16A34A;margin-bottom:12px;font-size:12.5px">';
-    h += '已连接：<b>'+pfName+'</b> · 模型：<b>'+aiConfig.model+'</b><br>';
-    h += '<span style="color:#6B7280">点击下方按钮，AI将基于企业数据直接生成个性化方案（约30-60秒）。</span></div>';
-    h += '<div class="ai-switch"><input type="checkbox" class="chk" id="aiDesensChk" '+(aiConfig.desens?'checked':'')+' onchange="aiConfig.desens=this.checked;saveAiCfg()"><span>发送前脱敏（企业名→"某科技公司"）</span></div>';
+    h += '已连接：<b>'+aiPfName()+'</b> · 模型：<b>'+aiPfModel()+'</b><br>';
+    h += '<span style="color:#6b5d4a">点击下方按钮，AI将基于企业数据直接生成个性化方案（约30-60秒）。</span></div>';
+    h += '<div class="ai-switch"><input type="checkbox" class="chk" id="aiDesensChk" '+(aiConfig.desens?'checked':'')+' onchange="aiConfig.desens=this.checked"><span>发送前脱敏（企业名→"某科技公司"）</span></div>';
     h += '<div id="aiDirectArea">';
     h += '<button class="btn btn-primary" style="width:100%;font-size:15px;padding:12px" onclick="startDirectAi()">⚡ 开始 AI 深度分析</button>';
     h += '</div>';
@@ -1349,9 +1574,9 @@ function openAiDialog(){
   h += '</div>';
   // Tab 1: Manual bridge
   h += '<div id="aipanel1" style="display:'+(aiTabIdx===1?'block':'none')+'">';
-  h += '<div class="diag" style="background:#F5F3FF;border-left:4px solid #7C3AED;font-size:12px;margin-bottom:12px">';
+  h += '<div class="diag" style="background:#faf4ea;border-left:4px solid #b45309;font-size:12px;margin-bottom:12px">';
   h += '手动模式：复制请求 → 粘贴到任意AI对话（WorkBuddy/ChatGPT等） → 将结果粘贴回此处。</div>';
-  h += '<div class="ai-switch"><input type="checkbox" class="chk" id="aiDesensChk2" '+(aiConfig.desens?'checked':'')+' onchange="aiConfig.desens=this.checked;saveAiCfg()"><span>脱敏（企业名→"某科技公司"）</span></div>';
+  h += '<div class="ai-switch"><input type="checkbox" class="chk" id="aiDesensChk2" '+(aiConfig.desens?'checked':'')+' onchange="aiConfig.desens=this.checked"><span>脱敏（企业名→"某科技公司"）</span></div>';
   h += '<div class="ai-pre" id="aiReqText">'+esc(buildAiRequest(r,d,aiConfig.desens))+'</div>';
   h += '<div class="tools"><button class="btn btn-primary" onclick="copyAiReq()">📋 复制请求</button><span class="spacer"></span></div>';
   h += '<textarea class="ai-area" id="aiResultInput" placeholder="将AI返回的方案粘贴到这里（支持Markdown）..." style="margin-top:10px">'+esc(d._aiResult||"")+'</textarea>';
@@ -1360,76 +1585,157 @@ function openAiDialog(){
   showModal(h);
 }
 
+/* 流式读取一次对话响应：增量渲染到 out（prefix 为已生成内容，用于多轮续写），返回 {text, finish} */
+async function streamRead(resp, out, prefix){
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let text="", buf="", finish="";
+  while(true){
+    const {done,value} = await reader.read();
+    if(done) break;
+    buf += decoder.decode(value,{stream:true});
+    const lines = buf.split("\n");
+    buf = lines.pop();
+    for(const line of lines){
+      if(!line.startsWith("data: ")) continue;
+      const data = line.slice(6).trim();
+      if(data==="[DONE]"){ continue; }
+      try{
+        const json = JSON.parse(data);
+        const ch = json.choices && json.choices[0];
+        const delta = ch && ch.delta && ch.delta.content;
+        if(delta){ text += delta; out.textContent = (prefix||"") + text; out.scrollTop = out.scrollHeight; }
+        if(ch && ch.finish_reason) finish = ch.finish_reason;
+        else if(json.error){
+          const em = json.error.message || JSON.stringify(json.error);
+          text += "\n\n[API 错误] " + em;
+          out.textContent = (prefix||"") + text;
+          out.style.color = "#DC2626";
+          console.error("[hightech AI]", json);
+          finish = "error";
+        }
+      }catch(e){
+        console.error("[hightech SSE parse error]", e, line);
+      }
+    }
+  }
+  return {text, finish};
+}
+/* 客户申报方案硬过滤：剥离所有费用/成本/预算/测算内容，prompt 之外的终极防线
+   只剥"补强成本"特征（费用测算章节、含"单价/小计/合计"的服务报价表、投入约X万元短语），
+   不动企业现状数据（销售收入/研发费用/净资产等"元"）。 */
+function stripCostContent(md){
+  if(!md) return md;
+  let t = md;
+  // 1) 删除以"费用/成本/预算/报价"为主题的整段章节（标题直到下一个同级/更高级标题或文末）
+  t = t.replace(/(^|\n)#{1,6}\s*[^\n]*(费用测算|成本测算|费用汇总|直接费用|年度费用|年度预算|支出汇总|投入汇总|费用承诺|费用一览|费用预算|费用构成|费用表|时间承诺|时间安排与费用|预算明细|报价方案|费用明细|费用预估|费用参考|投入测算|资金预算|成本明细|投入预算|成本预算|成本概览|成本一览)[^\n]*\n[\s\S]*?(?=\n#{1,6}\s|\n*$)/g, "\n");
+  // 2) 删除费用表特征的 markdown 表格：表头第一列是"项目/分项/明细/类别/事项"且其他列含"金额/费用/单价/预算/成本/小计/合计/报价/说明"任一（企业数据表第一列是"年度/科目"，不命中）
+  t = t.replace(/\n\|[ \t]*(?:项目|分项|明细|类别|事项|分项名称|明细项|预算项|支出项|构成项|科目明细)[ \t]*\|[^\n]*(?:金额|费用|单价|预算|成本|小计|合计|报价|说明)[^\n]*\n\|[\s:|—\-]+\n(?:[^\n]*\|[^\n]*\n)*/g, "\n");
+  // 3) 删除"预计投入约X万/约需X元/费用约X元/受让费用约X元"等补强成本短语（保留企业数据关键词开头的句子）
+  t = t.replace(/(预计投入|约需|预计费用|费用约|预算约|投入约|需投入|合计投入|购买价约|受让费用|审计费用|服务费约|材料费约|代办费约)\s*[（(]?[0-9][0-9,，.\s]*(元|万元)[）)]?/g, "");
+  // 4) 删除"X元/项""X元/件""X元/份"等单位价格表述
+  t = t.replace(/[0-9][0-9,，.]*\s*(元|万元)\s*[／/]\s*(项|件|份|个)/g, "");
+  // 5) 删除"合计：X元"等总计表述
+  t = t.replace(/(合计|总计|共需)[：:]\s*[0-9][0-9,，.]*\s*(元|万元)/g, "");
+  // 6) 清理残留的"费用约""预算约"等残留词
+  t = t.replace(/(?:费用|预算|报价)\s*约\s*[:：]?\s*/g, "");
+  // 6.5) 兜底：含"金额(元)"列 + 后续出现"合计"行的整段删除（防止"年度费用一览""支出预算表"等表遗漏）
+  t = t.replace(/[\u4e00-\u9fa5]*\(元\)[\s\S]{0,800}?(?:合计|总计|共需)[\s\S]{0,80}?(?:元|万元)/g, function(m){
+    // 仅删含"项目"或"分项"等费用表专有特征的块
+    if(/项目|分项|明细|类别|事项/.test(m)) return "";
+    return m;
+  });
+  // 7) 清理空行堆积
+  t = t.replace(/\n{3,}/g, "\n\n");
+  return t;
+}
+
 async function startDirectAi(){
   const r = engine(); if(!r) return;
   const d = data[atype];
   const prompt = buildAiRequest(r, d, aiConfig.desens);
-  const pf = AI_PLATFORMS[aiConfig.platform||"deepseek"];
-  const model = aiConfig.model || pf.models[0].id;
+  const pfName = aiPfName();
+  const model = aiPfModel();
   const area = document.getElementById("aiDirectArea");
   // Show loading
-  area.innerHTML = '<div class="ai-loading"><div class="spinner"></div><div class="ai-status">正在连接 '+pf.name+'（'+model+'）...</div><div class="ai-status" id="aiProgress">分析中，请稍候（通常30-60秒）</div></div>';
+  area.innerHTML = '<div class="ai-loading"><div class="spinner"></div><div class="ai-status">正在连接 '+pfName+'（'+model+'）...</div><div class="ai-status" id="aiProgress">分析中，请稍候（通常30-60秒）</div></div>';
   try {
     const nowD = new Date();
     const nowStr = nowD.getFullYear() + "年" + (nowD.getMonth()+1) + "月" + nowD.getDate() + "日";
     const curYear = nowD.getFullYear();
-    const sysPrompt = "你是一名从业多年的资深项目申报咨询顾问，擅长高新技术企业认定、科技型中小企业评价、专精特新中小企业认定，服务过大量中小企业客户，精通各地政策差异与申报实操。客户委托你为一家企业撰写《申报方案》，这份方案将直接交给企业负责人，是你亲笔撰写的咨询成果。\n\n当前时间基准：今天是 " + nowStr + "（" + curYear + "年）。方案中所有时间规划（申报批次、材料准备周期、时间表、预计拿证时间）一律从今天起算，只能使用 " + curYear + " 年及之后的批次与日期，严禁出现任何 " + curYear + " 年之前的年份或申报批次表述（如“去年申请”“去年申报”等均属错误，涉及财务数据年度时写清具体会计年度即可，如“近一年”即" + (curYear-1) + "年度）。\n\n申报策略（最高原则）：以「大概率申请下来、一次通过」为第一原则。若企业当前条件与评分不足以一次通过，必须给出逐项补强路径（谁来做·做什么·何时完成·交付什么材料）；若按期望申报年度时间紧张或数据不足，应主动建议推迟申报并明确推荐申报年度（如2027年、2028年），全部时间规划围绕推荐申报年度倒排：材料补齐 → 专项审计 → 系统填报窗口 → 公示拿证。财务数据年度口径按推荐申报年度换算（近一年=申报年度-1年度，近三年=申报年度-3至-1年度）。用户请求中的「期望申报年度」优先作为规划基准，但若不足以一次通过可建议顺延。\n\n写作铁律：\n1. 以顾问本人口吻专业行文，全文称呼客户为「贵公司」；正文不得出现「作为AI」「人工智能」「语言模型」「生成」「仅供参考」「综上所述」「总之」等任何AI痕迹词汇，不写自我评价，不写客套话。\n2. 内容必须具体落地：每个建议写清做什么、怎么做、谁来做、何时完成、交付什么材料；涉及金额给出具体测算数值（单位：元）并说明口径。\n3. 必须结合企业所在城市的当地政策实际：主管部门、奖励补贴标准、申报批次与时间窗口、当地评审关注点、省级特色化细则；不确定的写「需以当地主管部门当年通知为准」或「建议提前与当地经办窗口电话确认」，严禁编造数字。\n4. 结构参考：企业现状与达标差距 → 逐项补强措施 → 分阶段实施时间表 → 申报材料清单 → 风险点与应对；紧扣企业数据，勿照搬模板。\n5. 使用 Markdown 输出，中文正文。";
-    const resp = await fetch(pf.url, {
-      method:"POST",
-      headers:{"Content-Type":"application/json","Authorization":"Bearer "+aiConfig.apiKey},
-      body:JSON.stringify({
-        model:model,
-        messages:[{role:"system",content:sysPrompt},{role:"user",content:prompt}],
-        stream:true,
-        max_tokens:4096,
-        temperature:0.7
-      })
-    });
-    if(!resp.ok){
-      const errTxt = await resp.text().catch(()=>"");
-      let msg = "请求失败("+resp.status+")";
-      if(resp.status===401) msg = "API Key 无效，请检查设置";
-      else if(resp.status===429) msg = "请求过于频繁或额度不足，请稍后重试";
-      else if(resp.status===404) msg = "模型不存在，请检查模型设置";
-      else if(errTxt) msg += "："+errTxt.substring(0,200);
-      throw new Error(msg);
-    }
-    // Stream response
-    const reader = resp.body.getReader();
-    const decoder = new TextDecoder();
-    let result = "";
-    let buf = "";
+    const sysPrompt = "你是一名从业多年的资深项目申报咨询顾问，擅长高新技术企业认定、科技型中小企业评价、专精特新中小企业认定，服务过大量中小企业客户，精通各地政策差异与申报实操。客户委托你为一家企业撰写《申报方案》，这份方案将直接交给企业负责人，是你亲笔撰写的咨询成果。\n\n当前时间基准：今天是 " + nowStr + "（" + curYear + "年）。方案中所有时间规划（申报批次、材料准备周期、时间表、预计拿证时间）一律从今天起算，只能使用 " + curYear + " 年及之后的批次与日期，严禁出现任何 " + curYear + " 年之前的年份或申报批次表述（如“去年申请”“去年申报”等均属错误，涉及财务数据年度时写清具体会计年度即可，如“近一年”即" + (curYear-1) + "年度）。\n\n申报策略（最高原则）：以「大概率申请下来、一次通过」为第一原则。若企业当前条件与评分不足以一次通过，必须给出逐项补强路径（做什么·何时完成·交付什么材料）；若按期望申报年度时间紧张或数据不足，应主动建议推迟申报并明确推荐申报年度（如2027年、2028年），全部时间规划围绕推荐申报年度倒排：材料补齐 → 专项审计 → 系统填报窗口 → 公示拿证。财务数据年度口径按推荐申报年度换算（近一年=申报年度-1年度，近三年=申报年度-3至-1年度）。用户请求中的「期望申报年度」优先作为规划基准，但若不足以一次通过可建议顺延。\n\n写作铁律：\n1. 以顾问本人口吻专业行文，全文称呼客户为「贵公司」；正文不得出现「作为AI」「人工智能」「语言模型」「生成」「仅供参考」「综上所述」「总之」等任何AI痕迹词汇，不写自我评价，不写客套话。\n2. 内容必须具体落地：每个建议写清做什么、怎么做、何时完成、交付什么材料；研发投入、收入占比、知识产权数量等给出具体数值与口径。\n3. 必须结合企业所在城市的当地政策实际：主管部门、奖励补贴标准、申报批次与时间窗口、当地评审关注点、省级特色化细则；不确定的写「需以当地主管部门当年通知为准」或「建议提前与当地经办窗口电话确认」，严禁编造数字。\n4. 结构参考：企业现状与达标差距 → 逐项补强措施 → 分阶段实施时间表 → 申报材料清单 → 风险点与应对；紧扣企业数据，勿照搬模板。\n5. 周期必须落地：每个补强动作给出预计完成周期，不写费用。\n6. 知识产权时间现实（务必遵守）：软著申请到拿证约1-3个月、实用新型约6-12个月、外观设计约4-6个月、发明专利约1-3年、知识产权转让（受让/购买）登记约1-2个月；高企/科小只认可「已授权（拿证）」的知识产权，受理中不计分。凡从今天起新申请、赶不上申报截止日前拿证的（尤其发明专利），必须建议「受让/购买已授权知识产权」并提示受让需走的合同/著录变更流程，严禁写「现在申请发明专利、明年第一批申报」这类时间上不成立的方案。\n7. 使用 Markdown 输出，中文正文。\n8. **严禁出现任何费用、单价、小计、合计、预算、金额区间、成本测算表**等任何成本信息——本方案是直接交付客户的成品文档，不写钱；具体报价由顾问与客户单线沟通，不进入方案文本。**金额白名单（唯一允许出现的金额）**：仅限企业现状财务数据——销售收入、研发费用、净资产、高新技术产品收入及占比（客户自有历史数据，可出现在「企业现状」部分）；**严禁任何补强成本类金额**（知识产权购买/转让价、申请费、审计费、服务费、材料费及「预计投入X万元」「约需X元」「费用测算表」「成本明细表」「报价」等），补强措施只讲动作与周期，不谈钱。\n9. **知识产权数量必须按硬门槛精确计算**：国标底线Ⅰ类≥1项 或 Ⅱ类≥6项（Ⅱ类仅限用1次），上海更严（Ⅰ类≥1或Ⅱ类≥6，且必须与主营产品强相关、纯软著通过率低）。必须按门槛算出缺口并给出**精确补强清单**（如「Ⅰ类不足1→补1项发明」「Ⅱ类不足6→需补N项软著/实用新型」），严禁只笼统写「建议申请5项知识产权」这种不达标或不明确的数字。\n10. **禁止在交付方案里写「我方」「销售」「顾问」「XX老师负责」等中介内部表述**；补强措施一律写成中性客观表述（如「需在X月前取得XX证书」「建议贵公司完成XX」）。";
+    // 发起请求（自动续写：输出被 max_tokens 截断时自动追加一轮继续生成，最多续到 MAX_ROUND 段）
+    const messages = [{role:"system",content:sysPrompt},{role:"user",content:prompt}];
+    let result = "", finish = "", round = 0;
     area.innerHTML = '<div class="ai-stream" id="aiStreamOut"></div><div class="ai-status" id="aiProgress">⏳ AI 正在生成方案...</div><div class="tools" style="margin-top:10px;display:none" id="aiMergeBar"><button class="btn btn-green" onclick="mergeStreamResult()">✓ 合并进报告</button><button class="btn btn-ghost" onclick="closeModal()">关闭</button></div>';
     const out = document.getElementById("aiStreamOut");
-    while(true){
-      const {done,value} = await reader.read();
-      if(done) break;
-      buf += decoder.decode(value,{stream:true});
-      const lines = buf.split("\n");
-      buf = lines.pop();
-      for(const line of lines){
-        if(!line.startsWith("data: ")) continue;
-        const data = line.slice(6).trim();
-        if(data==="[DONE]"){ continue; }
-        try{
-          const json = JSON.parse(data);
-          const delta = json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content;
-          if(delta){ result += delta; out.textContent = result; out.scrollTop = out.scrollHeight; }
-        }catch(e){}
+    const MAX_ROUND = 4;
+    for(round=0; round<MAX_ROUND; round++){
+      if(round>0){
+        messages.push({role:"assistant",content:result});
+        messages.push({role:"user",content:"【续写】上面的方案因长度限制被截断。请接着写：先重复你最后写到的一个标题或句子开头（仅一行），然后继续完整续写后续内容，不要重复已写内容，保持同样的格式、口吻与专业度，直至整份方案完整结束。"});
+        const pg=document.getElementById("aiProgress");
+        if(pg) pg.innerHTML = '⏳ 内容较长，正在续写第 '+(round+1)+' 段（最多 '+MAX_ROUND+' 段）...';
       }
+      const resp = await fetch(aiRequestUrl(), {
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+aiConfig.apiKey},
+        body:JSON.stringify({
+          model:model,
+          messages,
+          stream:true,
+          max_tokens:8192,
+          temperature:0.7
+        })
+      });
+      if(!resp.ok){
+        const errTxt = await resp.text().catch(()=>"");
+        let msg = "请求失败("+resp.status+")";
+        if(resp.status===401) msg = "API Key 无效，请检查设置";
+        else if(resp.status===429) msg = "请求过于频繁或额度不足，请稍后重试";
+        else if(resp.status===404) msg = "模型不存在，请检查模型设置";
+        else if(errTxt) msg += "："+errTxt.substring(0,200);
+        throw new Error(msg);
+      }
+      const r2 = await streamRead(resp, out, round>0 ? result+"\n\n" : "");
+      result = round>0 ? result+"\n\n"+r2.text : r2.text;
+      finish = r2.finish;
+      if(finish!=="length") break;
     }
     // Done
     const prog = document.getElementById("aiProgress");
-    if(prog) prog.innerHTML = '✅ 分析完成！点击下方按钮合并进报告。';
     const bar = document.getElementById("aiMergeBar");
-    if(bar) bar.style.display = "flex";
-    // Store result
-    d._aiResult = result;
+    // 空响应兜底：result 太短或仅含错误标签时给出明确提示
+    const cleanResult = (result||"").replace(/\s*\[API 错误\][\s\S]*$/,"").trim();
+    if(!cleanResult){
+      if(prog) prog.innerHTML = '<span style="color:#DC2626">❌ AI 未返回有效内容（result 为空）</span>';
+      if(bar) bar.style.display = "none";
+      area.insertAdjacentHTML("beforeend",
+        '<div class="diag" style="background:#FEF2F2;border-left:4px solid #DC2626;margin-top:10px;font-size:12px">' +
+        '<b>可能原因：</b><br>1. 模型名 <code>'+esc(model)+'</code> 在 '+esc(pfName)+' 平台不存在/已下线（请在本工具「⚙ 配置 AI 接口」中修改模型名称）<br>'+
+        '2. API Key 无效或账户余额不足<br>3. 请求被服务商风控拦截（请稍后重试）<br>'+
+        '4. 网络中断导致 stream 被提前关闭<br>'+
+        '<span style="color:#6b5d4a">详细响应已打印到浏览器控制台（F12 → Console），可联系管理员排查。</span></div>'
+      );
+    } else {
+      if(finish==="length"){
+        if(prog) prog.innerHTML = '<span style="color:#D97706">⚠️ 已达自动续写上限（共 '+round+' 段），方案仍可能不完整。可关闭后点「重新生成」，或改用手动桥接补齐。</span>';
+      } else {
+        if(prog) prog.innerHTML = '✅ 分析完成！点击下方按钮合并进报告。';
+      }
+      if(bar) bar.style.display = "flex";
+    }
+    // 过滤统计：若客户方案被清洗了费用内容，提示用户
+    const strippedLines = ((result||"").match(/\n/g)||[]).length - ((d._aiResult||"").match(/\n/g)||[]).length;
+    if(strippedLines > 2 && prog){
+      prog.innerHTML = prog.innerHTML + ' <span style="color:#059669;font-size:12px">（已自动清理'+strippedLines+'行费用测算内容，保持客户方案无成本信息）</span>';
+    }
+    // Store result (保留 error 标签供调试)；客户申报方案过滤费用（销售话术不过滤）
+    d._aiResult = stripCostContent(result);
     persist();
   }catch(e){
     area.innerHTML = '<div class="diag" style="background:#FEF2F2;border-left:4px solid #DC2626;margin-bottom:12px"><b>❌ '+esc(e.message)+'</b></div>'+
       '<div class="diag" style="background:#FFFBEB;border-left:4px solid #D97706;font-size:12px;margin-bottom:10px">建议：1) 检查API Key是否正确 2) 确认账户余额充足 3) 或切换到「手动桥接」模式</div>'+
-      '<button class="btn btn-ghost" onclick="closeModal();openAiSettings()">⚙️ 修改设置</button>'+
       '<button class="btn btn-ghost" onclick="aiSwitch(1)">📋 切换到手动桥接</button>';
   }
 }
@@ -1443,19 +1749,18 @@ function openSalesDialog(){
   if(!hasKey){
     let h = '<h3>📋 输出销售方方案</h3>';
     h += '<div class="diag" style="background:#FFFBEB;border-left:4px solid #D97706;margin-bottom:12px">';
-    h += '需要配置 AI API Key 才能生成销售方方案。<br>';
-    h += '<span style="font-size:12px;color:#6B7280">DeepSeek 注册即送500万token免费额度，智谱glm-4-flash完全免费。</span></div>';
-    h += '<button class="btn btn-primary" onclick="closeModal();openAiSettings()">⚙️ 前往设置</button>';
+    h += '需要配置 AI API Key 才能生成销售方方案。可复制企业评估数据到任意 AI 对话（ChatGPT / WorkBuddy 等）生成销售话术，再把结果粘贴回本工具使用。<br>';
+    h += '<span style="font-size:12px;color:#6b5d4a">已配置接口时，点击下方即可直连生成。</span></div>';
     showModal(h);
     return;
   }
-  const pfName = AI_PLATFORMS[aiConfig.platform||"deepseek"].name;
   let h = '<h3>📋 输出销售方方案</h3>';
-  h += '<div class="diag" style="background:#F5F3FF;border-left:4px solid #7C3AED;margin-bottom:12px;font-size:13px">';
-  h += 'AI 将基于「'+esc(r.typeName)+' · '+esc(d.name||"企业")+'」的评估数据，生成一套销售人员可直接使用的话术方案，包含：<b>方案讲解、服务内容、公司优势、限时优惠话术、FAQ</b>。<br>';
-  h += '<span style="color:#6B7280">已连接：'+pfName+' · '+aiConfig.model+'（约30-60秒）</span></div>';
+  h += '<div class="diag" style="background:#faf4ea;border-left:4px solid #b45309;margin-bottom:12px;font-size:13px">';
+  h += 'AI 将基于「'+esc(r.typeName)+' · '+esc(d.name||"企业")+'」的评估数据，生成一套销售人员可直接使用的话术方案，包含：<b>方案讲解、服务内容、公司优势、限时优惠话术、FAQ、内部费用参考</b>。<br>';
+  h += '<span style="color:#6b5d4a">「内部费用参考」含成本测算与报价区间，仅销售内部可见，不作为话术念给客户。</span><br>';
+  h += '<span style="color:#6b5d4a">已连接：'+aiPfName()+' · '+aiPfModel()+'（约30-60秒）</span></div>';
   h += '<div id="salesArea">';
-  h += '<button class="btn btn-primary" style="width:100%;font-size:15px;padding:12px;background:#7C3AED" onclick="startSalesAi()">⚡ 开始生成销售话术</button>';
+  h += '<button class="btn btn-primary" style="width:100%;font-size:15px;padding:12px;background:#b45309" onclick="startSalesAi()">⚡ 开始生成销售话术</button>';
   h += '</div>';
   showModal(h);
 }
@@ -1463,68 +1768,79 @@ async function startSalesAi(){
   const r = engine(); if(!r) return;
   const d = data[atype];
   const prompt = buildSalesPrompt(r, d, aiConfig.desens);
-  const pf = AI_PLATFORMS[aiConfig.platform||"deepseek"];
-  const model = aiConfig.model || pf.models[0].id;
+  const pfName = aiPfName();
+  const model = aiPfModel();
   const area = document.getElementById("salesArea");
-  area.innerHTML = '<div class="ai-loading"><div class="spinner"></div><div class="ai-status">正在连接 '+pf.name+'（'+model+'）...</div><div class="ai-status" id="salesProgress">生成中，请稍候（通常30-60秒）</div></div>';
+  area.innerHTML = '<div class="ai-loading"><div class="spinner"></div><div class="ai-status">正在连接 '+pfName+'（'+model+'）...</div><div class="ai-status" id="salesProgress">生成中，请稍候（通常30-60秒）</div></div>';
   try {
     const nowD = new Date();
     const nowStr = nowD.getFullYear() + "年" + (nowD.getMonth()+1) + "月" + nowD.getDate() + "日";
     const curYear = nowD.getFullYear();
     const sysPrompt = "你是一名在项目申报咨询行业深耕多年的销售总监，擅长把复杂的资质评估结果转化为客户能听懂、愿意买单的销售话术。你现在要为销售团队写一份内部话术方案，销售员会拿着这份话术直接跟客户沟通。你的语言要像真人在说话——口语化、有感染力、有节奏感，不说书面套话，不堆四字成语，不写「综上所述」「总而言之」这类官话。每句话都要有实际信息量，能打动客户。严禁出现「作为AI」「人工智能」「语言模型」「生成」「仅供参考」等任何AI痕迹词汇。你的角色是销售总监，不是咨询顾问，不是AI助手。今天是" + nowStr + "。";
-    const resp = await fetch(pf.url, {
-      method:"POST",
-      headers:{"Content-Type":"application/json","Authorization":"Bearer "+aiConfig.apiKey},
-      body:JSON.stringify({
-        model:model,
-        messages:[{role:"system",content:sysPrompt},{role:"user",content:prompt}],
-        stream:true,
-        max_tokens:4096,
-        temperature:0.8
-      })
-    });
-    if(!resp.ok){
-      const errTxt = await resp.text().catch(()=>"");
-      let msg = "请求失败("+resp.status+")";
-      if(resp.status===401) msg = "API Key 无效，请检查设置";
-      else if(resp.status===429) msg = "请求过于频繁或额度不足，请稍后重试";
-      else if(resp.status===404) msg = "模型不存在，请检查模型设置";
-      else if(errTxt) msg += "："+errTxt.substring(0,200);
-      throw new Error(msg);
-    }
-    const reader = resp.body.getReader();
-    const decoder = new TextDecoder();
-    let result = "";
-    let buf = "";
+    // 发起请求（自动续写：输出被 max_tokens 截断时自动追加一轮继续生成，最多续到 MAX_ROUND 段）
+    const messages = [{role:"system",content:sysPrompt},{role:"user",content:prompt}];
+    let result = "", finish = "", round = 0;
     area.innerHTML = '<div class="ai-stream" id="salesStreamOut"></div><div class="ai-status" id="salesProgress">⏳ AI 正在生成销售话术...</div><div class="tools" style="margin-top:10px;display:none" id="salesMergeBar"><button class="btn btn-green" onclick="mergeSalesResult()">✓ 合并进报告</button><button class="btn btn-ghost" onclick="closeModal()">关闭</button></div>';
     const out = document.getElementById("salesStreamOut");
-    while(true){
-      const {done,value} = await reader.read();
-      if(done) break;
-      buf += decoder.decode(value,{stream:true});
-      const lines = buf.split("\n");
-      buf = lines.pop();
-      for(const line of lines){
-        if(!line.startsWith("data: ")) continue;
-        const data = line.slice(6).trim();
-        if(data==="[DONE]"){ continue; }
-        try{
-          const json = JSON.parse(data);
-          const delta = json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content;
-          if(delta){ result += delta; out.textContent = result; out.scrollTop = out.scrollHeight; }
-        }catch(e){}
+    const MAX_ROUND = 4;
+    for(round=0; round<MAX_ROUND; round++){
+      if(round>0){
+        messages.push({role:"assistant",content:result});
+        messages.push({role:"user",content:"【续写】上面的销售话术因长度限制被截断。请接着写：先重复你最后写到的一个标题或句子开头（仅一行），然后继续完整续写后续内容，不要重复已写内容，保持同样的口吻与结构，直至整份话术完整结束。"});
+        const pg=document.getElementById("salesProgress");
+        if(pg) pg.innerHTML = '⏳ 内容较长，正在续写第 '+(round+1)+' 段（最多 '+MAX_ROUND+' 段）...';
       }
+      const resp = await fetch(aiRequestUrl(), {
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+aiConfig.apiKey},
+        body:JSON.stringify({
+          model:model,
+          messages,
+          stream:true,
+          max_tokens:8192,
+          temperature:0.8
+        })
+      });
+      if(!resp.ok){
+        const errTxt = await resp.text().catch(()=>"");
+        let msg = "请求失败("+resp.status+")";
+        if(resp.status===401) msg = "API Key 无效，请检查设置";
+        else if(resp.status===429) msg = "请求过于频繁或额度不足，请稍后重试";
+        else if(resp.status===404) msg = "模型不存在，请检查模型设置";
+        else if(errTxt) msg += "："+errTxt.substring(0,200);
+        throw new Error(msg);
+      }
+      const r2 = await streamRead(resp, out, round>0 ? result+"\n\n" : "");
+      result = round>0 ? result+"\n\n"+r2.text : r2.text;
+      finish = r2.finish;
+      if(finish!=="length") break;
     }
     const prog = document.getElementById("salesProgress");
-    if(prog) prog.innerHTML = '✅ 生成完成！点击下方按钮合并进报告。';
     const bar = document.getElementById("salesMergeBar");
-    if(bar) bar.style.display = "flex";
+    const cleanResult = (result||"").replace(/\s*\[API 错误\][\s\S]*$/,"").trim();
+    if(!cleanResult){
+      if(prog) prog.innerHTML = '<span style="color:#DC2626">❌ AI 未返回有效内容（result 为空）</span>';
+      if(bar) bar.style.display = "none";
+      area.insertAdjacentHTML("beforeend",
+        '<div class="diag" style="background:#FEF2F2;border-left:4px solid #DC2626;margin-top:10px;font-size:12px">' +
+        '<b>可能原因：</b><br>1. 模型名 <code>'+esc(model)+'</code> 在 '+esc(pfName)+' 平台不存在/已下线<br>'+
+        '2. API Key 无效或账户余额不足<br>3. 网络中断导致 stream 被提前关闭<br>'+
+        '<span style="color:#6b5d4a">详细响应已打印到浏览器控制台（F12 → Console）。</span></div>'
+      );
+    } else {
+      if(finish==="length"){
+        if(prog) prog.innerHTML = '<span style="color:#D97706">⚠️ 已达自动续写上限（共 '+round+' 段），话术仍可能不完整。可关闭后重新生成。</span>';
+      } else {
+        if(prog) prog.innerHTML = '✅ 生成完成！点击下方按钮合并进报告。';
+      }
+      if(bar) bar.style.display = "flex";
+    }
     d._salesResult = result;
     persist();
   }catch(e){
     area.innerHTML = '<div class="diag" style="background:#FEF2F2;border-left:4px solid #DC2626;margin-bottom:12px"><b>❌ '+esc(e.message)+'</b></div>'+
       '<div class="diag" style="background:#FFFBEB;border-left:4px solid #D97706;font-size:12px;margin-bottom:10px">建议：1) 检查API Key是否正确 2) 确认账户余额充足</div>'+
-      '<button class="btn btn-ghost" onclick="closeModal();openAiSettings()">⚙️ 修改设置</button>'+
+      '<button class="btn btn-ghost" onclick="closeModal();openAiConfigDialog()">⚙ 配置 AI 接口</button>'+
       '<button class="btn btn-ghost" onclick="closeModal()">关闭</button>';
   }
 }
@@ -1596,14 +1912,14 @@ function openRecords(){
   const list = loadRecords();
   let h = '<h3>📋 近期生成记录</h3>';
   if(!list.length){
-    h += '<div class="diag" style="background:#F8FAFC;border-left:4px solid #9CA3AF;font-size:13px">暂无记录。<br>每次「生成申报方案」成功（AI直连或手动合并）后会自动保存一条记录：可随时<b>📂 载入数据</b>修改后重新生成，或<b>📄 查看方案</b>重新导出Word/PDF，避免重复填写与方案丢失。</div>';
+    h += '<div class="diag" style="background:#faf7f2;border-left:4px solid #9a8a72;font-size:13px">暂无记录。<br>每次「生成申报方案」成功（AI直连或手动合并）后会自动保存一条记录：可随时<b>📂 载入数据</b>修改后重新生成，或<b>📄 查看方案</b>重新导出Word/PDF，避免重复填写与方案丢失。</div>';
   }else{
-    h += '<div style="font-size:12px;color:#6B7280;margin-bottom:10px">共 '+list.length+' 条 · 同企业同资质保留最新一条 · 最多保留 '+REC_LIMIT+' 条</div>';
+    h += '<div style="font-size:12px;color:#6b5d4a;margin-bottom:10px">共 '+list.length+' 条 · 同企业同资质保留最新一条 · 最多保留 '+REC_LIMIT+' 条</div>';
     h += list.map(rec=>{
       let plan = "";
       try{ plan = JSON.parse(rec.snapshot)._aiResult || ""; }catch(e){}
       const badge = '<span class="rec-badge" style="background:'+(rec.qualified?"#DCFCE7;color:#15803D":"#FEE2E2;color:#B91C1C")+'">'+(rec.qualified?"达标":"未达标")+'</span>';
-      const planBadge = plan ? '<span class="rec-badge" style="background:#DBEAFE;color:#1D4ED8">有方案</span>' : "";
+      const planBadge = plan ? '<span class="rec-badge" style="background:#fbeccb;color:#b45309">有方案</span>' : "";
       return `<div class="rec-row">
         <div style="min-width:0">
           <div class="rec-t">${esc(rec.typeName)} · ${esc(rec.name)}${badge}${planBadge}</div>
@@ -1633,14 +1949,14 @@ function viewRecord(id){
   let plan = "";
   try{ plan = JSON.parse(rec.snapshot)._aiResult || ""; }catch(e){}
   let h = '<h3>📄 历史申报方案</h3>';
-  h += '<div class="diag" style="background:#EFF6FF;border-left:4px solid #2563EB;font-size:12px;margin-bottom:12px">';
+  h += '<div class="diag" style="background:#fdf4e6;border-left:4px solid #e0901a;font-size:12px;margin-bottom:12px">';
   h += '<b>'+esc(rec.typeName)+'</b> · '+esc(rec.name)+' · 生成于 '+rec.timeStr+'（综合得分 '+rec.score+'，'+(rec.qualified?"达标":"未达标")+'）</div>';
-  h += '<div class="report" style="max-height:52vh;overflow:auto"><div class="card"><h3>申报方案</h3><div class="plan-body">'+(plan?mdToHtml(plan):'<div class="diag" style="background:#F8FAFC;border-left:4px solid #9CA3AF">该记录未包含方案内容。</div>')+'</div></div></div>';
+  h += '<div class="report" style="max-height:52vh;overflow:auto"><div class="card"><h3>申报方案</h3><div class="plan-body">'+(plan?mdToHtml(plan):'<div class="diag" style="background:#faf7f2;border-left:4px solid #9a8a72">该记录未包含方案内容。</div>')+'</div></div></div>';
   h += '<div class="tools" style="margin-top:12px">';
   let salesPlan = "";
   try{ salesPlan = JSON.parse(rec.snapshot)._salesResult || ""; }catch(e){}
   if(salesPlan){
-    h += '<div class="report" style="max-height:52vh;overflow:auto;margin-top:12px"><div class="card"><h3 style="color:#7C3AED">📋 销售方方案（内部话术）</h3><div class="plan-body">'+mdToHtml(salesPlan)+'</div></div></div>';
+    h += '<div class="report" style="max-height:52vh;overflow:auto;margin-top:12px"><div class="card"><h3 style="color:#b45309">📋 销售方方案（内部话术）</h3><div class="plan-body">'+mdToHtml(salesPlan)+'</div></div></div>';
   }
   h += '<button class="btn btn-green" onclick="exportRecord(\''+rec.id+'\',\'word\')">⬇ 下载Word</button>';
   h += '<span class="spacer"></span>';

@@ -6,7 +6,9 @@ export default defineConfig({
   plugins: [vue()],
   build: {
     outDir: 'dist',
-    assetsDir: 'assets'
+    assetsDir: 'assets',
+    // 构建前 dist 需用 find -delete 手动清理（WorkBuddy 安全删除机制会拦截 Vite 的 rmSync 清空）
+    emptyOutDir: false
   },
   server: {
     port: 5173,

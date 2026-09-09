@@ -4,3 +4,11 @@ preview.log
 preview.pid
 *.local
 .DS_Store
+
+# 本地临时产物 / 一次性脚本（不进仓库）
+_verify_out/
+*.png
+*.docx
+*.zip
+fix-warm-gold.cjs
+vite.config.js.timestamp-*

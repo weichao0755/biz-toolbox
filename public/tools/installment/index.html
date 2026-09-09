@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>分期收款 / 支出测算器</title>
+<script src="../quote/html2canvas.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#faf7f2;color:#2a2118}
+  .wrap{max-width:940px;margin:0 auto;padding:18px 16px 60px}
+  .topbar{background:linear-gradient(120deg,#7a3e07,#e0901a);color:#fff;border-radius:14px;padding:18px 22px;margin-bottom:16px;box-shadow:0 6px 18px rgba(180,83,9,.18)}
+  .topbar h1{margin:0;font-size:20px;letter-spacing:1px}
+  .topbar p{margin:6px 0 0;font-size:12.5px;opacity:.86;line-height:1.6}
+  .card{background:#fffefb;border:1px solid #ece3d6;border:1px solid #f2e6d8;border-radius:14px;padding:16px 18px;margin-bottom:14px;box-shadow:0 2px 8px rgba(180,120,40,.06)}
+  .card h2{margin:0 0 12px;font-size:15px;color:#2a1a0a;display:flex;align-items:center;gap:8px}
+  .card h2 .tag{font-size:11px;font-weight:400;color:#6b5d4a;background:#fbf5ea;padding:2px 8px;border-radius:20px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .fg{margin-bottom:10px}
+  .fg label{display:block;font-size:12.5px;color:#3a3228;margin-bottom:5px;font-weight:600}
+  .fg input{width:100%;padding:9px 11px;border:1px solid #e8dcd0;border-radius:9px;font-size:14px;outline:none;transition:.15s;background:#fffefb}
+  .fg input:focus{border-color:#a85509;box-shadow:0 0 0 3px rgba(24,95,165,.12)}
+  .tbl{width:100%;border-collapse:collapse;font-size:13px}
+  .tbl th{background:#b45309;color:#fff;font-weight:500;padding:9px 8px;font-size:12px;text-align:center}
+  .tbl td{padding:6px 6px;border-bottom:1px solid #f6efe3;vertical-align:middle}
+  .tbl input{padding:7px 8px;border:1px solid #e8dcd0;border-radius:7px;font-size:13px;width:100%;outline:none}
+  .tbl input:focus{border-color:#a85509;box-shadow:0 0 0 2px rgba(24,95,165,.12)}
+  .tbl .amt{text-align:right}
+  .row-del{background:#fdecec;border:none;color:#c0392b;width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:15px;line-height:1}
+  .row-del:hover{background:#f9d4d4}
+  .add-btn{margin-top:10px;background:#fbf5ea;color:#2a1a0a;border:1px dashed #d4c4a8;border-radius:9px;padding:9px;width:100%;cursor:pointer;font-size:13px;font-weight:600}
+  .add-btn:hover{background:#f7ead4}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+  .btn{border:none;border-radius:10px;padding:11px 18px;font-size:14px;font-weight:600;cursor:pointer;transition:.15s}
+  .btn-primary{background:#b45309;color:#fff}
+  .btn-primary:hover{background:#1f1408}
+  .btn-ghost{background:#fffefb;color:#2a2118;border:1px solid #ece3d6}
+  .btn-ghost:hover{background:#fbf5ea;border-color:#e0901a}
+  .btn-danger{background:#fdecea;color:#c0392b}
+  .btn-danger:hover{background:#f9d4d4}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .result{display:none}
+  .result.show{display:block}
+  .banner{border-radius:12px;padding:13px 16px;font-size:13.5px;font-weight:600;margin-bottom:12px;line-height:1.6}
+  .banner.ok{background:#e8f7ef;color:#1d7a46;border:1px solid #bfe6cf}
+  .banner.warn{background:#fdf0e6;color:#b45309;border:1px solid #f6d9b3}
+  .banner.bad{background:#fdecea;color:#c0392b;border:1px solid #f5c6c6}
+  .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+  .kpi .box{background:#faf7f2;border:1px solid #f2e6d8;border-radius:11px;padding:12px}
+  .kpi .k{font-size:11.5px;color:#6b5d4a;margin-bottom:4px}
+  .kpi .v{font-size:18px;font-weight:700;color:#2a1a0a}
+  .kpi .v.red{color:#c0392b}
+  .kpi .v.green{color:#1d7a46}
+  .nodes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+  .nodes .n{background:#faf7f2;border:1px solid #f2e6d8;border-radius:11px;padding:12px}
+  .nodes .n .t{font-size:11.5px;color:#6b5d4a;margin-bottom:5px}
+  .nodes .n .d{font-size:14px;font-weight:600;color:#2a2118;line-height:1.5}
+  .tl{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}
+  .tl th{background:#faf7f2;color:#3a3228;padding:8px 6px;font-size:11.5px;border-bottom:2px solid #e8dcd0}
+  .tl td{padding:7px 6px;border-bottom:1px solid #f6efe3;text-align:center}
+  .tl td.r{text-align:right}
+  .tl .st-ok{color:#1d7a46;font-weight:600}
+  .tl .st-bad{color:#c0392b;font-weight:700;background:#fdecea}
+  .tl tr.bad td{background:#fff6f5}
+  .risk{background:#fdf0e6;border:1px solid #f6d9b3;border-radius:10px;padding:11px 14px;font-size:12.5px;color:#92400e;line-height:1.8;margin-top:10px}
+  .risk b{color:#b45309}
+  .ok-tip{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#b45309;color:#fff;padding:10px 18px;border-radius:30px;font-size:13px;opacity:0;transition:.3s;pointer-events:none;z-index:99;box-shadow:0 6px 18px rgba(42,33,24,.18)}
+  .ok-tip.show{opacity:1}
+  .hint{font-size:11.5px;color:#7b8794;margin-top:8px;line-height:1.7}
+  @media(max-width:680px){.grid2,.kpi,.nodes{grid-template-columns:1fr 1fr}.kpi{grid-template-columns:1fr 1fr}}
+  .check{margin:8px 0 12px;padding:10px 14px;border-radius:8px;font-size:14px;line-height:1.8;background:#fbf5ea;border:1px solid #d6e2f5}
+  .check .ttl{font-weight:700;margin-bottom:4px}
+  .check .ok{color:#1d7a46;font-weight:700}
+  .check .warn{color:#b45309;font-weight:700}
+  .sumrow{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin:8px 2px 2px;padding:8px 12px;border-radius:8px;background:#f3f6fb;font-size:14px;color:#334}
+  .sumrow .s-l{font-weight:700}
+  .sumrow .s-i{color:#556}
+  .sumrow .over{color:#c0392b;font-weight:700}
+  .sumrow.over{background:#fdecea;border:1px solid #f5c6c0}
+  /* 导出图片卡片（仅收款计划，发给客户，不暴露支出） */
+  #exportCard{position:fixed;left:-10000px;top:0;z-index:-1}
+  #exportCard .ec-inner{width:760px;padding:26px 24px;background:#fff;color:#2a2118;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  #exportCard .ec-deal{font-size:15px;color:#2a1a0a;font-weight:700;margin-bottom:6px}
+  #exportCard .ec-title{font-size:23px;font-weight:800;color:#2a1a0a;text-align:center;letter-spacing:2px}
+  #exportCard .ec-date{font-size:12px;color:#8a7a62;text-align:center;margin:6px 0 16px}
+  #exportCard .ec-table{border:1px solid #e8dcd0;border-radius:8px;overflow:hidden}
+  #exportCard .er{display:flex;width:100%;box-sizing:border-box}
+  #exportCard .eh{background:#b45309;color:#fff;font-weight:600}
+  #exportCard .et{background:#fbf5ea;font-weight:700;color:#2a1a0a}
+  #exportCard .c{box-sizing:border-box;padding:11px 12px;font-size:13.5px;border-bottom:1px solid #efe7d9;line-height:1.4}
+  #exportCard .er:last-child .c{border-bottom:none}
+  #exportCard .c1{width:130px;flex:0 0 130px}
+  #exportCard .c2{width:135px;flex:0 0 135px;text-align:right;font-variant-numeric:tabular-nums}
+  #exportCard .c3{width:95px;flex:0 0 95px;text-align:right;font-variant-numeric:tabular-nums}
+  #exportCard .c4{flex:1 1 0;min-width:0;word-break:break-all;text-align:center}
+  #exportCard .ec-foot{margin-top:14px;font-size:13px;color:#3a3228;text-align:right}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <h1>📊 分期收款 / 支出测算器</h1>
+    <p>按「阶段名」归并收款与支出两条计划，逐节点核对累计现金流，确保收款始终 ≥ 支出，并定位利润全部到账的节点。<br>适用：客户分期付款 + 渠道分期返佣、节点与期数不完全对齐的居间/转让业务。</p>
+  </div>
+
+  <div class="card">
+    <h2>① 业务信息</h2>
+    <div class="grid2">
+      <div class="fg"><label>业务名称 / 客户</label><input type="text" id="dealName" placeholder="如：深圳某某科技 公司转让"></div>
+      <div class="fg"><label>收款总金额（合同 / 约定）</label><input type="number" id="recTotal" min="0" step="0.01" placeholder="如：50000"></div>
+      <div class="fg"><label>支出总金额（合同 / 约定）</label><input type="number" id="payTotal" min="0" step="0.01" placeholder="如：30000"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>② 收款计划 <span class="tag">转让公司项目收款分期计划表</span></h2>
+    <table class="tbl">
+      <thead><tr><th style="width:28%">阶段 / 节点</th><th style="width:20%">金额（元）</th><th style="width:16%">比例（%）</th><th style="width:28%">备注</th><th style="width:8%"></th></tr></thead>
+      <tbody id="recBody"></tbody>
+    </table>
+    <div class="sumrow" id="recSum"></div>
+    <button class="add-btn" onclick="addReceipt()">＋ 添加收款节点</button>
+  </div>
+
+  <div class="card">
+    <h2>③ 支出计划 <span class="tag">我们向渠道付的钱</span></h2>
+    <table class="tbl">
+      <thead><tr><th style="width:28%">阶段 / 节点</th><th style="width:20%">金额（元）</th><th style="width:16%">比例（%）</th><th style="width:28%">备注</th><th style="width:8%"></th></tr></thead>
+      <tbody id="payBody"></tbody>
+    </table>
+    <div class="sumrow" id="paySum"></div>
+    <button class="add-btn" onclick="addPayment()">＋ 添加支出节点</button>
+    <div class="hint">小贴士：同名阶段（如都写「签约」）会自动归并到同一时间点合并计算；不同阶段则各自成节点。阶段填写顺序即为时间线顺序。</div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" id="calcBtn" onclick="compute()">🔍 计算并分析</button>
+    <button class="btn btn-ghost" id="imgBtn" onclick="exportImage()">🖼️ 生成图片（发给客户）</button>
+    <button class="btn btn-ghost" onclick="saveRecord()">💾 保存记录</button>
+    <button class="btn btn-danger" onclick="clearAll()">🗑️ 清空</button>
+  </div>
+
+  <div class="result" id="result">
+    <div id="banner" class="banner"></div>
+    <div class="kpi" id="kpi"></div>
+    <div id="checkBox" class="check"></div>
+    <div class="nodes" id="nodes"></div>
+    <div class="card">
+      <h2>④ 现金流时间线</h2>
+      <table class="tl">
+        <thead><tr><th>序号</th><th>阶段 / 节点</th><th>本节点收款</th><th>本节点支出</th><th>累计收款</th><th>累计支出</th><th>累计净额</th><th>状态</th></tr></thead>
+        <tbody id="tlBody"></tbody>
+      </table>
+      <div id="riskBox"></div>
+    </div>
+  </div>
+</div>
+<div class="ok-tip" id="okTip"></div>
+
+<script>
+/* ============ 工具函数 ============ */
+function fmtMoney(n){ n=Number(n)||0; return '¥'+n.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2}) }
+function fmtMoneyRaw(n){ n=Number(n)||0; return n.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2}) }
+function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+function rmbUpper(n){
+  n=Math.round((Number(n)||0)*100)
+  if(n===0) return '人民币零元整'
+  const NUMS=['零','壹','贰','叁','肆','伍','陆','柒','捌','玖']
+  const UNITS=['','拾','佰','仟']
+  const BIG=['','万','亿','万亿']
+  const intPart=Math.floor(n/100)
+  const jiao=Math.floor((n%100)/10)
+  const fen=n%10
+  let s=''
+  if(intPart>0){
+    const digits=String(intPart).split('').reverse()
+    const parts=[]
+    for(let i=0;i<digits.length;i+=4){
+      const seg=digits.slice(i,i+4)
+      let segStr='', zeroPending=false
+      for(let j=seg.length-1;j>=0;j--){
+        const d=Number(seg[j])
+        if(d===0){ zeroPending=true }
+        else{ if(zeroPending&&segStr!=='') segStr+='零'; zeroPending=false; segStr+=NUMS[d]+UNITS[j] }
+      }
+      parts.unshift({seg:segStr, big:BIG[Math.floor(i/4)]})
+    }
+    parts.forEach((p,i)=>{
+      if(p.seg!==''){ if(i>0&&s.endsWith('零')) s=s.slice(0,-1); s+=p.seg+p.big }
+      else{ if(s!==''&&!s.endsWith('零')) s+='零' }
+    })
+    s=s.replace(/零+$/,'')
+    if(s.endsWith('零')) s=s.slice(0,-1)
+    s+='元'
+  }
+  if(jiao===0&&fen===0){ s+='整' }
+  else{
+    if(jiao>0){ s+=NUMS[jiao]+'角'; if(fen===0) s+='整' }
+    else{ if(fen>0) s+='零' }
+    if(fen>0) s+=NUMS[fen]+'分'
+  }
+  return '人民币'+s
+}
+
+/* ============ 状态 ============ */
+const DATA_KEY='installment_tool_data_v1'
+const REC_KEY='installment_records_v1'
+const REC_LIMIT=30
+const AGENCY_NAME='深圳市金米启航企业服务有限公司'
+let state={ dealName:'', recTotal:0, payTotal:0, receipts:[], payments:[] }
+let lastResult=null
+
+function loadState(){
+  try{
+    const s=JSON.parse(localStorage.getItem(DATA_KEY)||'null')
+    if(s&&typeof s==='object'){ state=Object.assign({dealName:'',recTotal:0,payTotal:0,receipts:[],payments:[]},s) }
+  }catch(e){}
+  if(!state.receipts.length) state.receipts=[{stage:'签约',amount:0,ratio:0,note:''},{stage:'过户',amount:0,ratio:0,note:''},{stage:'交接',amount:0,ratio:0,note:''}]
+  if(!state.payments.length) state.payments=[{stage:'签约',amount:0,ratio:0,note:''},{stage:'交接',amount:0,ratio:0,note:''}]
+}
+function saveState(){ try{ localStorage.setItem(DATA_KEY, JSON.stringify(state)) }catch(e){} }
+
+/* ============ 渲染输入表 ============ */
+function renderReceipts(){
+  const b=document.getElementById('recBody')
+  b.innerHTML=state.receipts.map((r,i)=>{ if(r.ratio==null&&state.recTotal>0) r.ratio=(Number(r.amount)||0)/state.recTotal*100; return `<tr>
+    <td><input value="${esc(r.stage)}" oninput="state.receipts[${i}].stage=this.value;saveState()"></td>
+    <td><input class="amt" type="number" min="0" step="0.01" value="${r.amount}" oninput="onAmt('rec',${i},this.value)"></td>
+    <td><input class="ratio" type="number" min="0" step="0.01" value="${r.ratio!=null?r.ratio:''}" oninput="onRatio('rec',${i},this.value)"></td>
+    <td><input value="${esc(r.note)}" oninput="state.receipts[${i}].note=this.value;saveState()"></td>
+    <td><button class="row-del" onclick="delReceipt(${i})" title="删除">×</button></td>
+  </tr>` }).join('')
+  recalcTotals('rec')
+}
+function renderPayments(){
+  const b=document.getElementById('payBody')
+  b.innerHTML=state.payments.map((p,i)=>{ if(p.ratio==null&&state.payTotal>0) p.ratio=(Number(p.amount)||0)/state.payTotal*100; return `<tr>
+    <td><input value="${esc(p.stage)}" oninput="state.payments[${i}].stage=this.value;saveState()"></td>
+    <td><input class="amt" type="number" min="0" step="0.01" value="${p.amount}" oninput="onAmt('pay',${i},this.value)"></td>
+    <td><input class="ratio" type="number" min="0" step="0.01" value="${p.ratio!=null?p.ratio:''}" oninput="onRatio('pay',${i},this.value)"></td>
+    <td><input value="${esc(p.note)}" oninput="state.payments[${i}].note=this.value;saveState()"></td>
+    <td><button class="row-del" onclick="delPayment(${i})" title="删除">×</button></td>
+  </tr>` }).join('')
+  recalcTotals('pay')
+}
+function addReceipt(){ state.receipts.push({stage:'',amount:0,ratio:0,note:''}); saveState(); renderReceipts() }
+function addPayment(){ state.payments.push({stage:'',amount:0,ratio:0,note:''}); saveState(); renderPayments() }
+function delReceipt(i){ state.receipts.splice(i,1); saveState(); renderReceipts() }
+function delPayment(i){ state.payments.splice(i,1); saveState(); renderPayments() }
+
+// 金额 ⇄ 比例 ⇄ 总金额 联动
+function onAmt(type,i,val){
+  const arr=type==='rec'?state.receipts:state.payments
+  const total=type==='rec'?state.recTotal:state.payTotal
+  arr[i].amount=Number(val)||0
+  arr[i].ratio = total>0 ? arr[i].amount/total*100 : null
+  const row=document.querySelectorAll(type==='rec'?'#recBody tr':'#payBody tr')[i]
+  if(row){ const inp=row.querySelector('.ratio'); if(inp) inp.value=(arr[i].ratio==null?'':arr[i].ratio) }
+  saveState(); recalcTotals(type)
+}
+function onRatio(type,i,val){
+  const arr=type==='rec'?state.receipts:state.payments
+  const total=type==='rec'?state.recTotal:state.payTotal
+  const ratio=Number(val); arr[i].ratio=(val===''||isNaN(ratio))?null:ratio
+  arr[i].amount=(total>0&&arr[i].ratio!=null)?total*arr[i].ratio/100:0
+  const row=document.querySelectorAll(type==='rec'?'#recBody tr':'#payBody tr')[i]
+  if(row){ const inp=row.querySelector('.amt'); if(inp) inp.value=arr[i].amount }
+  saveState(); recalcTotals(type)
+}
+// 实时合计 + 超额校验
+function recalcTotals(type){
+  const arr=type==='rec'?state.receipts:state.payments
+  const total=type==='rec'?state.recTotal:state.payTotal
+  let sumAmt=0, sumRatio=0
+  arr.forEach(x=>{ sumAmt+=(Number(x.amount)||0); if(x.ratio!=null) sumRatio+=(Number(x.ratio)||0) })
+  const el=document.getElementById(type==='rec'?'recSum':'paySum')
+  if(!el) return
+  const overAmt=total>0&&sumAmt>total+0.005
+  const overRatio=sumRatio>100+0.005
+  const ratioTxt=(sumRatio>0||total>0)?sumRatio.toFixed(2)+'%':'—'
+  let html='<span class="s-l">合计：</span><span class="s-i">金额 <b>'+fmtMoneyRaw(sumAmt)+'</b></span><span class="s-i">比例 <b>'+ratioTxt+'</b></span>'
+  if(total>0){ html+='<span class="s-i">总金额 '+fmtMoneyRaw(total)+'</span>'; if(overAmt||overRatio){ html+='<span class="over">⚠️ 已超出总金额！金额合计 '+fmtMoneyRaw(sumAmt)+' ＞ '+fmtMoneyRaw(total)+'</span>'; el.className='sumrow over' } else { el.className='sumrow' } }
+  else { el.className='sumrow' }
+  el.innerHTML=html
+}
+
+function syncInfo(){ state.dealName=document.getElementById('dealName').value; state.recTotal=Number(document.getElementById('recTotal').value)||0; state.payTotal=Number(document.getElementById('payTotal').value)||0; saveState(); renderReceipts(); renderPayments() }
+function fillInfo(){ document.getElementById('dealName').value=state.dealName||''; document.getElementById('recTotal').value=state.recTotal||''; document.getElementById('payTotal').value=state.payTotal||'' }
+
+/* ============ 计算 ============ */
+function compute(){
+  syncInfo()
+  // 统一阶段顺序：收款表顺序在前，支出表中未出现的新阶段追加在后
+  const order=[], seen=new Set()
+  state.receipts.forEach(r=>{ const k=String(r.stage||'').trim(); if(k&&!seen.has(k)){ seen.add(k); order.push(k) } })
+  state.payments.forEach(p=>{ const k=String(p.stage||'').trim(); if(k&&!seen.has(k)){ seen.add(k); order.push(k) } })
+
+  const recMap={}, payMap={}
+  state.receipts.forEach(r=>{ const k=String(r.stage||'').trim(); if(!k) return; recMap[k]=(recMap[k]||0)+Number(r.amount)||0 })
+  state.payments.forEach(p=>{ const k=String(p.stage||'').trim(); if(!k) return; payMap[k]=(payMap[k]||0)+Number(p.amount)||0 })
+
+  let cumR=0, cumP=0
+  const rows=order.map((stage,i)=>{
+    const rAmt=recMap[stage]||0, pAmt=payMap[stage]||0
+    cumR+=rAmt; cumP+=pAmt
+    return { i:i+1, stage, rAmt, pAmt, cumR, cumP, net:cumR-cumP }
+  })
+  const totalR=cumR, totalP=cumP, totalProfit=totalR-totalP
+  const unsafe=rows.filter(r=>r.net<0)
+  const minNet=rows.length?Math.min(...rows.map(r=>r.net)):0
+  const maxGap=Math.max(0,-minNet)
+  const profitNode=rows.length?rows[rows.length-1]:null
+  const turnNode=rows.find(r=>r.net>=0)||null
+  const hasGap=unsafe.length>0
+
+  lastResult={ rows, totalR, totalP, totalProfit, unsafe, maxGap, profitNode, turnNode, hasGap, dealName:state.dealName, recTotal:state.recTotal, payTotal:state.payTotal, diffR:(state.recTotal>0?totalR-state.recTotal:null), diffP:(state.payTotal>0?totalP-state.payTotal:null) }
+
+  renderResult()
+  document.getElementById('result').classList.add('show')
+  document.getElementById('result').scrollIntoView({behavior:'smooth',block:'start'})
+}
+
+function renderResult(){
+  const R=lastResult
+  // banner
+  const banner=document.getElementById('banner')
+  if(!R.rows.length){ banner.className='banner bad'; banner.textContent='⚠️ 请先填写至少一个收款节点和支出节点后再计算。'; return }
+  if(R.totalProfit<0){ banner.className='banner bad'; banner.innerHTML='❌ 整笔业务亏损：总收款 '+fmtMoney(R.totalR)+' − 总支出 '+fmtMoney(R.totalP)+' = <b>'+fmtMoney(R.totalProfit)+'</b>。利润无法收回，建议重新谈付款节奏或加价。' }
+  else if(R.hasGap){ banner.className='banner warn'; banner.innerHTML='⚠️ 现金缺口预警：有 <b>'+R.unsafe.length+'</b> 个节点「累计收款 < 累计支出」，最大需垫资 <b>'+fmtMoney(R.maxGap)+'</b>。请前移收款或后移支出，确保收款始终 ≥ 支出。' }
+  else if((R.recTotal>0&&R.totalR>R.recTotal+0.005)||(R.payTotal>0&&R.totalP>R.payTotal+0.005)){ let parts=[]; if(R.recTotal>0&&R.totalR>R.recTotal+0.005) parts.push('收款合计 '+fmtMoney(R.totalR)+' ＞ 约定收款总额 '+fmtMoney(R.recTotal)); if(R.payTotal>0&&R.totalP>R.payTotal+0.005) parts.push('支出合计 '+fmtMoney(R.totalP)+' ＞ 约定支出总额 '+fmtMoney(R.payTotal)); banner.className='banner warn'; banner.innerHTML='⚠️ 已超出约定总金额：'+parts.join('；')+'。请核减节点金额或调整约定总额。' }
+  else{ banner.className='banner ok'; banner.innerHTML='✅ 全节点安全：每个节点累计收款均 ≥ 累计支出，无需垫资，业务现金流稳健。' }
+
+  // kpi
+  const profitCls=R.totalProfit<0?'red':(R.totalProfit>0?'green':'')
+  document.getElementById('kpi').innerHTML=`
+    <div class="box"><div class="k">总收款</div><div class="v">${fmtMoney(R.totalR)}</div></div>
+    <div class="box"><div class="k">总支出</div><div class="v">${fmtMoney(R.totalP)}</div></div>
+    <div class="box"><div class="k">总利润</div><div class="v ${profitCls}">${fmtMoney(R.totalProfit)}</div></div>
+    <div class="box"><div class="k">最大垫资</div><div class="v ${R.maxGap>0?'red':''}">${fmtMoney(R.maxGap)}</div></div>`
+
+  // nodes
+  let profitNodeTxt=R.profitNode?('第'+R.profitNode.i+'节点「'+esc(R.profitNode.stage)+'」'+(R.totalProfit>0?'（利润 '+fmtMoney(R.totalProfit)+' 全额到账）':'（末节点，但整体亏损）')):'—'
+  let turnTxt
+  if(!R.rows.length) turnTxt='—'
+  else if(R.rows[0].net>=0) turnTxt='第1节点即转正（全程无需垫资）'
+  else if(R.turnNode) turnTxt='第'+R.turnNode.i+'节点「'+esc(R.turnNode.stage)+'」起累计净额回正'
+  else turnTxt='全程为负，业务不可行'
+  let gapTxt=R.maxGap>0?('需垫资 '+fmtMoney(R.maxGap)+'（最早缺口：第'+R.unsafe[0].i+'节点「'+esc(R.unsafe[0].stage)+'」）'):'无垫资，收款始终 ≥ 支出'
+  document.getElementById('nodes').innerHTML=`
+    <div class="n"><div class="t">🎯 利润全部到账节点</div><div class="d">${profitNodeTxt}</div></div>
+    <div class="n"><div class="t">💡 现金流转正节点（补充）</div><div class="d">${turnTxt}</div></div>
+    <div class="n"><div class="t">🛡️ 现金安全结论</div><div class="d">${gapTxt}</div></div>`
+
+  // 约定总额核对
+  const cb=document.getElementById('checkBox')
+  let cHtml=''
+  if(R.recTotal>0||R.payTotal>0){
+    cHtml+='<div class="ttl">📋 与约定总额核对</div>'
+    if(R.recTotal>0){
+      const ok=Math.abs(R.diffR)<0.005
+      cHtml+='<div class="row">收款：节点合计 <b>'+fmtMoney(R.totalR)+'</b> ／ 约定 <b>'+fmtMoney(R.recTotal)+'</b> → '+(ok?'<span class="ok">一致 ✓</span>':'<span class="warn">相差 '+fmtMoney(R.diffR)+'</span>')+'</div>'
+    }
+    if(R.payTotal>0){
+      const ok=Math.abs(R.diffP)<0.005
+      cHtml+='<div class="row">支出：节点合计 <b>'+fmtMoney(R.totalP)+'</b> ／ 约定 <b>'+fmtMoney(R.payTotal)+'</b> → '+(ok?'<span class="ok">一致 ✓</span>':'<span class="warn">相差 '+fmtMoney(R.diffP)+'</span>')+'</div>'
+    }
+  }
+  cb.innerHTML=cHtml; cb.style.display=cHtml?'block':'none'
+
+  // timeline
+  document.getElementById('tlBody').innerHTML=R.rows.map(r=>{
+    const bad=r.net<0
+    return `<tr class="${bad?'bad':''}">
+      <td>${r.i}</td>
+      <td style="text-align:left">${esc(r.stage)}</td>
+      <td class="r">${r.rAmt>0?fmtMoneyRaw(r.rAmt):'—'}</td>
+      <td class="r">${r.pAmt>0?fmtMoneyRaw(r.pAmt):'—'}</td>
+      <td class="r">${fmtMoneyRaw(r.cumR)}</td>
+      <td class="r">${fmtMoneyRaw(r.cumP)}</td>
+      <td class="r" style="font-weight:700;color:${r.net<0?'#c0392b':'#1d7a46'}">${fmtMoneyRaw(r.net)}</td>
+      <td class="${bad?'st-bad':'st-ok'}">${bad?'缺口':'安全'}</td>
+    </tr>`
+  }).join('')
+
+  // risk
+  const rb=document.getElementById('riskBox')
+  if(R.hasGap){
+    rb.className='risk'
+    rb.innerHTML='<b>⚠️ 现金缺口明细（累计收款 < 累计支出，存在垫资风险）：</b><br>'+R.unsafe.map(r=>'· 第'+r.i+'节点「'+esc(r.stage)+'」：累计收款 '+fmtMoneyRaw(r.cumR)+' − 累计支出 '+fmtMoneyRaw(r.cumP)+' = <b>缺口 '+fmtMoneyRaw(-r.net)+'</b>').join('<br>')
+  }else{ rb.className=''; rb.innerHTML='' }
+}
+
+/* ============ 提示 ============ */
+function showTip(msg){ const t=document.getElementById('okTip'); t.innerHTML=msg; t.classList.add('show'); clearTimeout(showTip._t); showTip._t=setTimeout(()=>t.classList.remove('show'),4000) }
+
+/* ============ 图片生成（仅收款计划，发给客户，不含支出） ============ */
+async function exportImage(){
+  const rows=state.receipts.filter(r=>String(r.stage||'').trim()!=='' || (Number(r.amount)||0)>0)
+  if(!rows.length){ alert('请先在「收款计划」中填写至少一个节点（阶段与金额）后再生成图片。'); return }
+  const btn=document.getElementById('imgBtn'); btn.disabled=true; btn.textContent='生成中…'
+  let sumAmt=0, sumRatio=0
+  rows.forEach(r=>{ sumAmt+=(Number(r.amount)||0); if(r.ratio!=null) sumRatio+=(Number(r.ratio)||0) })
+  const today=new Date(); const p=x=>String(x).padStart(2,'0'); const todayStr=today.getFullYear()+'-'+p(today.getMonth()+1)+'-'+p(today.getDate())
+  const deal=state.dealName||''
+  const rowHtml=rows.map(r=>`<div class="er"><div class="c c1">${esc(r.stage||'—')}</div><div class="c c2">${fmtMoney(r.amount)}</div><div class="c c3">${r.ratio!=null?Number(r.ratio).toFixed(2)+'%':'—'}</div><div class="c c4">${esc(r.note||'')}</div></div>`).join('')
+  const card=document.createElement('div'); card.id='exportCard'
+  card.innerHTML=`<div class="ec-inner">
+    ${deal?`<div class="ec-deal">${esc(deal)}</div>`:''}
+    <div class="ec-title">转让公司项目收款分期计划表</div>
+    <div class="ec-date">日期：${todayStr}</div>
+    <div class="ec-table">
+      <div class="er eh"><div class="c c1">阶段 / 节点</div><div class="c c2">金额（元）</div><div class="c c3">比例（%）</div><div class="c c4">备注</div></div>
+      ${rowHtml}
+      <div class="er et"><div class="c c1">合计</div><div class="c c2">${fmtMoney(sumAmt)}</div><div class="c c3">${sumRatio>0?Number(sumRatio).toFixed(2)+'%':'—'}</div><div class="c c4"></div></div>
+    </div>
+    <div class="ec-foot">收款方：${AGENCY_NAME}</div>
+  </div>`
+  document.body.appendChild(card)
+  try{
+    if(!window.html2canvas) throw new Error('截图库未加载（html2canvas.min.js 缺失）')
+    const canvas=await html2canvas(card,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false})
+    await new Promise(res=>canvas.toBlob(blob=>{
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='收款计划-'+(deal||'业务')+'-'+todayStr+'.png'; document.body.appendChild(a); a.click(); a.remove()
+      setTimeout(()=>URL.revokeObjectURL(a.href),5000)
+      res()
+    },'image/png'))
+    showTip('✅ 图片已生成并开始下载（仅含收款计划，不含支出，可直接发给客户）。')
+  }catch(e){ console.error(e); alert('生成失败：'+(e&&e.message||e)) }
+  finally{ if(card.parentNode) card.remove(); btn.disabled=false; btn.textContent='🖼️ 生成图片（发给客户）' }
+}
+
+/* ============ 记录 ============ */
+function fmtTime(ts){ const d=new Date(ts),p=x=>String(x).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes()) }
+function loadRecords(){ try{ const a=JSON.parse(localStorage.getItem(REC_KEY)||'[]'); return Array.isArray(a)?a:[] }catch(e){ return [] } }
+function saveRecord(){
+  if(!lastResult||!lastResult.rows.length){ alert('请先计算并分析后再保存记录。'); return }
+  const R=lastResult
+  const rec={ id:'r'+Date.now(), time:Date.now(), timeStr:fmtTime(Date.now()), deal:R.dealName||'未命名业务', totalR:R.totalR, totalP:R.totalP, profit:R.totalProfit, snapshot:JSON.stringify(state) }
+  let list=loadRecords().filter(x=>!(x.deal===rec.deal))
+  list.unshift(rec)
+  if(list.length>REC_LIMIT) list=list.slice(0,REC_LIMIT)
+  localStorage.setItem(REC_KEY,JSON.stringify(list))
+  showTip('✅ 已保存记录：'+esc(rec.deal)+'（利润 '+fmtMoney(R.totalProfit)+'）')
+}
+
+/* ============ 清空 ============ */
+function clearAll(){
+  if(!confirm('确定清空当前全部填写内容？（已保存的记录不受影响）')) return
+  state={dealName:'',recTotal:0,payTotal:0,receipts:[{stage:'签约',amount:0,ratio:0,note:''}],payments:[{stage:'签约',amount:0,ratio:0,note:''}]}
+  saveState(); lastResult=null
+  document.getElementById('result').classList.remove('show')
+  fillInfo(); renderReceipts(); renderPayments()
+  showTip('已清空当前表单。')
+}
+
+/* ============ 初始化 ============ */
+loadState(); fillInfo(); renderReceipts(); renderPayments()
+document.getElementById('dealName').addEventListener('input',syncInfo)
+document.getElementById('recTotal').addEventListener('input',syncInfo)
+document.getElementById('payTotal').addEventListener('input',syncInfo)
+</script>
+</body>
+</html>

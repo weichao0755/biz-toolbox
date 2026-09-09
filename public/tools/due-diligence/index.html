@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>企业尽调报告生成器</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#faf7f2;color:#2a2118;min-height:100vh}
+header{background:linear-gradient(120deg,#fffdf9,#fdf3e3,#fbeccb);color:#2a2118;padding:16px 28px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header h1{font-size:19px;display:flex;align-items:center;gap:8px}
+header .sub{font-size:12px;color:#6b5d4a}
+header .save-state{margin-left:auto;font-size:12px;background:#fffefb;color:#6b5d4a;border:1px solid #ece3d6;border-radius:20px;padding:5px 14px}
+header .save-state.saved{background:#e8f7ef;color:#1d7a46;border-color:#bfe6cf}
+header .rec-btn{background:#fffefb;color:#2a2118;border:1px solid #ece3d6;border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;font-family:inherit;transition:.15s}
+header .rec-btn:hover{background:#fbf5ea;border-color:#e0901a}
+/* 生成记录弹窗 */
+.rec-bg{position:fixed;inset:0;background:rgba(42,26,10,.45);z-index:90;display:none}
+.rec-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:14px;padding:20px 22px;width:580px;max-width:94vw;height:min(600px,86vh);z-index:91;display:none;flex-direction:column;box-shadow:0 10px 40px rgba(42,33,24,.18)}
+.rec-modal h3{margin:0 0 12px;font-size:15.5px;color:#7a3e07}
+.rec-body{flex:1;overflow:auto;min-height:0;padding-right:4px}
+.rec-row{display:flex;align-items:center;gap:10px;border:1px solid #f2e6d8;border-radius:10px;padding:11px 13px;margin-bottom:10px;background:#fffefb}
+.rec-row .rec-t{font-size:13.5px;font-weight:600;color:#2a2118;margin-bottom:3px}
+.rec-row .rec-s{font-size:12px;color:#9a8a72}
+.rec-ops{margin-left:auto;display:flex;gap:6px;flex-shrink:0}
+.rec-badge{display:inline-block;font-size:10.5px;border-radius:9px;padding:1px 7px;margin-left:6px;vertical-align:1px;font-weight:600}
+.rec-empty{background:#faf7f2;border-left:4px solid #9a8a72;border-radius:6px;padding:12px 14px;font-size:12.5px;color:#4a4035;line-height:1.7}
+.rec-tip{font-size:12px;color:#9a8a72;margin-bottom:10px}
+.rec-kv{display:flex;font-size:13px;padding:5px 0;border-bottom:1px dashed #f2e6d8}
+.rec-kv .k{width:120px;color:#9a8a72;flex-shrink:0}
+.rec-kv .v{color:#2a2118;word-break:break-all}
+.wrap{max-width:1000px;margin:22px auto;padding:0 16px;display:flex;gap:18px;align-items:flex-start}
+.side{width:238px;background:#fff;border-radius:12px;padding:12px;box-shadow:0 1px 3px rgba(180,120,40,.06);position:sticky;top:16px;flex-shrink:0}
+.side .st-title{font-size:12px;color:#9a8a72;padding:4px 10px 8px;font-weight:600;letter-spacing:1px}
+.side button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:none;background:none;padding:9px 10px;font-size:13px;border-radius:8px;color:#3a3228;cursor:pointer;margin-bottom:2px;font-family:inherit}
+.side button .st-num{width:22px;height:22px;border-radius:50%;background:#f2e6d8;color:#6b5d4a;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700}
+.side button.active{background:#e0901a;color:#fff;font-weight:bold}
+.side button.active .st-num{background:#fff;color:#7a3e07}
+.side button.done .st-num{background:#16A34A;color:#fff}
+.side button.done::after{content:"✓";margin-left:auto;color:#16A34A;font-weight:bold}
+.side button.active.done::after{color:#fff}
+.main{flex:1;background:#fff;border-radius:12px;padding:26px 28px;box-shadow:0 1px 3px rgba(180,120,40,.06);min-height:560px}
+.main h2{font-size:17px;color:#7a3e07;margin-bottom:4px}
+.main .hint{font-size:12px;color:#9a8a72;margin-bottom:14px}
+.step-help{background:#fdf6ec;border:1px solid #f3d9ab;border-left:4px solid #e0901a;border-radius:8px;padding:10px 13px;margin:6px 0 16px;font-size:12.5px;color:#6b3e07;line-height:1.85}
+.step-help b{color:#a85509}
+.frow{display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.fitem{flex:1;min-width:200px}
+.fitem label{display:block;font-size:12.5px;color:#4a4035;margin-bottom:4px}
+.fitem label .req{color:#DC2626;margin-left:2px}
+.fitem input,.fitem select,.fitem textarea{width:100%;padding:8px 10px;border:1px solid #e8dcd0;border-radius:8px;font-size:13.5px;font-family:inherit;background:#fff;color:#2a2118}
+.fitem textarea{resize:vertical;min-height:64px;line-height:1.6}
+.fitem input:focus,.fitem select:focus,.fitem textarea:focus{outline:2px solid #f3c98a;border-color:#f0a93c}
+.fitem .src-note{display:block;font-size:11px;color:#9a8a72;margin:3px 0 0;line-height:1.5}
+.sec-title{font-size:13.5px;color:#7a3e07;font-weight:700;margin:18px 0 10px;padding-left:8px;border-left:4px solid #e0901a}
+.dyn-table{width:100%;border-collapse:collapse;font-size:12.5px;margin:6px 0 6px}
+.dyn-table th{background:#fdf4e6;color:#7a3e07;padding:7px 8px;text-align:left;font-weight:600;border-bottom:1px solid #e8dcd0;white-space:nowrap}
+.dyn-table td{padding:5px 6px;border-bottom:1px solid #faf7f2}
+.dyn-table td input,.dyn-table td select{width:100%;padding:6px 8px;border:1px solid #e8dcd0;border-radius:6px;font-size:12.5px;font-family:inherit}
+.dyn-table td input:focus,.dyn-table td select:focus{outline:2px solid #f3c98a;border-color:#f0a93c}
+.dyn-table .del-btn{border:none;background:#FEE2E2;color:#DC2626;border-radius:6px;padding:5px 9px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.dyn-table .del-btn:hover{background:#FECACA}
+.add-btn{border:1px dashed #f3c98a;background:#fdf4e6;color:#e0901a;border-radius:8px;padding:6px 14px;font-size:12.5px;cursor:pointer;font-family:inherit;margin:2px 0 4px}
+.add-btn:hover{background:#fbeccb}
+/* 版本选择 */
+.ver-bar{display:flex;gap:10px;margin:2px 0 6px}
+.ver-card{flex:1;border:2px solid #f2e6d8;border-radius:12px;padding:11px 14px;cursor:pointer;background:#fff;transition:.15s;text-align:left;font-family:inherit}
+.ver-card:hover{border-color:#f3c98a}
+.ver-card.active{border-color:#e0901a;background:#fdf4e6;box-shadow:0 2px 8px rgba(224,144,26,.15)}
+.ver-card .vn{font-size:14.5px;font-weight:700;color:#2a2118;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ver-card.active .vn{color:#7a3e07}
+.ver-card .vd{font-size:11.5px;color:#9a8a72;margin-top:3px;line-height:1.5}
+.ver-card .badge{font-size:10px;background:#FEF3C7;color:#92400E;border-radius:10px;padding:1px 7px;font-weight:600}
+.ver-card .soon{font-size:10px;background:#faf7f2;color:#9a8a72;border-radius:10px;padding:1px 7px;font-weight:600}
+/* 截图槽 */
+.shot-slot{background:#faf7f2;border:1px solid #f2e6d8;border-radius:10px;padding:11px 12px;margin-bottom:11px}
+.shot-label{font-size:12.5px;color:#3a3228;font-weight:600;margin-bottom:8px}
+.shot-label .req{color:#DC2626;margin-left:2px}
+.shot-label .tag{font-size:10.5px;color:#9a8a72;font-weight:400;margin-left:6px}
+.shot-list{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.shot-item{position:relative;border:1px solid #e8dcd0;border-radius:8px;overflow:hidden;background:#fff}
+.shot-item img{display:block;height:76px;object-fit:cover}
+.shot-del{position:absolute;top:2px;right:2px;border:none;background:rgba(220,38,38,.88);color:#fff;border-radius:50%;width:19px;height:19px;font-size:11px;cursor:pointer;line-height:1}
+.shot-upload{border:1.5px dashed #f3c98a;background:#fdf4e6;color:#e0901a;border-radius:8px;padding:12px;text-align:center;font-size:12.5px;cursor:pointer;font-family:inherit;transition:.15s}
+.shot-upload:hover{border-color:#e0901a;background:#fbeccb}
+/* 单选卡片 */
+.radios{display:flex;gap:10px;margin-bottom:4px}
+.radio-card{flex:1;border:2px solid #f2e6d8;border-radius:10px;padding:12px;text-align:center;cursor:pointer;font-size:13px;color:#4a4035;background:#fff;font-family:inherit;font-weight:600;transition:.15s}
+.radio-card:hover{border-color:#f3c98a}
+.radio-card.on{border-color:#e0901a;background:#fdf4e6;color:#7a3e07}
+.tools{display:flex;gap:8px;margin-top:20px;align-items:center;flex-wrap:wrap}
+.btn{border:none;border-radius:8px;padding:9px 20px;font-size:13.5px;cursor:pointer;font-family:inherit}
+.btn-primary{background:#b45309;color:#fff}
+.btn-primary:hover{background:#b45309}
+.btn-green{background:#16A34A;color:#fff}
+.btn-green:hover{background:#15803D}
+.btn-ghost{background:#fffefb;color:#2a2118;border:1px solid #ece3d6}
+.btn-ghost:hover{background:#fbf5ea;border-color:#e0901a}
+.btn-danger{background:#FEE2E2;color:#DC2626}
+.btn-danger:hover{background:#FECACA}
+.spacer{flex:1}
+/* 报告预览 */
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:12px 0 18px}
+.sum-card{background:#faf7f2;border:1px solid #f2e6d8;border-radius:10px;padding:11px 13px}
+.sum-card .k{font-size:11.5px;color:#9a8a72;margin-bottom:4px}
+.sum-card .v{font-size:14px;color:#2a2118;font-weight:600;word-break:break-all}
+.gen-box{background:linear-gradient(135deg,#7a3e07,#e0901a);border-radius:12px;padding:22px;color:#fff;text-align:center;margin:8px 0 16px}
+.gen-box .t{font-size:17px;font-weight:bold;margin-bottom:6px}
+.gen-box .d{font-size:12.5px;opacity:.85;line-height:1.7}
+.gen-box .btn{font-size:15px;padding:12px 32px;margin-top:14px;background:#fff;color:#7a3e07;font-weight:bold}
+.gen-box .btn:hover{background:#fdf6ec}
+.gen-box .btn:disabled{opacity:.6;cursor:not-allowed}
+.report-struct{font-size:12.5px;color:#4a4035;line-height:1.9;background:#faf7f2;border-radius:10px;padding:14px 18px;border:1px solid #f2e6d8}
+.report-struct b{color:#7a3e07}
+.opt-note{font-size:11.5px;color:#9a8a72;margin-top:8px;line-height:1.6}
+footer{text-align:center;color:#9a8a72;font-size:12px;padding:20px}
+.notice{position:fixed;left:50%;bottom:36px;transform:translateX(-50%);background:#2a2118;color:#fff;padding:9px 18px;border-radius:20px;font-size:12.5px;z-index:99;opacity:0;transition:.25s;pointer-events:none;box-shadow:0 4px 14px rgba(42,33,24,.16)}
+.notice.show{opacity:1}
+@media(max-width:760px){.wrap{flex-direction:column}.side{width:100%;position:static;display:flex;flex-wrap:wrap}.side button{width:auto}.side .st-title{display:none}.ver-bar{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📄 企业尽调报告生成器</h1>
+  <span class="sub">引导式尽调 · 一键生成正式 Word 报告</span>
+  <button class="rec-btn" onclick="openRecords()">📋 生成记录</button>
+  <span class="save-state" id="saveState">数据已自动保存</span>
+</header>
+<div class="rec-bg" id="recModalBg" onclick="closeRecModal()"></div>
+<div class="rec-modal" id="recModal">
+  <div class="rec-body" id="recModalBody"></div>
+</div>
+
+<div class="wrap">
+  <aside class="side">
+    <div class="st-title">尽调流程</div>
+    <div id="stepNav"></div>
+  </aside>
+
+  <main class="main" id="mainArea"></main>
+</div>
+
+<footer>企业尽调报告生成器 · 填写的数据仅保存在当前浏览器</footer>
+<div class="notice" id="notice"></div>
+
+<script src="docx.umd.js"></script>
+<script>
+/* ================= 版本定义 ================= */
+const VERSIONS = [
+  { id:'basic',    name:'基础版', badge:'摸底尽调', desc:'股权结构、税局系统核查、账户开立、诉讼核查', ready:true },
+  { id:'pro',      name:'专业版', badge:'',          desc:'完整深度尽调（开发中，敬请期待）', ready:false },
+  { id:'hightech', name:'高新版', badge:'',          desc:'高新/专精特新专项尽调（开发中，敬请期待）', ready:false }
+]
+const STEPS_BY_VERSION = {
+  basic: [
+    { id:'project', icon:'📋', title:'项目信息', desc:'委托方、目标公司与报告要素' },
+    { id:'equity',  icon:'🏛️', title:'股权结构', desc:'公司章程 / 股权结构图截图' },
+    { id:'finance', icon:'💰', title:'财务概况', desc:'电子税务局截图 + 社保/公积金/银行账户' },
+    { id:'legal',   icon:'⚖️', title:'法律合规', desc:'未完成诉讼核查' },
+    { id:'risk',    icon:'⚠️', title:'风险与结论', desc:'风险点、综合评估与调查结论' },
+    { id:'report',  icon:'📄', title:'生成报告', desc:'一键生成并下载正式 Word 报告' }
+  ]
+}
+let STEPS = STEPS_BY_VERSION.basic
+
+/* 截图槽位定义（基础版） */
+const CAT_LABELS = {
+  equity:'公司章程/股权结构图',
+  fin_grade:'纳税人级别', fin_info:'纳税人信息', fin_violation:'违法违章记录', fin_cancel:'注销预检',
+  fin_financial:'最新一期财务报表', fin_invoice:'发票界面', fin_invoiceData:'开票数据', fin_taxData:'纳税数据',
+  legal_nolawsuit:'无诉讼证明'
+}
+const FIN_SLOTS = [
+  { cat:'fin_grade',      label:'纳税人级别' },
+  { cat:'fin_info',       label:'纳税人信息' },
+  { cat:'fin_violation',  label:'违法违章记录' },
+  { cat:'fin_cancel',     label:'注销预检' },
+  { cat:'fin_financial',  label:'最新一期财务报表' },
+  { cat:'fin_invoice',    label:'发票界面' },
+  { cat:'fin_invoiceData',label:'开票数据' },
+  { cat:'fin_taxData',    label:'纳税数据' }
+]
+/* 各步骤可粘贴的截图槽（按顺序） */
+const CATS_BY_STEP = {
+  equity:[ 'equity' ],
+  finance: FIN_SLOTS.map(s=>s.cat),
+  legal: [ 'legal_nolawsuit' ]
+}
+
+/* ================= 数据模型（自动保存） ================= */
+const LS_KEY = 'dd_report_data_v1'
+/* 调查机构统一使用（报告出具方，全流程固定） */
+const AGENCY_NAME = '深圳市金米启航企业服务有限公司'
+const AGENCY_EN   = 'SHENZHEN JINMI QIHANG ENTERPRISE SERVICE CO., LTD.'
+function emptyState(){
+  return {
+    version:'basic',
+    project:{ reportNo:'', client:'', agency:AGENCY_NAME, company:'', creditCode:'', address:'', legalRep:'', regCapital:'', founded:'', baseDate:'', reportDate:today() },
+    finance:{ accounts:{ social:'', housing:'', bank:'', bankName:'' } },
+    legal:{ hasLawsuit:'', lawsuits:[{no:'',cause:'',amount:'',status:'审理中'}] },
+    risk:{ risks:[{type:'',desc:'',level:'中',suggest:''}], overall:'', conclusion:'', advice:'' },
+    attachments:{ items:[] }   /* { id, title, category, dataUrl, w, h, type } */
+  }
+}
+function today(){
+  const d=new Date();const p=n=>String(n).padStart(2,'0')
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())
+}
+let state = loadState()
+function loadState(){
+  try{
+    const raw=localStorage.getItem(LS_KEY)
+    if(raw){
+      const s=JSON.parse(raw)
+      if(!s || typeof s!=='object') return emptyState()
+      /* 旧版数据（无 version 字段或版本不合法）结构与新版不兼容，直接重置 */
+      if(!s.version || !VERSIONS.some(v=>v.id===s.version)) return emptyState()
+      const base=emptyState()
+      /* 逐级深合并（全部用新对象，避免 base 被 s 覆盖导致嵌套字段 undefined） */
+      const merged=Object.assign({}, base, s)
+      merged.project=Object.assign({}, base.project, s.project||{})
+      /* 调查机构统一固定，历史数据一并覆盖 */
+      merged.project.agency=AGENCY_NAME
+      merged.finance=Object.assign({}, base.finance, s.finance||{})
+      merged.finance.accounts=Object.assign({}, base.finance.accounts, (s.finance&&s.finance.accounts)||{})
+      merged.legal=Object.assign({}, base.legal, s.legal||{})
+      merged.risk=Object.assign({}, base.risk, s.risk||{})
+      merged.attachments=Object.assign({}, base.attachments, s.attachments||{})
+      /* 清洗：仅保留带 category 的截图（旧版无 category 的孤儿数据丢弃） */
+      merged.attachments.items=(merged.attachments.items||[]).filter(x=>x&&x.category&&x.dataUrl)
+      /* 清洗：案件详情/风险点默认行结构 */
+      merged.legal.lawsuits=(merged.legal.lawsuits||[]).map(x=>Object.assign({no:'',cause:'',amount:'',status:'审理中'},x))
+      merged.risk.risks=(merged.risk.risks||[]).map(x=>Object.assign({type:'',desc:'',level:'中',suggest:''},x))
+      return merged
+    }
+  }catch(e){ console.error('[loadState] 异常:', e && (e.stack||e.message) || e) }
+  return emptyState()
+}
+function saveState(){
+  let ok=true
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)) }catch(e){ ok=false }
+  const el=document.getElementById('saveState')
+  if(ok){ el.textContent='✓ 数据已自动保存'; el.classList.add('saved') }
+  else{ el.textContent='⚠ 数据过大无法保存，截图仅本次会话有效'; el.classList.remove('saved') }
+}
+function resetState(){
+  if(!confirm('确定清空所有已填写的尽调数据？此操作不可恢复。')) return
+  state=emptyState(); saveState(); currentStep=0; doneSteps.clear(); renderNav(); renderStep()
+}
+
+/* ================= 状态 ================= */
+let currentStep = 0
+const doneSteps = new Set()
+
+/* ================= 渲染：版本选择 ================= */
+function versionBar(){
+  return `<div class="ver-bar">${VERSIONS.map(v=>{
+    const cur=state.version===v.id?'active':''
+    const tag=v.ready?`<span class="badge">${v.badge}</span>`:`<span class="soon">开发中</span>`
+    return `<button class="ver-card ${cur}" data-ver="${v.id}"><div class="vn">${v.name}${tag}</div><div class="vd">${v.desc}</div></button>`
+  }).join('')}</div>`
+}
+function setVersion(id){
+  const v=VERSIONS.find(x=>x.id===id)
+  if(!v) return
+  if(!v.ready){ flash('「'+v.name+'」开发中，敬请期待'); return }
+  if(id===state.version) return
+  state.version=id
+  STEPS=STEPS_BY_VERSION[id]
+  currentStep=0; doneSteps.clear()
+  saveState(); renderNav(); renderStep()
+}
+
+/* ================= 渲染：步骤导航 ================= */
+function renderNav(){
+  const nav=document.getElementById('stepNav')
+  nav.innerHTML = STEPS.map((s,i)=>{
+    const active=i===currentStep?'active':''
+    const done=doneSteps.has(i)?'done':''
+    return `<button class="${active} ${done}" data-i="${i}"><span class="st-num">${i+1}</span>${s.icon} ${s.title}</button>`
+  }).join('')
+  nav.querySelectorAll('button').forEach(b=>b.onclick=()=>{ currentStep=+b.dataset.i; renderNav(); renderStep() })
+}
+
+/* ================= 渲染：表单通用 ================= */
+function esc(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+function val(key){ const d=state; return (key.split('.').reduce((o,k)=>o&&o[k],d)) ?? '' }
+function field(group, key, label, opts={}){
+  const v=val(group+'.'+key)
+  const req=opts.req?'<span class="req">*</span>':''
+  const note=opts.note?`<span class="src-note">${opts.note}</span>`:''
+  if(opts.type==='select'){
+    const options=opts.options.map(o=>`<option value="${esc(o)}" ${v===o?'selected':''}>${esc(o)}</option>`).join('')
+    return `<div class="fitem"><label>${label}${req}</label><select data-k="${group}.${key}">${options}</select>${note}</div>`
+  }
+  if(opts.type==='textarea'){
+    return `<div class="fitem" style="flex-basis:100%"><label>${label}${req}</label><textarea data-k="${group}.${key}" placeholder="${esc(opts.placeholder||'')}">${esc(v)}</textarea>${note}</div>`
+  }
+  const ph=opts.placeholder?`placeholder="${esc(opts.placeholder)}"`:''
+  const t=opts.type==='number'?'number':'text'
+  return `<div class="fitem"><label>${label}${req}</label><input type="${t}" data-k="${group}.${key}" value="${esc(v)}" ${ph}>${note}</div>`
+}
+/* 单选卡片（是/否等） */
+function radioCards(group, key, label, options, opts={}){
+  const v=val(group+'.'+key)
+  const req=opts.req?'<span class="req">*</span>':''
+  return `<div class="fitem" style="flex-basis:100%"><label>${label}${req}</label><div class="radios">${options.map(o=>{
+    const on=v===o?'on':''
+    return `<button type="button" class="radio-card ${on}" data-radio="${group}.${key}" data-opt="${esc(o)}">${esc(o)}</button>`
+  }).join('')}</div></div>`
+}
+/* 动态表格渲染 */
+function dynTable(group, key, cols, rowIdFn){
+  const rows=state[group][key]
+  let html=`<div class="list-scroll"><table class="dyn-table"><tr>${cols.map(c=>`<th>${c.label}${c.req?'<span class="req" style="color:#DC2626">*</span>':''}</th>`).join('')}<th></th></tr>`
+  rows.forEach((r,ri)=>{
+    html+='<tr>'
+    cols.forEach(c=>{
+      const v=r[c.k]??''
+      if(c.type==='select'){
+        html+=`<td><select data-rk="${group}.${key}.${ri}.${c.k}">${c.options.map(o=>`<option value="${esc(o)}" ${v===o?'selected':''}>${esc(o)}</option>`).join('')}</select></td>`
+      }else{
+        html+=`<td><input type="text" data-rk="${group}.${key}.${ri}.${c.k}" value="${esc(v)}" placeholder="${esc(c.placeholder||'')}"></td>`
+      }
+    })
+    html+=`<td><button class="del-btn" data-del="${group}.${key}.${ri}">删除</button></td></tr>`
+  })
+  html+=`</table></div><button class="add-btn" data-add="${group}.${key}">＋ 添加一行</button>`
+  return html
+}
+
+/* ================= 截图槽 ================= */
+function shotsOf(cat){ return state.attachments.items.filter(x=>x.category===cat) }
+function shotSlot(cat, label, opts={}){
+  const list=shotsOf(cat)
+  let h=`<div class="shot-slot"><div class="shot-label">${label}${opts.req?'<span class="req">*</span>':''}${opts.note?`<span class="tag">${opts.note}</span>`:''}</div>`
+  if(list.length){
+    h+='<div class="shot-list">'
+    list.forEach((it,idx)=>{
+      h+=`<div class="shot-item"><img src="${it.dataUrl}"><button class="shot-del" data-shot-del="${cat}.${idx}">×</button></div>`
+    })
+    h+='</div>'
+  }
+  h+=`<div class="shot-upload" data-shot="${cat}" data-multi="${opts.multi?1:0}">${opts.multi?(list.length?'＋ 继续添加（Ctrl+V 或点击）':'＋ 上传截图（Ctrl+V 或点击）'):(list.length?'⇄ 点击替换截图（Ctrl+V 或点击）':'＋ 上传截图（Ctrl+V 或点击）')}</div>`
+  h+='</div>'
+  return h
+}
+function addShot(cat, file){
+  if(!file || !file.type.startsWith('image/')) return
+  processImage(file).then(res=>{
+    const isMulti=CATS_BY_STEP && (cat==='equity')
+    if(!isMulti) state.attachments.items=state.attachments.items.filter(x=>x.category!==cat)
+    state.attachments.items.push({ id:Date.now()+'_'+Math.random().toString(36).slice(2,7), category:cat, title:CAT_LABELS[cat]||'', ...res })
+    saveState(); renderStep()
+  }).catch(err=>alert('图片处理失败：'+err.message))
+}
+/* 图片处理：压缩至合适尺寸，返回 dataUrl + 尺寸 + 类型 */
+function processImage(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader()
+    reader.onload=()=>{
+      const img=new Image()
+      img.onload=()=>{
+        let { width, height }=img
+        const MAX=1400
+        if(width>MAX||height>MAX){
+          const s=Math.min(MAX/width,MAX/height)
+          width=Math.round(width*s); height=Math.round(height*s)
+        }
+        const canvas=document.createElement('canvas')
+        canvas.width=width; canvas.height=height
+        canvas.getContext('2d').drawImage(img,0,0,width,height)
+        const isPng=file.type==='image/png'
+        const dataUrl=canvas.toDataURL(isPng?'image/png':'image/jpeg',0.9)
+        resolve({ dataUrl, w:width, h:height, type:isPng?'png':'jpg' })
+      }
+      img.onerror=()=>reject(new Error('图片解码失败'))
+      img.src=reader.result
+    }
+    reader.onerror=()=>reject(new Error('文件读取失败'))
+    reader.readAsDataURL(file)
+  })
+}
+
+/* 轻提示 */
+let _noticeTimer=null
+function flash(msg){
+  const el=document.getElementById('notice')
+  el.textContent=msg; el.classList.add('show')
+  clearTimeout(_noticeTimer)
+  _noticeTimer=setTimeout(()=>el.classList.remove('show'),2200)
+}
+
+/* ================= 事件委托 ================= */
+document.addEventListener('input', e=>{
+  const k=e.target.dataset.k
+  if(k){ const parts=k.split('.'); let o=state; for(let i=0;i<parts.length-1;i++) o=o[parts[i]]; o[parts[parts.length-1]]=e.target.value; saveState() }
+  const rk=e.target.dataset.rk
+  if(rk){ const parts=rk.split('.'); let o=state; for(let i=0;i<parts.length-2;i++) o=o[parts[i]]; o[parts[parts.length-2]][parts[parts.length-1]]=e.target.value; saveState() }
+})
+document.addEventListener('change', e=>{
+  const k=e.target.dataset.k
+  if(k){
+    const parts=k.split('.'); let o=state; for(let i=0;i<parts.length-1;i++) o=o[parts[i]]; o[parts[parts.length-1]]=e.target.value
+    saveState()
+    /* 银行账户选择变化时刷新条件字段 */
+    if(k==='finance.accounts.bank') renderStep()
+  }
+})
+document.addEventListener('click', e=>{
+  /* 版本切换 */
+  const ver=e.target.closest('[data-ver]')
+  if(ver){ setVersion(ver.dataset.ver); return }
+  /* 单选卡片 */
+  const radio=e.target.closest('[data-radio]')
+  if(radio){
+    const parts=radio.dataset.radio.split('.')
+    let o=state; for(let i=0;i<parts.length-1;i++) o=o[parts[i]]
+    o[parts[parts.length-1]]=radio.dataset.opt
+    saveState(); renderStep()
+    return
+  }
+  /* 截图槽：点击上传 */
+  const up=e.target.closest('[data-shot]')
+  if(up){
+    const cat=up.dataset.shot
+    const fi=document.createElement('input')
+    fi.type='file'; fi.accept='image/*'
+    fi.onchange=()=>{ for(const f of fi.files) addShot(cat,f) }
+    fi.click()
+    return
+  }
+  /* 截图删除 */
+  const shotDel=e.target.closest('[data-shot-del]')
+  if(shotDel){
+    const [cat,idx]=shotDel.dataset.shotDel.split('.')
+    const list=shotsOf(cat)
+    state.attachments.items=state.attachments.items.filter(x=>!(x.category===cat && list[+idx] && x.id===list[+idx].id))
+    saveState(); renderStep()
+    return
+  }
+  /* 动态表格行删除 */
+  const del=e.target.closest('[data-del]')
+  if(del){
+    const [g,k,ri]=del.dataset.del.split('.')
+    const arr=state[g][k]
+    if(arr.length<=1){ alert('至少保留一行'); return }
+    arr.splice(+ri,1); saveState(); renderStep()
+    return
+  }
+  /* 动态表格行新增 */
+  const add=e.target.closest('[data-add]')
+  if(add){
+    const [g,k]=add.dataset.add.split('.')
+    const tmpl=emptyState()[g][k]
+    state[g][k].push(JSON.parse(JSON.stringify(tmpl)))
+    saveState(); renderStep()
+    return
+  }
+})
+/* 全局粘贴：分配到当前步骤的第一个空截图槽 */
+document.addEventListener('paste', e=>{
+  const stepId=STEPS[currentStep].id
+  const cats=CATS_BY_STEP[stepId]
+  if(!cats || !cats.length) return
+  /* 法律合规步骤：无诉讼槽仅在选"否"时有效 */
+  if(stepId==='legal' && state.legal.hasLawsuit!=='否') return
+  const items=e.clipboardData && e.clipboardData.items
+  if(!items) return
+  for(const it of items){
+    if(it.type.startsWith('image/')){
+      e.preventDefault()
+      const file=it.getAsFile()
+      if(!file) return
+      /* 找第一个空槽；若全满，粘贴到第一个槽（单槽则替换，多槽则追加） */
+      let cat=null
+      for(const c of cats){ if(!shotsOf(c).length){ cat=c; break } }
+      if(!cat) cat=cats[0]
+      addShot(cat,file)
+      flash('已粘贴到：'+(CAT_LABELS[cat]||cat))
+      return
+    }
+  }
+})
+
+/* ================= 每步内容 ================= */
+function stepContent(i){
+  const s=STEPS[i]
+  let html=`<h2>${s.icon} ${s.title}</h2><p class="hint">${s.desc}</p>`
+  if(i===0) html+=versionBar()
+  switch(s.id){
+    case 'project': html+=stepProject(); break
+    case 'equity':  html+=stepEquity(); break
+    case 'finance': html+=stepFinance(); break
+    case 'legal':   html+=stepLegal(); break
+    case 'risk':    html+=stepRisk(); break
+    case 'report':  html+=stepReport(); break
+  }
+  /* 底部操作按钮 */
+  html+=`<div class="tools">`
+  if(i>0) html+=`<button class="btn btn-ghost" id="btnPrev">← 上一步</button>`
+  if(i<STEPS.length-1) html+=`<span class="spacer"></span><button class="btn btn-primary" id="btnNext">下一步 →</button>`
+  if(i===STEPS.length-1) html+=`<span class="spacer"></span>`
+  html+=`<button class="btn btn-danger" id="btnReset" style="margin-left:auto">清空重填</button>`
+  html+=`</div>`
+  return html
+}
+
+function stepProject(){
+  const g='project'
+  let h='<div class="step-help"><b>📌 本步填写项目背景</b>报告编号可自定义（如 DD-2026-001）；委托方为发起尽调的一方，目标公司为被调查企业。带 <span style="color:#DC2626">*</span> 的为必填项。</div>'
+  h+=`<div class="frow">${field(g,'reportNo','报告编号',{placeholder:'如 DD-2026-001',note:'建议按年度编号，便于归档'})}${field(g,'baseDate','调查基准日',{req:1,placeholder:'如 2026-06-30',note:'所有财务与经营数据以该日期为准'})}${field(g,'reportDate','报告出具日期',{req:1})}</div>`
+  h+=`<div class="frow">${field(g,'client','委托方名称',{req:1,placeholder:'如：某某投资管理有限公司'})}<div class="fitem"><label>调查机构（受托方）<span class="src-note">统一固定，无需修改</span></label><input type="text" value="${esc(AGENCY_NAME)}" readonly style="background:#faf7f2;color:#475569"></div></div>`
+  h+=`<div class="sec-title">目标公司基本信息</div>`
+  h+=`<div class="frow">${field(g,'company','目标公司名称',{req:1,placeholder:'以营业执照全称为准'})}</div>`
+  h+=`<div class="frow">${field(g,'creditCode','统一社会信用代码',{placeholder:'18 位信用代码'})}${field(g,'legalRep','法定代表人',{})}${field(g,'regCapital','注册资本（万元）',{type:'number'})}${field(g,'founded','成立日期',{placeholder:'如 2015-03-12'})}</div>`
+  h+=`<div class="frow">${field(g,'address','注册地址',{placeholder:'以营业执照登记地址为准',type:'textarea'})}</div>`
+  return h
+}
+
+function stepEquity(){
+  let h='<div class="step-help"><b>🏛️ 股权结构：直接截图提供，无需填写文字。</b>请上传目标公司的<b>公司章程</b>或<b>股权结构图</b>截图（可多张）。截图将嵌入报告的「股权结构」章节。</div>'
+  h+='<div class="sec-title">股权结构截图</div>'
+  h+=shotSlot('equity','公司章程 / 股权结构图',{req:1,multi:true,note:'必传，可传多张'})
+  return h
+}
+
+function stepFinance(){
+  let h='<div class="step-help"><b>💰 财务概况：以电子税务局系统核查为准。</b>请逐项粘贴或上传税局系统截图（可 <b>Ctrl+V</b> 直接粘贴，自动分配到空位），并选择社保、公积金、银行账户开通情况。截图将嵌入报告的「财务概况」章节。</div>'
+  h+='<div class="sec-title">税局系统核查截图（必传 8 项）</div>'
+  FIN_SLOTS.forEach(s=>{ h+=shotSlot(s.cat, s.label, {req:1, note:'必传'}) })
+  h+='<div class="sec-title">账户开通情况</div>'
+  const ac=state.finance.accounts
+  h+=`<div class="frow">${field('finance.accounts','social','社保账户开通情况',{req:1,type:'select',options:['','有','无','销户']})}${field('finance.accounts','housing','公积金账户开通情况',{req:1,type:'select',options:['','有','无','销户']})}${field('finance.accounts','bank','银行账户开通情况',{req:1,type:'select',options:['','有','无','销户']})}</div>`
+  if(ac.bank==='有'){
+    h+=`<div class="frow">${field('finance.accounts','bankName','银行名称（开户银行）',{req:1,placeholder:'如：中国工商银行深圳南山支行'})}</div>`
+  }
+  return h
+}
+
+function stepLegal(){
+  let h='<div class="step-help"><b>⚖️ 法律合规：核查目标公司是否存在未完成诉讼。</b><br>· 选「否」→ 需上传无诉讼证明截图（如裁判文书网 / 企查查 / 天眼查查询结果）；<br>· 选「是」→ 需填写未完成诉讼的案件详情。</div>'
+  h+=radioCards('legal','hasLawsuit','是否存在未完成诉讼？',['是','否'],{req:1})
+  const hl=state.legal.hasLawsuit
+  if(hl==='否'){
+    h+='<div class="sec-title">无诉讼证明截图</div>'
+    h+=shotSlot('legal_nolawsuit','无未完成诉讼证明',{req:1,note:'必传，如裁判文书网/企查查查询结果'})
+  }else if(hl==='是'){
+    h+='<div class="sec-title">未完成诉讼案件详情</div>'
+    h+=dynTable('legal','lawsuits',[
+      {k:'no',label:'案号',req:1,placeholder:'如 (2026)粤03民初123号'},
+      {k:'cause',label:'案由',req:1,placeholder:'如 买卖合同纠纷'},
+      {k:'amount',label:'涉案金额(万)',placeholder:'数字'},
+      {k:'status',label:'进展状态',type:'select',options:['审理中','仲裁中','一审','二审','其他']}
+    ])
+  }
+  return h
+}
+
+function stepRisk(){
+  const g='risk'
+  let h='<div class="step-help"><b>📌 风险与结论</b>结合前面各步骤核查的信息，汇总主要风险点并给出整体评估结论。报告将把本步内容作为「摘要与结论」的核心输出。</div>'
+  h+='<div class="sec-title">主要风险点</div>'
+  h+=dynTable(g,'risks',[
+    {k:'type',label:'风险类别',placeholder:'如 税务风险'},
+    {k:'desc',label:'风险描述',placeholder:'具体描述'},
+    {k:'level',label:'风险等级',type:'select',options:['高','中','低']},
+    {k:'suggest',label:'应对建议',placeholder:'处置建议'}
+  ])
+  h+=`<div class="frow">${field(g,'overall','整体风险评估',{req:1,type:'select',options:['','整体风险较低','整体风险可控','整体风险较高','整体风险高，需审慎决策']})}</div>`
+  h+=`<div class="frow">${field(g,'conclusion','调查结论',{req:1,type:'textarea',placeholder:'如：经尽调，目标公司经营基本面良好，主要风险集中在……综合评估认为……'})}</div>`
+  h+=`<div class="frow">${field(g,'advice','交易/合作建议',{req:1,type:'textarea',placeholder:'如：建议按 XX 方式推进，同时设置对赌/担保条款以对冲 XX 风险……'})}</div>`
+  return h
+}
+
+function stepReport(){
+  const p=state.project
+  const shots=state.attachments.items.length
+  let h='<div class="step-help"><b>📌 最后一步</b>点击下方按钮，系统将根据已填写内容自动生成一份完整、排版正式的《企业尽职调查报告》（基础版）Word 文档，可直接打印或提交。</div>'
+  h+='<div class="summary-grid">'
+  h+=`<div class="sum-card"><div class="k">报告版本</div><div class="v">基础版</div></div>`
+  h+=`<div class="sum-card"><div class="k">目标公司</div><div class="v">${esc(p.company||'—')}</div></div>`
+  h+=`<div class="sum-card"><div class="k">委托方</div><div class="v">${esc(p.client||'—')}</div></div>`
+  h+=`<div class="sum-card"><div class="k">报告编号</div><div class="v">${esc(p.reportNo||'—')}</div></div>`
+  h+=`<div class="sum-card"><div class="k">调查基准日</div><div class="v">${esc(p.baseDate||'—')}</div></div>`
+  h+=`<div class="sum-card"><div class="k">截图数量</div><div class="v">${shots} 张</div></div>`
+  h+=`<div class="sum-card"><div class="k">尽调完成进度</div><div class="v">${doneSteps.size>0?Math.round(doneSteps.size/(STEPS.length-1)*100):0}%</div></div>`
+  h+='</div>'
+  h+='<div class="gen-box">'
+  h+='<div class="t">📄 生成企业尽职调查报告（基础版 · Word）</div>'
+  h+='<div class="d">报告包含：封面 · 保密声明 · 目录 · 报告摘要与结论 · 公司基本信息 · 股权结构（截图） · 财务概况（税局截图＋账户情况） · 法律合规 · 风险提示与综合结论 · 落款</div>'
+  h+='<button class="btn" id="btnGen" onclick="generateDocx()">⬇ 生成并下载 Word 报告</button>'
+  h+='</div>'
+  h+='<div class="report-struct"><b>报告体例说明：</b><br>正文：宋体小四（12pt），1.5 倍行距；一级标题：黑体三号；二级标题：黑体四号；表格：宋体五号。<br>页眉：报告名称＋机密标识；页脚：页码＋"本报告仅供委托方内部使用"。<br>下载后请用 Word / WPS 打开，可继续编辑微调后再定稿打印。</div>'
+  h+='<p class="opt-note">提示：若需修改内容，可返回前面步骤修改后重新生成；生成的文件不依赖本页面，可独立保存、发送。</p>'
+  return h
+}
+
+/* ================= 步骤渲染 ================= */
+function renderStep(){
+  const area=document.getElementById('mainArea')
+  try{
+    area.innerHTML=stepContent(currentStep)
+  }catch(err){
+    console.error('步骤渲染失败:', err)
+    area.innerHTML=`<div class="step-help" style="color:#DC2626"><b>⚠ 页面渲染出错：</b>${esc(err.message)}<br>请点击「清空重填」重置数据后重试。</div>`
+  }
+  const prev=document.getElementById('btnPrev')
+  const next=document.getElementById('btnNext')
+  if(prev) prev.onclick=()=>{ currentStep--; renderNav(); renderStep() }
+  if(next) next.onclick=()=>{
+    if(!validate(currentStep)) return
+    doneSteps.add(currentStep)
+    currentStep++; renderNav(); renderStep()
+  }
+  const reset=document.getElementById('btnReset')
+  if(reset) reset.onclick=resetState
+}
+
+function validate(i){
+  const s=STEPS[i].id
+  const miss=[]
+  if(s==='project'){
+    if(!String(state.project.company||'').trim()) miss.push('目标公司名称')
+    if(!String(state.project.client||'').trim()) miss.push('委托方名称')
+    if(!String(state.project.baseDate||'').trim()) miss.push('调查基准日')
+  }
+  if(s==='equity'){
+    if(!shotsOf('equity').length) miss.push('公司章程/股权结构图截图（至少 1 张）')
+  }
+  if(s==='finance'){
+    FIN_SLOTS.forEach(sl=>{ if(!shotsOf(sl.cat).length) miss.push('财务截图：'+sl.label) })
+    const ac=state.finance.accounts
+    if(!ac.social) miss.push('社保账户开通情况')
+    if(!ac.housing) miss.push('公积金账户开通情况')
+    if(!ac.bank) miss.push('银行账户开通情况')
+    if(ac.bank==='有' && !String(ac.bankName||'').trim()) miss.push('银行名称（银行账户选「有」时）')
+  }
+  if(s==='legal'){
+    if(!state.legal.hasLawsuit) miss.push('是否存在未完成诉讼')
+    else if(state.legal.hasLawsuit==='否' && !shotsOf('legal_nolawsuit').length) miss.push('无诉讼证明截图')
+    else if(state.legal.hasLawsuit==='是'){
+      const ls=state.legal.lawsuits.filter(x=>String(x.no||'').trim()||String(x.cause||'').trim())
+      if(!ls.length) miss.push('未完成诉讼案件详情（至少 1 行）')
+    }
+  }
+  if(s==='risk'){
+    if(!state.risk.overall) miss.push('整体风险评估')
+    if(!String(state.risk.conclusion||'').trim()) miss.push('调查结论')
+    if(!String(state.risk.advice||'').trim()) miss.push('交易/合作建议')
+  }
+  if(miss.length){ alert('请先完成以下必填项：\n· '+miss.join('\n· ')); return false }
+  return true
+}
+
+/* ================= Word 报告生成 ================= */
+const { Document, Packer, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle, Header, Footer, PageNumber, PageBreak, ShadingType, VerticalAlign, convertInchesToTwip, ImageRun, TabStopType, TabStopPosition } = docx
+
+/* dataUrl → Uint8Array（docx 图片数据） */
+function dataUrlToBytes(dataUrl){
+  const b64=dataUrl.split(',')[1]
+  const bin=atob(b64)
+  const bytes=new Uint8Array(bin.length)
+  for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i)
+  return bytes
+}
+
+/* 字体工具（标题微软雅黑 → 更具科技感；正文宋体保持正式） */
+const F = {
+  song:  { ascii:'Times New Roman', hAnsi:'Times New Roman', eastAsia:'宋体' },
+  hei:   { ascii:'Arial', hAnsi:'Arial', eastAsia:'微软雅黑' },
+  yahei: { ascii:'Arial', hAnsi:'Arial', eastAsia:'微软雅黑' }
+}
+/* 品牌色板（深空蓝 × 科技青） */
+const C = {
+  primary:'0C2D5D',   /* 深空蓝 · 主色 */
+  deep:'08203F',      /* 幽蓝 · 封面色带 */
+  accent:'00A3E0',    /* 科技青 · 强调线/标记 */
+  head:'0C2D5D',      /* 表头底色 */
+  band:'EAF3FB',      /* 标签列浅蓝 */
+  zebra:'F5F9FD',     /* 数据行斑马纹 */
+  line:'8FB4D9',      /* 表格边框蓝 */
+  gray:'7F8C99'
+}
+/* 单元格内边距（twip） */
+const CELL_MAR = { top:80, bottom:80, left:120, right:120 }
+/* 表格边框：外框细蓝，内线极浅 */
+const TABLE_BORDERS = {
+  top:{style:BorderStyle.SINGLE,size:6,color:C.line}, bottom:{style:BorderStyle.SINGLE,size:6,color:C.line},
+  left:{style:BorderStyle.SINGLE,size:6,color:C.line}, right:{style:BorderStyle.SINGLE,size:6,color:C.line},
+  insideHorizontal:{style:BorderStyle.SINGLE,size:4,color:'CBDDEC'}, insideVertical:{style:BorderStyle.SINGLE,size:4,color:'CBDDEC'}
+}
+function withBorders(table){ table.borders = TABLE_BORDERS; return table }
+
+function r(text, opts={}){
+  return new TextRun({ text:String(text??''), font:opts.font||F.song, size:opts.size||24, bold:opts.bold, italics:opts.italics, color:opts.color, break:opts.brk, characterSpacing:opts.csp })
+}
+function p(children, opts={}){
+  return new Paragraph({
+    children:Array.isArray(children)?children:[children],
+    alignment:opts.align, spacing:opts.spacing||{ line:360, lineRule:'auto', before:opts.before||0, after:opts.after||0 },
+    indent:opts.indent, keepNext:opts.keepNext, border:opts.border
+  })
+}
+/* 正文叙述段：两端对齐 + 首行缩进两字符 */
+function body(text){
+  return p(r(String(text??'')),{ align:AlignmentType.JUSTIFIED, indent:{ firstLine:480 } })
+}
+/* 表格内单元格文字 */
+function cellText(txt, o={}){
+  return p(r(txt,{ font:o.font||F.song, size:o.size||21, bold:o.bold, color:o.color }),{
+    spacing:{ line:300, lineRule:'auto', after:o.after!=null?o.after:40, before:o.before!=null?o.before:40 },
+    alignment:o.align
+  })
+}
+/* 章节标题：青色方块标记 + 深蓝雅黑 + 浅蓝横幅 + 青色下划线 */
+function H1(text){
+  return new Paragraph({
+    children:[
+      r('■ ',{font:F.yahei,size:26,bold:true,color:C.accent}),
+      r(text,{font:F.yahei,size:32,bold:true,color:C.primary})
+    ],
+    spacing:{ before:420, after:220, line:360, lineRule:'auto' }, keepNext:true,
+    shading:{ fill:'EDF4FB', type:ShadingType.CLEAR },
+    border:{ left:{ style:BorderStyle.SINGLE, size:28, color:C.accent, space:6 },
+             bottom:{ style:BorderStyle.SINGLE, size:6, color:C.accent, space:2 } }
+  })
+}
+/* 小节标题：青色竖条标记 + 深蓝雅黑 */
+function H2(text){
+  return new Paragraph({
+    children:[
+      r('▎',{font:F.yahei,size:32,bold:true,color:C.accent}),
+      r(' '+text,{font:F.yahei,size:26,bold:true,color:C.primary})
+    ],
+    spacing:{ before:280, after:140, line:340, lineRule:'auto' }, keepNext:true
+  })
+}
+/* 键值表：左列蓝底黑体标签 */
+function KVTable(rows, widths){
+  const w=widths||[32,68]
+  return withBorders(new Table({
+    width:{ size:100, type:WidthType.PERCENTAGE },
+    rows: rows.map((row,i)=>new TableRow({
+      children:[
+        new TableCell({ width:{size:w[0],type:WidthType.PERCENTAGE}, margins:CELL_MAR, shading:{fill:C.band,type:ShadingType.CLEAR}, verticalAlign:VerticalAlign.CENTER,
+          children:[cellText(row[0],{font:F.hei,bold:true,color:C.primary})] }),
+        new TableCell({ width:{size:w[1],type:WidthType.PERCENTAGE}, margins:CELL_MAR, shading:i%2?{fill:C.zebra,type:ShadingType.CLEAR}:undefined, verticalAlign:VerticalAlign.CENTER,
+          children:[cellText(row[1])] })
+      ]
+    }))
+  }))
+}
+/* 数据表：深蓝表头白字 + 斑马纹；aligns 控制各列对齐（left/center） */
+function DataTable(headers, rows, aligns){
+  const cols=headers.length
+  const defAlign=(i)=>Array.isArray(aligns)?(aligns[i]||'left'):(i===0?'left':'center')
+  return withBorders(new Table({
+    width:{ size:100, type:WidthType.PERCENTAGE },
+    rows:[
+      new TableRow({ tableHeader:true, children: headers.map(h=>new TableCell({
+        margins:CELL_MAR, shading:{fill:C.head,type:ShadingType.CLEAR}, verticalAlign:VerticalAlign.CENTER,
+        children:[cellText(h,{font:F.hei,bold:true,color:'FFFFFF',align:AlignmentType.CENTER})]
+      })) }),
+      ...rows.map((cells,ri)=>new TableRow({ children: cells.map((c,ci)=>new TableCell({
+        margins:CELL_MAR, shading:ri%2?{fill:C.zebra,type:ShadingType.CLEAR}:undefined, verticalAlign:VerticalAlign.CENTER,
+        children:[cellText(c,{align:defAlign(ci)==='center'?AlignmentType.CENTER:AlignmentType.LEFT})]
+      })) }))
+    ]
+  }))
+}
+function fieldRows(obj){
+  const m=[
+    ['公司名称',obj.company],['统一社会信用代码',obj.creditCode],['法定代表人',obj.legalRep],
+    ['注册资本（万元）',obj.regCapital],['成立日期',obj.founded],['注册地址',obj.address],
+    ['调查基准日',obj.baseDate],['报告编号',obj.reportNo]
+  ]
+  return m.map(([k,v])=>[k, v||'—'])
+}
+
+/* 截图相框：标题 + 1x1 表格相框（浅蓝边框+内边距+居中图片）+ 图注 */
+function shotBlock(title, it){
+  const arr=[]
+  arr.push(H2(title))
+  if(it && it.dataUrl){
+    let iw=it.w||600, ih=it.h||400
+    const MAXW=520
+    if(iw>MAXW){ ih=Math.round(ih*MAXW/iw); iw=MAXW }
+    const FRAME={ top:{style:BorderStyle.SINGLE,size:12,color:C.accent}, bottom:{style:BorderStyle.SINGLE,size:4,color:C.line},
+      left:{style:BorderStyle.SINGLE,size:4,color:C.line}, right:{style:BorderStyle.SINGLE,size:4,color:C.line} }
+    arr.push(new Table({
+      alignment:AlignmentType.CENTER,
+      width:{ size:80, type:WidthType.PERCENTAGE },
+      rows:[ new TableRow({ children:[ new TableCell({
+        margins:{ top:160, bottom:160, left:160, right:160 }, borders:FRAME, verticalAlign:VerticalAlign.CENTER,
+        children:[ new Paragraph({ alignment:AlignmentType.CENTER, spacing:{ line:240, lineRule:'auto', before:0, after:0 }, children:[
+          new ImageRun({ type:it.type||'png', data:dataUrlToBytes(it.dataUrl), transformation:{ width:iw, height:ih } })
+        ] }) ]
+      }) ] }) ]
+    }))
+    arr.push(p([ r('▍',{size:18,color:C.accent,bold:true}), r('图：'+title+'（系统截图 · 以原件为准）',{size:18,color:C.gray}) ],{alignment:AlignmentType.CENTER,spacing:{before:60,after:300,line:280,lineRule:'auto'}}))
+  }else{
+    arr.push(p(r('（未提供截图）',{size:20,color:C.gray}),{spacing:{before:60}}))
+  }
+  return arr
+}
+
+function buildDocx(){
+  const d=state
+  const pj=d.project
+  const reportTitle='企业尽职调查报告'
+  const dateStr=(pj.reportDate||today()).replace(/-/,' 年 ').replace(/-/,' 月 ')+' 日'
+  const companyName=pj.company||'（目标公司）'
+  const risks=d.risk.risks.filter(x=>String(x.desc||'').trim())
+
+  const children=[]
+
+  /* ===== 封面（科技风：幽蓝色带 + 青色细节线 + 拉距英文标） ===== */
+  const DEEP_MAR={ fill:C.deep, type:ShadingType.CLEAR }
+  const NILB={ style:BorderStyle.NONE, size:0, color:'FFFFFF' }
+  const NO_TB={ top:NILB, bottom:NILB, left:NILB, right:NILB, insideHorizontal:NILB, insideVertical:NILB }
+  /* 顶部幽蓝色带：品牌 + 机密标识 */
+  children.push(new Table({
+    width:{ size:100, type:WidthType.PERCENTAGE }, borders:NO_TB,
+    rows:[ new TableRow({ children:[
+      new TableCell({ width:{size:55,type:WidthType.PERCENTAGE}, margins:{top:150,bottom:150,left:220,right:0}, shading:DEEP_MAR, verticalAlign:VerticalAlign.CENTER,
+        children:[ p([r('金米启航 ',{font:F.yahei,size:22,bold:true,color:'FFFFFF'}), r('JINMI QIHANG',{font:F.yahei,size:15,color:'9FD8F5',csp:40})],{spacing:{line:240,lineRule:'auto',after:0,before:0}}) ] }),
+      new TableCell({ width:{size:45,type:WidthType.PERCENTAGE}, margins:{top:150,bottom:150,left:0,right:220}, shading:DEEP_MAR, verticalAlign:VerticalAlign.CENTER,
+        children:[ p([r('CONFIDENTIAL',{font:F.yahei,size:15,color:'9FD8F5',csp:70})],{align:AlignmentType.RIGHT,spacing:{line:240,lineRule:'auto',after:0,before:0}}) ] })
+    ] }) ]
+  }))
+  /* 青色科技细线 */
+  children.push(new Paragraph({ spacing:{before:0,after:0}, border:{ bottom:{style:BorderStyle.SINGLE,size:12,color:C.accent} }, children:[r('',{})] }))
+  /* 机密字样（拉距） */
+  children.push(new Paragraph({ spacing:{before:1400,after:280}, alignment:AlignmentType.CENTER, children:[r('CONFIDENTIAL · 机 密',{font:F.yahei,size:22,bold:true,color:C.accent,csp:60})] }))
+  /* 报告标题 */
+  children.push(new Paragraph({ spacing:{before:200,after:140}, alignment:AlignmentType.CENTER, children:[r(reportTitle,{font:F.yahei,size:52,bold:true,color:C.primary})] }))
+  /* 英文副标（拉开字距） */
+  children.push(new Paragraph({ spacing:{before:0,after:240}, alignment:AlignmentType.CENTER, children:[r('CORPORATE DUE DILIGENCE REPORT',{font:F.yahei,size:17,color:C.gray,csp:70})] }))
+  /* 版本标签 */
+  children.push(new Paragraph({ spacing:{before:100,after:600}, alignment:AlignmentType.CENTER, children:[r('基础版 · BASIC EDITION',{font:F.yahei,size:22,bold:true,color:'2E75B6',csp:40})] }))
+  /* 目标公司 + 短青线 */
+  children.push(new Paragraph({ spacing:{before:240,after:100}, alignment:AlignmentType.CENTER, children:[r(companyName,{font:F.yahei,size:34,bold:true,color:C.primary})] }))
+  children.push(new Paragraph({ spacing:{after:520}, alignment:AlignmentType.CENTER, indent:{left:3300,right:3300}, border:{ bottom:{style:BorderStyle.SINGLE,size:12,color:C.accent} }, children:[r('',{})] }))
+  /* 报告要素（极简横线表：无竖线 · 无底色） */
+  const coverRows=[
+    ['委托方 / CLIENT', pj.client||'—'],
+    ['调查机构 / AGENCY', AGENCY_NAME],
+    ['报告编号 / REF NO.', pj.reportNo||'—'],
+    ['调查基准日 / BASE DATE', pj.baseDate||'—']
+  ]
+  const HAIR={ style:BorderStyle.SINGLE, size:4, color:'D5E2EF' }
+  children.push(new Table({
+    alignment:AlignmentType.CENTER,
+    width:{ size:76, type:WidthType.PERCENTAGE },
+    borders:{ top:NILB, bottom:NILB, left:NILB, right:NILB, insideHorizontal:HAIR, insideVertical:NILB },
+    rows: coverRows.map(row=>new TableRow({ children:[
+      new TableCell({ width:{size:42,type:WidthType.PERCENTAGE}, margins:{top:90,bottom:90,left:120,right:120}, verticalAlign:VerticalAlign.CENTER,
+        children:[ cellText(row[0],{font:F.yahei,size:19,bold:true,color:C.gray,align:AlignmentType.LEFT}) ] }),
+      new TableCell({ width:{size:58,type:WidthType.PERCENTAGE}, margins:{top:90,bottom:90,left:120,right:120}, verticalAlign:VerticalAlign.CENTER,
+        children:[ cellText(row[1],{font:F.yahei,size:21,bold:true,color:C.primary,align:AlignmentType.LEFT}) ] })
+    ]}))
+  }))
+  /* 日期 */
+  children.push(new Paragraph({ spacing:{before:900,after:260}, alignment:AlignmentType.CENTER, children:[r(dateStr,{font:F.yahei,size:26,color:C.primary,csp:20})] }))
+  /* 底部幽蓝色带：机构署名 */
+  children.push(new Table({
+    width:{ size:100, type:WidthType.PERCENTAGE }, borders:NO_TB,
+    rows:[ new TableRow({ children:[ new TableCell({ width:{size:100,type:WidthType.PERCENTAGE}, margins:{top:170,bottom:170,left:0,right:0}, shading:DEEP_MAR, verticalAlign:VerticalAlign.CENTER,
+      children:[
+        p([r(AGENCY_NAME,{font:F.yahei,size:22,bold:true,color:'FFFFFF'})],{align:AlignmentType.CENTER,spacing:{line:280,lineRule:'auto',after:60,before:0}}),
+        p([r(AGENCY_EN,{font:F.yahei,size:13,color:'9FD8F5',csp:50})],{align:AlignmentType.CENTER,spacing:{line:220,lineRule:'auto',after:0,before:0}})
+      ] }) ] }) ]
+  }))
+  children.push(new Paragraph({ children:[new PageBreak()] }))
+
+  /* ===== 保密声明 ===== */
+  children.push(H1('保密声明'))
+  children.push(body('本报告由'+AGENCY_NAME+'（以下简称"调查机构"）受'+(pj.client||'委托方')+'委托，就'+companyName+'（以下简称"目标公司"）出具的尽职调查报告。报告内容涉及目标公司的商业信息与财务数据，仅供委托方内部决策使用。'))
+  children.push(body('未经委托方书面同意，任何单位和个人不得复制、传播、引用本报告的全部或部分内容。报告内容基于调查基准日前可获取的公开信息与目标公司提供资料作出，调查机构对因资料不完整、不真实导致的判断偏差不承担责任。'))
+  children.push(new Paragraph({ children:[new PageBreak()] }))
+
+  /* ===== 目录 ===== */
+  children.push(H1('目 录'))
+  const toc=[
+    '一、报告摘要与结论',
+    '二、公司基本信息',
+    '三、股权结构',
+    '四、财务概况',
+    '五、法律合规',
+    '六、风险提示与综合结论'
+  ]
+  toc.forEach(t=>children.push(p(r(t,{size:26}),{spacing:{after:140,line:360,lineRule:'auto'}})))
+  children.push(new Paragraph({ children:[new PageBreak()] }))
+
+  /* ===== 一、摘要与结论 ===== */
+  children.push(H1('一、报告摘要与结论'))
+  children.push(H2('1.1 调查概述'))
+  children.push(body('受'+(pj.client||'委托方')+'委托，调查机构于'+(pj.reportDate||'—')+'对'+companyName+'开展了基础版尽职调查，调查基准日为'+(pj.baseDate||'—')+'。本次调查涵盖公司基本信息、股权结构（公司章程/股权结构图）、财务状况（电子税务局系统核查及社保/公积金/银行账户开立情况）、法律合规（未完成诉讼核查）等方面。'))
+  children.push(H2('1.2 公司概况'))
+  children.push(body(companyName+'，成立于'+(pj.founded||'—')+'，注册资本'+(pj.regCapital||'—')+'万元，法定代表人'+(pj.legalRep||'—')+'，统一社会信用代码'+(pj.creditCode||'—')+'，注册地址：'+(pj.address||'—')+'。'))
+  children.push(H2('1.3 整体评估'))
+  children.push(body('经调查评估，目标公司'+(d.risk.overall||'整体风险可控')+'。主要判断依据：'))
+  children.push(body(d.risk.conclusion||'——'))
+  children.push(H2('1.4 主要风险提示'))
+  if(risks.length){
+    risks.forEach(x=>children.push(p([r('· '+x.type+'（'+x.level+'）：'+x.desc,{})],{indent:{left:480},spacing:{after:60}})))
+  }else{
+    children.push(p(r('· 未录入具体风险点。',{}),{indent:{left:480}}))
+  }
+  children.push(H2('1.5 调查结论与建议'))
+  children.push(body(d.risk.conclusion||'——'))
+  children.push(body('交易/合作建议：'+(d.risk.advice||'——')))
+  children.push(new Paragraph({ children:[new PageBreak()] }))
+
+  /* ===== 二、公司基本信息 ===== */
+  children.push(H1('二、公司基本信息'))
+  children.push(body('本节根据目标公司营业执照及工商登记信息整理，反映调查基准日状态。'))
+  children.push(p(r('',{spacing:{after:60}})))
+  children.push(KVTable(fieldRows(pj)))
+  children.push(p(r('',{spacing:{after:60}})))
+  children.push(new Paragraph({ children:[new PageBreak()] }))
+
+  /* ===== 三、股权结构（截图） ===== */
+  children.push(H1('三、股权结构'))
+  children.push(body('本章以目标公司提供的公司章程/股权结构图截图反映其股权结构。'))
+  const eqShots=shotsOf('equity')
+  if(eqShots.length){
+    eqShots.forEach((it,idx)=>{
+      const label=eqShots.length>1?('3.'+(idx+1)+' 股权结构截图（'+(idx+1)+'）'):'3.1 股权结构截图'
+      shotBlock(label,it).forEach(x=>children.push(x))
+    })
+  }else{
+    children.push(p(r('（未提供截图）',{color:C.gray})))
+  }
+  children.push(new Paragraph({ children:[new PageBreak()] }))
+
+  /* ===== 四、财务概况 ===== */
+  children.push(H1('四、财务概况'))
+  children.push(H2('4.1 电子税务局核查截图'))
+  FIN_SLOTS.forEach((sl,idx)=>{
+    const it=shotsOf(sl.cat)[0]
+    shotBlock('4.1.'+(idx+1)+' '+sl.label,it).forEach(x=>children.push(x))
+  })
+  children.push(H2('4.2 账户开通情况'))
+  const ac=d.finance.accounts
+  const acRows=[
+    ['社保账户开通情况', ac.social||'—'],
+    ['公积金账户开通情况', ac.housing||'—'],
+    ['银行账户开通情况', ac.bank==='有'?(ac.bank+'（开户银行：'+(ac.bankName||'—')+'）'):(ac.bank||'—')]
+  ]
+  children.push(p(r('',{spacing:{after:60}})))
+  children.push(KVTable(acRows))
+  children.push(new Paragraph({ children:[new PageBreak()] }))
+
+  /* ===== 五、法律合规 ===== */
+  children.push(H1('五、法律合规'))
+  if(d.legal.hasLawsuit==='是'){
+    children.push(H2('5.1 未完成诉讼情况'))
+    children.push(body('经核查，目标公司存在以下未完成的诉讼/仲裁案件：'))
+    const lawsuits=d.legal.lawsuits.filter(x=>String(x.no||'').trim()||String(x.cause||'').trim())
+    if(lawsuits.length){
+      children.push(p(r('',{spacing:{after:60}})))
+      children.push(DataTable(['案号','案由','涉案金额(万)','进展状态'], lawsuits.map(x=>[x.no||'—',x.cause||'—',x.amount||'—',x.status||'—']), ['center','left','center','left']))
+    }else{
+      children.push(p(r('未录入案件详情。',{})))
+    }
+  }else{
+    children.push(H2('5.1 未完成诉讼核查'))
+    children.push(body('经核查，目标公司不存在未完成的诉讼/仲裁案件，相关证明截图如下。'))
+    const nl=shotsOf('legal_nolawsuit')[0]
+    shotBlock('5.2 无诉讼证明截图',nl).forEach(x=>children.push(x))
+  }
+  children.push(new Paragraph({ children:[new PageBreak()] }))
+
+  /* ===== 六、风险与结论 ===== */
+  children.push(H1('六、风险提示与综合结论'))
+  children.push(H2('6.1 主要风险点'))
+  if(risks.length){
+    children.push(DataTable(['风险类别','风险描述','风险等级','应对建议'], risks.map(x=>[x.type||'—',x.desc,x.level||'—',x.suggest||'—']), ['center','left','center','left']))
+  }else{
+    children.push(p(r('未录入具体风险点。',{})))
+  }
+  children.push(H2('6.2 整体风险评估'))
+  children.push(body(d.risk.overall||'—'))
+  children.push(H2('6.3 调查结论'))
+  children.push(body(d.risk.conclusion||'——'))
+  children.push(H2('6.4 建议'))
+  children.push(body(d.risk.advice||'——'))
+
+  /* ===== 落款 ===== */
+  children.push(p(r('',{spacing:{before:400}})))
+  children.push(p([r('调查机构（盖章）：'+AGENCY_NAME,{size:26})],{alignment:AlignmentType.RIGHT,spacing:{before:1000}}))
+  children.push(p([r('报告出具日期：'+dateStr,{size:26})],{alignment:AlignmentType.RIGHT,spacing:{before:160}}))
+
+  /* 页眉页脚（科技风：左品牌右机密 · 青色分隔线） */
+  const header=new Header({ children:[
+    new Paragraph({
+      tabStops:[{ type:TabStopType.RIGHT, position:TabStopPosition.MAX }],
+      spacing:{after:40}, border:{ bottom:{style:BorderStyle.SINGLE,size:6,color:C.accent} },
+      children:[
+        r('金米启航 ',{font:F.yahei,size:18,bold:true,color:C.primary}),
+        r('| 企业尽职调查报告 · 基础版',{font:F.yahei,size:18,color:C.gray}),
+        new TextRun({ text:'\t' }),
+        r('CONFIDENTIAL',{font:F.yahei,size:16,color:C.accent,csp:50})
+      ] })
+  ]})
+  const footer=new Footer({ children:[
+    new Paragraph({ alignment:AlignmentType.CENTER, spacing:{before:40}, border:{ top:{style:BorderStyle.SINGLE,size:6,color:C.accent} },
+      children:[
+        r('— 第 ',{size:18,color:C.gray}), new TextRun({children:[PageNumber.CURRENT],size:18,color:C.gray,font:F.song}), r(' 页 · 本报告仅供委托方内部使用 —',{size:18,color:C.gray})
+      ] })
+  ]})
+
+  const doc=new Document({
+    styles:{ default:{ document:{ run:{ font:F.song, size:24 } } } },
+    sections:[{
+      properties:{ page:{ margin:{ top:convertInchesToTwip(1), bottom:convertInchesToTwip(1), left:convertInchesToTwip(1.1), right:convertInchesToTwip(1.1) } } },
+      headers:{ default:header },
+      footers:{ default:footer },
+      children
+    }]
+  })
+  return doc
+}
+
+async function generateDocx(){
+  const btn=document.getElementById('btnGen')
+  if(btn){ btn.disabled=true; btn.textContent='正在生成…' }
+  try{
+    const doc=buildDocx()
+    const blob=await Packer.toBlob(doc)
+    const name='企业尽职调查报告（基础版）_'+(state.project.company||'目标公司')+'_'+(state.project.reportDate||today())+'.docx'
+    const a=document.createElement('a')
+    a.href=URL.createObjectURL(blob)
+    a.download=name
+    document.body.appendChild(a); a.click(); a.remove()
+    setTimeout(()=>URL.revokeObjectURL(a.href), 5000)
+    saveRecord()
+    alert('✅ 报告已生成并开始下载。\n请用 Word / WPS 打开检查排版，可继续编辑后定稿。')
+  }catch(e){
+    console.error(e)
+    alert('生成失败：'+e.message)
+  }
+  if(btn){ btn.disabled=false; btn.textContent='⬇ 生成并下载 Word 报告' }
+}
+
+/* ================= 生成记录（历史报告快照：载入数据 / 查看摘要 / 重新导出） ================= */
+const REC_KEY = 'dd_records_v1'
+const REC_LIMIT = 30
+function fmtTime(ts){
+  const d=new Date(ts), p=x=>String(x).padStart(2,"0")
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes())
+}
+function loadRecords(){
+  try{ const arr=JSON.parse(localStorage.getItem(REC_KEY)||"[]"); return Array.isArray(arr)?arr:[]; }catch(e){ return []; }
+}
+function findRecord(id){ return loadRecords().find(r=>r.id===id) || null; }
+function saveRecord(){
+  try{
+    /* 快照深拷贝，避免引用 state */
+    let snap = JSON.parse(JSON.stringify(state))
+    /* 截图 dataUrl 可能很大（base64），若快照超限则剥离截图内容，仅保留文本数据 */
+    const raw = JSON.stringify(snap)
+    if(raw.length > 700*1024){
+      (snap.attachments.items||[]).forEach(x=>{ x.dataUrl='' })
+    }
+    const v = VERSIONS.find(x=>x.id===state.version)||VERSIONS[0]
+    const rec = {
+      id: "r"+Date.now(),
+      time: Date.now(),
+      timeStr: fmtTime(Date.now()),
+      version: state.version,
+      versionName: v.name,
+      company: state.project.company || "未命名企业",
+      client: state.project.client || "",
+      reportNo: state.project.reportNo || "",
+      reportDate: state.project.reportDate || "",
+      snapshot: JSON.stringify(snap)
+    }
+    let list = loadRecords().filter(x=>!(x.version===rec.version && x.company===rec.company && x.reportNo===rec.reportNo))
+    list.unshift(rec)
+    if(list.length > REC_LIMIT) list = list.slice(0, REC_LIMIT)
+    localStorage.setItem(REC_KEY, JSON.stringify(list))
+  }catch(e){ console.warn("saveRecord 失败", e) }
+}
+function openRecModal(h){
+  document.getElementById('recModalBody').innerHTML=h
+  document.getElementById('recModal').style.display='flex'
+  document.getElementById('recModalBg').style.display='block'
+  document.body.style.overflow='hidden'
+}
+function closeRecModal(){
+  document.getElementById('recModal').style.display='none'
+  document.getElementById('recModalBg').style.display='none'
+  document.body.style.overflow=''
+}
+function openRecords(){
+  const list = loadRecords()
+  let h = '<h3>📋 近期生成记录</h3>'
+  if(!list.length){
+    h += '<div class="rec-empty">暂无记录。<br>每次「生成并下载 Word 报告」成功后会自动保存一条记录：可随时<b>📂 载入数据</b>修改后重新生成，避免重复填写。</div>'
+  }else{
+    h += '<div class="rec-tip">共 '+list.length+' 条 · 同版本同企业同编号保留最新一条 · 最多保留 '+REC_LIMIT+' 条</div>'
+    h += list.map(rec=>{
+      const vBadge = '<span class="rec-badge" style="background:#fbeccb;color:#b45309">'+esc(rec.versionName)+'</span>'
+      return `<div class="rec-row">
+        <div style="min-width:0">
+          <div class="rec-t">${esc(rec.company)}${vBadge}</div>
+          <div class="rec-s">🕐 ${rec.timeStr} · ${rec.reportNo?('编号 '+esc(rec.reportNo)+' · '):''}${esc(rec.client||'无委托方')} · 报告日期 ${esc(rec.reportDate||'—')}</div>
+        </div>
+        <div class="rec-ops">
+          <button class="btn" onclick="loadRecord('${rec.id}')">📂 载入数据</button>
+          <button class="btn" onclick="viewRecord('${rec.id}')">📄 查看</button>
+          <button class="del-btn" onclick="delRecord('${rec.id}')">删</button>
+        </div>
+      </div>`
+    }).join('')
+  }
+  h += '<div style="margin-top:12px;text-align:right"><button class="btn" onclick="closeRecModal()">关闭</button></div>'
+  openRecModal(h)
+}
+function loadRecord(id){
+  const rec = findRecord(id); if(!rec) return
+  if(!confirm("将载入「"+rec.timeStr+"」记录的完整数据（覆盖当前表单），确定？")) return
+  try{
+    state = JSON.parse(rec.snapshot)
+    currentStep = STEPS.length-1
+    doneSteps.clear()
+    STEPS.slice(0,-1).forEach((_,i)=>doneSteps.add(i))
+    saveState(); renderNav(); renderStep()
+    closeRecModal()
+    window.scrollTo({top:0,behavior:'smooth'})
+  }catch(e){ alert("载入失败："+e.message) }
+}
+function viewRecord(id){
+  const rec = findRecord(id); if(!rec) return
+  let h = '<h3>📄 历史尽调报告记录</h3>'
+  h += '<div style="background:#fdf4e6;border-left:4px solid #e0901a;border-radius:6px;padding:10px 13px;font-size:12.5px;margin-bottom:12px;line-height:1.8">'
+  h += '<b>'+esc(rec.versionName)+'</b> · '+esc(rec.company)+' · 生成于 '+rec.timeStr+'</div>'
+  h += '<div class="rec-kv"><span class="k">报告版本</span><span class="v">'+esc(rec.versionName)+'</span></div>'
+  h += '<div class="rec-kv"><span class="k">目标企业</span><span class="v">'+esc(rec.company)+'</span></div>'
+  h += '<div class="rec-kv"><span class="k">委托方</span><span class="v">'+esc(rec.client||'—')+'</span></div>'
+  h += '<div class="rec-kv"><span class="k">报告编号</span><span class="v">'+esc(rec.reportNo||'—')+'</span></div>'
+  h += '<div class="rec-kv"><span class="k">报告日期</span><span class="v">'+esc(rec.reportDate||'—')+'</span></div>'
+  h += '<div style="margin-top:10px;font-size:12.5px;color:#9a8a72">💡 点击「载入数据」可恢复该报告的完整填写内容（含截图，若记录过大则仅保留文本数据），到生成步骤即可重新导出 Word。</div>'
+  h += '<div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">'
+  h += '<button class="btn" style="background:#7a3e07;color:#fff;border:none" onclick="loadRecord(\''+rec.id+'\')">📂 载入数据并重新生成</button>'
+  h += '<button class="btn" onclick="openRecords()">← 返回列表</button>'
+  h += '<button class="btn" onclick="closeRecModal()">关闭</button></div>'
+  openRecModal(h)
+}
+function delRecord(id){
+  if(!confirm("确定删除这条记录？")) return
+  localStorage.setItem(REC_KEY, JSON.stringify(loadRecords().filter(r=>r.id!==id)))
+  openRecords()
+}
+
+/* ================= 初始化 ================= */
+renderNav()
+renderStep()
+saveState()
+</script>
+</body>
+</html>

@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>快速报价单生成器</title>
+<script src="./docx.umd.js"></script>
+<script src="./html2canvas.min.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#faf7f2;color:#2a2118;font-size:14px}
+  .wrap{max-width:980px;margin:0 auto;padding:20px 16px 60px}
+  .header{background:linear-gradient(120deg,#fffdf9,#fdf3e3,#fbeccb);color:#2a2118;border:1px solid #ece3d6;border-radius:12px;padding:18px 22px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:16px;box-shadow:0 1px 3px rgba(180,120,40,.08)}
+  .header-txt{min-width:0;flex:1}
+  .header h1{font-size:20px;display:flex;align-items:center;gap:8px;margin:0}
+  .header p{font-size:12.5px;color:#6b5d4a;margin-top:6px;margin-bottom:0}
+  .header .accent{color:#b45309}
+  .h-btns{display:flex;align-items:center;gap:10px;flex-shrink:0}
+  .h-btn{background:#fffefb;color:#2a2118;border:1px solid #d4c4a8;border-radius:8px;padding:8px 13px;font-size:12.5px;cursor:pointer;font-family:inherit;transition:.15s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;box-shadow:0 1px 2px rgba(180,120,40,.06)}
+  .h-btn:hover{border-color:#b45309;color:#b45309;background:#fbf5ea}
+  .h-btn svg{width:14px;height:14px;fill:currentColor}
+  .steps-bar{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+  .step-chip{flex:1;min-width:120px;background:#fff;border:1px solid #efe6d8;border-radius:8px;padding:8px 10px;font-size:12px;color:#6b5d4a;cursor:pointer;transition:.2s;text-align:center}
+  .step-chip .no{display:inline-block;width:18px;height:18px;line-height:18px;border-radius:50%;background:#f2e6d8;color:#6b5d4a;font-size:11px;margin-right:4px}
+  .step-chip.active{border-color:#e0901a;color:#2a1a0a;font-weight:600;background:#fffefb;box-shadow:inset 3px 0 0 #b45309}
+  .step-chip.active .no{background:#e0901a;color:#fff}
+  .step-chip.done{border-color:#a7d7c5;color:#2f855a}
+  .step-chip.done .no{background:#38a169;color:#fff}
+  .card{background:#fffefb;border-radius:12px;padding:24px 26px;border:1px solid #ece3d6;box-shadow:0 1px 3px rgba(180,120,40,.06);margin-bottom:16px;display:none}
+  .card.show{display:block}
+  .card h2{font-size:16px;color:#2a1a0a;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+  .card .sub{font-size:12.5px;color:#8a7a62;margin-bottom:18px}
+  .frow{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  .fg{margin-bottom:14px}
+  .fg label{display:block;font-size:12.5px;color:#4a4035;margin-bottom:5px;font-weight:500}
+  .fg label .req{color:#dc2626;margin-left:2px}
+  .fg input[type=text],.fg input[type=number],.fg input[type=date],.fg select,.fg textarea{width:100%;border:1px solid #e8dcd0;border-radius:7px;padding:9px 11px;font-size:13.5px;font-family:inherit;background:#fff;transition:.15s;color:#2a2118}
+  .fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:#e0901a;box-shadow:0 0 0 2px rgba(224,144,26,.12)}
+  .fg .hint{font-size:11.5px;color:#9a8a72;margin-top:4px;line-height:1.5}
+  .group-title{font-size:13.5px;font-weight:600;color:#2a1a0a;margin:18px 0 10px;padding-left:10px;border-left:3px solid #e0901a;display:flex;align-items:center;gap:8px}
+  .group-title .cnt{font-size:11px;color:#8a7a62;font-weight:400}
+  .svc-row{display:grid;grid-template-columns:34px 1fr 84px 66px 96px 62px 46px 30px;gap:8px;align-items:center;border:1px solid #f2e6d8;border-radius:10px;padding:12px 14px;margin-bottom:10px;background:#faf7f2;transition:.15s}
+  .svc-row.sel{border-color:#e0901a;background:#fbf5ea;box-shadow:0 1px 6px rgba(224,144,26,.12)}
+  .svc-row .chk{justify-self:center}
+  .svc-row .chk input{width:17px;height:17px;accent-color:#b45309;cursor:pointer}
+  .svc-row .svc-name{font-size:13.5px;font-weight:600;color:#2a2118}
+  .svc-row .svc-desc{font-size:11.5px;color:#8a7a62;margin-top:3px;line-height:1.5}
+  .svc-row .svc-tag{display:inline-block;background:#fbf1de;color:#a85509;font-size:10.5px;border-radius:4px;padding:0 6px;margin-left:6px;vertical-align:1px}
+  .svc-row .svc-price{font-size:13px;color:#2a1a0a;font-weight:600}
+  .svc-row .svc-price .z{color:#9a8a72;font-weight:400;font-size:12px}
+  .svc-row input.qty,.svc-row input.px{width:100%;border:1px solid #e8dcd0;border-radius:6px;padding:7px 8px;font-size:13px;font-family:inherit;text-align:center;background:#fff}
+  .svc-row input.qty:focus,.svc-row input.px:focus{outline:none;border-color:#e0901a}
+  .svc-row .line-total{font-size:13px;font-weight:600;color:#2a2118;text-align:right}
+  .svc-row .line-total .z{color:#9a8a72;font-weight:400;font-size:11.5px}
+  .svc-row .gift-chk{justify-self:center;display:flex;align-items:center;gap:2px;flex-direction:column}
+  .svc-row .gift-chk input{width:15px;height:15px;accent-color:#e8590c;cursor:pointer}
+  .svc-row .gift-chk input:disabled{cursor:not-allowed}
+  .svc-row .gift-chk .g-lb{font-size:10px;color:#e8590c;line-height:1}
+  .svc-row .del{justify-self:center;width:24px;height:24px;border:none;background:#fdecec;color:#dc2626;border-radius:6px;cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;transition:.15s}
+  .svc-row .del:hover{background:#fbd5d5}
+  .gift-tag{display:inline-block;background:#fdeee3;color:#e8590c;font-size:11.5px;font-weight:700;border-radius:4px;padding:1px 7px;text-align:center}
+  .gift-txt{color:#e8590c;font-weight:700}
+  .svc-row.disabled{opacity:.5}
+  .lib-empty{font-size:12.5px;color:#8a7a62;text-align:center;padding:24px 0}
+  .add-svc-btn{display:inline-flex;align-items:center;gap:6px;border:1.5px dashed #e3d4ba;border-radius:9px;padding:10px 16px;font-size:13px;color:#a85509;background:#faf7f2;cursor:pointer;font-family:inherit;transition:.15s}
+  .add-svc-btn:hover{border-color:#e0901a;background:#fbf5ea}
+  .sum-box{background:#faf7f2;border:1px solid #f2e6d8;border-radius:10px;padding:14px 18px;margin-top:6px}
+  .sum-line{display:flex;justify-content:space-between;font-size:13px;color:#4a4035;padding:4px 0}
+  .sum-line.total{font-size:16px;font-weight:700;color:#2a1a0a;border-top:1.5px dashed #e8dcd0;margin-top:6px;padding-top:10px}
+  .sum-line.total .upper{font-size:12px;color:#8a7a62;font-weight:400;margin-top:3px;text-align:right}
+  .actions{display:flex;gap:10px;margin-top:18px;justify-content:flex-end;flex-wrap:wrap}
+  .btn{border-radius:8px;padding:10px 20px;font-size:13.5px;cursor:pointer;font-family:inherit;border:1.5px solid transparent;transition:.15s}
+  .btn-primary{background:#b45309;color:#fff}
+  .btn-primary:hover{background:#7a3e07}
+  .btn-primary:disabled{background:#c4ad84;cursor:not-allowed}
+  .btn-ghost{background:#fff;color:#2a1a0a;border-color:#e3d4ba}
+  .btn-ghost:hover{border-color:#e0901a;color:#2a1a0a;background:#fbf5ea}
+  .btn-danger{background:#fff;color:#dc2626;border-color:#f0b6b6}
+  .btn-danger:hover{background:#fef2f2}
+  .btn-sm{padding:5px 11px;font-size:12px}
+  .preview-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  .preview-table th{background:#faf4ea;color:#2a2118;padding:9px 10px;text-align:center;font-weight:600;font-size:12.5px;border:1px solid #f2e6d8}
+  .preview-table td{border:1px solid #f2e6d8;padding:8px 10px;text-align:center;color:#2a2118}
+  .preview-table td.left{text-align:left}
+  .preview-table tr:nth-child(even){background:#faf7f2}
+  .preview-table tr.total-row td{background:#fbf5ea;font-weight:700;color:#2a1a0a}
+  .ok-tip{display:none;background:#E8F7EF;border:1px solid #a7d7c5;color:#2f855a;border-radius:9px;padding:12px 16px;font-size:13px;margin-top:14px;line-height:1.7}
+  .ok-tip.show{display:block}
+  .modal-bg{position:fixed;inset:0;background:rgba(42,26,10,.45);z-index:90;display:none}
+  .modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:14px;padding:20px 22px;width:620px;max-width:94vw;max-height:86vh;z-index:91;display:none;flex-direction:column;box-shadow:0 10px 40px rgba(42,33,24,.18)}
+  .modal h3{margin:0 0 12px;font-size:15.5px;color:#2a1a0a}
+  .modal-body{flex:1;overflow:auto;min-height:0;padding-right:4px}
+  .rec-row{display:flex;align-items:center;gap:10px;border:1px solid #f2e6d8;border-radius:10px;padding:11px 13px;margin-bottom:10px;background:#fffefb}
+  .rec-row .rec-t{font-size:13.5px;font-weight:600;color:#2a2118;margin-bottom:3px}
+  .rec-row .rec-s{font-size:12px;color:#8a7a62}
+  .rec-ops{margin-left:auto;display:flex;gap:6px;flex-shrink:0}
+  .rec-badge{display:inline-block;font-size:10.5px;border-radius:9px;padding:1px 7px;margin-left:6px;vertical-align:1px;font-weight:600}
+  .rec-empty{background:#faf7f2;border-left:4px solid #9a8a72;border-radius:6px;padding:12px 14px;font-size:12.5px;color:#4a4035;line-height:1.7}
+  .rec-tip{font-size:12px;color:#8a7a62;margin-bottom:10px}
+  .lib-row{display:grid;grid-template-columns:1fr 64px 90px 52px;gap:8px;align-items:center;border:1px solid #f2e6d8;border-radius:9px;padding:9px 12px;margin-bottom:8px;background:#faf7f2}
+  .lib-row .lr-name{font-size:13px;font-weight:600;color:#2a2118}
+  .lib-row .lr-desc{font-size:11.5px;color:#8a7a62;margin-top:2px;line-height:1.5}
+  .lib-row input{border:1px solid #e8dcd0;border-radius:6px;padding:6px 8px;font-size:12.5px;font-family:inherit;text-align:center}
+  .lib-row .lr-del{background:none;border:none;color:#dc2626;font-size:16px;cursor:pointer;line-height:1}
+  .lib-group{font-size:12px;font-weight:600;color:#a85509;margin:14px 0 6px}
+  .kv{display:flex;border-bottom:1px solid #f2e6d8;padding:7px 0;font-size:13px}
+  .kv .k{width:110px;color:#8a7a62;flex-shrink:0}
+  .kv .v{color:#2a2118;word-break:break-all}
+  /* 图片卡片（截图目标，750px 微信友好） */
+  .preview-scroll{overflow-x:auto;padding-bottom:4px}
+  #imgCard{width:750px;margin:0 auto;background:#fff;border:1px solid #efe6d8;border-radius:10px;padding:30px 34px 34px;box-sizing:border-box}
+  #imgCard .q-head{text-align:center;margin-bottom:4px}
+  #imgCard .q-co{font-size:12px;color:#8a7a62;letter-spacing:2px}
+  #imgCard .q-title{font-size:26px;color:#2a1a0a;font-weight:700;letter-spacing:10px;padding-left:10px;margin-top:6px}
+  #imgCard .q-no{font-size:12.5px;color:#4a4035;margin-top:8px}
+  #imgCard .q-meta{display:flex;justify-content:space-between;font-size:12.5px;color:#6b5d4a;margin:14px 0 4px;padding-bottom:8px;border-bottom:1.5px solid #2a1a0a;gap:10px}
+#imgCard .q-sign{margin-top:22px;text-align:right;font-size:13px;color:#2a2118;line-height:2}
+#imgCard .q-sign .co{color:#2a1a0a;font-weight:700;font-size:13.5px}
+/* 图片卡片明细表：用 div+flex 定宽替代 table，避免 html2canvas 对 fixed 表格重算列宽导致错行 */
+#imgCard .qt{display:flex;align-items:stretch;width:100%;box-sizing:border-box}
+#imgCard .qt .c{border:1px solid #f2e6d8;padding:9px 10px;font-size:13px;color:#2a2118;background:#fff;display:flex;align-items:center;justify-content:center;text-align:center;word-break:break-word;overflow:hidden;flex:0 0 auto;box-sizing:border-box}
+#imgCard .qt .c:nth-child(1){width:45px;flex-basis:45px}
+#imgCard .qt .c:nth-child(2){width:120px;flex-basis:120px}
+#imgCard .qt .c:nth-child(3){width:250px;flex-basis:250px}
+#imgCard .qt .c:nth-child(4){width:50px;flex-basis:50px}
+#imgCard .qt .c:nth-child(5){width:50px;flex-basis:50px}
+#imgCard .qt .c:nth-child(6){width:82px;flex-basis:82px}
+#imgCard .qt .c:nth-child(7){width:85px;flex-basis:85px}
+#imgCard .qt .c.left{justify-content:flex-start;text-align:left;padding-left:12px}
+#imgCard .qt.head{background:#faf4ea;margin-top:10px}
+#imgCard .qt.head .c{background:#faf4ea;color:#2a2118;font-weight:600;border-color:#f2e6d8;font-size:12.5px}
+#imgCard .qt .c.sum{color:#4a4035;justify-content:flex-end;text-align:right}
+#imgCard .qt .c.total{background:#fbf5ea;font-weight:700;color:#2a1a0a}
+#imgCard .qt .c.gift{color:#e8590c;font-weight:700}
+#imgCard .qt-sum{display:flex;align-items:stretch;width:100%;box-sizing:border-box}
+#imgCard .qt-sum .l{flex:0 0 515px;width:515px;border:1px solid #f2e6d8;padding:9px 10px;color:#4a4035;font-size:13px;display:flex;align-items:center;justify-content:flex-end;text-align:right;box-sizing:border-box}
+#imgCard .qt-sum .v{flex:0 0 167px;width:167px;border:1px solid #f2e6d8;border-left:none;padding:9px 10px;color:#4a4035;font-size:13px;display:flex;align-items:center;justify-content:center;text-align:center;box-sizing:border-box}
+#imgCard .qt-sum.total .l,#imgCard .qt-sum.total .v{background:#fbf5ea;font-weight:700;color:#2a1a0a}
+  .foot-tip{font-size:11.5px;color:#9a8a72;text-align:center;margin-top:24px;line-height:1.7}
+  /* AI 配置弹窗 */
+  .ai-modal-bg{position:fixed;inset:0;background:rgba(42,26,10,.45);z-index:90;display:none}
+  .ai-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:14px;width:520px;max-width:94vw;max-height:86vh;z-index:91;display:none;flex-direction:column;box-shadow:0 10px 40px rgba(42,33,24,.18)}
+  .ai-head{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;background:linear-gradient(120deg,#fffdf9,#fdf3e3,#fbeccb);border-radius:14px 14px 0 0;color:#2a2118;border-bottom:1px solid #ece3d6}
+  .ai-head h3{margin:0;font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .ai-head h3::before{content:'⚙';font-size:15px;opacity:.9}
+  .ai-close{background:#fffefb;border:1px solid #ece3d6;width:28px;height:28px;border-radius:8px;font-size:15px;color:#2a2118;cursor:pointer;line-height:1;transition:.15s}
+  .ai-close:hover{background:#fbf5ea;border-color:#e0901a}
+  .ai-body{padding:18px 22px;overflow:auto}
+  .ai-warn{background:#fff4f4;border:1px solid #f9c5c6;border-left:4px solid #e5484d;color:#b42318;font-size:12px;padding:12px 14px;border-radius:10px;line-height:1.6;margin-bottom:16px}
+  .ai-warn b{color:#b42318}
+  .ai-section{background:#faf7f2;border:1px solid #faf4ea;border-radius:12px;padding:14px 16px;margin-bottom:14px}
+  .ai-section-title{font-size:12.5px;font-weight:700;color:#2a1a0a;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .ai-section-title::before{content:'';width:4px;height:14px;background:linear-gradient(180deg,#e0901a,#b45309);border-radius:2px}
+  .ai-form .fg{margin-bottom:13px}
+  .ai-form .fg:last-child{margin-bottom:0}
+  .ai-form .fg label{display:block;font-size:12.5px;color:#3a3228;margin-bottom:6px;font-weight:600}
+  .ai-form .fg label .meta{font-size:11px;color:#8a7a62;font-weight:400;margin-left:4px}
+  .ai-form input,.ai-form select{width:100%;padding:9px 12px;border:1px solid #e8dcd0;border-radius:9px;font-size:13px;box-sizing:border-box;background:#fff;transition:.15s}
+  .ai-form input:focus,.ai-form select:focus{outline:none;border-color:#e0901a;box-shadow:0 0 0 3px rgba(224,144,26,.12)}
+  .ai-actions{display:flex;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid #faf4ea;justify-content:flex-end}
+  .ai-actions .btn{padding:8px 18px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;border:1px solid transparent;transition:.15s}
+  .ai-actions .btn-primary{background:linear-gradient(135deg,#b45309,#e0901a);color:#fff;border:none}
+  .ai-actions .btn-primary:hover{filter:brightness(1.1)}
+  .ai-actions .btn-ghost{background:#fff;color:#3a3228;border-color:#e8dcd0}
+  .ai-actions .btn-ghost:hover{border-color:#e0901a;color:#2a1a0a;background:#fbf5ea}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="header-txt">
+      <h1>📄 快速报价单生成器</h1>
+      <p>统一服务报价口径 · 填三步出报价单（图片/Word 双格式）· 价格可调、口径可管</p>
+    </div>
+    <div class="h-btns">
+      <button class="h-btn" onclick="openAiConfig()" title=""><svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7z"/><path d="M19.43 12.98c.04-.32.07-.66.07-1s-.03-.68-.07-1l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.61-.22l-2.49 1a7.03 7.03 0 0 0-1.73-1l-.38-2.65A.5.5 0 0 0 14 2h-4a.5.5 0 0 0-.49.4l-.38 2.65a7.03 7.03 0 0 0-1.73 1l-2.49-1a.5.5 0 0 0-.61.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65c-.04.32-.07.66-.07 1s.03.68.07 1l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46a.5.5 0 0 0 .61.22l2.49-1.01c.53.4 1.1.74 1.73 1l.38 2.65a.5.5 0 0 0 .49.4h4a.5.5 0 0 0 .49-.4l.38-2.65a7.03 7.03 0 0 0 1.73-1l2.49 1.01a.5.5 0 0 0 .61-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65z"/></svg>AI 配置</button>
+      <button class="h-btn" onclick="openLibModal()" title=""><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>价目库管理</button>
+      <button class="h-btn" onclick="openRecords()" title=""><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/><path d="M8 12h8v2H8zm0 4h5v2H8zm0-8h3v2H8z"/></svg>生成记录</button>
+    </div>
+  </div>
+
+  <div class="steps-bar" id="stepsBar"></div>
+
+  <!-- 第 1 步：客户与销售信息 -->
+  <div class="card show" id="step1">
+    <h2>① 客户与销售信息</h2>
+    <div class="sub">填写报价对象与跟进人，生成时会写入报价单抬头</div>
+    <div class="frow">
+      <div class="fg">
+        <label>客户名称<span class="req">*</span></label>
+        <input type="text" id="custName" placeholder="如：深圳某某科技有限公司" oninput="saveState()">
+      </div>
+      <div class="fg">
+        <label>申请主体<span class="hint" style="margin:0 0 0 4px">（留空则沿用默认机构名）</span></label>
+        <input type="text" id="applicant" placeholder="如：深圳某某科技有限公司（写入报价单抬头/落款）" oninput="saveState()">
+      </div>
+      <div class="fg">
+        <label>联系人</label>
+        <input type="text" id="custContact" placeholder="客户联系人姓名" oninput="saveState()">
+      </div>
+      <div class="fg">
+        <label>联系电话</label>
+        <input type="text" id="custPhone" placeholder="客户联系电话" oninput="saveState()">
+      </div>
+      <div class="fg">
+        <label>销售顾问<span class="req">*</span></label>
+        <input type="text" id="agent" placeholder="你的名字（写入落款）" oninput="saveState()">
+      </div>
+      <div class="fg">
+        <label>客户来源</label>
+        <select id="custSrc" onchange="saveState()">
+          <option value="">请选择</option>
+          <option>58同城店铺</option>
+          <option>美团店铺</option>
+          <option>内部销售渠道</option>
+          <option>财税老师渠道</option>
+          <option>同行转介绍</option>
+          <option>老客户复购</option>
+          <option>其他</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>备注</label>
+        <input type="text" id="custNote" placeholder="客户背景补充（不写入报价单）" oninput="saveState()">
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="goStep(2)">下一步：选择服务项目 →</button>
+    </div>
+  </div>
+
+  <!-- 第 2 步：服务项目 -->
+  <div class="card" id="step2">
+    <h2>② 选择服务项目</h2>
+    <div class="sub">勾选服务并核对数量与单价（灰色 0 = 面议）。勾选行末「赠」的服务不收费，金额自动计入优惠</div>
+    <div id="svcList"></div>
+    <div style="margin-top:14px">
+      <button class="add-svc-btn" onclick="openAddSvc()">＋ 添加自定义服务项</button>
+    </div>
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="goStep(1)">← 上一步</button>
+      <button class="btn btn-primary" onclick="goStep(3)">下一步：报价与条款 →</button>
+    </div>
+  </div>
+
+  <!-- 第 3 步：报价与条款 -->
+  <div class="card" id="step3">
+    <h2>③ 报价与条款</h2>
+    <div class="sub">设置报价编号、折扣与生效条款，报价说明请在下方自行填写</div>
+    <div class="frow3">
+      <div class="fg">
+        <label>报价单编号</label>
+        <input type="text" id="quotaNo" placeholder="自动生成" oninput="saveState()">
+      </div>
+      <div class="fg">
+        <label>报价日期</label>
+        <input type="date" id="quotaDate" onchange="saveState()">
+      </div>
+      <div class="fg">
+        <label>报价有效期（天）</label>
+        <input type="number" id="validDays" min="1" max="365" value="30" oninput="saveState()">
+      </div>
+      <div class="fg">
+        <label>折扣率（%）</label>
+        <input type="number" id="discount" min="0" max="100" value="100" oninput="saveState()">
+        <div class="hint">100 = 不打折，90 = 九折</div>
+      </div>
+      <div class="fg">
+        <label>优惠金额（元）</label>
+        <input type="number" id="discountAmt" min="0" step="0.01" value="0" oninput="saveState()">
+      </div>
+      <div class="fg">
+        <label>付款方式</label>
+        <select id="payMode" onchange="saveState()">
+          <option value="预付50%，尾款于服务完成后结清">预付 50%，尾款于服务完成后结清</option>
+          <option value="一次性付清">一次性付清</option>
+          <option value="分期支付">分期支付</option>
+          <option value="面议">面议</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg">
+      <label>备注 / 服务说明 <button class="btn-sm" type="button" style="margin-left:8px;background:linear-gradient(120deg,#fffdf9,#fdf3e3,#fbeccb);color:#2a2118;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit" onclick="aiWriteNotes()">✨ AI 撰写</button></label>
+      <textarea id="notes" rows="4" style="width:100%;border:1px solid #e8dcd0;border-radius:7px;padding:9px 11px;font-size:13.5px;font-family:inherit" placeholder="填写报价说明、服务承诺、不包含事项等，将写入报价单「报价说明」栏" oninput="saveState()"></textarea>
+      <div id="aiNotesStatus" style="font-size:12px;color:#b45309;min-height:16px;margin-top:4px"></div>
+    </div>
+    <div class="sum-box">
+      <div class="sum-line"><span>服务项目合计</span><span id="sumRaw">¥0.00</span></div>
+      <div class="sum-line"><span>折扣 / 优惠</span><span id="sumDiscount">—</span></div>
+      <div class="sum-line total"><span>应付金额</span><span id="sumTotal">¥0.00<div class="upper" id="sumUpper">人民币零元整</div></span></div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="goStep(2)">← 上一步</button>
+      <button class="btn btn-primary" onclick="goStep(4)">下一步：预览并生成 →</button>
+    </div>
+  </div>
+
+  <!-- 第 4 步：预览与生成 -->
+  <div class="card" id="step4">
+    <h2>④ 预览并生成</h2>
+    <div class="sub">下方预览即图片成品：可一键复制发微信/朋友圈，也可下载 PNG 或 Word 文件</div>
+    <div class="preview-scroll"><div id="imgCard"></div></div>
+    <div class="ok-tip" id="okTip"></div>
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="goStep(3)">← 上一步</button>
+      <button class="btn btn-primary" id="copyBtn" onclick="copyImg()">📋 复制图片</button>
+      <button class="btn" id="pngBtn" style="background:#b45309;color:#fff" onclick="downloadImg()">🖼️ 下载 PNG</button>
+      <button class="btn btn-ghost" id="genBtn" onclick="doGenerate()">📄 下载 Word</button>
+    </div>
+  </div>
+
+  <div class="foot-tip">深圳市金米启航企业服务有限公司 · 内部业务工具 · 数据仅保存在本机浏览器</div>
+</div>
+
+<!-- 生成记录弹窗 -->
+<div class="modal-bg" id="recModalBg" onclick="closeRecModal()"></div>
+<div class="modal" id="recModal">
+  <h3>📋 近期生成记录</h3>
+  <div class="modal-body" id="recModalBody"></div>
+  <div style="margin-top:12px;text-align:right"><button class="btn btn-ghost" onclick="closeRecModal()">关闭</button></div>
+</div>
+
+<!-- 价目库管理弹窗 -->
+<div class="modal-bg" id="libModalBg" onclick="closeLibModal()"></div>
+<div class="modal" id="libModal">
+  <h3>⚙️ 价目库管理</h3>
+  <div class="rec-tip">统一维护服务项目与默认价（仅本机生效）。改完保存后，第 ② 步的选择会同步刷新；已选项目的单价不会被覆盖。</div>
+  <div class="modal-body" id="libModalBody"></div>
+  <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+    <button class="btn btn-ghost btn-sm" onclick="addLibItem()">＋ 新增服务项</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost" onclick="closeLibModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveLib()">保存价目库</button>
+    </div>
+  </div>
+</div>
+
+<!-- 自定义服务弹窗 -->
+<div class="modal-bg" id="addModalBg" onclick="closeAddModal()"></div>
+<div class="modal" id="addModal" style="width:480px">
+  <h3>＋ 自定义服务项</h3>
+  <div class="modal-body" style="overflow:visible">
+    <div class="fg">
+      <label>服务名称<span class="req">*</span></label>
+      <input type="text" id="addName" placeholder="如：税务清算专项">
+    </div>
+    <div class="fg">
+      <label>所属分类</label>
+      <select id="addGroup"></select>
+    </div>
+    <div class="fg">
+      <label>服务内容说明</label>
+      <textarea id="addDesc" rows="2" style="width:100%;border:1px solid #e8dcd0;border-radius:7px;padding:9px 11px;font-size:13.5px;font-family:inherit" placeholder="写入报价单明细栏"></textarea>
+    </div>
+    <div class="frow">
+      <div class="fg">
+        <label>单价（元，0=面议）</label>
+        <input type="number" id="addPrice" min="0" step="0.01" value="0">
+      </div>
+      <div class="fg">
+        <label>单位</label>
+        <input type="text" id="addUnit" value="项">
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
+    <button class="btn btn-ghost" onclick="closeAddModal()">取消</button>
+    <button class="btn btn-primary" onclick="confirmAddSvc()">添加并勾选</button>
+  </div>
+</div>
+
+<div class="ai-modal-bg" id="aiModalBg" onclick="closeAiConfig()"></div>
+<div class="ai-modal" id="aiModal">
+  <div class="ai-head"><h3>AI 接口配置（本工具独立）</h3><button class="ai-close" onclick="closeAiConfig()" aria-label="关闭">✕</button></div>
+  <div class="ai-body ai-form">
+    <div class="ai-warn"><b>信息说明</b>：本工具的 AI 接口独立配置，仅对本工具生效，不会同步到其它工具或平台首页。</div>
+    <div class="ai-section">
+      <div class="ai-section-title">连接信息</div>
+      <div class="fg"><label>服务商 <span class="meta">仅列出支持文本生成的平台</span></label><select id="aiProvider" onchange="aiCfgOnProvider()"></select></div>
+      <div class="fg"><label>API Key</label><input id="aiKey" type="password" placeholder="sk-... / ark-..."></div>
+      <div class="fg"><label>Base URL <span class="meta">OpenAI 兼容接口地址，留空使用服务商默认地址</span></label><input id="aiBaseUrl" placeholder="https://ark.cn-beijing.volces.com/api/v3"></div>
+    </div>
+    <div class="ai-section">
+      <div class="ai-section-title">模型设置</div>
+      <div class="fg"><label>文本大模型 <span class="meta">撰写备注 / 服务说明</span></label><input id="aiLlmModel" placeholder="如：Qwen/Qwen2.5-7B-Instruct / hunyuan-turbo-s"></div>
+    </div>
+    <div class="ai-actions"><button class="btn btn-ghost" onclick="closeAiConfig()">取消</button><button class="btn btn-primary" onclick="saveAiCfg()">保存配置</button></div>
+  </div>
+</div>
+
+<script>
+/* ============ 常量 ============ */
+const LS_KEY = 'quote_tool_data_v2'
+const REC_KEY = 'quote_records_v1'
+const LIB_KEY = 'quote_price_lib_v1'
+const AGENCY_NAME = '深圳市金米启航企业服务有限公司'
+const AGENCY_PHONE = '0755-00000000'
+function agencyName(){
+  const a = String((state&&state.customer&&state.customer.applicant)||'').trim()
+  return a || AGENCY_NAME
+}
+const REC_LIMIT = 30
+
+/* ============ 价目库（默认值，可管理） ============ */
+const DEFAULT_LIB = [
+  { id:'zt',  group:'公司转让', name:'公司转让全套代办', desc:'股权变更、税务清算、银行账户、资质证件过户等全套手续代办', price:5000, unit:'单' },
+  { id:'gj',  group:'公司转让', name:'公司收购委托（代找标的）', desc:'按买方需求筛选匹配优质标的，含初步尽调与谈判支持', price:3000, unit:'单' },
+  { id:'gy',  group:'资质咨询', name:'高新技术企业认定评估与辅导', desc:'高新认定可行性评估、研发台账梳理、材料辅导与申报全流程', price:0, unit:'项' },
+  { id:'ks',  group:'资质咨询', name:'科技型中小企业入库', desc:'科小入库条件评估与申报', price:0, unit:'项' },
+  { id:'ztx', group:'资质咨询', name:'专精特新中小企业申报', desc:'专精特新申报评估、材料辅导与申报', price:0, unit:'项' },
+  { id:'xjr', group:'资质咨询', name:'重点小巨人（三新一强）培育辅导', desc:'重点小巨人培育规划、材料辅导与申报', price:0, unit:'项' },
+  { id:'zzxb',group:'资质代办', name:'建筑工程资质新办', desc:'资质新办条件评估、人员配置、材料整理与申报', price:0, unit:'项' },
+  { id:'zzsj',group:'资质代办', name:'建筑工程资质升级', desc:'资质升级条件诊断、业绩梳理、人员补充与申报', price:0, unit:'项' },
+  { id:'ax',  group:'资质代办', name:'安全生产许可证办理', desc:'安许办理条件评估与申报（三类人员配置）', price:0, unit:'项' },
+  { id:'jd',  group:'咨询服务', name:'企业尽职调查报告', desc:'工商、税务、债务、诉讼、资质全维度尽调核查', price:0, unit:'份' },
+  { id:'zc',  group:'基础服务', name:'公司注册', desc:'工商注册全套（核名、执照、刻章、银行开户协助）', price:800, unit:'单' },
+  { id:'jz',  group:'基础服务', name:'代理记账', desc:'月度记账报税、年度汇算清缴', price:300, unit:'月' }
+]
+
+/* ============ 状态 ============ */
+let state = loadState()
+
+function emptyState(){
+  const d = new Date()
+  const p = x=>String(x).padStart(2,'0')
+  return {
+    step: 1,
+    customer:{ name:'', contact:'', phone:'', agent:'', src:'', note:'', applicant:'' },
+    items:[],  // [{libId,name,desc,unit,qty,price}]
+    quote:{ no:'', date:d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()), validDays:'30', discount:'100', discountAmt:'0', payMode:'预付50%，尾款于服务完成后结清', notes:'' }
+  }
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(LS_KEY)
+    if(raw){
+      const s = JSON.parse(raw)
+      if(!s || typeof s!=='object') return emptyState()
+      const base = emptyState()
+      const m = {}
+      m.step = (s.step>=1&&s.step<=4)?s.step:1
+      m.customer = Object.assign({}, base.customer, s.customer||{})
+      m.items = Array.isArray(s.items)?s.items:[]
+      m.quote = Object.assign({}, base.quote, s.quote||{})
+      return m
+    }
+  }catch(e){}
+  return emptyState()
+}
+function saveState(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)) }catch(e){}
+}
+function saveStateDebounced(){
+  clearTimeout(saveState._t)
+  saveState._t = setTimeout(saveState, 400)
+}
+
+/* ============ 价目库存取 ============ */
+function loadLib(){
+  try{
+    const raw = localStorage.getItem(LIB_KEY)
+    if(raw){
+      const arr = JSON.parse(raw)
+      if(Array.isArray(arr) && arr.length) return arr
+    }
+  }catch(e){}
+  return DEFAULT_LIB.map(x=>({...x}))
+}
+let lib = loadLib()
+function saveLib(){
+  lib = lib.map(x=>({...x})).filter(x=>String(x.name||'').trim())
+  // 清理已删除服务项在报价中的引用，避免幽灵项残留
+  state.items = state.items.filter(x=> lib.some(l=>l.id===x.libId))
+  try{ localStorage.setItem(LIB_KEY, JSON.stringify(lib)) }catch(e){}
+  closeLibModal()
+  renderSvcList()
+  renderSum()
+  saveState()
+  alert('价目库已保存 ✅')
+}
+function libFind(id){ return lib.find(x=>x.id===id) || null }
+
+/* ============ 工具函数 ============ */
+function fmtMoney(n){
+  n = Number(n)||0
+  return '¥' + n.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2})
+}
+function fmtMoneyRaw(n){
+  n = Number(n)||0
+  return n.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2})
+}
+function rmbUpper(n){
+  n = Math.round((Number(n)||0)*100)
+  if(n===0) return '人民币零元整'
+  const NUMS = ['零','壹','贰','叁','肆','伍','陆','柒','捌','玖']
+  const UNITS = ['','拾','佰','仟']
+  const BIG = ['','万','亿','万亿']
+  const intPart = Math.floor(n/100)
+  const jiao = Math.floor((n%100)/10)
+  const fen = n%10
+  let s = ''
+  if(intPart>0){
+    const digits = String(intPart).split('').reverse()
+    const parts = []
+    for(let i=0;i<digits.length;i+=4){
+      const seg = digits.slice(i,i+4)
+      let segStr = ''
+      let zeroPending = false
+      for(let j=seg.length-1;j>=0;j--){
+        const d = Number(seg[j])
+        if(d===0){
+          zeroPending = true
+        }else{
+          if(zeroPending && segStr!=='') segStr += '零'
+          zeroPending = false
+          segStr += NUMS[d] + UNITS[j]
+        }
+      }
+      const bigIdx = Math.floor(i/4)
+      parts.unshift({ seg:segStr, big: BIG[bigIdx] })
+    }
+    parts.forEach((p,i)=>{
+      if(p.seg!==''){
+        if(i>0 && s.endsWith('零')) s = s.slice(0,-1)
+        s += p.seg + p.big
+      }else{
+        if(s!=='' && !s.endsWith('零')) s += '零'
+      }
+    })
+    s = s.replace(/零+$/,'')
+    if(s.endsWith('零')) s = s.slice(0,-1)
+    s += '元'
+  }
+  if(jiao===0 && fen===0){
+    s += '整'
+  }else{
+    if(jiao>0){
+      s += NUMS[jiao] + '角'
+      if(fen===0) s += '整'
+    }else{
+      if(fen>0) s += '零'
+    }
+    if(fen>0) s += NUMS[fen] + '分'
+  }
+  return '人民币' + s
+}
+
+/* ============ 金额计算 ============ */
+function getItems(){
+  return state.items.map(it=>{
+    const l = libFind(it.libId)
+    return {
+      libId: it.libId,
+      name: it.name || (l?l.name:'未命名服务'),
+      desc: it.desc || (l?l.desc:''),
+      unit: it.unit || (l?l.unit:'项'),
+      qty: Math.max(1, Number(it.qty)||1),
+      price: Math.max(0, Number(it.price)||0),
+      gift: !!it.gift,
+      line: Math.max(1, Number(it.qty)||1) * (Math.max(0, Number(it.price)||0))
+    }
+  })
+}
+function calcSum(){
+  const items = getItems()
+  const normal = items.filter(x=>!x.gift)
+  const gifts = items.filter(x=>x.gift)
+  const raw = normal.reduce((s,x)=>s+x.line,0)
+  const giftSum = gifts.reduce((s,x)=>s+x.line,0)
+  const disc = Math.max(0, Math.min(100, Number(state.quote.discount)||100))
+  const discAmt = Math.max(0, Number(state.quote.discountAmt)||0)
+  const afterDisc = Math.max(0, raw*disc/100 - discAmt)
+  return { items, raw, giftSum, disc, discAmt, total: Math.round(afterDisc*100)/100 }
+}
+
+/* ============ 导航 ============ */
+const STEP_NAMES = ['客户与销售信息','选择服务项目','报价与条款','预览并生成']
+function renderNav(){
+  document.getElementById('stepsBar').innerHTML = STEP_NAMES.map((n,i)=>{
+    const no = i+1
+    let cls = 'step-chip'
+    if(state.step===no) cls += ' active'
+    else if(no<state.step) cls += ' done'
+    return `<div class="${cls}" onclick="goStep(${no})"><span class="no">${no<state.step?'✓':no}</span>${n}</div>`
+  }).join('')
+}
+function goStep(n){
+  if(n<state.step) { state.step=n; saveState(); renderAll(); return }
+  if(n===2){
+    if(!String(state.customer.name||'').trim()){ alert('请先填写客户名称'); return }
+    if(!String(state.customer.agent||'').trim()){ alert('请先填写销售顾问（你的名字）'); return }
+  }
+  if(n===3){
+    if(!state.items.length){ alert('请至少选择一项服务'); return }
+  }
+  if(n===4){
+    const items = getItems()
+    if(!items.length){ alert('请至少选择一项服务'); return }
+    if(!String(state.quote.no||'').trim()){
+      state.quote.no = autoNo()
+      saveState()
+    }
+  }
+  state.step = n
+  saveState()
+  renderAll()
+  window.scrollTo({top:0,behavior:'smooth'})
+}
+function autoNo(){
+  const d = new Date(), p=x=>String(x).padStart(2,'0')
+  const n = Date.now().toString().slice(-4)
+  return `Q-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${n}`
+}
+
+/* ============ 渲染 ============ */
+function renderAll(){
+  renderNav()
+  renderStep()
+}
+function renderStep(){
+  ;['step1','step2','step3','step4'].forEach((id,i)=>{ document.getElementById(id).classList.toggle('show', i+1===state.step) })
+  if(state.step===1) fillStep1()
+  if(state.step===2) renderSvcList()
+  if(state.step===3) fillStep3()
+  if(state.step===4) renderPreview()
+}
+function fillStep1(){
+  const c = state.customer
+  setVal('custName', c.name); setVal('custContact', c.contact); setVal('custPhone', c.phone)
+  setVal('agent', c.agent); setVal('custSrc', c.src); setVal('custNote', c.note); setVal('applicant', c.applicant)
+}
+function setVal(id, v){
+  const el = document.getElementById(id)
+  if(el && document.activeElement!==el) el.value = v||''
+}
+function readStep1(){
+  state.customer = {
+    name: val('custName'), contact: val('custContact'), phone: val('custPhone'),
+    agent: val('agent'), src: val('custSrc'), note: val('custNote'), applicant: val('applicant')
+  }
+  saveStateDebounced()
+}
+function val(id){ return document.getElementById(id).value }
+
+/* 服务列表 */
+function renderSvcList(){
+  const groups = {}
+  lib.forEach(l=>{
+    if(!groups[l.group]) groups[l.group]=[]
+    groups[l.group].push(l)
+  })
+  const sel = new Set(state.items.map(x=>x.libId))
+  let h = ''
+  Object.keys(groups).forEach(g=>{
+    h += `<div class="group-title">${g}<span class="cnt">${groups[g].length} 项</span></div>`
+    groups[g].forEach(l=>{
+      const it = state.items.find(x=>x.libId===l.id)
+      const checked = it?'checked':''
+      const gift = it?!!it.gift:false
+      const qty = it?it.qty:1
+      const price = it?it.price:l.price
+      const line = Number(qty||1)*Number(price||0)
+      const lineTxt = !checked ? '<span class="z">—</span>' : (gift ? '<span class="gift-tag">赠送</span>' : fmtMoney(line))
+      const giftDis = (!checked || !(Number(price)>0)) ? 'disabled' : ''
+      h += `<div class="svc-row ${checked?'sel':''}" data-id="${l.id}">
+        <div class="chk"><input type="checkbox" ${checked} onchange="toggleSvc('${l.id}',this.checked)"></div>
+        <div style="min-width:0">
+          <div class="svc-name">${esc(l.name)}</div>
+          <div class="svc-desc">${esc(l.desc||'')}</div>
+        </div>
+        <div class="svc-price" style="text-align:right">${l.price>0?fmtMoney(l.price):'<span class="z">面议</span>'}</div>
+        <div style="text-align:center"><input class="qty" type="number" min="1" value="${qty}" ${checked?'':'disabled'} oninput="updSvc('${l.id}','qty',this.value)" onchange="saveState()"></div>
+        <div style="text-align:center"><input class="px" type="number" min="0" step="0.01" value="${price}" ${checked?'':'disabled'} oninput="updSvc('${l.id}','price',this.value)" onchange="saveState()"></div>
+        <div class="line-total">${lineTxt}</div>
+        <div class="gift-chk" title="${giftDis?'面议项或未勾选不能设为赠送':'标记为赠送（不收费，金额计入优惠）'}"><input type="checkbox" ${gift?'checked':''} ${giftDis} onchange="toggleGift('${l.id}',this.checked)"><span class="g-lb">赠</span></div>
+        <button class="del" title="删除该项（自定义项会同时从价目库移除）" onclick="delSvc('${l.id}')">×</button>
+      </div>`
+    })
+  })
+  document.getElementById('svcList').innerHTML = h || '<div class="lib-empty">价目库为空，点击下方按钮添加服务项</div>'
+}
+function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+function toggleSvc(id, on){
+  const l = libFind(id); if(!l) return
+  if(on){
+    if(!state.items.find(x=>x.libId===id)){
+      state.items.push({ libId:id, name:l.name, desc:l.desc, unit:l.unit, qty:1, price:l.price })
+    }
+  }else{
+    state.items = state.items.filter(x=>x.libId!==id)
+  }
+  saveState(); renderSvcList()
+}
+function updSvc(id, field, v){
+  const it = state.items.find(x=>x.libId===id)
+  if(!it) return
+  if(field==='qty') it.qty = Math.max(1, Number(v)||1)
+  if(field==='price') it.price = Math.max(0, Number(v)||0)
+  if(it.price<=0 && it.gift){
+    it.gift = false
+    saveState(); renderSvcList(); renderSum(); return
+  }
+  saveState()
+  const row = document.querySelector(`.svc-row[data-id="${id}"] .line-total`)
+  if(row) row.innerHTML = it.gift ? '<span class="gift-tag">赠送</span>' : fmtMoney(Number(it.qty||1)*Number(it.price||0))
+  renderSum()
+}
+function toggleGift(id, on){
+  const it = state.items.find(x=>x.libId===id)
+  if(!it) return
+  if(on && !(Number(it.price)>0)){ alert('单价为 0 的服务（面议）不能设为赠送'); return }
+  it.gift = !!on
+  saveState(); renderSvcList(); renderSum()
+}
+
+/* 第3步 */
+function fillStep3(){
+  const q = state.quote
+  setVal('quotaNo', q.no); setVal('quotaDate', q.date); setVal('validDays', q.validDays)
+  setVal('discount', q.discount); setVal('discountAmt', q.discountAmt); setVal('payMode', q.payMode)
+  setVal('notes', q.notes)
+  renderSum()
+}
+function readStep3(){
+  state.quote = {
+    no: val('quotaNo'), date: val('quotaDate'), validDays: val('validDays'),
+    discount: val('discount'), discountAmt: val('discountAmt'),
+    payMode: val('payMode'), notes: val('notes')
+  }
+  saveStateDebounced()
+}
+function renderSum(){
+  const { raw, giftSum, disc, discAmt, total } = calcSum()
+  document.getElementById('sumRaw').textContent = fmtMoney(raw+giftSum)
+  const discTxt = []
+  if(giftSum>0) discTxt.push('赠送 ¥'+fmtMoneyRaw(giftSum))
+  if(disc<100) discTxt.push(disc+'%')
+  if(discAmt>0) discTxt.push('减 ¥'+fmtMoneyRaw(discAmt))
+  document.getElementById('sumDiscount').textContent = discTxt.length?('-'+(discTxt.join(' '))):'—'
+  document.getElementById('sumTotal').innerHTML = fmtMoney(total)+`<div class="upper">${rmbUpper(total)}</div>`
+}
+
+/* 第4步 预览（图片卡片，750px 截图目标） */
+function renderPreview(){
+  const c = state.customer, q = state.quote
+  const { items, raw, giftSum, disc, discAmt, total } = calcSum()
+  const no = String(q.no||autoNo()).trim()
+  let h = `<div class="q-head"><div class="q-co">${esc(agencyName())}</div><div class="q-title">报 价 单</div><div class="q-no">编号：${esc(no)} ｜ 日期：${esc(q.date)} ｜ 有效期 ${esc(q.validDays||'30')} 天</div></div>`
+  h += `<div class="q-meta"><span>致：${esc(c.name)}${c.contact?'（'+esc(c.contact)+(c.phone?' · '+esc(c.phone):'')+'）':''}</span><span>销售顾问：${esc(c.agent)}</span></div>`
+  h += `<div class="qt head">
+    <div class="c">序号</div><div class="c left">服务项目</div><div class="c left">服务内容</div><div class="c">数量</div><div class="c">单位</div><div class="c">单价（元）</div><div class="c">金额（元）</div>
+  </div>`
+  items.forEach((it,i)=>{
+    const amtTxt = it.gift ? '赠送' : (it.price>0?fmtMoneyRaw(it.line):'面议')
+    h += `<div class="qt">
+      <div class="c">${i+1}</div>
+      <div class="c left">${esc(it.name)}</div>
+      <div class="c left" style="font-size:12px;color:#4a4035">${esc(it.desc)||'—'}</div>
+      <div class="c">${it.qty}</div>
+      <div class="c">${esc(it.unit)}</div>
+      <div class="c">${it.price>0?fmtMoneyRaw(it.price):'面议'}</div>
+      <div class="c ${it.gift?'gift':''}">${amtTxt}</div>
+    </div>`
+  })
+  const discTxt = []
+  if(giftSum>0) discTxt.push('赠送 ¥'+fmtMoneyRaw(giftSum))
+  if(disc<100) discTxt.push(disc+'%')
+  if(discAmt>0) discTxt.push('减 ¥'+fmtMoneyRaw(discAmt))
+  h += `<div class="qt-sum"><div class="l">服务项目合计</div><div class="v">¥ ${fmtMoneyRaw(raw+giftSum)}</div></div>`
+  if(discTxt.length) h += `<div class="qt-sum"><div class="l">折扣/优惠</div><div class="v">- ${esc(discTxt.join(' '))}</div></div>`
+  h += `<div class="qt-sum total"><div class="l">应付金额</div><div class="v">¥ ${fmtMoneyRaw(total)}</div></div>`
+  h += `<div style="margin-top:8px;font-size:12.5px;color:#2a1a0a;font-weight:600">大写：${rmbUpper(total)}</div>`
+  if(q.notes) h += `<div style="margin-top:10px;font-size:12px;color:#4a4035;background:#faf7f2;border-left:3px solid #e0901a;padding:8px 12px;line-height:1.7"><b>报价说明：</b><br>${esc(q.notes).replace(/\n/g,'<br>')}</div>`
+  h += `<div class="q-sign"><div class="co">${esc(agencyName())}</div><div>销售顾问：${esc(c.agent)}</div><div>${esc(q.date)}</div></div>`
+  document.getElementById('imgCard').innerHTML = h
+}
+
+
+/* ============ Word 生成 ============ */
+function loadDocx(){
+  if(window.docx) return window.docx
+  throw new Error('docx 库未加载')
+}
+function validateBeforeGen(){
+  const c = state.customer
+  if(!String(c.name||'').trim()) return '请填写客户名称'
+  if(!String(c.agent||'').trim()) return '请填写销售顾问'
+  const items = getItems()
+  if(!items.length) return '请至少选择一项服务'
+  return null
+}
+async function doGenerate(){
+  const err = validateBeforeGen()
+  if(err){ alert(err); return }
+  const btn = document.getElementById('genBtn')
+  btn.disabled = true; btn.textContent = '正在生成…'
+  try{
+    const d = loadDocx()
+    const { Document, Packer, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle, Footer, PageNumber } = d
+    const c = state.customer, q = state.quote
+    const { items, raw, giftSum, disc, discAmt, total } = calcSum()
+    const no = String(q.no||autoNo()).trim()
+
+    const FSong = { ascii:'Times New Roman', hAnsi:'Times New Roman', eastAsia:'宋体' }
+    const FHei  = { ascii:'Arial', hAnsi:'Arial', eastAsia:'黑体' }
+    const R = (text,o={}) => new TextRun({ text:String(text??''), font:o.font||FSong, size:o.size||24, bold:o.bold, color:o.color })
+    const bodyP = (text,o={}) => new Paragraph({
+      children:[R(text,o)],
+      alignment:o.align||AlignmentType.JUSTIFIED,
+      indent:o.indent!=null?{ firstLine:o.indent }:undefined,
+      spacing:{ line:400, lineRule:'auto', after:o.after!=null?o.after:80 }
+    })
+
+    const children = []
+
+    /* 编号与日期（右上） */
+    children.push(new Paragraph({
+      children:[R('报价单编号：'+no,{size:21,color:'595959'}), R('　报价日期：'+(q.date||''),{size:21,color:'595959'})],
+      alignment:AlignmentType.RIGHT, spacing:{ after:80 }
+    }))
+
+    /* 标题 */
+    children.push(new Paragraph({
+      children:[R('报　价　单',{font:FHei,size:44,bold:true,color:'0C2D5D'})],
+      alignment:AlignmentType.CENTER, spacing:{ before:60, after:180, line:360, lineRule:'auto' }
+    }))
+
+    /* 客户信息表 */
+    const infoRows = [
+      ['客户名称', c.name],
+      ['申请主体', String(c.applicant||'').trim() || AGENCY_NAME],
+      ['联系人', (c.contact||'') + (c.phone?('　'+c.phone):'')],
+      ['销售顾问', c.agent]
+    ]
+    const noBorder = { top:{style:BorderStyle.NONE}, bottom:{style:BorderStyle.NONE}, left:{style:BorderStyle.NONE}, right:{style:BorderStyle.NONE}, insideHorizontal:{style:BorderStyle.NONE}, insideVertical:{style:BorderStyle.NONE} }
+    const infoTable = new Table({
+      width:{ size:100, type:WidthType.PERCENTAGE }, borders:noBorder,
+      rows: infoRows.map(([k,v])=> new TableRow({ children:[
+        new TableCell({ width:{ size:16, type:WidthType.PERCENTAGE }, margins:{ top:40, bottom:40 }, children:[ new Paragraph({ children:[R(k+'：',{size:22,bold:true})], alignment:AlignmentType.RIGHT, spacing:{ line:320, lineRule:'auto' } }) ] }),
+        new TableCell({ width:{ size:84, type:WidthType.PERCENTAGE }, margins:{ top:40, bottom:40 }, children:[ new Paragraph({ children:[R(v||'＿＿＿＿＿＿',{size:22})], spacing:{ line:320, lineRule:'auto' } }) ] })
+      ] }))
+    })
+    children.push(infoTable)
+    children.push(new Paragraph({ spacing:{ after:140 } }))
+
+    /* 引言 */
+    children.push(bodyP(`尊敬的${c.name}客户：`,{ align:AlignmentType.LEFT, indent:0, after:60 }))
+    children.push(bodyP('感谢贵司对'+agencyName()+'的信任。现就贵司委托的服务事项，我司报价如下，敬请审阅。',{ after:140 }))
+
+    /* 报价明细表 */
+    const TH = (text,sizePct) => new TableCell({
+      width:{ size:sizePct, type:WidthType.PERCENTAGE },
+      shading:{ fill:'0C2D5D' },
+      margins:{ top:60, bottom:60, left:60, right:60 },
+      children:[ new Paragraph({ children:[R(text,{size:21,bold:true,color:'FFFFFF'})], alignment:AlignmentType.CENTER, spacing:{ line:280, lineRule:'auto' } }) ]
+    })
+    const TD = (text,sizePct,align,color) => new TableCell({
+      width:{ size:sizePct, type:WidthType.PERCENTAGE },
+      margins:{ top:60, bottom:60, left:60, right:60 },
+      children:[ new Paragraph({ children:[R(text,{size:21,color})], alignment:align||AlignmentType.CENTER, spacing:{ line:280, lineRule:'auto' } }) ]
+    })
+    const rowHdr = new TableRow({ tableHeader:true, children:[ TH('序号',6), TH('服务项目',18), TH('服务内容',32), TH('数量',7), TH('单位',7), TH('单价（元）',15), TH('金额（元）',15) ] })
+    const rowCells = items.map((it,i)=>new TableRow({ children:[
+      TD(String(i+1),6),
+      TD(it.name,18,AlignmentType.LEFT),
+      TD(it.desc||'—',32,AlignmentType.LEFT),
+      TD(String(it.qty),7),
+      TD(it.unit,7),
+      TD(it.price>0?fmtMoneyRaw(it.price):'面议',15),
+      it.gift ? TD('赠送',15,AlignmentType.CENTER,'E8590C') : TD(it.price>0?fmtMoneyRaw(it.line):'面议',15)
+    ] }))
+    const discTxt = []
+    if(giftSum>0) discTxt.push('赠送 ¥'+fmtMoneyRaw(giftSum))
+    if(disc<100) discTxt.push(disc+'%')
+    if(discAmt>0) discTxt.push('减 ¥'+fmtMoneyRaw(discAmt))
+    const rowSubTotal = new TableRow({ children:[
+      new TableCell({ columnSpan:5, margins:{ top:40, bottom:40, left:60, right:60 }, children:[ new Paragraph({ children:[R('服务项目合计',{size:20,color:'595959'})], alignment:AlignmentType.RIGHT, spacing:{ line:260, lineRule:'auto' } }) ] }),
+      new TableCell({ columnSpan:2, margins:{ top:40, bottom:40, left:60, right:60 }, children:[ new Paragraph({ children:[R('¥ '+fmtMoneyRaw(raw+giftSum),{size:20,color:'595959'})], alignment:AlignmentType.CENTER, spacing:{ line:260, lineRule:'auto' } }) ] })
+    ] })
+    rowCells.push(rowSubTotal)
+    if(discTxt.length){
+      rowCells.push(new TableRow({ children:[
+        new TableCell({ columnSpan:5, margins:{ top:40, bottom:40, left:60, right:60 }, children:[ new Paragraph({ children:[R('折扣/优惠',{size:20,color:'595959'})], alignment:AlignmentType.RIGHT, spacing:{ line:260, lineRule:'auto' } }) ] }),
+        new TableCell({ columnSpan:2, margins:{ top:40, bottom:40, left:60, right:60 }, children:[ new Paragraph({ children:[R('- '+discTxt.join(' '),{size:20,color:'595959'})], alignment:AlignmentType.CENTER, spacing:{ line:260, lineRule:'auto' } }) ] })
+      ] }))
+    }
+    const rowTotal = new TableRow({ children:[
+      new TableCell({ columnSpan:5, shading:{ fill:'EAF2FB' }, margins:{ top:60, bottom:60, left:60, right:60 }, children:[ new Paragraph({ children:[R('应付金额（大写：'+rmbUpper(total)+'）',{size:21,bold:true,color:'0C2D5D'})], alignment:AlignmentType.RIGHT, spacing:{ line:280, lineRule:'auto' } }) ] }),
+      new TableCell({ columnSpan:2, shading:{ fill:'EAF2FB' }, margins:{ top:60, bottom:60, left:60, right:60 }, children:[ new Paragraph({ children:[R('¥ '+fmtMoneyRaw(total),{size:21,bold:true,color:'0C2D5D'})], alignment:AlignmentType.CENTER, spacing:{ line:280, lineRule:'auto' } }) ] })
+    ] })
+    children.push(new Table({
+      width:{ size:100, type:WidthType.PERCENTAGE },
+      borders:{ top:{style:BorderStyle.SINGLE,size:4,color:'0C2D5D'}, bottom:{style:BorderStyle.SINGLE,size:4,color:'0C2D5D'}, left:{style:BorderStyle.SINGLE,size:4,color:'0C2D5D'}, right:{style:BorderStyle.SINGLE,size:4,color:'0C2D5D'}, insideHorizontal:{style:BorderStyle.SINGLE,size:2,color:'B9C4D6'}, insideVertical:{style:BorderStyle.SINGLE,size:2,color:'B9C4D6'} },
+      rows:[ rowHdr ].concat(rowCells).concat([rowTotal])
+    }))
+    children.push(new Paragraph({ spacing:{ after:160 } }))
+
+    /* 报价条款 */
+    const terms = [
+      ['报价有效期', `本报价自${q.date||'报价之日'}起 ${q.validDays||'30'} 天内有效，逾期价格如有调整以双方确认为准。`],
+      ['付款方式', q.payMode||'预付 50%，尾款于服务完成后结清'],
+      ['报价说明', q.notes||'具体服务范围与交付标准以双方签订的服务合同为准。']
+    ]
+    terms.forEach(([k,v],i)=>{
+      children.push(new Paragraph({
+        children:[ R(k+'：',{size:22,bold:true}), R(v,{size:22}) ],
+        alignment:AlignmentType.JUSTIFIED, spacing:{ line:360, lineRule:'auto', after:100 }
+      }))
+    })
+    children.push(new Paragraph({ spacing:{ after:180 } }))
+
+    /* 落款 */
+    children.push(new Paragraph({
+      children:[R(agencyName(),{size:24,bold:true})],
+      alignment:AlignmentType.CENTER, spacing:{ line:360, lineRule:'auto', after:60 }
+    }))
+    children.push(new Paragraph({
+      children:[R('销售顾问：'+(c.agent||'＿＿＿＿'),{size:22})],
+      alignment:AlignmentType.CENTER, spacing:{ line:340, lineRule:'auto', after:60 }
+    }))
+    children.push(new Paragraph({
+      children:[R('联系电话：'+AGENCY_PHONE,{size:22})],
+      alignment:AlignmentType.CENTER, spacing:{ line:340, lineRule:'auto', after:60 }
+    }))
+    children.push(new Paragraph({
+      children:[R(q.date?('报价日期：'+q.date):'',{size:22})],
+      alignment:AlignmentType.CENTER, spacing:{ line:340, lineRule:'auto' }
+    }))
+
+    const doc = new Document({
+      styles:{ default:{ document:{ run:{ font:FSong, size:24 } } } },
+      sections:[{
+        properties:{},
+        footers:{ default:new Footer({ children:[ new Paragraph({ alignment:AlignmentType.CENTER,
+          children:[ R('第 ',{size:18,color:'808080'}), new TextRun({children:[PageNumber.CURRENT],size:18,color:'808080',font:FSong}), R(' 页',{size:18,color:'808080'}) ] }) ] }) },
+        children
+      }]
+    })
+
+    const blob = await Packer.toBlob(doc)
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `报价单-${(c.name||'客户').slice(0,20)}-${no}.docx`
+    document.body.appendChild(a); a.click(); a.remove()
+    setTimeout(()=>URL.revokeObjectURL(a.href),5000)
+    showTip('✅ 报价单（Word）已生成并开始下载。<br>每次生成都会自动保存一条记录，可在右上角「📋 生成记录」中随时载入修改或重新导出。')
+    saveRecord()
+  }catch(e){
+    console.error(e)
+    alert('生成失败：'+(e&&e.message||e))
+  }finally{
+    btn.disabled=false; btn.textContent='📄 下载 Word'
+  }
+}
+
+/* ============ 图片生成（复制 / 下载 PNG） ============ */
+function showTip(msg){
+  const t = document.getElementById('okTip')
+  if(!t) return
+  t.innerHTML = msg
+  t.classList.add('show')
+  clearTimeout(showTip._t)
+  showTip._t = setTimeout(()=>t.classList.remove('show'), 7000)
+}
+function captureCard(){
+  if(!window.html2canvas) return Promise.reject(new Error('截图库未加载（html2canvas.min.js 缺失）'))
+  return html2canvas(document.getElementById('imgCard'), { scale:2, backgroundColor:'#ffffff', useCORS:true, logging:false })
+}
+async function capturePngBlob(){
+  const canvas = await captureCard()
+  return new Promise((res,rej)=>canvas.toBlob(b=>b?res(b):rej(new Error('PNG 编码失败')),'image/png'))
+}
+function saveBlob(blob,name){
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = name
+  document.body.appendChild(a); a.click(); a.remove()
+  setTimeout(()=>URL.revokeObjectURL(a.href),5000)
+}
+function imgFileName(){
+  return '报价单_' + String(state.quote.no||autoNo()).replace(/[^\w-]/g,'_') + '.png'
+}
+async function copyImg(){
+  const btn = document.getElementById('copyBtn')
+  btn.disabled = true; btn.textContent = '生成中…'
+  try{
+    const blob = await capturePngBlob()
+    if(!(navigator.clipboard && window.ClipboardItem && navigator.clipboard.write)) throw new Error('CLIPBOARD_UNSUPPORTED')
+    await navigator.clipboard.write([new ClipboardItem({'image/png':blob})])
+    btn.disabled=false; btn.innerHTML='📋 复制图片'
+    showTip('✅ 图片已复制到剪贴板！<br>直接到微信聊天框 / 朋友圈 / 58、美团店铺后台「粘贴」即可发布')
+  }catch(e){
+    btn.disabled=false; btn.innerHTML='📋 复制图片'
+    const em = String(e&&e.message||e)
+    const needFallback = em.indexOf('CLIPBOARD_UNSUPPORTED')>=0 || /NotAllowed|SecurityError|permission|denied|Permission/i.test(em)
+    if(needFallback){
+      try{
+        saveBlob(await capturePngBlob(), imgFileName())
+        showTip('当前浏览器未授权「复制图片」（离线版常见），已自动下载 PNG。<br>用在线版（https 链接）打开，点一次「复制图片」即可直接粘贴到微信。')
+      }catch(e2){
+        alert('生成图片失败：'+(e2&&e2.message||e2))
+      }
+    }else{
+      alert('复制失败：'+(e&&e.message||e))
+    }
+  }
+}
+async function downloadImg(){
+  const btn = document.getElementById('pngBtn')
+  btn.disabled = true; btn.textContent = '生成中…'
+  try{
+    saveBlob(await capturePngBlob(), imgFileName())
+    btn.disabled=false; btn.innerHTML='🖼️ 下载 PNG'
+    showTip('✅ PNG 图片已开始下载。<br>发朋友圈/微信群建议用上方「📋 复制图片」，复制后直接粘贴即可。')
+  }catch(e){
+    btn.disabled=false; btn.innerHTML='🖼️ 下载 PNG'
+    alert('生成图片失败：'+(e&&e.message||e))
+  }
+}
+
+/* ============ 生成记录 ============ */
+function fmtTime(ts){
+  const d=new Date(ts), p=x=>String(x).padStart(2,"0")
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes())
+}
+function loadRecords(){
+  try{ const arr=JSON.parse(localStorage.getItem(REC_KEY)||"[]"); return Array.isArray(arr)?arr:[]; }catch(e){ return []; }
+}
+function findRecord(id){ return loadRecords().find(r=>r.id===id) || null }
+function saveRecord(){
+  try{
+    const c = state.customer
+    const { total } = calcSum()
+    const rec = {
+      id: "r"+Date.now(),
+      time: Date.now(),
+      timeStr: fmtTime(Date.now()),
+      customer: c.name || "未命名客户",
+      agent: c.agent || "",
+      quotaNo: state.quote.no || "",
+      amount: total,
+      itemCount: state.items.length,
+      snapshot: JSON.stringify(state)
+    }
+    let list = loadRecords().filter(x=>!(x.customer===rec.customer && x.quotaNo===rec.quotaNo))
+    list.unshift(rec)
+    if(list.length > REC_LIMIT) list = list.slice(0, REC_LIMIT)
+    localStorage.setItem(REC_KEY, JSON.stringify(list))
+  }catch(e){ console.warn("saveRecord 失败", e) }
+}
+function openRecModal(h){
+  document.getElementById('recModalBody').innerHTML=h
+  document.getElementById('recModal').style.display='flex'
+  document.getElementById('recModalBg').style.display='block'
+  document.body.style.overflow='hidden'
+}
+function closeRecModal(){
+  document.getElementById('recModal').style.display='none'
+  document.getElementById('recModalBg').style.display='none'
+  document.body.style.overflow=''
+}
+function openRecords(){
+  const list = loadRecords()
+  let h = ''
+  if(!list.length){
+    h += '<div class="rec-empty">暂无记录。<br>每次「生成报价单（Word）」成功后会自动保存一条记录：可随时<b>📂 载入数据</b>修改后重新生成，避免重复填写。</div>'
+  }else{
+    h += '<div class="rec-tip">共 '+list.length+' 条 · 同客户同编号保留最新一条 · 最多保留 '+REC_LIMIT+' 条</div>'
+    h += list.map(rec=>{
+      return `<div class="rec-row">
+        <div style="min-width:0">
+          <div class="rec-t">${esc(rec.customer)}<span class="rec-badge" style="background:#fbf1de;color:#a85509">¥ ${fmtMoneyRaw(rec.amount)}</span><span class="rec-badge" style="background:#E8F7EF;color:#2f855a">${rec.itemCount} 项</span></div>
+          <div class="rec-s">🕐 ${rec.timeStr} · ${esc(rec.agent||'—')}${rec.quotaNo?' · '+esc(rec.quotaNo):''}</div>
+        </div>
+        <div class="rec-ops">
+          <button class="btn btn-primary btn-sm" onclick="loadRecord('${rec.id}')">📂 载入数据</button>
+          <button class="btn btn-ghost btn-sm" onclick="viewRecord('${rec.id}')">📄 查看</button>
+          <button class="btn btn-danger btn-sm" onclick="delRecord('${rec.id}')">删</button>
+        </div>
+      </div>`
+    }).join('')
+  }
+  openRecModal(h)
+}
+function loadRecord(id){
+  const rec = findRecord(id); if(!rec) return
+  if(!confirm("将载入「"+rec.timeStr+"」记录的完整数据（覆盖当前表单），确定？")) return
+  try{
+    state = JSON.parse(rec.snapshot)
+    if(!state.step || state.step<1 || state.step>4) state.step = 4
+    saveState(); renderAll()
+    closeRecModal()
+    window.scrollTo({top:0,behavior:'smooth'})
+  }catch(e){ alert("载入失败："+e.message) }
+}
+function viewRecord(id){
+  const rec = findRecord(id); if(!rec) return
+  let h = '<div style="background:#fdf4e6;border-left:4px solid #a85509;border-radius:6px;padding:10px 13px;font-size:12.5px;margin-bottom:12px;line-height:1.8">'
+  h += '<b>'+esc(rec.customer)+'</b> · ¥'+fmtMoneyRaw(rec.amount)+' · 生成于 '+rec.timeStr+'</div>'
+  h += '<div class="kv"><span class="k">客户名称</span><span class="v">'+esc(rec.customer)+'</span></div>'
+  h += '<div class="kv"><span class="k">销售顾问</span><span class="v">'+esc(rec.agent||'—')+'</span></div>'
+  h += '<div class="kv"><span class="k">报价单编号</span><span class="v">'+esc(rec.quotaNo||'—')+'</span></div>'
+  h += '<div class="kv"><span class="k">服务项数</span><span class="v">'+rec.itemCount+' 项</span></div>'
+  h += '<div class="kv"><span class="k">应付金额</span><span class="v">¥ '+fmtMoneyRaw(rec.amount)+'</span></div>'
+  h += '<div style="margin-top:10px;font-size:12.5px;color:#8a7a62">💡 点击「载入数据」可恢复该报价单的全部填写内容，到第 ④ 步即可重新导出 Word。</div>'
+  h += '<div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">'
+  h += '<button class="btn btn-primary btn-sm" onclick="loadRecord(\''+rec.id+'\')">📂 载入数据并重新生成</button>'
+  h += '<button class="btn btn-ghost btn-sm" onclick="openRecords()">← 返回列表</button>'
+  h += '<button class="btn btn-ghost btn-sm" onclick="closeRecModal()">关闭</button></div>'
+  openRecModal(h)
+}
+function delRecord(id){
+  if(!confirm("确定删除这条记录？")) return
+  localStorage.setItem(REC_KEY, JSON.stringify(loadRecords().filter(r=>r.id!==id)))
+  openRecords()
+}
+
+/* ============ 价目库管理 ============ */
+let libDraft = null
+function openLibModal(){
+  libDraft = lib.map(x=>({...x}))
+  renderLibModal()
+  document.getElementById('libModal').style.display='flex'
+  document.getElementById('libModalBg').style.display='block'
+  document.body.style.overflow='hidden'
+}
+function closeLibModal(){
+  document.getElementById('libModal').style.display='none'
+  document.getElementById('libModalBg').style.display='none'
+  document.body.style.overflow=''
+}
+function renderLibModal(){
+  const groups = {}
+  libDraft.forEach(l=>{
+    if(!groups[l.group]) groups[l.group]=[]
+    groups[l.group].push(l)
+  })
+  let h = ''
+  Object.keys(groups).forEach(g=>{
+    h += `<div class="lib-group">${esc(g)}</div>`
+    groups[g].forEach((l,i)=>{
+      h += `<div class="lib-row">
+        <div style="min-width:0">
+          <div class="lr-name"><input type="text" value="${esc(l.name)}" style="text-align:left;width:100%;font-weight:600" oninput="libDraft[${libDraft.indexOf(l)}].name=this.value"></div>
+          <div class="lr-desc"><input type="text" value="${esc(l.desc||'')}" style="text-align:left;width:100%;font-size:11.5px" placeholder="服务内容说明" oninput="libDraft[${libDraft.indexOf(l)}].desc=this.value"></div>
+        </div>
+        <div><input type="number" min="0" step="0.01" value="${l.price}" oninput="libDraft[${libDraft.indexOf(l)}].price=Number(this.value)||0"></div>
+        <div><input type="text" value="${esc(l.unit)}" oninput="libDraft[${libDraft.indexOf(l)}].unit=this.value"></div>
+        <button class="lr-del" onclick="delLibRow(${libDraft.indexOf(l)})" title="删除">×</button>
+      </div>`
+    })
+  })
+  document.getElementById('libModalBody').innerHTML = h || '<div class="lib-empty">价目库为空</div>'
+}
+function delLibRow(i){
+  if(!confirm("删除该服务项？已引用它的报价单载入后单价会丢失，请谨慎。")) return
+  const removed = libDraft[i]
+  libDraft.splice(i,1)
+  if(removed && String(removed.id).indexOf('c')===0){
+    state.items = state.items.filter(x=>x.libId!==removed.id)
+  }
+  renderLibModal()
+}
+function addLibItem(){
+  libDraft.push({ id:'c'+Date.now(), group:'自定义', name:'新服务项', desc:'', price:0, unit:'项' })
+  renderLibModal()
+  const rows = document.querySelectorAll('#libModalBody .lib-row')
+  if(rows.length) rows[rows.length-1].scrollIntoView({behavior:'smooth'})
+}
+
+/* ============ 自定义服务 ============ */
+function openAddSvc(){
+  document.getElementById('addName').value=''
+  document.getElementById('addDesc').value=''
+  document.getElementById('addPrice').value='0'
+  document.getElementById('addUnit').value='项'
+  const gsel = document.getElementById('addGroup')
+  const groups = []
+  lib.forEach(l=>{ if(groups.indexOf(l.group)<0) groups.push(l.group) })
+  if(groups.indexOf('自定义')<0) groups.push('自定义')
+  gsel.innerHTML = groups.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('')
+  gsel.value = groups.indexOf('咨询服务')>=0 ? '咨询服务' : groups[0]
+  document.getElementById('addModal').style.display='flex'
+  document.getElementById('addModalBg').style.display='block'
+}
+function closeAddModal(){
+  document.getElementById('addModal').style.display='none'
+  document.getElementById('addModalBg').style.display='none'
+}
+function confirmAddSvc(){
+  const name = val('addName').trim()
+  if(!name){ alert('请填写服务名称'); return }
+  const group = val('addGroup').trim() || '自定义'
+  const id = 'c'+Date.now()
+  const l = { id, group, name, desc:val('addDesc').trim(), price:Math.max(0,Number(val('addPrice'))||0), unit:val('addUnit').trim()||'项' }
+  lib.push(l)
+  persistLib()
+  state.items.push({ libId:id, name:l.name, desc:l.desc, unit:l.unit, qty:1, price:l.price })
+  saveState()
+  renderSvcList()
+  closeAddModal()
+}
+function persistLib(){
+  try{ localStorage.setItem(LIB_KEY, JSON.stringify(lib.map(x=>({...x})))) }catch(e){}
+}
+function delSvc(id){
+  const custom = String(id).indexOf('c')===0
+  state.items = state.items.filter(x=>x.libId!==id)
+  if(custom){
+    lib = lib.filter(x=>x.id!==id)
+    persistLib()
+  }
+  saveState()
+  renderSvcList()
+  renderSum()
+}
+
+/* ============ AI 撰写备注（本工具独立配置：quote_ai_config） ============ */
+const AI_CFG_KEY = 'quote_ai_config'
+const DEFAULT_AI_KEY = '' // 团队 API Key 请在「AI 配置」面板填写，勿硬编码入库
+const AI_PROVIDERS = {
+  deepseek:{ name:'DeepSeek',        baseUrl:'https://api.deepseek.com/v1',          model:'deepseek-v4-flash',        text:true },
+  silicon: { name:'硅基流动',         baseUrl:'https://api.siliconflow.cn/v1',        model:'Qwen/Qwen2.5-7B-Instruct', text:true },
+  zhipu:   { name:'智谱 GLM',         baseUrl:'https://open.bigmodel.cn/api/paas/v4', model:'glm-4-flash',              text:true },
+  moonshot:{ name:'月之暗面 Moonshot', baseUrl:'https://api.moonshot.cn/v1',          model:'moonshot-v1-8k',           text:true },
+  qwen:    { name:'阿里云百炼(通义)', baseUrl:'https://dashscope.aliyun.com/compatible-mode/v1', model:'qwen-turbo',       text:true },
+  hunyuan: { name:'腾讯混元',         baseUrl:'https://api.hunyuan.cloud.tencent.com/v1',       model:'hunyuan-turbo-s',    text:true },
+  baidu:   { name:'百度千帆',         baseUrl:'https://qianfan.baidubce.com/v2',               model:'ernie-speed-128k',   text:true },
+  ifly:    { name:'讯飞星火',         baseUrl:'https://spark-api-open.xf-yun.com/v1',           model:'spark-lite',         text:true },
+  volcengine:{ name:'火山引擎方舟',     baseUrl:'https://ark.cn-beijing.volces.com/api/v3',    model:'doubao-seed-2-1-pro-260628', text:true },
+  custom:  { name:'自定义（OpenAI 兼容）', baseUrl:'',                                model:'',                         text:true }
+}
+const AI_REQUIRED_CAPS = { text:true }
+let aiCfg = loadAiCfg()
+function loadAiCfg(){
+  try{
+    const c = JSON.parse(localStorage.getItem(AI_CFG_KEY) || '{}')
+    return Object.assign({ provider:'volcengine', key:DEFAULT_AI_KEY, baseUrl:'', llmModel:AI_PROVIDERS.volcengine.model }, c)
+  }catch(e){ return { provider:'volcengine', key:DEFAULT_AI_KEY, baseUrl:'', llmModel:AI_PROVIDERS.volcengine.model } }
+}
+function aiCfgOptionsHtml(selected){
+  return Object.keys(AI_PROVIDERS).filter(k => {
+    const p = AI_PROVIDERS[k]
+    for(const cap in AI_REQUIRED_CAPS){ if(AI_REQUIRED_CAPS[cap] && !p[cap]) return false }
+    return true
+  }).map(k => '<option value="'+k+'" '+(selected===k?'selected':'')+'>'+AI_PROVIDERS[k].name+'</option>').join('')
+}
+function openAiConfig(){
+  const current = aiCfg.provider || 'volcengine'
+  const pre = AI_PROVIDERS[current] || AI_PROVIDERS.volcengine
+  document.getElementById('aiProvider').innerHTML = aiCfgOptionsHtml(current)
+  document.getElementById('aiProvider').value = current
+  document.getElementById('aiKey').value = aiCfg.key || ''
+  document.getElementById('aiBaseUrl').value = aiCfg.baseUrl || pre.baseUrl || ''
+  document.getElementById('aiLlmModel').value = aiCfg.llmModel || pre.model || ''
+  document.getElementById('aiModalBg').style.display = 'block'
+  document.getElementById('aiModal').style.display = 'flex'
+}
+function closeAiConfig(){
+  document.getElementById('aiModalBg').style.display = 'none'
+  document.getElementById('aiModal').style.display = 'none'
+}
+function aiCfgOnProvider(){
+  const pre = AI_PROVIDERS[document.getElementById('aiProvider').value] || AI_PROVIDERS.volcengine
+  document.getElementById('aiBaseUrl').value = pre.baseUrl || ''
+  document.getElementById('aiLlmModel').value = pre.model || ''
+}
+function saveAiCfg(){
+  aiCfg = {
+    provider: document.getElementById('aiProvider').value,
+    key: document.getElementById('aiKey').value.trim(),
+    baseUrl: document.getElementById('aiBaseUrl').value.trim().replace(/\/+$/,''),
+    llmModel: document.getElementById('aiLlmModel').value.trim()
+  }
+  localStorage.setItem(AI_CFG_KEY, JSON.stringify(aiCfg))
+  closeAiConfig()
+}
+function aiRequestUrl(){
+  if(aiCfg.baseUrl){
+    const b = String(aiCfg.baseUrl).replace(/\/+$/,'')
+    return /\/chat\/completions$/i.test(b) ? b : b + '/chat/completions'
+  }
+  const p = AI_PROVIDERS[aiCfg.provider] || AI_PROVIDERS.volcengine
+  return p.baseUrl ? (p.baseUrl.replace(/\/+$/,'') + '/chat/completions') : ''
+}
+async function aiCall(messages, statusEl){
+  const url = aiRequestUrl()
+  if(!url) throw new Error('未配置有效的 AI 接口地址')
+  if(statusEl) statusEl.textContent = '正在调用 AI ...'
+  const res = await fetch(url, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + (aiCfg.key || '') },
+    body: JSON.stringify({ model: aiCfg.llmModel || AI_PROVIDERS[aiCfg.provider]?.model || '', messages: messages, temperature:0.7 })
+  })
+  if(!res.ok){
+    const t = await res.text().catch(()=>'')
+    throw new Error('AI 接口返回 ' + res.status + '：' + (t || res.statusText))
+  }
+  const data = await res.json()
+  return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || ''
+}
+async function aiWriteNotes(){
+  const statusEl = document.getElementById('aiNotesStatus')
+  try{
+    readStep3()
+    const items = getItems()
+    if(!items.length){ if(statusEl) statusEl.textContent = '请先选择服务项目'; return }
+    const c = state.customer, q = state.quote
+    const lines = items.map((it,i) => `${i+1}. ${it.name}（${it.desc || '详见服务清单'}）${it.gift?'——赠送':it.price>0?'：¥'+fmtMoneyRaw(it.line):'：面议'}`)
+    const prompt = `你是一名企业服务公司销售顾问。请根据以下报价信息，撰写一段专业的「报价说明/服务备注」，用于报价单。要求：
+1. 说明服务范围与核心交付物；
+2. 说明付款节点（参考付款方式：${q.payMode || '面议'}）；
+3. 明确不包含事项；
+4. 语气专业、简洁，不超过 220 字。
+
+客户：${c.name || '（未填写）'}
+销售顾问：${c.agent || '（未填写）'}
+服务项目：
+${lines.join('\n')}
+应付金额：${q.total>0?'¥'+fmtMoneyRaw(q.total):'面议'}
+付款方式：${q.payMode || '面议'}
+
+直接输出备注正文，不要加标题、不要加「以下是」等引导语。`
+    const content = await aiCall([{role:'user', content:prompt}], statusEl)
+    if(content){
+      document.getElementById('notes').value = content.trim()
+      readStep3()
+      if(statusEl) statusEl.textContent = '✅ 已生成，可继续修改'
+      setTimeout(() => { if(statusEl) statusEl.textContent = '' }, 4000)
+    }
+  }catch(e){
+    console.error(e)
+    if(statusEl) statusEl.textContent = 'AI 撰写失败：' + e.message
+  }
+}
+
+/* ============ 输入监听（第1/3步实时保存） ============ */
+;['custName','custContact','custPhone','agent','custSrc','custNote','applicant'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', readStep1)
+  document.getElementById(id).addEventListener('change', readStep1)
+})
+;['quotaNo','quotaDate','validDays','discount','discountAmt','payMode','notes'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', readStep3)
+  document.getElementById(id).addEventListener('change', ()=>{ readStep3(); renderSum() })
+})
+
+/* ============ 初始化 ============ */
+if(!state.quote.no) state.quote.no = autoNo()
+renderAll()
+saveState()
+</script>
+</body>
+</html>

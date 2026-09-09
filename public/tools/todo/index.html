@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>待办事项清单</title>
+<style>
+  :root{
+    --bg:#faf7f2;
+    --surface:#fffefb;
+    --surface-2:#fbf5ea;
+    --border:#ece3d6;
+    --border-2:#d4c4a8;
+    --text:#2a2118;
+    --text-2:#6b5d4a;
+    --text-3:#9ca3af;
+    --accent:#b45309;
+    --accent-2:#e0901a;
+    --accent-grad:linear-gradient(135deg,#e0901a,#b45309);
+    --shadow:0 2px 8px rgba(180,120,40,.06);
+    --shadow-hover:0 6px 18px rgba(180,120,40,.12);
+    --red:#dc2626;
+    --green:#16a34a;
+    --blue:#2563eb;
+    --purple:#5f3dc4;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text)}
+  .wrap{max-width:1060px;margin:0 auto;padding:18px 16px 60px}
+
+  /* 顶栏 */
+  .topbar{background:linear-gradient(120deg,#fffdf9,#fdf3e3 48%,#fbeccb);color:var(--text);border-radius:14px;padding:18px 22px;margin-bottom:16px;box-shadow:var(--shadow-hover);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;position:relative;overflow:hidden;border:1px solid rgba(224,144,26,.22)}
+  .topbar::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(180,120,40,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(180,120,40,.06) 1px,transparent 1px);background-size:28px 28px;pointer-events:none}
+  .topbar>*{position:relative;z-index:1}
+  .topbar h1{margin:0;font-size:20px;letter-spacing:1px;color:var(--text)}
+  .topbar p{margin:5px 0 0;font-size:12.5px;color:var(--text-2);line-height:1.5}
+  .topbar .today{font-size:12.5px;background:rgba(180,83,9,.12);color:var(--accent);padding:5px 12px;border-radius:20px;font-weight:600}
+
+  /* 统计条 */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+  .stats .box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow)}
+  .stats .k{font-size:11.5px;color:var(--text-2);margin-bottom:4px}
+  .stats .v{font-size:22px;font-weight:700;color:var(--text);line-height:1.1}
+  .stats .v.today{color:var(--accent)}
+  .stats .v.done{color:var(--green)}
+  .stats .v.overdue{color:var(--red)}
+
+  /* 视图切换 */
+  .tabs{display:flex;gap:6px;margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:5px;box-shadow:var(--shadow)}
+  .tab{flex:1;text-align:center;padding:9px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--text-2);transition:.15s;border:none;background:transparent}
+  .tab.active{background:var(--accent-grad);color:#fff}
+  .tab:hover:not(.active){background:var(--surface-2);color:var(--text)}
+
+  /* 布局 */
+  .layout{display:grid;grid-template-columns:230px 1fr;gap:14px;align-items:start}
+  @media(max-width:760px){.layout{grid-template-columns:1fr}}
+
+  /* 侧栏：清单列表 */
+  .sidebar{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:var(--shadow)}
+  .sidebar h3{margin:0 0 10px;font-size:13px;color:var(--text-2);font-weight:600;display:flex;justify-content:space-between;align-items:center}
+  .list-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:9px;cursor:pointer;font-size:13.5px;margin-bottom:2px;color:var(--text);transition:.12s}
+  .list-item:hover{background:var(--surface-2)}
+  .list-item.active{background:#fff7e6;color:var(--accent);font-weight:600}
+  .list-item .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .list-item .cnt{margin-left:auto;font-size:11px;color:var(--text-2);background:var(--surface-2);padding:1px 7px;border-radius:10px}
+  .list-item .del{margin-left:4px;color:var(--border-2);font-size:13px;visibility:hidden;border:none;background:none;cursor:pointer}
+  .list-item:hover .del{visibility:visible}
+  .list-item .del:hover{color:var(--red)}
+  .add-list{width:100%;margin-top:8px;background:var(--surface-2);border:1px dashed var(--border-2);color:var(--text-2);border-radius:9px;padding:8px;cursor:pointer;font-size:12.5px;font-weight:600}
+  .add-list:hover{background:#f7ead4;color:var(--accent)}
+  .list-inp{width:100%;padding:7px 9px;border:1px solid var(--accent);border-radius:8px;font-size:13px;outline:none;margin-bottom:6px;background:var(--surface)}
+
+  /* 主区 */
+  .main{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;min-height:400px;box-shadow:var(--shadow)}
+  .main-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+  .main-head h2{margin:0;font-size:16px;color:var(--text)}
+  .main-head .sub{font-size:12px;color:var(--text-2);margin-top:2px}
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .search{width:180px;padding:8px 11px;border:1px solid var(--border);border-radius:9px;font-size:13px;outline:none;background:var(--surface)}
+  .search:focus{border-color:var(--accent-2);box-shadow:0 0 0 3px rgba(224,144,26,.15)}
+  .btn{border:none;border-radius:9px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit}
+  .btn-primary{background:var(--accent-grad);color:#fff}
+  .btn-primary:hover{background:linear-gradient(135deg,#c25b0a,#9c4708);transform:translateY(-1px)}
+  .btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+  .btn-ghost:hover{background:var(--surface-2);border-color:var(--border-2)}
+  .btn-sm{padding:5px 10px;font-size:12px;border-radius:7px}
+
+  /* 筛选 chips */
+  .chips{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+  .chip{padding:4px 11px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text-2);transition:.12s}
+  .chip.active{background:var(--accent-grad);color:#fff;border-color:transparent}
+  .chip:hover:not(.active){background:var(--surface-2)}
+
+  /* 待办列表 */
+  .todo-list{display:flex;flex-direction:column;gap:8px}
+  .todo{display:flex;align-items:flex-start;gap:10px;padding:11px 12px;border:1px solid var(--border);border-radius:11px;background:var(--surface);transition:.12s;position:relative}
+  .todo:hover{border-color:var(--accent-2);box-shadow:var(--shadow-hover)}
+  .todo.done{opacity:.55}
+  .todo.done .title{text-decoration:line-through;color:var(--text-3)}
+  .todo.overdue{border-left:3px solid var(--red)}
+  .todo .ck{width:20px;height:20px;border:2px solid var(--border-2);border-radius:50%;cursor:pointer;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;background:var(--surface)}
+  .todo .ck:hover{border-color:var(--accent)}
+  .todo.done .ck{background:var(--green);border-color:var(--green);color:#fff}
+  .todo .ck svg{width:12px;height:12px;opacity:0;transition:.15s}
+  .todo.done .ck svg{opacity:1}
+  .todo .body{flex:1;min-width:0}
+  .todo .title{font-size:14px;color:var(--text);line-height:1.4;word-break:break-word}
+  .todo .meta{display:flex;gap:8px;margin-top:5px;flex-wrap:wrap;align-items:center}
+  .badge{font-size:11px;padding:1px 8px;border-radius:10px;font-weight:500}
+  .badge.p-high{background:#fee2e2;color:var(--red)}
+  .badge.p-med{background:#fef3c7;color:#b45309}
+  .badge.p-low{background:#e0f2fe;color:#0369a1}
+  .badge.tag{background:var(--surface-2);color:var(--text-2)}
+  .badge.due{background:#fff7e6;color:var(--accent)}
+  .badge.due.today{background:#fee2e2;color:var(--red);font-weight:600}
+  .badge.repeat{background:#dcfce7;color:var(--green)}
+  .badge.list{background:#eff6ff;color:var(--blue)}
+  .todo .acts{display:flex;gap:4px;flex-shrink:0;opacity:0;transition:.12s}
+  .todo:hover .acts{opacity:1}
+  .icon-btn{border:none;background:none;cursor:pointer;font-size:14px;padding:4px;border-radius:6px;color:var(--text-2)}
+  .icon-btn:hover{background:var(--surface-2);color:var(--text)}
+  .icon-btn.danger:hover{color:var(--red);background:#fee2e2}
+
+  /* 子任务 */
+  .subs{margin-top:6px;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+  .sub{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-2)}
+  .sub .sck{width:15px;height:15px;border:1.5px solid var(--border-2);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .sub .sck svg{width:9px;height:9px;opacity:0}
+  .sub.done .sck{background:var(--green);border-color:var(--green)}
+  .sub.done .sck svg{opacity:1}
+  .sub.done .stxt{text-decoration:line-through;color:var(--text-3)}
+
+  .empty{text-align:center;color:var(--text-2);padding:40px 0;font-size:13px}
+
+  /* 模态框 */
+  .modal{display:none;position:fixed;inset:0;background:rgba(42,26,10,.45);z-index:100;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
+  .modal.show{display:flex}
+  .modal-box{background:var(--surface);border-radius:16px;width:100%;max-width:520px;padding:20px;box-shadow:0 20px 50px rgba(42,26,10,.25);border:1px solid var(--border)}
+  .modal-box h3{margin:0 0 16px;font-size:17px;color:var(--text)}
+  .fg{margin-bottom:12px}
+  .fg label{display:block;font-size:12.5px;color:var(--text-2);margin-bottom:5px;font-weight:600}
+  .fg input,.fg select,.fg textarea{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:9px;font-size:14px;outline:none;background:var(--surface);color:var(--text);font-family:inherit}
+  .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent-2);box-shadow:0 0 0 3px rgba(224,144,26,.15)}
+  .fg textarea{min-height:70px;resize:vertical}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .modal-acts{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+  .subs-edit{margin-top:8px;border-top:1px solid var(--border);padding-top:10px}
+  .subs-edit .sub-row{display:flex;gap:6px;margin-bottom:6px;align-items:center}
+  .subs-edit .sub-row input{flex:1;padding:6px 9px;border:1px solid var(--border);border-radius:7px;font-size:13px;outline:none;background:var(--surface)}
+  .subs-edit .sub-row button{border:none;background:#fee2e2;color:var(--red);width:26px;height:26px;border-radius:6px;cursor:pointer}
+
+  /* 日历视图 */
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .cal-head .month{font-size:16px;font-weight:700;color:var(--text)}
+  .cal-nav{display:flex;gap:6px}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .cal-dow{text-align:center;font-size:11.5px;color:var(--text-2);padding:6px 0;font-weight:600}
+  .cal-day{min-height:92px;border:1px solid var(--border);border-radius:9px;padding:5px;cursor:pointer;transition:.12s;position:relative;background:var(--surface);display:flex;flex-direction:column}
+  .cal-day:hover{border-color:var(--accent-2);box-shadow:var(--shadow-hover)}
+  .cal-day.today{border-color:var(--accent);box-shadow:0 0 0 2px rgba(180,83,9,.15)}
+  .cal-day.today .dnum{color:var(--accent);font-weight:700}
+  .cal-day.other{opacity:.35}
+  .cal-day .dhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+  .cal-day .dnum{font-size:12px;color:var(--text);font-weight:600}
+  .cal-day .evs{flex:1;display:flex;flex-direction:column;gap:3px;overflow:hidden}
+  .cal-day .ev{font-size:11px;padding:3px 5px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;border-left:2px solid transparent}
+  .cal-day .ev.p-high{background:#fff1f0;border-left-color:var(--red);color:var(--red)}
+  .cal-day .ev.p-med{background:#fffbeb;border-left-color:#d97706;color:#b45309}
+  .cal-day .ev.p-low{background:#eff6ff;border-left-color:var(--blue);color:#0369a1}
+  .cal-day .ev.done{text-decoration:line-through;opacity:.5}
+  .cal-day .more{font-size:10px;color:var(--text-2);text-align:center;padding:2px 0;background:var(--surface-2);border-radius:4px}
+  .cal-day .dotbar{display:flex;gap:3px;justify-content:flex-end;margin-top:auto;padding-top:4px;flex-wrap:wrap}
+  .cal-day .dindi{width:6px;height:6px;border-radius:50%}
+  .cal-day .dindi.high{background:var(--red)}
+  .cal-day .dindi.med{background:#d97706}
+  .cal-day .dindi.low{background:var(--blue)}
+  .cal-legend{display:flex;gap:14px;justify-content:center;margin-top:12px;font-size:12px;color:var(--text-2)}
+  .cal-legend span{display:flex;align-items:center;gap:4px}
+  .cal-tip{text-align:center;font-size:12px;color:var(--text-2);margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <h1>待办事项清单</h1>
+      <p>清单分组 · 标签 · 子任务 · 重复提醒 · 日历视图，数据保存在本地浏览器</p>
+    </div>
+    <div class="today" id="todayLabel"></div>
+  </div>
+
+  <div class="stats">
+    <div class="box"><div class="k">全部待办</div><div class="v" id="stAll">0</div></div>
+    <div class="box"><div class="k">今日到期</div><div class="v today" id="stToday">0</div></div>
+    <div class="box"><div class="k">已完成</div><div class="v done" id="stDone">0</div></div>
+    <div class="box"><div class="k">已逾期</div><div class="v overdue" id="stOverdue">0</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-view="list" onclick="switchView('list')">清单视图</button>
+    <button class="tab" data-view="calendar" onclick="switchView('calendar')">日历视图</button>
+  </div>
+
+  <!-- 清单视图 -->
+  <div id="viewList" class="layout">
+    <div class="sidebar">
+      <h3>清单 <button class="icon-btn" onclick="addListClick()" title="新建清单">＋</button></h3>
+      <div class="list-item active" data-list="all" onclick="selectList('all')"><span class="dot" style="background:#6b7280"></span>全部<span class="cnt" id="cntAll"></span><button class="del" onclick="event.stopPropagation()" style="visibility:hidden"></button></div>
+      <div class="list-item" data-list="inbox" onclick="selectList('inbox')"><span class="dot" style="background:#9ca3af"></span>收集箱<span class="cnt" id="cntInbox"></span><button class="del" onclick="event.stopPropagation()" style="visibility:hidden"></button></div>
+      <div class="list-item" data-list="today" onclick="selectList('today')"><span class="dot" style="background:var(--red)"></span>今天<span class="cnt" id="cntToday"></span><button class="del" onclick="event.stopPropagation()" style="visibility:hidden"></button></div>
+      <div id="customLists"></div>
+      <button class="add-list" id="addListBtn" onclick="addListClick()">＋ 新建清单</button>
+    </div>
+    <div class="main">
+      <div class="main-head">
+        <div>
+          <h2 id="listTitle">全部待办</h2>
+          <div class="sub" id="listSub"></div>
+        </div>
+        <div class="toolbar">
+          <input class="search" id="search" placeholder="搜索标题/标签…" oninput="renderTodos()">
+          <button id="btnAddTodo" class="btn btn-primary" onclick="openTodoModal()">＋ 新建待办</button>
+        </div>
+      </div>
+      <div class="chips" id="filterChips">
+        <button class="chip active" data-f="all" onclick="setFilter('all')">全部</button>
+        <button class="chip" data-f="open" onclick="setFilter('open')">未完成</button>
+        <button class="chip" data-f="done" onclick="setFilter('done')">已完成</button>
+        <button class="chip" data-f="overdue" onclick="setFilter('overdue')">已逾期</button>
+      </div>
+      <div class="todo-list" id="todoList"></div>
+    </div>
+  </div>
+
+  <!-- 日历视图 -->
+  <div id="viewCalendar" style="display:none">
+    <div class="main">
+      <div class="cal-head">
+        <button class="btn btn-ghost btn-sm" onclick="calPrev()">‹ 上月</button>
+        <div class="month" id="calMonth"></div>
+        <button class="btn btn-ghost btn-sm" onclick="calNext()">下月 ›</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-legend">
+        <span><span class="dindi high"></span>高优先级</span>
+        <span><span class="dindi med"></span>中优先级</span>
+        <span><span class="dindi low"></span>低优先级</span>
+      </div>
+      <div class="cal-tip">只有设置了「到期日」的待办会显示在日历中</div>
+    </div>
+  </div>
+</div>
+
+<!-- 待办编辑模态框 -->
+<div class="modal" id="todoModal">
+  <div class="modal-box">
+    <h3 id="modalTitle">新建待办</h3>
+    <div class="fg">
+      <label>标题 *</label>
+      <input id="fTitle" placeholder="要做什么？">
+    </div>
+    <div class="fg">
+      <label>备注</label>
+      <textarea id="fNote" placeholder="补充说明…"></textarea>
+    </div>
+    <div class="row2">
+      <div class="fg">
+        <label>所属清单</label>
+        <select id="fList"></select>
+      </div>
+      <div class="fg">
+        <label>优先级</label>
+        <select id="fPriority">
+          <option value="high">高</option>
+          <option value="med" selected>中</option>
+          <option value="low">低</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="fg">
+        <label>到期日</label>
+        <input id="fDue" type="date">
+      </div>
+      <div class="fg">
+        <label>重复</label>
+        <select id="fRepeat">
+          <option value="">不重复</option>
+          <option value="daily">每天</option>
+          <option value="weekly">每周</option>
+          <option value="monthly">每月</option>
+          <option value="yearly">每年</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg">
+      <label>标签（用逗号分隔）</label>
+      <input id="fTags" placeholder="如：客户,资质,加急">
+    </div>
+    <div class="subs-edit">
+      <label style="display:block;font-size:12.5px;color:var(--text-2);margin-bottom:6px;font-weight:600">子任务</label>
+      <div id="subEditList"></div>
+      <button class="btn btn-ghost btn-sm" onclick="addSubEdit()">＋ 添加子任务</button>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeTodoModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveTodo()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ 状态与存储 ============
+const STORE_KEY = 'todo_v1';
+const LIST_KEY = 'todo_lists_v1';
+const REPEAT_CN = { daily:'每天', weekly:'每周', monthly:'每月', yearly:'每年' };
+
+let todos = [];          // {id, title, note, list, priority, due, repeat, tags:[], subs:[{txt,done}], done, createdAt, completedAt}
+let lists = [];          // {id, name, color}
+let currentList = 'all';
+let currentFilter = 'all';
+let searchQ = '';
+let editingId = null;
+let calYear, calMonth;
+
+function safeGet(k, d){ try{ const v = JSON.parse(localStorage.getItem(k)); return v===null||v===undefined?d:v; }catch(e){ return d; } }
+function safeSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } }
+function uid(p){ return p + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+function load(){
+  todos = safeGet(STORE_KEY, []);
+  lists = safeGet(LIST_KEY, []);
+  if(!lists.length){
+    lists = [
+      {id:'work', name:'工作', color:'#3b82f6'},
+      {id:'life', name:'生活', color:'#10b981'}
+    ];
+    safeSet(LIST_KEY, lists);
+  }
+  dedupeRepeats();
+  checkRepeats();
+}
+
+// 清理旧逻辑产生的重复任务：同一（标题+周期+清单）只保留一条
+function dedupeRepeats(){
+  const seen = new Map(); // key -> 保留的 todo
+  const keep = new Set();
+  todos.forEach(t=>{
+    if(!t.repeat){ keep.add(t.id); return; }
+    const key = (t.title||'') + '\n' + t.repeat + '\n' + (t.list||'inbox');
+    const cur = seen.get(key);
+    if(!cur){ seen.set(key, t); keep.add(t.id); return; }
+    // 保留优先级：未完成的 > 已完成的；due 更大的 > due 更小的
+    const curOpen = !cur.done, tOpen = !t.done;
+    if(tOpen && !curOpen){ seen.set(key, t); keep.delete(cur.id); keep.add(t.id); }
+    else if(tOpen === curOpen){
+      const a = cur.due || '0000-00-00', b = t.due || '0000-00-00';
+      if(b > a){ seen.set(key, t); keep.delete(cur.id); keep.add(t.id); }
+    }
+  });
+  if(keep.size !== todos.length){
+    todos = todos.filter(t=>keep.has(t.id));
+    saveTodos();
+  }
+}
+
+// 每天检查一次：已完成的重复任务，若今天 >= 下一周期到期日，则复活为当前周期待办
+function checkRepeats(){
+  const today = todayStr();
+  let changed = false;
+  todos.forEach(t=>{
+    if(!t.repeat || !t.done || !t.due) return;
+    if(today >= t.due){
+      t.done = false;
+      t.completedAt = null;
+      // 子任务也全部重置为未完成
+      if(t.subs) t.subs.forEach(s=>s.done=false);
+      changed = true;
+    }
+  });
+  if(changed) saveTodos();
+}
+
+function nextDue(due, repeat){
+  const d = new Date(due+'T00:00:00');
+  if(repeat==='daily') d.setDate(d.getDate()+1);
+  else if(repeat==='weekly') d.setDate(d.getDate()+7);
+  else if(repeat==='monthly') d.setMonth(d.getMonth()+1);
+  else if(repeat==='yearly') d.setFullYear(d.getFullYear()+1);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function saveTodos(){ safeSet(STORE_KEY, todos); }
+function saveLists(){ safeSet(LIST_KEY, lists); }
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ============ 日期工具 ============
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function fmtDateCN(s){ if(!s) return ''; const [y,m,d]=s.split('-'); return `${m}月${d}日`; }
+function isOverdue(t){ return !t.done && t.due && t.due < todayStr(); }
+function isDueToday(t){ return !t.done && t.due === todayStr(); }
+
+// ============ 渲染 ============
+function renderStats(){
+  const open = todos.filter(t=>!t.done);
+  document.getElementById('stAll').textContent = open.length;
+  document.getElementById('stToday').textContent = todos.filter(isDueToday).length;
+  document.getElementById('stDone').textContent = todos.filter(t=>t.done).length;
+  document.getElementById('stOverdue').textContent = todos.filter(isOverdue).length;
+}
+
+function renderSidebar(){
+  document.getElementById('cntAll').textContent = todos.filter(t=>!t.done).length;
+  document.getElementById('cntInbox').textContent = todos.filter(t=>!t.done && t.list==='inbox').length;
+  document.getElementById('cntToday').textContent = todos.filter(isDueToday).length;
+  const el = document.getElementById('customLists');
+  el.innerHTML = lists.map(l=>{
+    const cnt = todos.filter(t=>!t.done && t.list===l.id).length;
+    return `<div class="list-item ${currentList===l.id?'active':''}" data-list="${l.id}" onclick="selectList('${l.id}')">
+      <span class="dot" style="background:${l.color}"></span>${esc(l.name)}<span class="cnt">${cnt}</span>
+      <button class="del" onclick="delList('${l.id}')">✕</button>
+    </div>`;
+  }).join('');
+  // 高亮当前选中
+  document.querySelectorAll('.sidebar .list-item').forEach(n=>{
+    n.classList.toggle('active', n.dataset.list===currentList);
+  });
+}
+
+function filteredTodos(){
+  let arr = todos.slice();
+  if(currentList==='all'){}
+  else if(currentList==='inbox') arr = arr.filter(t=>t.list==='inbox');
+  else if(currentList==='today') arr = arr.filter(t=>isDueToday(t));
+  else if(currentList && currentList.startsWith('__date:')){ const ds=currentList.slice(7); arr = arr.filter(t=>t.due===ds); }
+  else arr = arr.filter(t=>t.list===currentList);
+
+  if(currentFilter==='open') arr = arr.filter(t=>!t.done);
+  else if(currentFilter==='done') arr = arr.filter(t=>t.done);
+  else if(currentFilter==='overdue') arr = arr.filter(isOverdue);
+
+  if(searchQ){
+    const q = searchQ.toLowerCase();
+    arr = arr.filter(t=>{
+      const inTitle = (t.title||'').toLowerCase().includes(q);
+      const inNote = (t.note||'').toLowerCase().includes(q);
+      const inTags = (t.tags||[]).some(x=>x.toLowerCase().includes(q));
+      return inTitle || inNote || inTags;
+    });
+  }
+  // 排序：未完成在前，按优先级、到期日
+  const pRank = {high:0, med:1, low:2};
+  arr.sort((a,b)=>{
+    if(a.done !== b.done) return a.done ? 1 : -1;
+    if((a.priority!==b.priority)) return (pRank[a.priority]??1) - (pRank[b.priority]??1);
+    if(a.due && b.due) return a.due.localeCompare(b.due);
+    if(a.due) return -1; if(b.due) return 1;
+    return b.createdAt - a.createdAt;
+  });
+  return arr;
+}
+
+function renderTodos(){
+  renderStats();
+  renderSidebar();
+  const el = document.getElementById('todoList');
+  const arr = filteredTodos();
+  if(!arr.length){
+    el.innerHTML = `<div class="empty">${searchQ ? '没有匹配的待办' : '暂无待办，点击右上角「新建待办」开始'}</div>`;
+    return;
+  }
+  el.innerHTML = arr.map(t=>todoHtml(t)).join('');
+}
+
+function todoHtml(t){
+  const pBadge = t.priority==='high'?'p-high':t.priority==='low'?'p-low':'p-med';
+  const pCN = t.priority==='high'?'高':t.priority==='low'?'低':'中';
+  const overdue = isOverdue(t);
+  const listName = getListName(t.list);
+  const tags = (t.tags||[]).map(x=>`<span class="badge tag">${esc(x)}</span>`).join('');
+  const due = t.due ? `<span class="badge due ${isDueToday(t)?'today':''}">${isDueToday(t)?'今天到期':fmtDateCN(t.due)}${overdue?'（已逾期）':''}</span>` : '';
+  const rep = t.repeat ? `<span class="badge repeat">↻ ${REPEAT_CN[t.repeat]||t.repeat}</span>` : '';
+  const listBadge = (listName && currentList==='all') ? `<span class="badge list">${esc(listName)}</span>` : '';
+  const subs = (t.subs||[]).length ? `<div class="subs">${t.subs.map((s,i)=>`<div class="sub ${s.done?'done':''}" onclick="toggleSub('${t.id}',${i})">
+    <span class="sck"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>
+    <span class="stxt">${esc(s.txt)}</span></div>`).join('')}</div>` : '';
+
+  return `<div class="todo ${t.done?'done':''} ${overdue?'overdue':''}">
+    <div class="ck" onclick="toggleDone('${t.id}')"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+    <div class="body">
+      <div class="title">${esc(t.title)}</div>
+      <div class="meta">
+        <span class="badge ${pBadge}">${pCN}</span>
+        ${due}${rep}${listBadge}${tags}
+      </div>
+      ${t.note?`<div style="font-size:12px;color:var(--text-2);margin-top:4px;white-space:pre-wrap">${esc(t.note)}</div>`:''}
+      ${subs}
+    </div>
+    <div class="acts">
+      <button class="icon-btn" title="编辑" onclick="openTodoModal('${t.id}')">✎</button>
+      <button class="icon-btn danger" title="删除" onclick="delTodo('${t.id}')">🗑</button>
+    </div>
+  </div>`;
+}
+
+function getListName(id){
+  if(id==='inbox') return '收集箱';
+  const l = lists.find(x=>x.id===id);
+  return l ? l.name : '';
+}
+
+// ============ 视图切换 ============
+function switchView(v){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.view===v));
+  document.getElementById('viewList').style.display = v==='list'?'grid':'none';
+  document.getElementById('viewCalendar').style.display = v==='calendar'?'block':'none';
+  if(v==='calendar') renderCalendar();
+}
+
+// ============ 清单操作 ============
+function selectList(id){
+  currentList = id;
+  const titles = { all:'全部待办', inbox:'收集箱', today:'今天到期' };
+  let title = titles[id] || getListName(id) || '';
+  if(id && id.startsWith('__date:')) title = `${id.slice(7)} 到期`;
+  document.getElementById('listTitle').textContent = title;
+  document.getElementById('listSub').textContent = id==='today'?'仅显示今天到期的待办':'';
+  renderTodos();
+}
+function setFilter(f){
+  currentFilter = f;
+  document.querySelectorAll('#filterChips .chip').forEach(c=>c.classList.toggle('active', c.dataset.f===f));
+  renderTodos();
+}
+function addListClick(){
+  const el = document.getElementById('addListBtn');
+  el.outerHTML = `<input class="list-inp" id="newListInp" placeholder="清单名称，回车确认" onkeydown="if(event.key==='Enter')createList()" onblur="cancelListInp()">`;
+  document.getElementById('newListInp').focus();
+}
+function createList(){
+  const inp = document.getElementById('newListInp');
+  const name = inp.value.trim();
+  if(name){
+    const colors = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899'];
+    lists.push({id:uid('l'), name, color: colors[lists.length%colors.length]});
+    saveLists(); renderSidebar();
+  }
+  cancelListInp();
+}
+function cancelListInp(){
+  const inp = document.getElementById('newListInp');
+  if(inp){
+    inp.outerHTML = `<button class="add-list" id="addListBtn" onclick="addListClick()">＋ 新建清单</button>`;
+  }
+}
+function delList(id){
+  if(!confirm('删除该清单？清单下的待办会移入收集箱。')) return;
+  todos.forEach(t=>{ if(t.list===id) t.list='inbox'; });
+  lists = lists.filter(l=>l.id!==id);
+  saveLists(); saveTodos();
+  if(currentList===id) currentList='all';
+  renderTodos();
+}
+
+// ============ 待办操作 ============
+function toggleDone(id){
+  const t = todos.find(x=>x.id===id);
+  if(!t) return;
+  if(!t.done){
+    t.done = true;
+    t.completedAt = Date.now();
+    // 重复任务：把到期日推进到下一个周期，任务保持在「已完成」里
+    // 等真实日期到达下一周期时，checkRepeats 会自动复活它
+    if(t.repeat && t.due){ t.due = nextDue(t.due, t.repeat); }
+  } else {
+    t.done = false;
+    t.completedAt = null;
+  }
+  saveTodos(); renderTodos(); if(document.getElementById('viewCalendar').style.display!=='none') renderCalendar();
+}
+function toggleSub(id, i){
+  const t = todos.find(x=>x.id===id);
+  if(!t) return;
+  t.subs[i].done = !t.subs[i].done;
+  saveTodos(); renderTodos();
+}
+function delTodo(id){
+  if(!confirm('确认删除这条待办？')) return;
+  todos = todos.filter(t=>t.id!==id);
+  saveTodos(); renderTodos();
+}
+
+// ============ 模态框 ============
+function openTodoModal(id){
+  editingId = id || null;
+  document.getElementById('modalTitle').textContent = id ? '编辑待办' : '新建待办';
+  const listSel = document.getElementById('fList');
+  listSel.innerHTML = `<option value="inbox">收集箱</option>` + lists.map(l=>`<option value="${l.id}">${esc(l.name)}</option>`).join('');
+
+  if(id){
+    const t = todos.find(x=>x.id===id);
+    document.getElementById('fTitle').value = t.title||'';
+    document.getElementById('fNote').value = t.note||'';
+    listSel.value = t.list||'inbox';
+    document.getElementById('fPriority').value = t.priority||'med';
+    document.getElementById('fDue').value = t.due||'';
+    document.getElementById('fRepeat').value = t.repeat||'';
+    document.getElementById('fTags').value = (t.tags||[]).join(',');
+    editingSubs = (t.subs||[]).map(s=>({txt:s.txt, done:s.done}));
+  } else {
+    document.getElementById('fTitle').value = '';
+    document.getElementById('fNote').value = '';
+    listSel.value = currentList && currentList!=='all' && currentList!=='today' ? currentList : 'inbox';
+    document.getElementById('fPriority').value = 'med';
+    document.getElementById('fDue').value = '';
+    document.getElementById('fRepeat').value = '';
+    document.getElementById('fTags').value = '';
+    editingSubs = [];
+  }
+  renderSubEdit();
+  document.getElementById('todoModal').classList.add('show');
+  document.getElementById('fTitle').focus();
+}
+function closeTodoModal(){
+  document.getElementById('todoModal').classList.remove('show');
+  editingId = null;
+}
+function saveTodo(){
+  const title = document.getElementById('fTitle').value.trim();
+  if(!title){ alert('请输入标题'); return; }
+  const data = {
+    title,
+    note: document.getElementById('fNote').value.trim(),
+    list: document.getElementById('fList').value,
+    priority: document.getElementById('fPriority').value,
+    due: document.getElementById('fDue').value,
+    repeat: document.getElementById('fRepeat').value,
+    tags: document.getElementById('fTags').value.split(/[,，]/).map(s=>s.trim()).filter(Boolean),
+    subs: editingSubs.filter(s=>s.txt.trim()).map(s=>({txt:s.txt.trim(), done:!!s.done}))
+  };
+  if(editingId){
+    const t = todos.find(x=>x.id===editingId);
+    Object.assign(t, data);
+  } else {
+    todos.push({id:uid('t'), ...data, done:false, createdAt:Date.now(), completedAt:null});
+  }
+  saveTodos();
+  closeTodoModal();
+  renderTodos();
+  if(document.getElementById('viewCalendar').style.display!=='none') renderCalendar();
+}
+
+// 子任务编辑
+let editingSubs = [];
+function addSubEdit(){ editingSubs.push({txt:'',done:false}); renderSubEdit(); }
+function renderSubEdit(){
+  document.getElementById('subEditList').innerHTML = editingSubs.map((s,i)=>`
+    <div class="sub-row">
+      <input value="${esc(s.txt)}" placeholder="子任务内容" oninput="editingSubs[${i}].txt=this.value">
+      <button onclick="editingSubs.splice(${i},1);renderSubEdit()">✕</button>
+    </div>`).join('');
+}
+
+// ============ 日历视图 ============
+function initCal(){ const now=new Date(); calYear=now.getFullYear(); calMonth=now.getMonth(); }
+function calPrev(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
+function calNext(){ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
+function renderCalendar(){
+  document.getElementById('calMonth').textContent = `${calYear}年${calMonth+1}月`;
+  const first = new Date(calYear, calMonth, 1);
+  const startDow = first.getDay(); // 0=周日
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+  const today = todayStr();
+
+  // 按日期分组（只显示有 due 的待办）
+  const byDate = {};
+  todos.forEach(t=>{
+    if(!t.due) return;
+    (byDate[t.due] = byDate[t.due]||[]).push(t);
+  });
+
+  let html = `<div class="cal-dow">日</div><div class="cal-dow">一</div><div class="cal-dow">二</div><div class="cal-dow">三</div><div class="cal-dow">四</div><div class="cal-dow">五</div><div class="cal-dow">六</div>`;
+  // 上月补位
+  for(let i=startDow-1; i>=0; i--){
+    html += `<div class="cal-day other"><div class="dhead"><div class="dnum">${daysInPrev-i}</div></div></div>`;
+  }
+  for(let d=1; d<=daysInMonth; d++){
+    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const evs = byDate[ds]||[];
+    const isToday = ds===today;
+    let evHtml = '';
+    evs.slice(0,3).forEach(t=>{
+      evHtml += `<div class="ev ${t.priority==='high'?'p-high':t.priority==='low'?'p-low':'p-med'} ${t.done?'done':''}" onclick="openTodoModal('${t.id}')">${esc(t.title)}</div>`;
+    });
+    if(evs.length>3) evHtml += `<div class="more">+${evs.length-3} 项</div>`;
+    // 底部小圆点：按优先级聚合
+    const dots = evs.slice(0,5).map(t=>`<span class="dindi ${t.priority||'med'}"></span>`).join('');
+    html += `<div class="cal-day ${isToday?'today':''}" data-date="${ds}" onclick="calDayClick('${ds}')">
+      <div class="dhead"><div class="dnum">${d}</div>${evs.length?`<span style="font-size:10px;color:var(--text-2);background:var(--surface-2);padding:1px 5px;border-radius:8px">${evs.length}</span>`:''}</div>
+      <div class="evs">${evHtml}</div>
+      ${dots?`<div class="dotbar">${dots}</div>`:''}
+    </div>`;
+  }
+  // 下月补位
+  const total = startDow + daysInMonth;
+  const remain = (7 - total%7) % 7;
+  for(let i=1; i<=remain; i++){
+    html += `<div class="cal-day other"><div class="dhead"><div class="dnum">${i}</div></div></div>`;
+  }
+  document.getElementById('calGrid').innerHTML = html;
+}
+function calDayClick(ds){
+  // 点击某天：跳到清单视图并筛选该天到期
+  searchQ='';
+  document.getElementById('search').value='';
+  switchView('list');
+  selectList('__date:'+ds);
+}
+</script>
+<script>
+// ============ 初始化 ============
+load();
+initCal();
+document.getElementById('todayLabel').textContent = '今天 ' + todayStr();
+selectList('all');
+</script>
+</body>
+</html>

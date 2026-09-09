@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>销售优秀成交案例归集</title>
+<script src="./docx.umd.js"></script>
+<script src="./html2canvas.min.js"></script>
+<style>
+  :root{
+    --navy:#2a1a0a; --navy2:#3a2410; --cyan:#e0901a; --cyan2:#e0a93c;
+    --line:#efe6d8; --bg:#faf7f2; --card:#fffefb; --ink:#2a2118; --dim:#6b5d4a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Microsoft YaHei","微软雅黑",-apple-system,"PingFang SC",sans-serif;
+    background:radial-gradient(circle at 1px 1px, rgba(180,83,9,.05) 1px, transparent 0) 0 0/24px 24px, var(--bg);
+    color:var(--ink);min-height:100vh}
+  .top{background:linear-gradient(120deg,#fffdf9,#fdf3e3,#fbeccb);color:#2a2118;padding:18px 26px;
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+    box-shadow:0 6px 22px rgba(42,26,10,.18)}
+  .top h1{margin:0;font-size:21px;letter-spacing:1px;display:flex;align-items:center;gap:12px}
+  .top h1 .dot{width:11px;height:11px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan)}
+  .top .sub{font-size:12.5px;color:#6b5d4a;margin-top:3px;letter-spacing:.5px}
+  .top-actions{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 16px;border-radius:8px;
+    font-size:13.5px;cursor:pointer;font-family:inherit;transition:.15s;white-space:nowrap}
+  .btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(180,83,9,.12)}
+  .btn-primary{background:linear-gradient(135deg,#b45309,#e0901a);color:#fff;border:none}
+  .btn-ghost{background:#fffefb;color:#2a2118;border:1px solid #ece3d6}
+  .btn-ghost:hover{background:#fbf5ea;border-color:#e0901a}
+  .btn-danger{background:#fff;color:#dc2626;border-color:#f0b6b6}
+  .mini-btn{border:1px solid #e8dcd0;background:#fffefb;color:#2a2118;border-radius:8px;padding:0 12px;font-size:12.5px;cursor:pointer;font-family:inherit;white-space:nowrap;height:38px}
+  .mini-btn:hover{background:#fbf5ea;border-color:#e0901a}
+  .wrap{display:flex;gap:18px;padding:18px 22px;align-items:flex-start}
+  .col-list{flex:0 0 360px;max-width:360px;display:flex;flex-direction:column;gap:12px}
+  .col-edit{flex:1;min-width:0}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+  .toolbar input,.toolbar select{border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-size:13px;font-family:inherit;background:#fff}
+  .toolbar input{flex:1;min-width:120px}
+  .list-meta{font-size:12.5px;color:var(--dim);padding:0 2px}
+  .cards{display:flex;flex-direction:column;gap:11px;max-height:78vh;overflow:auto;padding-right:4px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:13px 15px;cursor:pointer;
+    transition:.15s;border-left:4px solid var(--cyan);position:relative}
+  .card:hover{box-shadow:0 6px 18px rgba(180,83,9,.12);transform:translateY(-1px)}
+  .card.active{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(224,144,26,.25)}
+  .card .ct{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:6px;padding-right:54px}
+  .card .cb{display:inline-block;font-size:11.5px;background:#f9f0df;color:var(--navy);border-radius:20px;padding:2px 10px;margin:0 6px 6px 0}
+  .card .ca{font-size:14px;color:#b45309;font-weight:700;margin:2px 0 4px}
+  .card .cs{font-size:12.5px;color:var(--dim);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .card .cd{font-size:11px;color:#b0a08a;margin-top:7px}
+  .card .del{position:absolute;top:10px;right:10px;border:none;background:#fbf5ea;color:#c2453d;border-radius:6px;
+    width:30px;height:26px;cursor:pointer;font-size:14px;line-height:1}
+  .card .del:hover{background:#fdeaea}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;box-shadow:0 4px 16px rgba(180,83,9,.06)}
+  .panel h2{margin:0 0 4px;font-size:17px;color:var(--navy)}
+  .panel .ph{font-size:12.5px;color:var(--dim);margin-bottom:16px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field.full{grid-column:1 / -1}
+  .field label{font-size:13px;color:var(--navy);font-weight:600;display:flex;align-items:center;gap:6px}
+  .field label .req{color:#e8590c}
+  .field input,.field select,.field textarea{border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:13.5px;
+    font-family:inherit;background:#fff;color:var(--ink);width:100%;resize:vertical}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(224,144,26,.15)}
+  .field textarea{min-height:74px;line-height:1.6}
+  .field .hint{font-size:11.5px;color:#9a8a72}
+  .edit-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px dashed var(--line)}
+  .empty{text-align:center;color:var(--dim);padding:60px 20px;font-size:14px}
+  .empty .big{font-size:46px;margin-bottom:12px;opacity:.5}
+  .tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .tag-auto{display:inline-block;font-size:11.5px;background:#eef3f9;color:#4a4035;border:1px solid #ece3d6;border-radius:20px;padding:2px 10px}
+  .mtag{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;background:#fff4e6;color:#b45309;border:1px solid #f3d6a8;border-radius:20px;padding:2px 6px 2px 10px}
+  .mtag .x{border:none;background:#f3d6a8;color:#b45309;border-radius:50%;width:16px;height:16px;cursor:pointer;font-size:11px;line-height:1;padding:0}
+  .mtag .x:hover{background:#e9c08a}
+  .tip{position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;
+    padding:11px 20px;border-radius:10px;font-size:13.5px;opacity:0;pointer-events:none;transition:.25s;z-index:99;box-shadow:0 8px 24px rgba(42,26,10,.25)}
+  .tip.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .media-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+  .thumb{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;width:120px;height:120px;background:#faf7f2}
+  .thumb img{width:100%;height:100%;object-fit:cover}
+  .thumb .x{position:absolute;top:4px;right:4px;border:none;background:rgba(42,26,10,.55);color:#fff;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:13px;line-height:1}
+  .audio-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+  .audio-row{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+  .audio-row audio{max-width:340px;height:36px}
+  .audio-row .nm{font-size:12.5px;color:var(--dim);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .audio-row .x{border:none;background:#fbf5ea;color:#c2453d;border-radius:6px;width:26px;height:24px;cursor:pointer;flex:0 0 auto}
+  .upload-btn{display:inline-block;border:1px dashed var(--cyan);color:var(--navy);background:#fbf5ea;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit}
+  .upload-btn:hover{background:#fbf3e4}
+  .modal{position:fixed;inset:0;background:rgba(42,26,10,.45);display:none;align-items:center;justify-content:center;z-index:200}
+  .modal.show{display:flex}
+  .modal-box{background:#fff;border-radius:14px;padding:22px 24px;width:440px;max-width:92vw;box-shadow:0 20px 60px rgba(42,26,10,.3)}
+  .modal-box h3{margin:0 0 14px;color:var(--navy);font-size:17px}
+  .biz-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;font-size:13.5px}
+  .biz-row .x{border:none;background:#fbf5ea;color:#c2453d;border-radius:6px;width:28px;height:26px;cursor:pointer}
+  .biz-add{display:flex;gap:8px;margin:12px 0 16px}
+  .biz-add input{flex:1;border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-size:13px;font-family:inherit}
+  #imgCard{position:absolute;left:-99999px;top:0;width:760px;background:#fff;padding:34px 38px;box-sizing:border-box}
+  #imgCard .ic-head{text-align:center;border-bottom:3px solid var(--navy);padding-bottom:14px;margin-bottom:18px}
+  #imgCard .ic-co{font-size:12px;color:#8a7a62;letter-spacing:3px}
+  #imgCard .ic-title{font-size:25px;color:var(--navy);font-weight:700;letter-spacing:6px;margin-top:6px}
+  #imgCard .ic-sub{font-size:12.5px;color:#6b5d4a;margin-top:8px}
+  #imgCard .ic-row{display:flex;align-items:center;border:1px solid #f2e6d8;margin-bottom:-1px;font-size:13px}
+  #imgCard .ic-idx{flex:0 0 38px;text-align:center;color:#8a7a62;border-right:1px solid #f2e6d8;padding:10px 0}
+  #imgCard .ic-body{flex:1;padding:10px 14px}
+  #imgCard .ic-t{font-weight:700;color:var(--navy);font-size:14.5px}
+  #imgCard .ic-b{display:inline-block;font-size:11px;background:#f9f0df;color:var(--navy);border-radius:14px;padding:1px 9px;margin:5px 6px 0 0}
+  #imgCard .ic-amt{flex:0 0 128px;text-align:right;color:#b45309;font-weight:700;padding:10px 14px;border-left:1px solid #f2e6d8}
+  .btn-ai{background:linear-gradient(120deg,#fffdf9,#fdf3e3,#fbeccb);color:#2a2118;border:none}
+  .btn-ai:hover{filter:brightness(1.06)}
+  .ai-parse-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:6px}
+  .ai-status{font-size:12px;color:#b45309;min-height:16px}
+  .ai-head{display:flex;align-items:center;justify-content:space-between;margin:-22px -24px 16px;padding:16px 22px;background:linear-gradient(120deg,#fffdf9,#fdf3e3,#fbeccb);border-radius:14px 14px 0 0;color:#2a2118;border-bottom:1px solid #ece3d6}
+  .ai-head h3{margin:0;font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .ai-head h3::before{content:'⚙';font-size:15px;opacity:.9}
+  .ai-close{background:#fffefb;border:1px solid #ece3d6;width:28px;height:28px;border-radius:8px;font-size:15px;color:#2a2118;cursor:pointer;line-height:1;transition:.15s}
+  .ai-close:hover{background:#fbf5ea;border-color:#e0901a}
+  .ai-warn{background:#fff4f4;border:1px solid #f9c5c6;border-left:4px solid #e5484d;color:#b42318;font-size:12px;padding:12px 14px;border-radius:10px;line-height:1.6;margin-bottom:16px}
+  .ai-warn b{color:#b42318}
+  .ai-section{background:#faf7f2;border:1px solid #faf4ea;border-radius:12px;padding:14px 16px;margin-bottom:14px}
+  .ai-section-title{font-size:12.5px;font-weight:700;color:#2a1a0a;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .ai-section-title::before{content:'';width:4px;height:14px;background:linear-gradient(180deg,#e0901a,#b45309);border-radius:2px}
+  .ai-form .fg{margin-bottom:13px}
+  .ai-form .fg:last-child{margin-bottom:0}
+  .ai-form .fg label{display:block;font-size:12.5px;color:#3a3228;margin-bottom:6px;font-weight:600}
+  .ai-form .fg label .meta{font-size:11px;color:#8a7a62;font-weight:400;margin-left:4px}
+  .ai-form .req-cap{color:#b42318;font-weight:500;font-size:11px}
+  .ai-form .cap{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;margin-left:6px;padding:2px 8px;border-radius:12px;vertical-align:middle}
+  .ai-form .cap.ok{background:#e7f7ee;color:#0f9d58;border:1px solid #b7e8c9}
+  .ai-form .cap.no{background:#fdecea;color:#c0392b;border:1px solid #f3c2bd}
+  .ai-form .cap-note{font-size:11px;color:#c0392b;margin-top:5px;line-height:1.4;display:flex;align-items:flex-start;gap:4px}
+  .ai-form .cap-note::before{content:'⚠';font-size:11px}
+  .ai-form input:disabled,.ai-form select:disabled{background:#faf7f2;color:#9a8a72;cursor:not-allowed;border-color:#efe7d9}
+  .ai-form input,.ai-form select{width:100%;padding:9px 12px;border:1px solid #e8dcd0;border-radius:9px;font-size:13px;box-sizing:border-box;background:#fff;transition:.15s}
+  .ai-form input:focus,.ai-form select:focus{outline:none;border-color:#e0901a;box-shadow:0 0 0 3px rgba(224,144,26,.12)}
+  .ai-form input::placeholder{color:#9a8a72}
+  .ai-actions{display:flex;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid #faf4ea;justify-content:flex-end}
+  .ai-actions .btn{padding:8px 18px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;border:1px solid transparent;transition:.15s}
+  .ai-actions .btn-primary{background:linear-gradient(135deg,#b45309,#e0901a);color:#fff;border:none}
+  .ai-actions .btn-primary:hover{filter:brightness(1.1)}
+  .ai-actions .btn-ghost{background:#fff;color:#3a3228;border-color:#e8dcd0}
+  .ai-actions .btn-ghost:hover{border-color:#e0901a;color:#2a1a0a;background:#fbf5ea}
+
+  @media(max-width:920px){.wrap{flex-direction:column}.col-list{flex:none;max-width:none;width:100%}.cards{max-height:none}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <div class="top">
+    <div>
+      <h1><span class="dot"></span>销售优秀成交案例归集</h1>
+      <div class="sub">深圳市金米启航企业服务有限公司 · 团队成交经验库</div>
+    </div>
+    <div class="top-actions">
+      <button class="btn btn-ghost" onclick="exportListImage()">🖼 导出列表图片</button>
+      <button class="btn btn-ghost" onclick="openAiConfig()">⚙ AI 配置</button>
+      <button class="btn btn-primary" onclick="newCase()">＋ 新建案例</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="col-list">
+      <div class="toolbar">
+        <input id="search" placeholder="搜索标题 / 痛点 / 话术…" oninput="renderList()">
+      </div>
+      <div class="toolbar">
+        <select id="filterBiz" onchange="renderList()"></select>
+        <select id="filterTag" onchange="renderList()"><option value="">全部标签</option></select>
+      </div>
+      <div class="list-meta" id="listMeta"></div>
+      <div class="cards" id="cards"></div>
+    </div>
+
+    <div class="col-edit">
+      <div class="panel" id="panel">
+        <h2 id="panelTitle">新建成交案例</h2>
+        <div class="ph">填写一项优秀成交的完整脉络，沉淀给团队复用。表单自动存草稿，点「保存案例」入库存档。</div>
+
+        <div class="grid">
+          <div class="field full">
+            <label>案例标题 <span class="req">*</span></label>
+            <input id="f_title" placeholder="自动由「成交日期(纯数字)+城市+来源+周期+成交人」合并，可手动修改" oninput="titleAuto=false; if(!this.value.trim()) titleAuto=true; autosave()">
+            <div class="hint">⚙ 标题默认由下方「成交日期（纯数字）＋城市＋客户来源＋成交周期＋成交人」自动合并生成；如需自定义可直接在上方修改。</div>
+          </div>
+          <div class="field">
+            <label>业务类型</label>
+            <div style="display:flex;gap:8px">
+              <select id="f_biz" onchange="onMetaChange()" style="flex:1"></select>
+              <button type="button" class="mini-btn" onclick="openBizModal()">管理</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>客户编号</label>
+            <input id="f_custno" placeholder="如：KH-2026-0088" oninput="autosave()">
+          </div>
+          <div class="field">
+            <label>城市</label>
+            <input id="f_city" placeholder="如：深圳 / 广州" oninput="onMetaChange()">
+          </div>
+          <div class="field">
+            <label>成交人</label>
+            <input id="f_dealperson" placeholder="如：张三" oninput="onMetaChange()">
+          </div>
+          <div class="field">
+            <label>成交日期</label>
+            <input id="f_dealdate" type="date" oninput="onMetaChange()">
+          </div>
+          <div class="field">
+            <label>客户来源</label>
+            <select id="f_source" onchange="onMetaChange()"></select>
+          </div>
+          <div class="field">
+            <label>成交周期</label>
+            <select id="f_cycle" onchange="onMetaChange()"></select>
+          </div>
+          <div class="field full">
+            <label>客户行业</label>
+            <input id="f_customer" placeholder="如：深圳制造业 / 软件和信息服务业" oninput="onMetaChange()">
+          </div>
+          <div class="field">
+            <label>纳税人类型</label>
+            <select id="f_taxpayer" onchange="onMetaChange()">
+              <option value="">— 请选择 —</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>主体类型</label>
+            <div style="display:flex;gap:8px">
+              <select id="f_entity" onchange="onMetaChange()" style="flex:1"></select>
+              <button type="button" class="mini-btn" onclick="openEntityModal()">管理</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>流水（元）</label>
+            <input id="f_turnover" type="number" min="0" step="100" placeholder="如 50000（合同 / 流水总额）" oninput="autosave()">
+          </div>
+          <div class="field">
+            <label>营收（元）</label>
+            <input id="f_revenue" type="number" min="0" step="100" placeholder="如 30000（我方确认收入）" oninput="autosave()">
+          </div>
+          <div class="field full">
+            <label>标签</label>
+            <div class="hint">以下标签自动从字段生成（客户来源 / 成交周期 / 纳税人类型 / 主体类型 / 客户行业），无需手填：</div>
+            <div class="tag-list" id="autoTagBox"></div>
+            <div style="height:8px"></div>
+            <div class="hint">手动补充标签（用于跨字段归类，如「极速过审」「制造业」）：</div>
+            <div class="tag-list" id="manualTagBox"></div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <input id="f_manualtag" placeholder="输入标签后回车或点「添加」" onkeydown="if(event.key==='Enter')addManualTag()" style="flex:1;border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-size:13px;font-family:inherit">
+              <button type="button" class="mini-btn" onclick="addManualTag()">＋ 添加</button>
+            </div>
+          </div>
+          <div class="field full">
+            <label>用到的辅料</label>
+            <input id="f_materials" placeholder="如：高新申报模板、IP 布局表、尽调清单" oninput="autosave()">
+          </div>
+          <div class="field full">
+            <label>客户痛点</label>
+            <textarea id="f_pain" placeholder="客户当时最急、最痛的问题是什么？为什么愿意付钱？" oninput="autosave()"></textarea>
+          </div>
+          <div class="field full">
+            <label>关键打法 / 路径</label>
+            <textarea id="f_approach" placeholder="从接触到成交的主线打法，分几步讲清楚。" oninput="autosave()"></textarea>
+          </div>
+          <div class="field full">
+            <label>关键动作</label>
+            <textarea id="f_actions" placeholder="具体做了哪些动作撬动了成交？（演示、方案、逼单节点等）" oninput="autosave()"></textarea>
+          </div>
+          <div class="field full">
+            <label>可复用话术</label>
+            <textarea id="f_script" placeholder="可直接抄去用的关键话术 / 破冰句 / 成交句。" oninput="autosave()"></textarea>
+          </div>
+          <div class="field full">
+            <label>成交亮点 / 复盘</label>
+            <textarea id="f_highlight" placeholder="这单最值得记的一点，下次怎么复制？" oninput="autosave()"></textarea>
+          </div>
+          <div class="field">
+            <label>归档人</label>
+            <input id="f_archiver" placeholder="如：张三" oninput="autosave()">
+          </div>
+          <div class="field">
+            <label>团队名</label>
+            <input id="f_team" placeholder="如：深圳业务一部" oninput="autosave()">
+          </div>
+          <div class="field full">
+            <label>聊天记录截图</label>
+            <div class="hint">可点击上传，也可在页面任意位置「Ctrl / ⌘ + V」直接粘贴截图。</div>
+            <label class="upload-btn">📷 上传截图<input type="file" accept="image/*" multiple onchange="onShots(this)" style="display:none"></label>
+            <div class="media-grid" id="shotBox"></div>
+          </div>
+          <div class="field full">
+            <label>上传录音</label>
+            <label class="upload-btn">🎙 上传录音<input type="file" accept="audio/*" onchange="onAudios(this)" style="display:none"></label>
+            <div class="audio-list" id="audioBox"></div>
+          </div>
+          <div class="ai-parse-row">
+            <button class="btn btn-ai" onclick="aiParse()">🤖 AI 智能解析（截图+录音 → 案例初稿）</button>
+            <span class="ai-status" id="aiStatus"></span>
+          </div>
+        </div>
+
+        <div class="edit-actions">
+          <button class="btn btn-primary" onclick="saveCase()">💾 保存案例</button>
+          <button class="btn" onclick="exportWord()">📄 导出本案例 Word</button>
+          <button class="btn btn-danger" id="delBtn" style="display:none" onclick="deleteCase()">🗑 删除</button>
+          <button class="btn" onclick="newCase()">↺ 清空重填</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="bizModal" class="modal">
+    <div class="modal-box">
+      <h3>管理业务类型</h3>
+      <div id="bizList"></div>
+      <div class="biz-add">
+        <input id="bizNew" placeholder="输入新的业务类型，如：ISO 认证" onkeydown="if(event.key==='Enter')addBiz()">
+        <button class="btn btn-primary" onclick="addBiz()">＋ 新增</button>
+      </div>
+      <div style="text-align:right">
+        <button class="btn" onclick="closeBizModal()">完成</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="entityModal" class="modal">
+    <div class="modal-box">
+      <h3>管理主体类型</h3>
+      <div id="entityList"></div>
+      <div class="biz-add">
+        <input id="entityNew" placeholder="输入新的主体类型，如：合伙企业" onkeydown="if(event.key==='Enter')addEntity()">
+        <button class="btn btn-primary" onclick="addEntity()">＋ 新增</button>
+      </div>
+      <div style="text-align:right">
+        <button class="btn" onclick="closeEntityModal()">完成</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="imgCard"></div>
+  <div class="tip" id="tip"></div>
+
+<div class="modal" id="aiCfgModal">
+  <div class="modal-box" style="width:560px;max-width:94vw">
+    <div class="ai-head">
+      <h3>AI 接口配置（本工具独立）</h3>
+      <button class="ai-close" onclick="closeAiConfig()" aria-label="关闭">✕</button>
+    </div>
+    <div class="ai-warn"><b>信息泄露风险提示</b>：上传的聊天截图与录音含客户敏感信息，开启 AI 解析会将这些数据发送给第三方大模型服务商。请确认已获客户授权并符合内部合规要求后再使用。</div>
+    <div class="ai-form">
+      <div class="ai-section">
+        <div class="ai-section-title">连接信息</div>
+        <div class="fg">
+          <label>服务商 <span class="meta">仅列出支持本工具核心能力的平台</span></label>
+          <select id="aiProvider" onchange="aiCfgOnProvider()"></select>
+        </div>
+        <div class="fg">
+          <label>API Key</label>
+          <input id="aiKey" type="password" placeholder="sk-... / 方舟 ark-...">
+        </div>
+        <div class="fg">
+          <label>Base URL <span class="meta">OpenAI 兼容接口地址，留空使用服务商默认地址</span></label>
+          <input id="aiBaseUrl" placeholder="https://ark.cn-beijing.volces.com/api/v3">
+        </div>
+      </div>
+      <div class="ai-section">
+        <div class="ai-section-title">模型设置</div>
+        <div class="fg">
+          <label>① 视觉模型 <span class="meta">识别聊天截图</span> <span class="cap" id="capVision"></span></label>
+          <input id="aiVisionModel" placeholder="如：Qwen/Qwen3-VL-8B-Instruct / gpt-4o">
+          <div class="cap-note" id="noteVision" style="display:none"></div>
+        </div>
+        <div class="fg">
+          <label>② 语音转写模型（ASR） <span class="meta">录音 → 文字</span> <span class="cap" id="capAsr"></span></label>
+          <input id="aiAsrModel" placeholder="如：FunAudioLLM/SenseVoiceSmall / whisper-1（留空则录音不参与解析）">
+          <div class="cap-note" id="noteAsr" style="display:none"></div>
+        </div>
+        <div class="fg">
+          <label>③ 结构化大模型 <span class="meta">汇聚材料整理成五字段</span></label>
+          <input id="aiLlmModel" placeholder="如：Qwen/Qwen2.5-7B-Instruct / glm-4-flash">
+        </div>
+      </div>
+      <div class="ai-actions">
+        <button class="btn btn-ghost" onclick="closeAiConfig()">取消</button>
+        <button class="btn" style="background:#fff;color:#b45309;border-color:#f0d9ab" onclick="copyAiTemplate()">📋 复制手动桥接模板</button>
+        <button class="btn btn-primary" onclick="saveAiCfg()">保存配置</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="aiErrModal">
+  <div class="modal-box" style="width:520px;max-width:94vw">
+    <div class="ai-head"><h3>⚠️ AI 解析未成功</h3><button class="ai-close" onclick="closeAiError()" aria-label="关闭">✕</button></div>
+    <div class="ai-form">
+      <div class="ai-warn" id="aiErrMsg" style="margin-bottom:12px"></div>
+      <div class="hint">常见原因：① 模型名与所选服务商不匹配；② 该服务商不支持视觉 / ASR 能力；③ 浏览器跨域(CORS)限制；④ API Key 无效或余额不足。可改用「⚙ AI 配置」中的「复制手动桥接模板」自行解析。</div>
+      <div class="ai-actions"><button class="btn" onclick="closeAiError()">关闭</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const AGENCY_NAME = "深圳市金米启航企业服务有限公司";
+const STORE_KEY = "sales_cases_v1";
+const DRAFT_KEY = "sales_cases_draft_v1";
+const BIZ_KEY = "sales_cases_biztypes_v1";
+const BIZ_SEED = ["高新认定","科技型中小企业","专精特新","重点小巨人","建筑工程资质","企业尽调","合同生成","快速报价","分期收款测算","公司转让","其他"];
+const SOURCES = ["首咨","扩增","历史","自营","推荐"];
+const CYCLES = ["日截","当周","上周","历史"];
+const TAXPAYERS = ["小规模纳税人","一般纳税人"];
+const ENTITY_KEY = "sales_cases_entitytypes_v1";
+const ENTITY_SEED = ["有限责任公司","个体工商户","个人独资企业"];
+
+let cases = [];
+let currentId = null;
+let currentMedia = { screenshots: [], audios: [] };
+let titleAuto = true;          // 标题是否由 5 个源字段自动合并生成
+let currentManualTags = [];    // 用户手动补充的标签
+
+/* ---------- 存储 ---------- */
+function loadCases(){
+  try{ cases = JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); }catch(e){ cases = []; }
+  if(!Array.isArray(cases)) cases = [];
+}
+function safeSet(k,v){
+  try{ localStorage.setItem(k,v); return true; }
+  catch(e){ return false; }
+}
+function saveCases(){
+  if(!safeSet(STORE_KEY, JSON.stringify(cases))){
+    alert("⚠️ 本地存储写入失败：案例数据（含截图 / 录音）体积已超过浏览器上限（约 5MB）。\n\n建议：删除部分含媒体的旧案例，或缩短 / 压缩录音后重试。");
+  }
+}
+function getBizTypes(){
+  try{ const v = JSON.parse(localStorage.getItem(BIZ_KEY)); if(Array.isArray(v) && v.length) return v; }catch(e){}
+  return BIZ_SEED.slice();
+}
+function saveBizTypes(arr){ localStorage.setItem(BIZ_KEY, JSON.stringify(arr)); }
+function uid(){ return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function fmtMoney(n){ n = Number(n)||0; return "¥" + n.toLocaleString("zh-CN"); }
+function esc(s){
+  return String(s==null?"":s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+}
+
+/* ---------- 业务类型管理 ---------- */
+function addBiz(){
+  const inp = document.getElementById("bizNew");
+  const v = (inp.value||"").trim();
+  if(!v){ return; }
+  let arr = getBizTypes();
+  if(arr.indexOf(v) >= 0){ showTip("已存在该业务类型"); inp.value=""; return; }
+  arr.push(v); saveBizTypes(arr); inp.value="";
+  renderBizList(); refreshFilters();
+  const fb = document.getElementById("f_biz"); if(fb) fb.value = v;
+  showTip("已新增：「"+v+"」");
+}
+function delBiz(name){
+  if(!confirm("删除业务类型「"+name+"」？\n已归档案例中该字段保留原值，不受影响。")) return;
+  let arr = getBizTypes().filter(x => x !== name);
+  saveBizTypes(arr);
+  renderBizList(); refreshFilters();
+  const fb = document.getElementById("f_biz"); if(fb && fb.value === name) fb.value = arr[0] || "";
+  showTip("已删除：「"+name+"」");
+}
+function renderBizList(){
+  const box = document.getElementById("bizList");
+  if(!box) return;
+  const arr = getBizTypes();
+  box.innerHTML = arr.map(b => '<div class="biz-row"><span>'+esc(b)+'</span><button class="x" title="删除" onclick="delBiz(\''+esc(b)+'\')">×</button></div>').join("");
+}
+function openBizModal(){ renderBizList(); document.getElementById("bizModal").classList.add("show"); }
+function closeBizModal(){ document.getElementById("bizModal").classList.remove("show"); }
+
+/* ---------- 主体类型管理（可增删，独立于业务类型） ---------- */
+function getEntityTypes(){
+  try{ const v = JSON.parse(localStorage.getItem(ENTITY_KEY)); if(Array.isArray(v) && v.length) return v; }catch(e){}
+  return ENTITY_SEED.slice();
+}
+function saveEntityTypes(arr){ localStorage.setItem(ENTITY_KEY, JSON.stringify(arr)); }
+function addEntity(){
+  const inp = document.getElementById("entityNew");
+  const v = (inp.value||"").trim();
+  if(!v){ return; }
+  let arr = getEntityTypes();
+  if(arr.indexOf(v) >= 0){ showTip("已存在该主体类型"); inp.value=""; return; }
+  arr.push(v); saveEntityTypes(arr); inp.value="";
+  renderEntityList(); refreshEntitySelect();
+  const fe = document.getElementById("f_entity"); if(fe) fe.value = v;
+  showTip("已新增：「"+v+"」");
+}
+function delEntity(name){
+  if(!confirm("删除主体类型「"+name+"」？\n已归档案例中该字段保留原值，不受影响。")) return;
+  let arr = getEntityTypes().filter(x => x !== name);
+  saveEntityTypes(arr);
+  renderEntityList(); refreshEntitySelect();
+  const fe = document.getElementById("f_entity"); if(fe && fe.value === name) fe.value = arr[0] || "";
+  showTip("已删除：「"+name+"」");
+}
+function renderEntityList(){
+  const box = document.getElementById("entityList");
+  if(!box) return;
+  const arr = getEntityTypes();
+  box.innerHTML = arr.map(b => '<div class="biz-row"><span>'+esc(b)+'</span><button class="x" title="删除" onclick="delEntity(\''+esc(b)+'\')">×</button></div>').join("");
+}
+function openEntityModal(){ renderEntityList(); document.getElementById("entityModal").classList.add("show"); }
+function closeEntityModal(){ document.getElementById("entityModal").classList.remove("show"); }
+function refreshEntitySelect(){
+  const el = document.getElementById("f_entity");
+  if(!el) return;
+  const cur = el.value;
+  el.innerHTML = '<option value="">— 请选择 —</option>' + getEntityTypes().map(e=>'<option value="'+esc(e)+'">'+esc(e)+'</option>').join("");
+  el.value = cur;
+}
+
+/* ---------- 标题自动合并生成 ---------- */
+function buildTitle(){
+  const dt = (document.getElementById("f_dealdate").value||"").replace(/\D/g,""); // 纯数字
+  const city = (document.getElementById("f_city").value||"").trim();
+  const src = document.getElementById("f_source").value || "";
+  const cyc = document.getElementById("f_cycle").value || "";
+  const person = (document.getElementById("f_dealperson").value||"").trim();
+  return (dt + city + src + cyc + person).trim();
+}
+
+/* ---------- 标签：自动 + 手动 ---------- */
+function splitTags(str){
+  return String(str==null?"":str).split(/[,，、]/).map(t=>t.trim()).filter(Boolean);
+}
+function autoTagsOf(c){
+  c = c || {};
+  return [c.source, c.cycle, c.taxpayer, c.entityType, c.customer]
+    .map(v => String(v==null?"":v).trim()).filter(Boolean);
+}
+function caseTags(c){
+  c = c || {};
+  const set = {};
+  autoTagsOf(c).forEach(t => set[t] = 1);
+  (c.manualTags || []).forEach(t => set[t] = 1);
+  return Object.keys(set);
+}
+function renderAutoTags(){
+  const box = document.getElementById("autoTagBox");
+  if(!box) return;
+  const c = { source:document.getElementById("f_source").value, cycle:document.getElementById("f_cycle").value,
+    taxpayer:document.getElementById("f_taxpayer").value, entityType:document.getElementById("f_entity").value,
+    customer:document.getElementById("f_customer").value };
+  const arr = autoTagsOf(c);
+  box.innerHTML = arr.length ? arr.map(t=>'<span class="tag-auto">'+esc(t)+'</span>').join("") : '<span class="hint">（字段填写后自动出现）</span>';
+}
+function renderManualTags(){
+  const box = document.getElementById("manualTagBox");
+  if(!box) return;
+  box.innerHTML = currentManualTags.map((t,i)=>'<span class="mtag">'+esc(t)+'<button class="x" title="删除" onclick="removeManualTag('+i+')">×</button></span>').join("");
+}
+function addManualTag(){
+  const inp = document.getElementById("f_manualtag");
+  const raw = (inp.value||"").trim();
+  if(!raw) return;
+  raw.split(/[,，]/).map(t=>t.trim()).filter(Boolean).forEach(t => {
+    if(currentManualTags.indexOf(t) < 0) currentManualTags.push(t);
+  });
+  inp.value = ""; renderManualTags(); autosave();
+  showTip("已添加标签");
+}
+function removeManualTag(i){ currentManualTags.splice(i,1); renderManualTags(); autosave(); }
+
+/* 任一驱动字段变化时：重建标题（若处于自动态）+ 重建自动标签 + 存草稿 */
+function onMetaChange(){
+  if(titleAuto){ document.getElementById("f_title").value = buildTitle(); }
+  renderAutoTags();
+  autosave();
+}
+
+/* ---------- 草稿 ---------- */
+function autosave(){
+  const d = readForm();
+  if(d.title || d.pain || d.approach || d.customer || d.city || d.dealPerson || d.dealDate || d.taxpayer || d.entityType || d.turnover || d.revenue || d.archiver || d.team || currentManualTags.length || currentMedia.screenshots.length || currentMedia.audios.length){
+    safeSet(DRAFT_KEY, JSON.stringify(d));
+  }
+}
+function clearDraft(){ localStorage.removeItem(DRAFT_KEY); }
+function loadDraft(){
+  try{ return JSON.parse(localStorage.getItem(DRAFT_KEY) || "null"); }catch(e){ return null; }
+}
+
+/* ---------- 媒体 ---------- */
+function readImageResize(file, maxW, quality, cb){
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if(w > maxW){ h = Math.round(h * maxW / w); w = maxW; }
+      const cv = document.createElement("canvas");
+      cv.width = w; cv.height = h;
+      cv.getContext("2d").drawImage(img, 0, 0, w, h);
+      cb(cv.toDataURL("image/jpeg", quality), w, h);
+    };
+    img.onerror = () => showTip("图片读取失败，已跳过");
+    img.src = reader.result;
+  };
+  reader.onerror = () => showTip("文件读取失败，已跳过");
+  reader.readAsDataURL(file);
+}
+function onShots(input){
+  const files = Array.from(input.files || []);
+  files.forEach(file => {
+    readImageResize(file, 1000, 0.82, (data, w, h) => {
+      currentMedia.screenshots.push({ name: file.name, data: data, w: w, h: h });
+      renderMedia(); autosave();
+    });
+  });
+  input.value = "";
+}
+/* 从剪贴板粘贴截图（Ctrl/⌘+V 复制的图片） */
+function onPasteShots(e){
+  const items = (e.clipboardData && e.clipboardData.items) || [];
+  let handled = false;
+  for(const it of items){
+    if(it.kind === "file" && it.type && it.type.indexOf("image/") === 0){
+      const file = it.getAsFile();
+      if(file){
+        handled = true;
+        readImageResize(file, 1000, 0.82, (data, w, h) => {
+          currentMedia.screenshots.push({ name: "剪贴板截图-" + (currentMedia.screenshots.length + 1), data: data, w: w, h: h });
+          renderMedia(); autosave();
+        });
+      }
+    }
+  }
+  if(handled){ e.preventDefault(); showTip("已从剪贴板添加截图"); }
+}
+function onAudios(input){
+  const files = Array.from(input.files || []);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      currentMedia.audios.push({ name: file.name, data: reader.result });
+      renderMedia(); autosave();
+    };
+    reader.onerror = () => showTip("录音读取失败，已跳过");
+    reader.readAsDataURL(file);
+  });
+  input.value = "";
+}
+function delShot(i){ currentMedia.screenshots.splice(i,1); renderMedia(); autosave(); }
+function delAudio(i){ currentMedia.audios.splice(i,1); renderMedia(); autosave(); }
+function setMediaFromCase(c){
+  currentMedia = {
+    screenshots: (c && c.screenshots) ? c.screenshots.slice() : [],
+    audios: (c && c.audios) ? c.audios.slice() : []
+  };
+  renderMedia();
+}
+function renderMedia(){
+  const sb = document.getElementById("shotBox");
+  if(sb) sb.innerHTML = currentMedia.screenshots.map((s,i) =>
+    '<div class="thumb"><img src="'+s.data+'" alt="'+esc(s.name)+'"><button class="x" title="删除" onclick="delShot('+i+')">×</button></div>'
+  ).join("");
+  const ab = document.getElementById("audioBox");
+  if(ab) ab.innerHTML = currentMedia.audios.map((a,i) =>
+    '<div class="audio-row"><audio controls src="'+a.data+'"></audio><span class="nm">'+esc(a.name)+'</span><button class="x" title="删除" onclick="delAudio('+i+')">×</button></div>'
+  ).join("");
+}
+
+/* ---------- 表单 ---------- */
+function readForm(){
+  const c = {
+    id: currentId,
+    title: document.getElementById("f_title").value.trim(),
+    bizType: document.getElementById("f_biz").value,
+    custNo: document.getElementById("f_custno").value.trim(),
+    city: document.getElementById("f_city").value.trim(),
+    dealPerson: document.getElementById("f_dealperson").value.trim(),
+    dealDate: document.getElementById("f_dealdate").value,
+    source: document.getElementById("f_source").value,
+    customer: document.getElementById("f_customer").value.trim(),
+    turnover: document.getElementById("f_turnover").value,
+    revenue: document.getElementById("f_revenue").value,
+    cycle: document.getElementById("f_cycle").value,
+    taxpayer: document.getElementById("f_taxpayer").value,
+    entityType: document.getElementById("f_entity").value,
+    materials: document.getElementById("f_materials").value.trim(),
+    painPoint: document.getElementById("f_pain").value.trim(),
+    approach: document.getElementById("f_approach").value.trim(),
+    keyActions: document.getElementById("f_actions").value.trim(),
+    script: document.getElementById("f_script").value.trim(),
+    highlight: document.getElementById("f_highlight").value.trim(),
+    archiver: document.getElementById("f_archiver").value.trim(),
+    team: document.getElementById("f_team").value.trim(),
+    screenshots: currentMedia.screenshots,
+    audios: currentMedia.audios
+  };
+  c.manualTags = currentManualTags.slice();
+  c.tags = caseTags(c).join("、");
+  return c;
+}
+function fillForm(c){
+  currentId = c ? c.id : null;
+  document.getElementById("f_biz").value = c ? (c.bizType||getBizTypes()[0]||"") : (getBizTypes()[0]||"");
+  document.getElementById("f_custno").value = c ? (c.custNo||"") : "";
+  document.getElementById("f_city").value = c ? (c.city||"") : "";
+  document.getElementById("f_dealperson").value = c ? (c.dealPerson||"") : "";
+  document.getElementById("f_dealdate").value = c ? (c.dealDate||"") : "";
+  document.getElementById("f_source").value = c ? (c.source||"") : "";
+  document.getElementById("f_customer").value = c ? (c.customer||"") : "";
+  document.getElementById("f_turnover").value = c ? (c.turnover||"") : "";
+  document.getElementById("f_revenue").value = c ? (c.revenue||"") : "";
+  document.getElementById("f_cycle").value = c ? (c.cycle||"") : "";
+  document.getElementById("f_taxpayer").value = c ? (c.taxpayer||"") : "";
+  refreshEntitySelect();
+  document.getElementById("f_entity").value = c ? (c.entityType||"") : "";
+  document.getElementById("f_materials").value = c ? (c.materials||"") : "";
+  document.getElementById("f_pain").value = c ? (c.painPoint||"") : "";
+  document.getElementById("f_approach").value = c ? (c.approach||"") : "";
+  document.getElementById("f_actions").value = c ? (c.keyActions||"") : "";
+  document.getElementById("f_script").value = c ? (c.script||"") : "";
+  document.getElementById("f_highlight").value = c ? (c.highlight||"") : "";
+  document.getElementById("f_archiver").value = c ? (c.archiver||"") : "";
+  document.getElementById("f_team").value = c ? (c.team||"") : "";
+  currentManualTags = c ? (c.manualTags ? c.manualTags.slice() : []) : [];
+  document.getElementById("f_title").value = c ? (c.title||"") : "";
+  // 标题是否处于自动生成态：与按当前字段合并结果比对
+  titleAuto = c ? (c.title === buildTitle()) : true;
+  setMediaFromCase(c);
+  renderAutoTags(); renderManualTags();
+  document.getElementById("delBtn").style.display = c ? "inline-block" : "none";
+  document.getElementById("panelTitle").textContent = c ? ("编辑案例 · " + (c.title||"未命名")) : "新建成交案例";
+}
+function newCase(){
+  currentId = null; fillForm(null); clearDraft();
+  showTip("已清空，开始新建一条案例");
+}
+function saveCase(){
+  const d = readForm();
+  if(!d.title){ alert("请先填写「案例标题」"); document.getElementById("f_title").focus(); return; }
+  const now = new Date().toISOString();
+  if(currentId){
+    const i = cases.findIndex(x => x.id === currentId);
+    if(i >= 0){ cases[i] = Object.assign({}, cases[i], d, { updatedAt: now }); }
+  }else{
+    d.id = uid(); d.createdAt = now; d.updatedAt = now;
+    cases.unshift(d); currentId = d.id;
+  }
+  saveCases(); clearDraft();
+  fillForm(cases.find(x => x.id === currentId));
+  refreshFilters(); renderList();
+  showTip("✅ 案例已存档（共 " + cases.length + " 条）");
+}
+function deleteCase(){
+  if(!currentId) return;
+  const c = cases.find(x => x.id === currentId);
+  if(!confirm("确认删除案例「" + (c ? c.title : "") + "」？此操作不可恢复。")) return;
+  cases = cases.filter(x => x.id !== currentId);
+  saveCases(); currentId = null; fillForm(null); clearDraft();
+  refreshFilters(); renderList();
+  showTip("🗑 已删除");
+}
+
+/* ---------- 列表渲染 ---------- */
+function getFilters(){
+  return {
+    q: (document.getElementById("search").value || "").trim().toLowerCase(),
+    biz: document.getElementById("filterBiz").value,
+    tag: document.getElementById("filterTag").value
+  };
+}
+function renderList(){
+  const f = getFilters();
+  let list = cases.slice();
+  if(f.biz) list = list.filter(x => x.bizType === f.biz);
+  if(f.tag) list = list.filter(x => splitTags(x.tags).indexOf(f.tag) >= 0);
+  if(f.q){
+    list = list.filter(x => {
+      const hay = [x.title,x.city,x.customer,x.painPoint,x.approach,x.keyActions,x.script,x.highlight,x.tags,x.materials,x.custNo,x.source,x.dealPerson,x.dealDate,x.taxpayer,x.entityType,x.archiver,x.team].join(" ").toLowerCase();
+      return hay.indexOf(f.q) >= 0;
+    });
+  }
+  list.sort((a,b)=> (b.updatedAt||"").localeCompare(a.updatedAt||""));
+  const box = document.getElementById("cards");
+  document.getElementById("listMeta").textContent = "共 " + cases.length + " 条，当前显示 " + list.length + " 条";
+  if(!list.length){
+    box.innerHTML = '<div class="empty"><div class="big">📂</div>' + (cases.length ? "没有匹配的案例，试试调整筛选。" : "还没有案例，点右上角「＋ 新建案例」开始沉淀第一条成交经验。") + '</div>';
+    return;
+  }
+  box.innerHTML = list.map(c => {
+    const tags = splitTags(c.tags).slice(0,4)
+      .map(t=>'<span class="cb">'+esc(t)+'</span>').join("");
+    const extra = []
+      .concat(c.custNo ? ['<span class="cb">编号 '+esc(c.custNo)+'</span>'] : [])
+      .concat(c.dealPerson ? ['<span class="cb">成交人 '+esc(c.dealPerson)+'</span>'] : [])
+      .concat(c.dealDate ? ['<span class="cb">'+esc(c.dealDate)+'</span>'] : [])
+      .concat(c.source ? ['<span class="cb" style="background:#eafaf0;color:#0a7d4f">'+esc(c.source)+'</span>'] : [])
+      .concat(c.bizType ? ['<span class="cb">'+esc(c.bizType)+'</span>'] : [])
+      .concat(c.taxpayer ? ['<span class="cb">'+esc(c.taxpayer)+'</span>'] : [])
+      .concat(c.entityType ? ['<span class="cb">'+esc(c.entityType)+'</span>'] : [])
+      .join("");
+    const media = (c.screenshots&&c.screenshots.length?('📷'+c.screenshots.length+' '):'') + (c.audios&&c.audios.length?('🎙'+c.audios.length):'');
+    const snippet = c.approach || c.painPoint || "";
+    const d = c.updatedAt ? new Date(c.updatedAt) : null;
+    const ds = d ? (d.getFullYear()+"-"+(d.getMonth()+1).toString().padStart(2,"0")+"-"+d.getDate().toString().padStart(2,"0")) : "";
+    return '<div class="card'+(c.id===currentId?" active":"")+'" onclick="openCase(\''+c.id+'\')">'
+      + '<button class="del" title="删除" onclick="event.stopPropagation();prepareDelete(\''+c.id+'\')">×</button>'
+      + '<div class="ct">'+esc(c.title||"未命名案例")+'</div>'
+      + extra
+      + ((c.turnover||c.revenue)?'<div class="ca">流水 '+fmtMoney(c.turnover||0)+' · 营收 '+fmtMoney(c.revenue||0)+'</div>':'')
+      + tags
+      + (snippet?'<div class="cs">'+esc(snippet)+'</div>':'')
+      + (media?'<div class="cd">'+media+'</div>':'')
+      + (ds?'<div class="cd">更新于 '+ds+'</div>':'')
+      + '</div>';
+  }).join("");
+}
+function prepareDelete(id){ currentId = id; deleteCase(); }
+function openCase(id){
+  const c = cases.find(x => x.id === id);
+  if(!c) return;
+  fillForm(c); renderList();
+}
+
+/* ---------- 筛选器 ---------- */
+function refreshFilters(){
+  const types = getBizTypes();
+  const fb = document.getElementById("filterBiz");
+  const cur = fb.value;
+  fb.innerHTML = '<option value="">全部业务类型</option>' + types.map(b=>'<option value="'+esc(b)+'">'+esc(b)+'</option>').join("");
+  fb.value = cur;
+
+  const ft = document.getElementById("filterTag");
+  const curT = ft.value;
+  const all = {};
+  cases.forEach(c => splitTags(c.tags).forEach(t=>all[t]=(all[t]||0)+1));
+  ft.innerHTML = '<option value="">全部标签</option>' + Object.keys(all).sort().map(t=>'<option value="'+esc(t)+'">'+esc(t)+' ('+all[t]+')</option>').join("");
+  ft.value = curT;
+
+  const fb2 = document.getElementById("f_biz");
+  fb2.innerHTML = types.map(b=>'<option value="'+esc(b)+'">'+esc(b)+'</option>').join("");
+}
+function fillSelect(id, opts){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.innerHTML = '<option value="">— 请选择 —</option>' + opts.map(o=>'<option value="'+esc(o)+'">'+esc(o)+'</option>').join("");
+}
+
+/* ---------- 导出列表图片 ---------- */
+function exportListImage(){
+  if(!cases.length){ alert("还没有案例可导出"); return; }
+  const sorted = cases.slice().sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""));
+  const today = new Date();
+  const ds = today.getFullYear()+"-"+(today.getMonth()+1).toString().padStart(2,"0")+"-"+today.getDate().toString().padStart(2,"0");
+  const rows = sorted.map((c,i)=>{
+    const tags = splitTags(c.tags).slice(0,5)
+      .map(t=>'<span class="ic-b">'+esc(t)+'</span>').join("");
+    const meta = [c.custNo, c.city, c.dealPerson, c.dealDate, c.source, c.bizType, c.customer, c.cycle, c.taxpayer, c.entityType].filter(Boolean).join(" · ");
+    return '<div class="ic-row">'
+      + '<div class="ic-idx">'+(i+1)+'</div>'
+      + '<div class="ic-body"><div class="ic-t">'+esc(c.title||"未命名")+'</div>'
+      + (meta?'<div style="font-size:11.5px;color:#6b5d4a;margin-top:3px">'+esc(meta)+'</div>':'')
+      + tags + '</div>'
+      + ((c.turnover||c.revenue)?'<div class="ic-amt">流 '+fmtMoney(c.turnover||0)+'</div>':'<div class="ic-amt" style="color:#9a8a72">—</div>')
+      + '</div>';
+  }).join("");
+  document.getElementById("imgCard").innerHTML =
+    '<div class="ic-head"><div class="ic-co">'+esc(AGENCY_NAME)+'</div>'
+    + '<div class="ic-title">销售优秀成交案例</div>'
+    + '<div class="ic-sub">共 '+cases.length+' 条 · 导出日期 '+ds+'</div></div>' + rows;
+
+  if(!window.html2canvas) { alert("截图库未加载"); return; }
+  showTip("正在生成图片…");
+  html2canvas(document.getElementById("imgCard"), { scale:2, backgroundColor:"#ffffff", useCORS:true, logging:false })
+    .then(canvas => {
+      canvas.toBlob(blob => {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "销售成交案例-" + ds + ".png";
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+        showTip("✅ 列表图片已导出（"+cases.length+" 条）");
+      });
+    })
+    .catch(e => { console.error(e); alert("图片导出失败："+(e&&e.message||e)); });
+}
+
+/* ---------- 导出单案例 Word ---------- */
+function loadDocx(){ if(window.docx) return window.docx; throw new Error("docx 库未加载"); }
+function b64ToUint8(b64){
+  const bin = atob(b64); const len = bin.length;
+  const arr = new Uint8Array(len);
+  for(let i=0;i<len;i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
+function dataUrlToBlob(dataUrl){
+  const meta = dataUrl.split(",")[0];
+  const mime = (meta.match(/:(.*?);/) || [, "application/octet-stream"])[1];
+  const bin = atob(dataUrl.split(",")[1]);
+  const arr = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+function downloadAudioFiles(audios){
+  if(!audios || !audios.length) return;
+  audios.forEach((a, i) => {
+    setTimeout(() => {
+      try{
+        const blob = dataUrlToBlob(a.data);
+        const u = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = u; link.download = a.name || ("录音"+(i+1));
+        document.body.appendChild(link); link.click(); link.remove();
+        setTimeout(() => URL.revokeObjectURL(u), 5000);
+      }catch(e){ console.error(e); }
+    }, 600 * (i + 1));
+  });
+}
+async function exportWord(){
+  const c = readForm();
+  if(!c.title){ alert("请先填写「案例标题」再导出"); return; }
+  showTip("正在生成 Word…");
+  try{
+    const d = loadDocx();
+    const { Document, Packer, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle, ImageRun } = d;
+    const FSong = { ascii:"Times New Roman", hAnsi:"Times New Roman", eastAsia:"宋体" };
+    const FHei  = { ascii:"Arial", hAnsi:"Arial", eastAsia:"黑体" };
+    const R = (text,o={}) => new TextRun({ text:String(text??""), font:o.font||FSong, size:o.size||24, bold:o.bold, color:o.color });
+    const head = (text) => new Paragraph({ children:[R(text,{font:FHei,size:26,bold:true,color:"0C2D5D"})], spacing:{ before:200, after:80 } });
+    const body = (text) => new Paragraph({ children:[R(text||"—",{size:22})], alignment:AlignmentType.JUSTIFIED, spacing:{ line:360, lineRule:"auto", after:120 } });
+    const noBorder = { top:{style:BorderStyle.NONE}, bottom:{style:BorderStyle.NONE}, left:{style:BorderStyle.NONE}, right:{style:BorderStyle.NONE}, insideHorizontal:{style:BorderStyle.NONE}, insideVertical:{style:BorderStyle.NONE} };
+    const infoRow = (k,v) => new TableRow({ children:[
+      new TableCell({ width:{ size:24, type:WidthType.PERCENTAGE }, margins:{top:40,bottom:40}, children:[ new Paragraph({ children:[R(k,{size:21,bold:true})], alignment:AlignmentType.RIGHT, spacing:{line:320,lineRule:"auto"} }) ] }),
+      new TableCell({ width:{ size:76, type:WidthType.PERCENTAGE }, margins:{top:40,bottom:40}, children:[ new Paragraph({ children:[R(v||"—",{size:21})], spacing:{line:320,lineRule:"auto"} }) ] })
+    ] });
+    const tagStr = splitTags(c.tags).join("、") || "—";
+
+    const children = [];
+    children.push(new Paragraph({ children:[R("优秀成交案例",{font:FHei,size:40,bold:true,color:"0C2D5D"})], alignment:AlignmentType.CENTER, spacing:{ after:60, line:360, lineRule:"auto" } }));
+    children.push(new Paragraph({ children:[R(c.title,{font:FHei,size:26,bold:true,color:"08203F"})], alignment:AlignmentType.CENTER, spacing:{ after:160, line:340, lineRule:"auto" } }));
+    children.push(new Table({ width:{ size:100, type:WidthType.PERCENTAGE }, borders:noBorder, rows:[
+      infoRow("归档人", c.archiver),
+      infoRow("团队名", c.team),
+      infoRow("客户编号", c.custNo),
+      infoRow("成交人", c.dealPerson),
+      infoRow("成交日期", c.dealDate),
+      infoRow("客户来源", c.source),
+      infoRow("业务类型", c.bizType),
+      infoRow("客户行业", c.customer),
+      infoRow("纳税人类型", c.taxpayer),
+      infoRow("主体类型", c.entityType),
+      infoRow("流水", c.turnover?fmtMoney(c.turnover):"—"),
+      infoRow("营收", c.revenue?fmtMoney(c.revenue):"—"),
+      infoRow("成交周期", c.cycle),
+      infoRow("用到的辅料", c.materials),
+      infoRow("标签", tagStr)
+    ] }));
+    children.push(new Paragraph({ spacing:{ after:80 } }));
+    children.push(head("客户痛点")); children.push(body(c.painPoint));
+    children.push(head("关键打法 / 路径")); children.push(body(c.approach));
+    children.push(head("关键动作")); children.push(body(c.keyActions));
+    children.push(head("可复用话术")); children.push(body(c.script));
+    children.push(head("成交亮点 / 复盘")); children.push(body(c.highlight));
+
+    if(c.screenshots && c.screenshots.length){
+      children.push(head("聊天记录截图"));
+      c.screenshots.forEach(s => {
+        const m = String(s.data).match(/^data:(image\/\w+);base64,(.*)$/);
+        if(!m) return;
+        const type = m[1] === "image/png" ? "png" : "jpg";
+        let w = s.w || 520, h = s.h || 360;
+        const maxW = 520; if(w > maxW){ h = Math.round(h * maxW / w); w = maxW; }
+        try{
+          children.push(new Paragraph({ children:[ new ImageRun({ type:type, data: b64ToUint8(m[2]), transformation:{ width:w, height:h } }) ], alignment:AlignmentType.CENTER, spacing:{ before:80, after:80 } }));
+        }catch(e){ console.error(e); }
+      });
+    }
+    if(c.audios && c.audios.length){
+      children.push(head("录音附件"));
+      children.push(new Paragraph({ children:[R("以下录音已随本文档一并导出为独立音频文件，请在下载目录中查收：",{size:21,color:"6b7280"})], spacing:{ after:60 } }));
+      c.audios.forEach((a,i) => {
+        children.push(new Paragraph({ children:[R("📎 "+(a.name||("录音"+(i+1))),{size:22})], spacing:{ after:40 } }));
+      });
+    }
+
+    children.push(new Paragraph({ spacing:{ before:220 } }));
+    children.push(new Paragraph({ children:[R(AGENCY_NAME,{size:22,bold:true,color:"0C2D5D"})], alignment:AlignmentType.RIGHT, spacing:{ line:340, lineRule:"auto" } }));
+    children.push(new Paragraph({ children:[R("归档人："+(c.archiver||"—"),{size:20,color:"08203F"})], alignment:AlignmentType.RIGHT, spacing:{ line:320, lineRule:"auto" } }));
+    children.push(new Paragraph({ children:[R("团队名："+(c.team||"—"),{size:20,color:"08203F"})], alignment:AlignmentType.RIGHT, spacing:{ line:320, lineRule:"auto" } }));
+
+    const doc = new Document({ styles:{ default:{ document:{ run:{ font:FSong, size:24 } } } }, sections:[{ children }] });
+    const blob = await Packer.toBlob(doc);
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "成交案例-" + (c.title||"未命名").slice(0,30) + ".docx";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+    if(c.audios && c.audios.length) downloadAudioFiles(c.audios);
+    showTip("✅ Word 已生成并开始下载" + (c.audios && c.audios.length ? "（含 "+c.audios.length+" 个录音文件）" : ""));
+  }catch(e){
+    console.error(e); alert("Word 导出失败："+(e&&e.message||e));
+  }
+}
+
+/* ---------- 提示 ---------- */
+let tipTimer = null;
+function showTip(msg){
+  const t = document.getElementById("tip");
+  t.innerHTML = msg; t.classList.add("show");
+  clearTimeout(tipTimer);
+  tipTimer = setTimeout(()=>t.classList.remove("show"), 2600);
+}
+
+/* ---------- 初始化 ---------- */
+function init(){
+  loadCases();
+  refreshFilters();
+  fillSelect("f_source", SOURCES);
+  fillSelect("f_cycle", CYCLES);
+  fillSelect("f_taxpayer", TAXPAYERS);
+  refreshEntitySelect();
+  document.addEventListener("paste", onPasteShots);
+  const draft = loadDraft();
+  if(draft && (draft.title || draft.pain || draft.approach || draft.customer || draft.city || draft.dealPerson || draft.dealDate || draft.taxpayer || draft.entityType || draft.turnover || draft.revenue || draft.archiver || draft.team || (draft.screenshots&&draft.screenshots.length) || (draft.audios&&draft.audios.length))){
+    fillForm(draft);
+    showTip("已恢复上次未保存的草稿");
+  }else{
+    fillForm(null);
+  }
+  renderList();
+}
+/* ============ AI 智能解析（本工具独立配置：sales_cases_ai_config） ============
+   流程：聊天截图→视觉模型；录音→语音转写(ASR)；二者汇聚→文本大模型结构化输出。
+   配置端口已明确标注每种大模型所需能力类型。
+   风险提示：截图与录音含客户敏感信息，调用 AI 会将其发送至第三方大模型服务商。 */
+const AI_CFG_KEY = 'sales_cases_ai_config';
+const AI_PROVIDERS = {
+  openai:     { name:'OpenAI',           baseUrl:'https://api.openai.com/v1',                  vision:'gpt-4o',            asr:'whisper-1',       llm:'gpt-4o' },
+  zhipu:      { name:'智谱 GLM',          baseUrl:'https://open.bigmodel.cn/api/paas/v4',       vision:'glm-4v-plus',       asr:'',                 llm:'glm-4-flash' },
+  silicon:    { name:'硅基流动',          baseUrl:'https://api.siliconflow.cn/v1',              vision:'Qwen/Qwen3-VL-8B-Instruct', asr:'FunAudioLLM/SenseVoiceSmall', llm:'Qwen/Qwen2.5-32B-Instruct' },
+  qwen:       { name:'阿里云百炼(通义)',  baseUrl:'https://dashscope.aliyun.com/compatible-mode/v1', vision:'qwen-vl-max', asr:'', llm:'qwen-turbo' },
+  volcengine: { name:'火山引擎方舟',       baseUrl:'https://ark.cn-beijing.volces.com/api/v3',  vision:'doubao-vision-pro',  asr:'',                 llm:'doubao-seed-2-1-pro-260628' },
+  hunyuan:    { name:'腾讯混元',          baseUrl:'https://api.hunyuan.cloud.tencent.com/v1',    vision:'hunyuan-vision-1.5-instruct', asr:'',        llm:'hunyuan-turbo-s' },
+  deepseek:   { name:'DeepSeek',          baseUrl:'https://api.deepseek.com/v1',                vision:'',                  asr:'',                 llm:'deepseek-chat' },
+  moonshot:   { name:'月之暗面 Moonshot', baseUrl:'https://api.moonshot.cn/v1',                 vision:'',                  asr:'',                 llm:'moonshot-v1-8k' },
+  custom:     { name:'自定义（OpenAI 兼容）', baseUrl:'',                                      vision:'',                  asr:'',                 llm:'' }
+};
+/* 本工具必需的能力：视觉(看截图) + 文本/LLM(结构化) 必须同时满足；语音(ASR)为可选，不满足时仅灰掉对应输入框 */
+const AI_REQUIRED_CAPS = { vision:true, llm:true };
+let aiCfg = loadAiCfg();
+
+function loadAiCfg(){
+  let c = {};
+  try{ c = JSON.parse(localStorage.getItem(AI_CFG_KEY) || '{}'); }catch(e){ c = {}; }
+  const cfg = Object.assign({ provider:'silicon', key:'', baseUrl:'', visionModel:'', asrModel:'', llmModel:'' }, c);
+  let dirty = false;
+  // 迁移：硅基流动旧视觉模型 Qwen/Qwen2.5-VL-7B-Instruct 已下线，自动升级到 Qwen3-VL 系列
+  if(cfg.visionModel === 'Qwen/Qwen2.5-VL-7B-Instruct'){
+    cfg.visionModel = 'Qwen/Qwen3-VL-8B-Instruct';
+    dirty = true;
+  }
+  // 迁移：硅基流动 7B/14B 文本模型分析深度不足，自动升级到 32B（深度案例拆解更依赖模型能力）
+  if(cfg.llmModel === 'Qwen/Qwen2.5-7B-Instruct' || cfg.llmModel === 'Qwen/Qwen2.5-14B-Instruct'){
+    cfg.llmModel = 'Qwen/Qwen2.5-32B-Instruct';
+    dirty = true;
+  }
+  if(dirty){ try{ localStorage.setItem(AI_CFG_KEY, JSON.stringify(cfg)); }catch(e){} }
+  return cfg;
+}
+function providerName(k){ return (AI_PROVIDERS[k] && AI_PROVIDERS[k].name) || k || '未设置'; }
+
+/* 下拉选项：按工具必需能力过滤掉完全用不了的 provider */
+function aiCfgOptionsHtml(selected){
+  return Object.keys(AI_PROVIDERS).filter(k => {
+    const p = AI_PROVIDERS[k];
+    for(const cap in AI_REQUIRED_CAPS){ if(AI_REQUIRED_CAPS[cap] && !p[cap]) return false; }
+    return true;
+  }).map(k => '<option value="'+k+'" '+(selected===k?'selected':'')+'>'+AI_PROVIDERS[k].name+'</option>').join('');
+}
+
+/* 能力徽章 + 门控：根据所选平台标注是否支持截图/录音，并在不支持时灰掉输入框 */
+function syncCapState(){
+  const pre = AI_PROVIDERS[document.getElementById('aiProvider').value] || {};
+  const visInput = document.getElementById('aiVisionModel');
+  const asrInput = document.getElementById('aiAsrModel');
+  const capV = document.getElementById('capVision');
+  const capA = document.getElementById('capAsr');
+  const noteV = document.getElementById('noteVision');
+  const noteA = document.getElementById('noteAsr');
+  const visOk = !!pre.vision, asrOk = !!pre.asr;
+  capV.textContent = visOk ? '✅ 支持截图' : '❌ 不支持截图';
+  capV.className = 'cap ' + (visOk ? 'ok' : 'no');
+  capA.textContent = asrOk ? '✅ 支持录音转写' : '❌ 不支持录音转写';
+  capA.className = 'cap ' + (asrOk ? 'ok' : 'no');
+  if(visOk){ visInput.disabled = false; noteV.style.display = 'none'; }
+  else if(!visInput.value.trim()){ visInput.disabled = true; noteV.textContent = '该平台无内置视觉模型，截图解析不可用；请改用「硅基流动」或「OpenAI」。'; noteV.style.display = 'block'; }
+  else { visInput.disabled = false; noteV.style.display = 'none'; }
+  if(asrOk){ asrInput.disabled = false; noteA.style.display = 'none'; }
+  else if(!asrInput.value.trim()){ asrInput.disabled = true; noteA.textContent = '该平台无内置语音转写(ASR)，录音解析不可用；请改用「硅基流动」或「OpenAI」。'; noteA.style.display = 'block'; }
+  else { asrInput.disabled = false; noteA.style.display = 'none'; }
+}
+
+/* 配置弹窗 */
+function openAiConfig(){
+  const f = function(id){ return document.getElementById(id); };
+  const currentProvider = aiCfg.provider || 'silicon';
+  const pre = AI_PROVIDERS[currentProvider] || {};
+  f('aiProvider').innerHTML = aiCfgOptionsHtml(currentProvider);
+  f('aiProvider').value = currentProvider;
+  f('aiKey').value = aiCfg.key || '';
+  f('aiBaseUrl').value = aiCfg.baseUrl || pre.baseUrl || '';
+  f('aiVisionModel').value = aiCfg.visionModel || pre.vision || '';
+  f('aiAsrModel').value = aiCfg.asrModel || pre.asr || '';
+  f('aiLlmModel').value = aiCfg.llmModel || pre.llm || '';
+  syncCapState();
+  f('aiCfgModal').classList.add('show');
+}
+function closeAiConfig(){ document.getElementById('aiCfgModal').classList.remove('show'); }
+function aiCfgOnProvider(){
+  const pre = AI_PROVIDERS[document.getElementById('aiProvider').value] || {};
+  document.getElementById('aiBaseUrl').value = pre.baseUrl || '';
+  document.getElementById('aiVisionModel').value = pre.vision || '';
+  document.getElementById('aiAsrModel').value = pre.asr || '';
+  document.getElementById('aiLlmModel').value = pre.llm || '';
+  syncCapState();
+}
+function saveAiCfg(){
+  aiCfg = {
+    provider: document.getElementById('aiProvider').value,
+    key: document.getElementById('aiKey').value.trim(),
+    baseUrl: document.getElementById('aiBaseUrl').value.trim().replace(/\/+$/,''),
+    visionModel: document.getElementById('aiVisionModel').value.trim(),
+    asrModel: document.getElementById('aiAsrModel').value.trim(),
+    llmModel: document.getElementById('aiLlmModel').value.trim()
+  };
+  localStorage.setItem(AI_CFG_KEY, JSON.stringify(aiCfg));
+  closeAiConfig();
+  showTip('✅ AI 配置已保存（本工具独立存储）');
+}
+function setAiStatus(t){ const el = document.getElementById('aiStatus'); if(el) el.textContent = t || ''; }
+
+/* 视觉模型：识别聊天截图 */
+async function callVision(shots){
+  const url = aiCfg.baseUrl + '/chat/completions';
+  const content = [{ type:'text', text:'你是销售对话转录员。以下是销售与客户的聊天记录截图（可能多张），请严格按以下要求逐张、逐条还原，供资深销售教练做案例拆解：\n1) 按时间顺序，每条用「客户：」「销售：」或「其他：」明确标注说话人；\n2) 必须【逐字引用】双方原话，用「」括起关键原话，禁止改写、概括或合并多条对话；\n3) 每条客户发言后用〔〕标注其情绪与真实意图（如：试探/不信任/比价/焦虑/犹豫/松口/急切/成交信号），并摘出客户提出的异议原话；\n4) 每条销售发言后用〔〕标注其动作类型（如：破冰/风险共情/专业反问/抛案例/算账对比/风险提示/限时逼单/报价）；\n5) 标出关键转折点与触发动作（如：从拒绝到松口、主动问价、约定下一步、成交），并说明是什么话触发了该转折；\n只还原事实，不要做总结性评论。用中文、条理清晰。' }];
+  shots.forEach(function(s){ content.push({ type:'image_url', image_url:{ url: s.data } }); });
+  const resp = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiCfg.key}, body: JSON.stringify({ model: aiCfg.visionModel, messages:[{ role:'user', content:content }], temperature:0.2, max_tokens: 2000 }) });
+  if(!resp.ok){ const t = await resp.text(); throw new Error('视觉模型调用失败('+resp.status+'): '+t.slice(0,300)); }
+  const j = await resp.json();
+  return (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || '';
+}
+
+/* 语音转写(ASR)：录音→文字，OpenAI Whisper 兼容端点 */
+async function callASR(auds){
+  const out = [];
+  for(const a of auds){
+    const url = aiCfg.baseUrl + '/audio/transcriptions';
+    const blob = await (await fetch(a.data)).blob();
+    const fd = new FormData();
+    fd.append('file', blob, a.name || 'audio.mp3');
+    fd.append('model', aiCfg.asrModel);
+    const resp = await fetch(url, { method:'POST', headers:{'Authorization':'Bearer '+aiCfg.key}, body: fd });
+    if(!resp.ok){ const t = await resp.text(); throw new Error('语音转写失败('+resp.status+'): '+t.slice(0,300)); }
+    const j = await resp.json();
+    out.push((a.name || '录音') + '：' + (j.text || ''));
+  }
+  return out.join('\n');
+}
+
+/* 尽力把 LLM 不干净的 JSON 输出洗干净。返回 {ok,data} 或 {ok:false,err,raw} */
+function robustJsonParse(raw){
+  if(raw == null) raw = '';
+  let s = String(raw).trim();
+  // 去掉 markdown 代码块
+  if(s.indexOf('```') >= 0){
+    s = s.replace(/^```[a-zA-Z]*\n?/, '').replace(/```[\s\S]*$/, '').trim();
+  }
+  // 去掉开头的 "json" 标签
+  s = s.replace(/^json\s*/i, '').trim();
+  // 截出第一个 {...} 或 [...]
+  const firstBrace = s.indexOf('{'); const firstBracket = s.indexOf('[');
+  let start = -1, end = -1, isObj = false;
+  if(firstBrace >= 0 && (firstBracket < 0 || firstBrace < firstBracket)){ start = firstBrace; isObj = true; }
+  else if(firstBracket >= 0){ start = firstBracket; isObj = false; }
+  if(start >= 0){
+    let depth = 0; let inStr = false; let esc = false;
+    for(let i = start; i < s.length; i++){
+      const ch = s[i];
+      if(inStr){
+        if(esc){ esc = false; }
+        else if(ch === '\\'){ esc = true; }
+        else if(ch === '"'){ inStr = false; }
+      }else{
+        if(ch === '"'){ inStr = true; }
+        else if(ch === '{' || ch === '['){ depth++; }
+        else if(ch === '}' || ch === ']'){ depth--; if(depth === 0){ end = i; break; } }
+      }
+    }
+  }
+  if(start >= 0 && end >= 0) s = s.slice(start, end + 1);
+  // 尝试原样解析
+  try{ return { ok:true, data:JSON.parse(s) }; }catch(e){}
+  // 修复 1：把未转义的换行/制表/回车统一换成空格（仅字符串内部）
+  try{
+    const fixed = s.replace(/("(?:\\"|[^"])*")/g, function(m){
+      return m.replace(/[\n\r\t]/g, ' ').replace(/\u0000-\u001f/g, ' ');
+    });
+    return { ok:true, data:JSON.parse(fixed) };
+  }catch(e){}
+  // 修复 2：处理字符串里多余/不匹配的引号：把孤立的右双引号换成中文，再尝试
+  try{
+    let fixed2 = s.replace(/("(?:\\"|[^"])*")/g, function(m){
+      // 统计内部未转义引号，若成对则认为合法，否则简单替换内部 " 为“
+      let inner = m.slice(1, -1);
+      // 把所有内部未转义双引号换成中文引号
+      inner = inner.replace(/([^\\])"/g, '$1“');
+      return '"' + inner + '"';
+    });
+    return { ok:true, data:JSON.parse(fixed2) };
+  }catch(e){}
+  return { ok:false, err:'AI 返回的内容不是合法 JSON，无法自动解析。', raw:raw };
+}
+
+/* 文本大模型：汇聚→结构化五字段 */
+async function callStructLLM(visionText, transcript){
+  const url = aiCfg.baseUrl + '/chat/completions';
+  const parts = [];
+  if(visionText) parts.push('【聊天截图识别内容】\n' + visionText);
+  if(transcript) parts.push('【录音转写内容】\n' + transcript);
+  const _biz = (document.getElementById('f_biz') || {}).value || '';
+  const sys = '你是资深销售教练与案例拆解导师，有 15 年财税与企业服务行业的实战与培训经验，熟悉高新认定、专精特新、资质、尽调、报价、公司转让、代理记账、税务筹划等多条业务线。你的读者是销售新人，这份「成交案例拆解」的目标是让他们真正学到可复用的销售心理与打法，而不是看一堆结论。\n\n【业务背景】我们是一家财税/企业服务公司，业务线很广。不同业务客户诉求差异很大，但本质都是 B2B 顾问式销售。\n\n【写作铁律——必须做到，否则视为不合格】\n1) 用【连贯的分析性段落】写作，每段展开"现象→客户心理机制→销售动作意图→实际效果"的因果链。严禁"小标题+一句话"堆砌，严禁用"一、二、三"罗列而无展开，严禁只给结论不给推导。\n2) 心理剖析是重点：每分析一个客户反应，必须指出背后的心理原理（如损失厌恶、锚定效应、互惠、信任阶梯、登门槛、社会认同、决策疲劳、稀缺性），并引用材料原话为证，说明销售的话如何精准命中该心理。\n3) 动作深意：每个销售关键动作，必须讲清"为什么此时做、作用于客户哪层心理、触发了什么变化"，而非只列"做了什么"。\n4) 话术必须是材料里销售的【原话】，用「」逐字括起；每条标注【场景】与"命中的心理点"。若材料根本没有可提炼的现成话术，明确写"材料未提供可提炼原话，建议补充录音/截图"，禁止编造话术。\n5) 学习价值：必须提炼成可复制的方法论/心理框架，并诚实指出本案例不可复制的运气成分，以及销售本可做得更好的 1 个真实具体点。\n6) 严禁空话套话（如"态度热情""服务专业"）；每个判断必须落到材料的具体原话、数字或动作上；材料不足处写"材料未体现"，绝对禁止编造。\n\n' + (_biz ? ('【本案例业务类型】' + _biz + '。请结合该业务的典型客户画像、常见痛点与决策因素来分析；若你不确定该业务的行业细节，一律以材料事实为准，不要编造行业知识。\n\n') : '') + '【分析框架——贯穿五个维度】\n1. 信任建立：销售如何快速从"陌生推销"转为"专业顾问"；\n2. 需求/动机挖掘：把客户表面诉求挖到真实付费驱动力；\n3. 价值锚定：让客户觉得"值这个价、非你不可"；\n4. 异议处理：比价/犹豫/质疑时怎么接怎么破；\n5. 成交逼定：临门一脚的动作与时机。\n\n【输出格式】只输出一个 JSON 对象，字段为 painPoint / approach / keyActions / script / highlight，每个字段都是一段连贯的分析性文字（不是小标题列表）。\n\n字段要求：\n- painPoint（客户痛点与心理）：先写【表象诉求】——客户嘴上说的、想解决的表层问题（引用原话）；再写【深层动机】——真实付费驱动力（恐惧/渴望/成本/风险/省心），剖析背后心理机制，引用原话证据；最后写【决策权重】——这笔成交中哪个动机占比最大、它如何压倒了其他选项。\n- approach（关键打法路径）：按"首次接触→建立信任→挖需→锚定价值→破异议→逼定成交"的时间线，每个阶段写一段：销售做了什么→命中客户哪层心理→客户因此产生什么变化→这一步为什么有效。连起来就是一条完整的"客户心理决策链"。\n- keyActions（关键动作深意）：挑 2-4 个真正撬动成交的动作，每个写：动作本身→背后的销售心理学原理→它触发了客户怎样的心理转折。要讲清"为什么是这个动作、而不是别的"。\n- script（可复用话术）：3-5 条，必须是材料中销售的【原话】（用「」括起），每条标注【场景：破冰/挖需/破价/破异议/逼单】与"命中的心理点"。若材料无现成话术，写"材料未提供可提炼原话"。\n- highlight（成交亮点与可迁移方法论）：写【最值得记的一点】（心理层面）+【可复制的 SOP/心理框架】+【本案例不可复制的运气成分】+【销售本可做得更好的 1 个真实具体点】。';
+  const EXAMPLE = {
+    painPoint: "表象诉求：客户开口就说「帮我找个便宜的代理记账，每月报税别出错就行」，表面是『省钱+不出错』。\n深层动机：真实驱动力是『税务合规恐惧』而非省钱——客户去年被专管员约谈过（原话「上次专管员打电话问我成本怎么这么低」，并连说两次「我不懂这些」），核心恐惧是「税务暴雷影响法人征信、牵连名下其他公司」。他真正买的不是『记账』，是『有人替我把关、我不用担惊受怕』。\n决策权重：合规恐惧约占 70%、省钱约 20%、省心约 10%；正因恐惧主导，当销售把『便宜』换算成『出事多花 8 万』时，价格立刻不再是障碍。",
+    approach: "首次接触：销售没报价格，先问「您公司现在最怕哪块出问题」——这一句把话题从『买卖』切到『风险』，客户防备心掉下来，开始讲被约谈经历（信任阶梯第一级：被理解）。\n建立信任：销售接「科技型小公司成本列支不规范最容易触发预警」，精准点中恐惧，客户回「对对就是这个」并主动要方案——此时客户已从『防备』转为『依赖专业意见』。\n挖需与锚定：销售给「基础代账+季度税务体检」组合，对比「只代账不体检=埋雷」，用『风险后果』而非『低价』锚定价值，客户自然觉得『值这个价』。\n破异议：客户比价「另一家每月便宜 80」，销售不降价，说「那家不包体检，真出事多花的是 8 万不是 80」——用『损失厌恶』瓦解比价逻辑，客户当场不比。\n逼定：销售给时间锚点「本月做能赶上年报前体检」，把『紧迫感』建立在合理节点上，客户当天下单。整条链是：被理解→信专业→怕风险→认价值→弃比价→下定。",
+    keyActions: "① 风险共情开场而非报价：原理是『先处理情绪再处理事情』。它把客户的『防备』转成『倾诉』，从而拿到「被约谈」这个关键情报，后面所有价值锚定都建立在这条情报上；若一上来报价，客户只会进入比价模式，这步就废了。\n② 把模糊恐惧具体化（成本不规范→触发预警）：原理是『具象化风险才会被感知』。模糊的『怕出事』没有行动力，变成『专管员预警→影响征信』才真正驱动付费。\n③ 不降价、改算风险账（80 vs 8 万）：原理是『损失厌恶远大于获利偏好』。人对『可能亏 8 万』的痛感远高于『省 80』的快感，所以拿风险代价替代价格比较，直接消解比价。",
+    script: "【破冰/挖需】「您公司现在哪块最怕出问题？是报税、还是怕被查？」——先问风险再问业务，客户瞬间觉得你懂行，愿意讲真话。\n【破价/破异议】「另一家便宜 80 但不包税务体检，真出事多花的是 8 万不是 80。」——用损失厌恶替代降价，保住利润。\n【逼单】「这个月做能赶上年报前全面体检，过了这村得等明年。」——给时间锚点，制造合理紧迫感。",
+    highlight: "最值得记的一点（心理层）：对『怕风险型』客户，越谈价格越死，越谈风险越成——因为他的决策权重里恐惧占 7 成。\n可复制 SOP/心理框架：风险共情开场→痛点具体化→风险锚定价值→算风险账破比价→时间锚点逼定。\n不可复制的运气：客户恰好上月被约谈、焦虑记忆新鲜；换没被约谈的客户，需先制造风险认知再走流程。\n销售可改进的真实一点：开场问「最怕哪块」稍显宽泛，若直接问「您公司有没有收到过税务提醒」，能更快戳中恐惧、缩短破冰时间。"
+  };
+  const user = parts.join('\n\n')
+    + '\n\n以下是「高质量深度分析」的范例，仅用于说明期望的深度、文风与格式，请勿照搬其内容，必须基于上面真实材料：\n'
+    + JSON.stringify(EXAMPLE)
+    + '\n\n请严格基于上面的真实材料做分析，只输出一个 JSON 对象，字段为 painPoint / approach / keyActions / script / highlight。\n【硬性要求】\n1) 写成连贯的分析性段落，禁止“一、二、三”小标题堆砌，每段要有因果推导。\n2) 话术 script 必须是材料中销售的【原话】，禁止改写或编造；没有就写“材料未提供可提炼原话”。\n3) 每个结论都要引用材料原话/数字/动作为证；材料未提及的维度写“材料未体现”，绝对禁止编造原话或数据。';
+  const resp = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiCfg.key}, body: JSON.stringify({ model: aiCfg.llmModel || aiCfg.visionModel, messages:[{ role:'system', content: sys },{ role:'user', content: user }], temperature:0.2, max_tokens: 3500 }) });
+  if(!resp.ok){ const t = await resp.text(); throw new Error('结构化大模型调用失败('+resp.status+'): '+t.slice(0,300)); }
+  const j = await resp.json();
+  const txt = (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || '';
+  const parsed = robustJsonParse(txt);
+  if(!parsed.ok){
+    const preview = (parsed.raw || '').slice(0, 500);
+    throw new Error('AI 返回的 JSON 格式不合法（常见原因是文本模型输出不稳定）。\n原始返回前 500 字：\n' + preview + '\n\n可改用「AI 配置」中的「复制手动桥接模板」自行解析。');
+  }
+  return parsed.data;
+}
+
+function applyAiResult(r){
+  if(!r) return;
+  const set = function(id, val){ const el = document.getElementById(id); if(el && val != null && val !== ''){ if(typeof val !== 'string'){ val = Array.isArray(val) ? val.join('\n') : JSON.stringify(val); } el.value = val; } };
+  set('f_pain', r.painPoint);
+  set('f_approach', r.approach);
+  set('f_actions', r.keyActions);
+  set('f_script', r.script);
+  set('f_highlight', r.highlight);
+  autosave();
+}
+
+/* 主流程 */
+async function aiParse(){
+  if(!aiCfg.key){ openAiConfig(); showTip('请先在「⚙ AI 配置」填写大模型'); return; }
+  const shots = currentMedia.screenshots;
+  const auds = currentMedia.audios;
+  if(!shots.length && !auds.length){ alert('请先上传聊天截图或录音，AI 才能解析生成初稿。'); return; }
+  const useVision = shots.length && aiCfg.visionModel;
+  const useAsr = auds.length && aiCfg.asrModel;
+  if(!useVision && !useAsr){ alert('当前配置缺少视觉模型或语音转写模型，无法解析截图/录音。请到「⚙ AI 配置」填写对应能力的大模型。'); return; }
+  let visionText = '', transcript = '';
+  try{
+    if(useVision){ setAiStatus('① 正在识别聊天截图…'); visionText = await callVision(shots); }
+    if(useAsr){ setAiStatus('② 正在转写录音…'); transcript = await callASR(auds); }
+    setAiStatus('③ 正在生成结构化案例初稿…');
+    const r = await callStructLLM(visionText, transcript);
+    applyAiResult(r);
+    setAiStatus('');
+    showTip('✅ AI 已生成初稿，请归档人核对并修改');
+  }catch(err){
+    setAiStatus('');
+    showAiError(err && err.message ? err.message : String(err));
+  }
+}
+
+function showAiError(msg){
+  document.getElementById('aiErrMsg').textContent = msg;
+  document.getElementById('aiErrModal').classList.add('show');
+}
+function closeAiError(){ document.getElementById('aiErrModal').classList.remove('show'); }
+
+/* 手动桥接：复制分析提示词模板（适合不支持直连或需私有化场景） */
+function copyAiTemplate(){
+  const t = '【销售优秀成交案例·AI 分析模板】\n请将聊天截图与录音转录文本粘贴在下方，然后要求模型按 painPoint / approach / keyActions / script / highlight 五个字段输出 JSON。\n\n[在此粘贴材料]';
+  try{ navigator.clipboard.writeText(t); showTip('已复制分析提示词模板，可粘贴到任意 AI 对话中使用'); }
+  catch(e){ window.prompt('复制以下提示词模板：', t); }
+}
+
+init();
+</script>
+</body>
+</html>

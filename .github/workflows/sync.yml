@@ -1,14 +1,17 @@
-name: Sync ima & Deploy
+name: Sync & Deploy Pages
 
 on:
+  # 源码推送即重新构建部署（保证团队每次更新都能上线）
+  push:
+    branches: [main]
   schedule:
     # 每天 2 次：UTC 02:00 / 10:00 = 北京时间 10:00 / 18:00
     - cron: '0 2,10 * * *'
   workflow_dispatch:
 
-# GitHub Pages 部署权限
+# GitHub Pages 部署 + 定时同步提交权限
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -17,7 +20,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  sync-build-deploy:
+  build-deploy:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -35,35 +38,35 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # 定时 / 手动触发时才同步知识库；源码推送直接走构建，不依赖 ima 凭证
       - name: Sync knowledge base from ima
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         env:
           IMA_OPENAPI_CLIENTID: ${{ secrets.IMA_OPENAPI_CLIENTID }}
           IMA_OPENAPI_APIKEY: ${{ secrets.IMA_OPENAPI_APIKEY }}
         run: node sync-ima.mjs
 
-      - name: Detect content changes
-        id: changes
+      - name: Commit synced content
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           if git diff --cached --quiet; then
             echo "no changes"
-            echo "changed=false" >> "$GITHUB_OUTPUT"
           else
-            echo "changes detected"
-            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git commit -m "chore: 同步知识库"
+            git push
           fi
 
       - name: Build
-        if: steps.changes.outputs.changed == 'true'
         run: npm run build
 
       - name: Upload Pages artifact
-        if: steps.changes.outputs.changed == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
 
       - name: Deploy to GitHub Pages
-        if: steps.changes.outputs.changed == 'true'
         id: deployment
         uses: actions/deploy-pages@v4

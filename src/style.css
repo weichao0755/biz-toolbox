@@ -1,20 +1,31 @@
 :root {
-  --bg: #f6f7f9;
-  --surface: #ffffff;
-  --border: #e3e6ea;
-  --text: #1f2329;
-  --text-2: #646a73;
-  --accent: #185fa5;
-  --accent-2: #378add;
-  --accent-bg: #e6f1fb;
-  --green: #3b6d11;
-  --green-bg: #eaf3de;
-  --red: #a32d2d;
-  --red-bg: #fcebeb;
-  --amber: #854f0b;
-  --amber-bg: #faeeda;
-  --radius: 10px;
-  --radius-lg: 14px;
+  --bg: #faf7f2;
+  --surface: #fffefb;
+  --surface-2: #fdf6ec;
+  --border: #ece3d6;
+  --text: #2a2118;
+  --text-2: #6b5d4a;
+  --muted: #9a8a72;
+  --card: #fffefb;
+  --accent: #b45309;
+  --accent-2: #e0901a;
+  --accent-grad: linear-gradient(135deg, #e0901a 0%, #b45309 100%);
+  --accent-bg: #fdf3e3;
+  --green: #2f8f5b;
+  --green-bg: #e8f3ec;
+  --red: #c0392f;
+  --red-bg: #fbecea;
+  --amber: #b5730a;
+  --amber-bg: #fbf0dd;
+  --radius: 12px;
+  --radius-lg: 18px;
+  --shadow-sm: 0 1px 2px rgba(60,40,10,.05), 0 2px 8px -4px rgba(60,40,10,.08);
+  --shadow: 0 6px 20px -8px rgba(60,40,10,.14), 0 14px 40px -16px rgba(60,40,10,.18);
+  --mono: 'JetBrains Mono','SF Mono',ui-monospace,SFMono-Regular,Consolas,monospace;
+  --side-bg: linear-gradient(180deg,#fffdf9 0%,#fdf3e3 100%);
+  --side-line: rgba(180,120,40,.16);
+  --side-text: #6b5d4a;
+  --side-dim: #9a8a72;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -23,7 +34,9 @@ html, body, #app { height: 100%; }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image: radial-gradient(circle at 1px 1px, rgba(224,144,26,.07) 1px, transparent 0);
+  background-size: 24px 24px;
   color: var(--text);
   font-size: 14px;
   line-height: 1.6;
@@ -36,22 +49,26 @@ button {
   font-family: inherit;
   cursor: pointer;
   border: none;
-  border-radius: 8px;
+  border-radius: 9px;
   font-size: 14px;
-  padding: 8px 18px;
-  background: var(--accent);
+  padding: 9px 20px;
+  font-weight: 500;
+  background: var(--accent-grad);
   color: #fff;
-  transition: opacity .15s;
+  box-shadow: 0 6px 16px -6px rgba(224,144,26,.4);
+  transition: transform .15s, box-shadow .15s, opacity .15s;
 }
-button:hover { opacity: .88; }
-button:disabled { opacity: .45; cursor: not-allowed; }
+button:hover { opacity: .92; transform: translateY(-1px); box-shadow: 0 10px 24px -6px rgba(224,144,26,.45); }
+button:active { transform: translateY(0); }
+button:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
 
 button.secondary {
   background: var(--surface);
   color: var(--text);
   border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
-button.secondary:hover { background: #f2f4f7; }
+button.secondary:hover { background: var(--surface-2); transform: translateY(-1px); }
 
 input, select, textarea {
   font-family: inherit;
@@ -63,8 +80,12 @@ input, select, textarea {
   color: var(--text);
   width: 100%;
   outline: none;
+  transition: border-color .15s, box-shadow .15s;
 }
-input:focus, select:focus, textarea:focus { border-color: var(--accent-2); }
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent-2);
+  box-shadow: 0 0 0 3px rgba(224,144,26,.16);
+}
 
 .page { padding: 24px 28px; max-width: 1080px; }
 .page-title { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
@@ -75,7 +96,10 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-2); }
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 20px;
+  box-shadow: var(--shadow-sm);
 }
+
+.grad-text { background: var(--accent-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
 .tag {
   display: inline-block;
@@ -95,7 +119,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-2); }
 .md-body li { margin: 4px 0; }
 .md-body table { border-collapse: collapse; margin: 12px 0; width: 100%; }
 .md-body th, .md-body td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
-.md-body th { background: #f2f4f7; font-weight: 600; }
+.md-body th { background: #faf4ea; font-weight: 600; }
 .md-body blockquote {
   border-left: 3px solid var(--accent-2);
   background: var(--accent-bg);
