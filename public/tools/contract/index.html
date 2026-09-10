@@ -645,7 +645,7 @@ function stepTermsIntermediary(){
     </div>
   </div>`
 }
-/* 债务债权 · 合同要素（标的公司名称 + 营业执照变更生效日期） */
+/* 债务债权 · 合同要素（标的公司名称；责任分界用「营业执照变更生效之日」表述，不填日期） */
 function stepTermsDebt(){
   const tm = state.terms
   return `
@@ -656,13 +656,9 @@ function stepTermsDebt(){
     <div class="frow">
       ${field(tm,'target','标的公司名称',{req:1,placeholder:'如：深圳市XX科技有限公司'})}
     </div>
-    <div class="sec-title">营业执照变更生效日期</div>
-    <div class="frow">
-      <div class="fg"><label>营业执照变更生效日期<span class="req">*</span></label><input type="date" value="${val(tm.changeDate)}" oninput="setVal('terms','changeDate',this.value)"><div class="hint">以该日期为界：变更日前的债权债务由甲方（旧股东）承继清偿；变更日后由乙方（新股东）负责</div></div>
-    </div>
     <div class="btn-row">
       <button class="btn btn-ghost" onclick="gotoStep(1)">← 上一步</button>
-      <button class="btn btn-primary" ${tm.target&&tm.changeDate?'':'disabled'} onclick="gotoStep(3)">下一步：补充协议 →</button>
+      <button class="btn btn-primary" ${tm.target?'':'disabled'} onclick="gotoStep(3)">下一步：补充协议 →</button>
     </div>
   </div>`
 }
@@ -1033,7 +1029,6 @@ function stepGen(){
       + kv('通知联系人', ac.name) + kv('通知电话', ac.phone) + kv('通知邮箱', ac.email)
   } else if(state.type==='debt'){
     elemKv = kv('标的公司名称', state.terms.target)
-      + kv('营业执照变更生效日期', state.terms.changeDate)
       + kv('旧股东人数', String(state.partiesA.length||0))
       + kv('新股东人数', String(state.partiesB.length||0))
   } else {
@@ -1256,27 +1251,50 @@ function contractBody(){
 
   /* ===== 债务债权协议（股权转让所涉债权债务责任转让协议）===== */
   if(state.type==='debt'){
-    const changeDateTxt = tm.changeDate ? cnDate(tm.changeDate) : '＿＿＿＿年＿＿月＿＿日'
     const totalParties = (state.partiesA.length||0) + (state.partiesB.length||0)
     const copyCount = totalParties > 2 ? totalParties : 2
     const cnCopy = ['一','二','三','四','五','六','七','八','九','十'][copyCount-1] || String(copyCount)
+    /* 注1：不写 num，由生成器按顺序自动编号（一、二、三…），增删条款无需手动重排
+       注2：责任分界点统一用「营业执照变更生效之日」这一客观事件表述，全文不出现具体日期 */
     return [
-      {num:1, t:'债权债务责任分割', body:[
-        `经协商，${tName}（以下简称"公司"）原股东的全部出资均已转让给现任新股东，股东转让出资后，原股东不再享受股东权利，也不再承担股东义务。现就公司在股权转让之前经营过程中已经产生或可能产生的债权债务、经营风险等事项，双方特别约定及声明如下：`,
-        `以营业执照变更生效之日（${changeDateTxt}）为界，该日期之前所发生的公司转让之前遗留的以公司或公司股东名义对外负债、提供担保、发生侵权及各类应纳而未缴职工社保问题均与乙方无关，均由甲方承继并负责清偿；甲方未及时清偿的，由甲方承担相应法律和经济责任；如果不得已由转让后的公司先代为清偿或承担责任的，则乙方及转让后的公司有权要求甲方清偿并承担违约责任。`,
-        `公司营业执照变更生效之日（${changeDateTxt}）之后所新产生的债权债务、提供担保、发生侵权、劳务纠纷、对外负债、偷税漏税及各类因缴纳而未缴清的税费均与甲方无关，一切责任均由乙方负责。`
+      {t:'债权债务责任的划分', body:[
+        `双方同意，以营业执照变更生效之日为界，划分标的公司的债权债务责任。`,
+        `该日之前已经产生的债务，以及虽于该日之后才被确认、但确因该日之前的经营行为或事实所引起的债务（以下统称"变更前债务"），均由甲方承担并负责清偿，与乙方及转让后的公司无关。`,
+        `该日之后新产生的债权债务，均由乙方负责并承担相应责任，与甲方无关。`
       ]},
-      {num:2, t:'出资实缴责任', body:[
-        `公司转让后，甲方不再对出资实缴负责，一切出资实缴责任由乙方负责。`
+      {t:'变更前债务的范围', body:[
+        `前条所称"变更前债务"，包括但不限于下列情形：`,
+        `　　（一）应缴而未缴的税款、滞纳金及税务处罚；`,
+        `　　（二）应缴而未缴的社会保险费、住房公积金及其滞纳金；`,
+        `　　（三）变更日之前已发生但尚未结案的诉讼、仲裁所确定的赔偿责任；`,
+        `　　（四）变更日之前提供担保所应承担的代偿责任；`,
+        `　　（五）其他因变更日之前的经营行为、事实或原因所产生的债务与责任。`,
+        `上述债务无论何时被确认，均由甲方承担；乙方或转让后的公司因此遭受损失的，甲方应予赔偿。`
       ]},
-      {num:3, t:'声明与保证', body:[
-        `甲方（旧股东）在本次股权转让中声明：截止本协议订立及执照变更前，公司不存在对外未结清债权债务。甲方对此声明承担法律责任及后果。`
+      {t:'出资实缴责任', body:[
+        `自营业执照变更生效之日起，标的公司尚未实缴的出资义务，由乙方按公司章程约定按期足额缴纳。`
       ]},
-      {num:4, t:'协议份数', body:[
-        `本声明一式${cnCopy}份，由甲乙双方各持一份，作为甲乙双方认定责任的法律凭证。`
+      {t:'双方确认与声明', body:[
+        `甲方确认：截至本协议签署之日，甲方已知悉的标的公司债务情况，已如实向乙方披露。`,
+        `乙方确认：已充分了解标的公司的经营及债务状况，自愿按本协议约定承接相应责任。`
       ]},
-      {num:5, t:'协议生效', body:[
-        `本协议经甲乙双方签署后与双方所签署的股权转让协议同时生效。`
+      {t:'税费承担', body:[
+        `因本次股权转让及本协议履行所产生的税费，由双方按照法律法规的规定各自承担；法律法规未作明确规定的，由双方协商确定。`
+      ]},
+      {t:'代偿与追偿', body:[
+        `若标的公司先行垫付了本应由甲方承担的债务，乙方有权代表标的公司向甲方追偿，甲方应在收到书面通知后三十日内予以清偿。`
+      ]},
+      {t:'违约责任', body:[
+        `任何一方违反本协议约定，应赔偿由此给守约方造成的实际损失。`
+      ]},
+      {t:'争议解决', body:[
+        `因本协议引起的争议，双方应友好协商解决；协商不成的，任何一方可向合同签订地有管辖权的人民法院提起诉讼。`
+      ]},
+      {t:'协议份数', body:[
+        `本协议一式${cnCopy}份，各方各持一份，具有同等法律效力。`
+      ]},
+      {t:'协议生效', body:[
+        `本协议自各方签署之日起生效。`
       ]}
     ]
   }
@@ -1366,7 +1384,6 @@ function validateBeforeGen(){
       else if(!String(p.idNo||'').trim()) return `请填写${roleB}（第${i+1}位）身份证号`
     }
     if(!String(tm.target||'').trim()) return '请填写标的公司名称'
-    if(!String(tm.changeDate||'').trim()) return '请填写营业执照变更生效日期'
     return ''
   }
   if(!String(A.name||'').trim()) return `请填写${roleA}名称/姓名`
