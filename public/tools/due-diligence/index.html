@@ -81,6 +81,9 @@ header .rec-btn:hover{background:#fbf5ea;border-color:#e0901a}
 .shot-item{position:relative;border:1px solid #e8dcd0;border-radius:8px;overflow:hidden;background:#fff}
 .shot-item img{display:block;height:76px;object-fit:cover}
 .shot-del{position:absolute;top:2px;right:2px;border:none;background:rgba(220,38,38,.88);color:#fff;border-radius:50%;width:19px;height:19px;font-size:11px;cursor:pointer;line-height:1}
+.shot-no{position:absolute;top:2px;left:2px;background:rgba(12,45,93,.82);color:#fff;border-radius:4px;font-size:10px;padding:1px 5px;line-height:1.4}
+.shot-clear{margin-top:6px;border:1px solid #e8dcd0;background:#fff;color:#9a8a72;border-radius:6px;padding:4px 10px;font-size:11.5px;cursor:pointer;font-family:inherit}
+.shot-clear:hover{border-color:#DC2626;color:#DC2626}
 .shot-upload{border:1.5px dashed #f3c98a;background:#fdf4e6;color:#e0901a;border-radius:8px;padding:12px;text-align:center;font-size:12.5px;cursor:pointer;font-family:inherit;transition:.15s}
 .shot-upload:hover{border-color:#e0901a;background:#fbeccb}
 /* 单选卡片 */
@@ -334,23 +337,27 @@ function dynTable(group, key, cols, rowIdFn){
 function shotsOf(cat){ return state.attachments.items.filter(x=>x.category===cat) }
 function shotSlot(cat, label, opts={}){
   const list=shotsOf(cat)
-  let h=`<div class="shot-slot"><div class="shot-label">${label}${opts.req?'<span class="req">*</span>':''}${opts.note?`<span class="tag">${opts.note}</span>`:''}</div>`
+  /* 每个环节均支持多张截图（multi 默认 true） */
+  let h=`<div class="shot-slot"><div class="shot-label">${label}${opts.req?'<span class="req">*</span>':''}${opts.note?`<span class="tag">${opts.note}</span>`:''}${list.length?`<span class="tag" style="color:#b45309">已传 ${list.length} 张</span>`:''}</div>`
   if(list.length){
     h+='<div class="shot-list">'
     list.forEach((it,idx)=>{
-      h+=`<div class="shot-item"><img src="${it.dataUrl}"><button class="shot-del" data-shot-del="${cat}.${idx}">×</button></div>`
+      h+=`<div class="shot-item"><span class="shot-no">${idx+1}</span><img src="${it.dataUrl}"><button class="shot-del" data-shot-del="${cat}.${idx}" title="删除这张">×</button></div>`
     })
     h+='</div>'
   }
-  h+=`<div class="shot-upload" data-shot="${cat}" data-multi="${opts.multi?1:0}">${opts.multi?(list.length?'＋ 继续添加（Ctrl+V 或点击）':'＋ 上传截图（Ctrl+V 或点击）'):(list.length?'⇄ 点击替换截图（Ctrl+V 或点击）':'＋ 上传截图（Ctrl+V 或点击）')}</div>`
+  h+=`<div class="shot-upload" data-shot="${cat}" data-multi="1">${list.length?'＋ 继续添加（可多选 · Ctrl+V 或点击）':'＋ 上传截图（可多选 · Ctrl+V 或点击）'}</div>`
+  if(list.length>1) h+=`<button class="shot-clear" data-shot-clear="${cat}">清空本环节（${list.length} 张）</button>`
   h+='</div>'
   return h
 }
+/* 记录最近一次上传的环节，供连续粘贴时续接 */
+let _lastShotCat=null
 function addShot(cat, file){
   if(!file || !file.type.startsWith('image/')) return
+  _lastShotCat=cat
   processImage(file).then(res=>{
-    const isMulti=CATS_BY_STEP && (cat==='equity')
-    if(!isMulti) state.attachments.items=state.attachments.items.filter(x=>x.category!==cat)
+    /* 所有环节均支持多张：直接追加，不再清掉已有截图 */
     state.attachments.items.push({ id:Date.now()+'_'+Math.random().toString(36).slice(2,7), category:cat, title:CAT_LABELS[cat]||'', ...res })
     saveState(); renderStep()
   }).catch(err=>alert('图片处理失败：'+err.message))
@@ -431,6 +438,15 @@ document.addEventListener('click', e=>{
     fi.click()
     return
   }
+  /* 清空某个环节的全部截图 */
+  const shotClear=e.target.closest('[data-shot-clear]')
+  if(shotClear){
+    const cat=shotClear.dataset.shotClear
+    if(!confirm('确定清空该环节已上传的全部截图吗？此操作不可撤销。')) return
+    state.attachments.items=state.attachments.items.filter(x=>x.category!==cat)
+    saveState(); renderStep()
+    return
+  }
   /* 截图删除 */
   const shotDel=e.target.closest('[data-shot-del]')
   if(shotDel){
@@ -473,10 +489,10 @@ document.addEventListener('paste', e=>{
       e.preventDefault()
       const file=it.getAsFile()
       if(!file) return
-      /* 找第一个空槽；若全满，粘贴到第一个槽（单槽则替换，多槽则追加） */
+      /* 优先填第一个还空着的环节；若本步各环节都已有图，则续接到最近一次上传的环节 */
       let cat=null
       for(const c of cats){ if(!shotsOf(c).length){ cat=c; break } }
-      if(!cat) cat=cats[0]
+      if(!cat) cat=(_lastShotCat && cats.indexOf(_lastShotCat)>=0) ? _lastShotCat : cats[0]
       addShot(cat,file)
       flash('已粘贴到：'+(CAT_LABELS[cat]||cat))
       return
@@ -527,9 +543,9 @@ function stepEquity(){
 }
 
 function stepFinance(){
-  let h='<div class="step-help"><b>💰 财务概况：以电子税务局系统核查为准。</b>请逐项粘贴或上传税局系统截图（可 <b>Ctrl+V</b> 直接粘贴，自动分配到空位），并选择社保、公积金、银行账户开通情况。截图将嵌入报告的「财务概况」章节。</div>'
-  h+='<div class="sec-title">税局系统核查截图（必传 8 项）</div>'
-  FIN_SLOTS.forEach(s=>{ h+=shotSlot(s.cat, s.label, {req:1, note:'必传'}) })
+  let h='<div class="step-help"><b>💰 财务概况：以电子税务局系统核查为准。</b>请逐项粘贴或上传税局系统截图（每项均可上传多张，可 <b>Ctrl+V</b> 直接粘贴，按顺序自动分配到还没有图的环节），并选择社保、公积金、银行账户开通情况。截图将全部嵌入报告的「财务概况」章节。</div>'
+  h+='<div class="sec-title">税局系统核查截图（必传 8 项 · 每项可多张）</div>'
+  FIN_SLOTS.forEach(s=>{ h+=shotSlot(s.cat, s.label, {req:1, note:'必传，可多张'}) })
   h+='<div class="sec-title">账户开通情况</div>'
   const ac=state.finance.accounts
   h+=`<div class="frow">${field('finance.accounts','social','社保账户开通情况',{req:1,type:'select',options:['','有','无','销户']})}${field('finance.accounts','housing','公积金账户开通情况',{req:1,type:'select',options:['','有','无','销户']})}${field('finance.accounts','bank','银行账户开通情况',{req:1,type:'select',options:['','有','无','销户']})}</div>`
@@ -544,8 +560,8 @@ function stepLegal(){
   h+=radioCards('legal','hasLawsuit','是否存在未完成诉讼？',['是','否'],{req:1})
   const hl=state.legal.hasLawsuit
   if(hl==='否'){
-    h+='<div class="sec-title">无诉讼证明截图</div>'
-    h+=shotSlot('legal_nolawsuit','无未完成诉讼证明',{req:1,note:'必传，如裁判文书网/企查查查询结果'})
+    h+='<div class="sec-title">无诉讼证明截图（可多张）</div>'
+    h+=shotSlot('legal_nolawsuit','无未完成诉讼证明',{req:1,note:'必传，可多张，如裁判文书网/企查查查询结果'})
   }else if(hl==='是'){
     h+='<div class="sec-title">未完成诉讼案件详情</div>'
     h+=dynTable('legal','lawsuits',[
@@ -940,8 +956,16 @@ function buildDocx(){
   children.push(H1('四、财务概况'))
   children.push(H2('4.1 电子税务局核查截图'))
   FIN_SLOTS.forEach((sl,idx)=>{
-    const it=shotsOf(sl.cat)[0]
-    shotBlock('4.1.'+(idx+1)+' '+sl.label,it).forEach(x=>children.push(x))
+    const arr=shotsOf(sl.cat)
+    if(arr.length){
+      arr.forEach((it,k)=>{
+        const label='4.1.'+(idx+1)+' '+sl.label+(arr.length>1?('（'+(k+1)+'）'):'')
+        shotBlock(label,it).forEach(x=>children.push(x))
+      })
+    }else{
+      children.push(H2('4.1.'+(idx+1)+' '+sl.label))
+      children.push(p(r('（未提供截图）',{color:C.gray})))
+    }
   })
   children.push(H2('4.2 账户开通情况'))
   const ac=d.finance.accounts
@@ -969,8 +993,15 @@ function buildDocx(){
   }else{
     children.push(H2('5.1 未完成诉讼核查'))
     children.push(body('经核查，目标公司不存在未完成的诉讼/仲裁案件，相关证明截图如下。'))
-    const nl=shotsOf('legal_nolawsuit')[0]
-    shotBlock('5.2 无诉讼证明截图',nl).forEach(x=>children.push(x))
+    const nlShots=shotsOf('legal_nolawsuit')
+    if(nlShots.length){
+      nlShots.forEach((it,k)=>{
+        const label=nlShots.length>1?('5.2.'+(k+1)+' 无诉讼证明截图（'+(k+1)+'）'):'5.2 无诉讼证明截图'
+        shotBlock(label,it).forEach(x=>children.push(x))
+      })
+    }else{
+      children.push(p(r('（未提供截图）',{color:C.gray})))
+    }
   }
   children.push(new Paragraph({ children:[new PageBreak()] }))
 
