@@ -63,6 +63,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { BACKUP_KEYS } from './data/backupKeys'
+import { initVault } from './utils/localVault'
 
 // 平台门户访问密码（仅锁首页/知识库/工具箱等门户页，工具独立 HTML 不受影响）
 const LOCK_PWD = '940214'
@@ -74,6 +76,8 @@ const err = ref(false)
 onMounted(() => {
   // 会话级解锁：本次浏览器标签页内刷新不再重复要求密码，关闭后重新打开需再次输入
   locked.value = sessionStorage.getItem(LOCK_KEY) !== '1'
+  // 本地文件夹同步：解锁前也启动，确保换电脑后一进门就自动恢复数据
+  initVault(BACKUP_KEYS).catch(() => {})
 })
 
 function unlock() {

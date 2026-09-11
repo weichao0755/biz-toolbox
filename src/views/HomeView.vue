@@ -77,6 +77,82 @@
       </div>
     </div>
 
+    <!-- 本地文件夹同步 -->
+    <div class="card data-mgmt vault-card">
+      <div class="data-head">
+        <div class="data-icon" style="background:linear-gradient(135deg,#e0901a,#b45309)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <path d="M8 13h8M8 16.5h5"/>
+          </svg>
+        </div>
+        <div>
+          <h3>本地文件夹同步<span class="vault-state" :class="vaultStateClass">● {{ vaultStateText }}</span></h3>
+          <p v-if="vault.supported">
+            指定一个本机文件夹，平台的所有设定与工具记录会<b>自动</b>存进去（不再受浏览器 5MB 上限限制）。
+            换电脑或重装后，选择同一个文件夹即可<b>自动恢复</b>全部数据。
+          </p>
+          <p v-else class="unsupported">
+            ⚠ 检测到当前浏览器<b>不支持</b>本地文件夹自动同步（仅 Chrome / Edge 等 Chromium 内核可用）。
+            请改用下方「备份数据 / 恢复数据」手动导出导入，效果相同。
+          </p>
+        </div>
+      </div>
+
+      <div v-if="vault.supported" class="vault-body">
+        <div class="vault-info">
+          <div class="vault-row">
+            <span class="k">存储文件夹</span>
+            <span class="v">{{ vault.bound ? vault.folderName : '尚未选择' }}</span>
+          </div>
+          <div class="vault-row">
+            <span class="k">最近同步</span>
+            <span class="v">{{ vault.lastSyncAt ? formatAgo(vault.lastSyncAt) : '尚未同步' }}</span>
+          </div>
+        </div>
+
+        <div class="data-actions">
+          <button v-if="!vault.bound" class="primary" :disabled="working" @click="onChooseFolder">
+            📁 选择存储位置
+          </button>
+          <template v-else>
+            <button v-if="vault.needReconnect" class="primary" :disabled="working" @click="onReconnect">
+              🔌 恢复连接
+            </button>
+            <button class="primary" :disabled="working || vault.syncing" @click="onLoadData()">
+              ⬆ 加载数据
+            </button>
+            <button class="secondary" :disabled="working || vault.syncing" @click="onSyncNow">
+              {{ vault.syncing ? '同步中…' : '⟳ 立即同步' }}
+            </button>
+            <button class="secondary" @click="onChooseFolder">⇄ 更换文件夹</button>
+            <button class="secondary" @click="onToggleHistory">
+              {{ showHistory ? '▴ 收起历史版本' : '▾ 历史版本' + (vault.backups.length ? `（${vault.backups.length}）` : '') }}
+            </button>
+            <button class="secondary danger-text" @click="onDisconnect">断开</button>
+          </template>
+        </div>
+
+        <p v-if="vault.bound && vault.needReconnect" class="vault-tip warn-tip">
+          浏览器关闭后会自动收回文件夹授权，这是安全机制。点一次「恢复连接」即可继续自动同步，不需要重新选文件夹。
+        </p>
+
+        <div v-if="showHistory && vault.bound" class="vault-history">
+          <div class="vh-head">保留最近 {{ Math.min(vault.backups.length, 5) }} 份历史版本，误覆盖时可回滚</div>
+          <div v-if="!vault.backups.length" class="vh-empty">暂无历史版本。数据变化超过一定量或间隔后会自动生成。</div>
+          <div v-else class="vh-list">
+            <div v-for="b in vault.backups" :key="b.name" class="vh-item">
+              <div class="vh-meta">
+                <span class="vh-time">{{ formatTs(b.at) }}</span>
+                <span class="vh-size">{{ formatSize(b.size) }}</span>
+              </div>
+              <button class="vh-load" @click="onLoadData(b.name)">恢复此版本</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="card data-mgmt">
       <div class="data-head">
         <div class="data-icon">
@@ -102,13 +178,18 @@
     <div class="card update-note">
       <h3>内容更新说明</h3>
       <p>平台为静态站点部署，更新流程：内容/工具更新 → 重新部署 → 全员刷新即可看到最新版本（推荐 Ctrl+F5 强制刷新）。需要更新内容时，联系管理员即可。</p>
-      <p class="ver-line">当前版本 {{ APP_VERSION }} · 更新于 2026-09-04</p>
+      <p class="ver-line">当前版本 {{ APP_VERSION }} · 更新于 2026-09-11</p>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { BACKUP_KEYS } from '../data/backupKeys'
+import {
+  vault, chooseFolder, reconnect, syncNow, loadFromFolder,
+  refreshBackups, disconnect, initVault, formatAgo, formatSize, formatTs
+} from '../utils/localVault'
 
 /* 待办模块：从 localStorage 读取待办数据，展示待处理/今日到期/已逾期统计 + 前几条预览 */
 const todoData = ref([])
@@ -161,39 +242,8 @@ function dueLabel(due) {
 
 onMounted(loadTodos)
 
-/* 数据备份/恢复：平台全部数据 key（各工具的表单状态 + 生成记录 + 旧版兼容 key + 各工具独立 AI 配置） */
-const BACKUP_KEYS = [
-  'hightech_ai_config',
-  'sales_cases_ai_config',
-  'contract_tool_data_v2',
-  'contract_records_v1',
-  'contract_ai_cfg',
-  'qual_app_v1',
-  'qual_records_v1',
-  'qual_ai_config',
-  'dd_report_data_v1',
-  'dd_records_v1',
-  'qref_records_v1',
-  'qual_search_config',
-  'qref_local_data',
-  'quote_tool_data_v2',
-  'quote_records_v1',
-  'quote_price_lib_v1',
-  'installment_tool_data_v1',
-  'installment_records_v1',
-  'sales_cases_v1',
-  'sales_cases_draft_v1',
-  'sales_cases_biztypes_v1',
-  'sales_cases_entitytypes_v1',
-  'todo_v1',
-  'todo_lists_v1',
-  'huashu_v1',
-  'huashu_cats_v1',
-  'huashu_vars_v1',
-  'huashu_favs_v1',
-  'huashu_stats_v1'
-]
-const APP_VERSION = 'v1.9.0' /* 2026-09-04 新增话术快捷回复（huashu） */
+/* 全部数据 key 统一来自 src/data/backupKeys.js（新增工具的 key 记得登记） */
+const APP_VERSION = 'v1.10.0' /* 2026-09-11 新增本地文件夹自动同步 */
 const fileInput = ref(null)
 const dataStatus = ref('')
 const dataStatusType = ref('ok')
@@ -256,6 +306,85 @@ function onFileChange(e) {
     }
   }
   reader.readAsText(f)
+}
+
+/* ============ 本地文件夹同步 ============ */
+const showHistory = ref(false)
+const working = ref(false)
+
+const vaultStateText = computed(() => {
+  if (!vault.supported) return '当前浏览器不支持'
+  if (!vault.bound) return '未绑定'
+  if (vault.needReconnect) return '待恢复授权'
+  if (vault.connected) return '已连接'
+  return '未连接'
+})
+const vaultStateClass = computed(() => {
+  if (!vault.supported) return 'disable'
+  if (!vault.bound) return 'idle'
+  if (vault.needReconnect) return 'warn'
+  return 'ok'
+})
+
+async function guard(fn) {
+  if (working.value) return
+  working.value = true
+  try { await fn() } finally { working.value = false }
+}
+
+async function initVaultOnce() {
+  await initVault(BACKUP_KEYS)
+  if (vault.connected) await refreshBackups()
+}
+onMounted(initVaultOnce)
+
+function onChooseFolder() {
+  guard(async () => {
+    const r = await chooseFolder()
+    if (r.aborted) return
+    if (r.ok) {
+      showDataStatus(r.restored ? '已从该文件夹恢复数据，正在刷新…' : `已绑定「${r.folder}」，共写入 ${r.count || 0} 项数据`, 'ok')
+      if (r.restored) setTimeout(() => location.reload(), 900)
+    } else if (r.msg) {
+      showDataStatus(r.msg, 'tip')
+    }
+  })
+}
+function onReconnect() {
+  guard(async () => {
+    const r = await reconnect()
+    if (r.ok) showDataStatus(r.restored ? '已恢复连接并载入文件夹数据…' : '已恢复连接，继续自动同步', 'ok')
+    else showDataStatus(r.msg || '恢复连接失败', 'tip')
+  })
+}
+function onSyncNow() {
+  guard(async () => {
+    const r = await syncNow('manual')
+    showDataStatus(r.ok ? `已同步 ${r.count} 项数据到文件夹` : (r.msg || '同步失败'), r.ok ? 'ok' : 'tip')
+  })
+}
+function onLoadData(name) {
+  const tip = name
+    ? `将用历史版本「${name}」覆盖当前浏览器里的全部数据，确定？`
+    : '将用文件夹里的数据覆盖当前浏览器里的全部数据，确定？'
+  if (!confirm(tip)) return
+  guard(async () => {
+    const r = await loadFromFolder(name)
+    if (r.ok) showDataStatus('正在载入数据并刷新页面…', 'ok')
+    else showDataStatus(r.msg || '加载失败', 'tip')
+  })
+}
+function onToggleHistory() {
+  showHistory.value = !showHistory.value
+  if (showHistory.value) refreshBackups()
+}
+function onDisconnect() {
+  if (!confirm('断开后将不再自动备份到该文件夹（浏览器里的数据会保留），确定？')) return
+  guard(async () => {
+    await disconnect()
+    showHistory.value = false
+    showDataStatus('已断开文件夹同步', 'ok')
+  })
 }
 </script>
 
@@ -421,6 +550,47 @@ function onFileChange(e) {
 .data-status { font-size: 12.5px; margin-left: 6px; }
 .data-status.ok { color: #16a34a; }
 .data-status.tip { color: #ea580c; }
+
+/* 本地文件夹同步 */
+.vault-card { border: 1px solid rgba(224,144,26,.28); background: linear-gradient(180deg, #fffdf9, #fffefb); }
+.vault-card .data-icon { color: #fff; }
+.vault-state { font-size: 11.5px; font-weight: 600; margin-left: 8px; padding: 2px 8px; border-radius: 20px; vertical-align: middle; }
+.vault-state.ok { background: #dcfce7; color: #15803d; }
+.vault-state.warn { background: #fef3c7; color: #b45309; }
+.vault-state.idle { background: #f3f0ea; color: #6b5d4a; }
+.vault-state.disable { background: #fee2e2; color: #b91c1c; }
+.vault-body { padding-top: 4px; }
+.unsupported { color: #b91c1c !important; }
+.data-head p b { color: var(--accent); }
+.vault-info {
+  display: flex; gap: 26px; flex-wrap: wrap; padding: 12px 14px; margin-bottom: 14px;
+  background: #fdf6ea; border: 1px solid var(--border); border-radius: 9px;
+}
+.vault-row { display: flex; flex-direction: column; gap: 3px; min-width: 150px; }
+.vault-row .k { font-size: 11.5px; color: #9a8a72; }
+.vault-row .v { font-size: 13.5px; color: var(--text); font-weight: 600; }
+.data-actions button:disabled { opacity: .55; cursor: not-allowed; }
+.danger-text { color: #b91c1c !important; }
+.vault-tip { font-size: 12.5px; line-height: 1.7; margin: 12px 0 0; }
+.warn-tip { color: #b45309; background: #fffbeb; border-left: 3px solid #f59e0b; padding: 8px 12px; border-radius: 0 6px 6px 0; }
+.vault-history {
+  margin-top: 14px; padding: 14px; border: 1px dashed #e2d3bd; border-radius: 9px; background: #fffdf8;
+}
+.vh-head { font-size: 12.5px; color: #6b5d4a; margin-bottom: 10px; }
+.vh-empty { font-size: 12.5px; color: #9a8a72; }
+.vh-list { display: flex; flex-direction: column; gap: 8px; }
+.vh-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 9px 12px; background: #fff; border: 1px solid var(--border); border-radius: 7px;
+}
+.vh-meta { display: flex; gap: 12px; align-items: baseline; }
+.vh-time { font-size: 13px; color: var(--text); font-weight: 600; }
+.vh-size { font-size: 11.5px; color: #9a8a72; }
+.vh-load {
+  padding: 5px 14px; border-radius: 6px; border: 1px solid #e2d3bd; background: #fff;
+  color: var(--accent); font-size: 12.5px; cursor: pointer; font-family: inherit; font-weight: 600;
+}
+.vh-load:hover { background: #fdf6ea; border-color: var(--accent); }
 .hidden-file { display: none; }
 .update-note h3 { font-size: 14px; margin-bottom: 6px; }
 .update-note p { color: var(--text-2); font-size: 13px; }
