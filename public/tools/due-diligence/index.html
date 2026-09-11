@@ -241,11 +241,14 @@ function loadState(){
   return emptyState()
 }
 function saveState(){
-  let ok=true
-  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)) }catch(e){ ok=false }
+  const ok=tryWrite(LS_KEY, JSON.stringify(state))
   const el=document.getElementById('saveState')
   if(ok){ el.textContent='✓ 数据已自动保存'; el.classList.add('saved') }
-  else{ el.textContent='⚠ 数据过大无法保存，截图仅本次会话有效'; el.classList.remove('saved') }
+  else{
+    const n=state.attachments.items.length
+    el.textContent='⚠ 截图过多导致超出浏览器存储上限，本次未保存（刷新会丢失）· 当前 '+n+' 张，建议删减后再试'
+    el.classList.remove('saved')
+  }
 }
 function resetState(){
   if(!confirm('确定清空所有已填写的尽调数据？此操作不可恢复。')) return
@@ -601,6 +604,9 @@ function stepReport(){
   h+=`<div class="sum-card"><div class="k">报告编号</div><div class="v">${esc(p.reportNo||'—')}</div></div>`
   h+=`<div class="sum-card"><div class="k">调查基准日</div><div class="v">${esc(p.baseDate||'—')}</div></div>`
   h+=`<div class="sum-card"><div class="k">截图数量</div><div class="v">${shots} 张</div></div>`
+  let kb=0; try{ kb=Math.round(JSON.stringify(state).length/1024) }catch(e){}
+  const hot=kb>3000
+  h+=`<div class="sum-card"><div class="k">本地占用</div><div class="v" style="${hot?'color:#DC2626':''}">${kb>=1024?(kb/1024).toFixed(1)+' MB':kb+' KB'}</div></div>`
   h+=`<div class="sum-card"><div class="k">尽调完成进度</div><div class="v">${doneSteps.size>0?Math.round(doneSteps.size/(STEPS.length-1)*100):0}%</div></div>`
   h+='</div>'
   h+='<div class="gen-box">'
@@ -610,6 +616,7 @@ function stepReport(){
   h+='</div>'
   h+='<div class="report-struct"><b>报告体例说明：</b><br>正文：宋体小四（12pt），1.5 倍行距；一级标题：黑体三号；二级标题：黑体四号；表格：宋体五号。<br>页眉：报告名称＋机密标识；页脚：页码＋"本报告仅供委托方内部使用"。<br>下载后请用 Word / WPS 打开，可继续编辑微调后再定稿打印。</div>'
   h+='<p class="opt-note">提示：若需修改内容，可返回前面步骤修改后重新生成；生成的文件不依赖本页面，可独立保存、发送。</p>'
+  if(hot) h+='<div class="step-help" style="color:#b91c1c;border-color:#fecaca;background:#fef2f2"><b>⚠ 本地存储接近上限</b>浏览器单域名存储约 5MB，截图越多越容易超限。<br>· 若顶部状态显示「超出浏览器存储上限」，请先删掉部分截图再继续<br>· 每个环节建议控制在 2-3 张以内<br>· 确定不再改动的历史报告，可到「近期生成记录」删掉旧记录腾出空间</div>'
   return h
 }
 
@@ -1088,33 +1095,56 @@ function loadRecords(){
   try{ const arr=JSON.parse(localStorage.getItem(REC_KEY)||"[]"); return Array.isArray(arr)?arr:[]; }catch(e){ return []; }
 }
 function findRecord(id){ return loadRecords().find(r=>r.id===id) || null; }
+/* 读取一条记录的截图概况（兼容没有 shotCount 字段的旧记录） */
+function recShotInfo(rec){
+  if(typeof rec.stripped==='number' && typeof rec.shotCount==='number')
+    return { count:rec.shotCount, stripped:!!rec.stripped }
+  try{
+    const s=JSON.parse(rec.snapshot||'{}')
+    const items=(s.attachments&&s.attachments.items)||[]
+    return { count:items.filter(x=>x&&x.dataUrl).length, stripped:items.some(x=>x&&!x.dataUrl) }
+  }catch(e){ return { count:0, stripped:false } }
+}
+/* 写入 localStorage，配额不足返回 false（不抛异常） */
+function tryWrite(key, val){
+  try{ localStorage.setItem(key, val); return true }catch(e){ return false }
+}
 function saveRecord(){
   try{
-    /* 快照深拷贝，避免引用 state */
-    let snap = JSON.parse(JSON.stringify(state))
-    /* 截图 dataUrl 可能很大（base64），若快照超限则剥离截图内容，仅保留文本数据 */
-    const raw = JSON.stringify(snap)
-    if(raw.length > 700*1024){
-      (snap.attachments.items||[]).forEach(x=>{ x.dataUrl='' })
-    }
     const v = VERSIONS.find(x=>x.id===state.version)||VERSIONS[0]
-    const rec = {
-      id: "r"+Date.now(),
-      time: Date.now(),
-      timeStr: fmtTime(Date.now()),
-      version: state.version,
-      versionName: v.name,
-      company: state.project.company || "未命名企业",
-      client: state.project.client || "",
-      reportNo: state.project.reportNo || "",
-      reportDate: state.project.reportDate || "",
-      snapshot: JSON.stringify(snap)
+    const company = state.project.company || '未命名企业'
+    const reportNo = state.project.reportNo || ''
+    const mkSnap = (strip)=>{
+      const s = JSON.parse(JSON.stringify(state))
+      if(strip) (s.attachments.items||[]).forEach(x=>{ x.dataUrl=''; x.stripped=1 })
+      return s
     }
-    let list = loadRecords().filter(x=>!(x.version===rec.version && x.company===rec.company && x.reportNo===rec.reportNo))
-    list.unshift(rec)
-    if(list.length > REC_LIMIT) list = list.slice(0, REC_LIMIT)
-    localStorage.setItem(REC_KEY, JSON.stringify(list))
-  }catch(e){ console.warn("saveRecord 失败", e) }
+    const mkRec = (snap, stripped)=>({
+      id:'r'+Date.now(), time:Date.now(), timeStr:fmtTime(Date.now()),
+      version:state.version, versionName:v.name,
+      company, client:state.project.client||'', reportNo, reportDate:state.project.reportDate||'',
+      /* 记录截图信息，供「载入数据」回填与列表展示 */
+      shotCount:(snap.attachments&&snap.attachments.items||[]).length,
+      stripped: stripped?1:0,
+      snapshot: JSON.stringify(snap)
+    })
+    let list = loadRecords().filter(x=>!(x.version===state.version && x.company===company && x.reportNo===reportNo))
+    /* 逐级降级写入：①完整截图 → ②丢掉最老记录腾空间 → ③才剥离截图内容 */
+    const pack = (rec)=>[rec].concat(list)
+    let rec = mkRec(mkSnap(false), false)
+    let ok = tryWrite(REC_KEY, JSON.stringify(pack(rec).slice(0,REC_LIMIT)))
+    for(let n=Math.min(pack(rec).length-1,8); !ok && n>=1; n--){
+      ok = tryWrite(REC_KEY, JSON.stringify(pack(rec).slice(0,n)))
+    }
+    if(!ok){
+      rec = mkRec(mkSnap(true), true)
+      ok = tryWrite(REC_KEY, JSON.stringify(pack(rec).slice(0,REC_LIMIT)))
+      for(let n=Math.min(pack(rec).length-1,8); !ok && n>=1; n--){
+        ok = tryWrite(REC_KEY, JSON.stringify(pack(rec).slice(0,n)))
+      }
+    }
+    if(!ok) console.warn('saveRecord: 空间不足，本次未保存生成记录')
+  }catch(e){ console.warn('saveRecord 失败', e) }
 }
 function openRecModal(h){
   document.getElementById('recModalBody').innerHTML=h
@@ -1133,12 +1163,16 @@ function openRecords(){
   if(!list.length){
     h += '<div class="rec-empty">暂无记录。<br>每次「生成并下载 Word 报告」成功后会自动保存一条记录：可随时<b>📂 载入数据</b>修改后重新生成，避免重复填写。</div>'
   }else{
-    h += '<div class="rec-tip">共 '+list.length+' 条 · 同版本同企业同编号保留最新一条 · 最多保留 '+REC_LIMIT+' 条</div>'
+    h += '<div class="rec-tip">共 '+list.length+' 条 · 同版本同企业同编号保留最新一条 · 最多保留 '+REC_LIMIT+' 条 · <b>载入前请先看截图标记</b></div>'
     h += list.map(rec=>{
       const vBadge = '<span class="rec-badge" style="background:#fbeccb;color:#b45309">'+esc(rec.versionName)+'</span>'
+      const si = recShotInfo(rec)
+      const sBadge = si.stripped
+        ? '<span class="rec-badge" style="background:#fee2e2;color:#b91c1c">⚠ 无截图内容</span>'
+        : (si.count ? '<span class="rec-badge" style="background:#dcfce7;color:#15803d">🖼 '+si.count+' 张</span>' : '')
       return `<div class="rec-row">
         <div style="min-width:0">
-          <div class="rec-t">${esc(rec.company)}${vBadge}</div>
+          <div class="rec-t">${esc(rec.company)}${vBadge}${sBadge}</div>
           <div class="rec-s">🕐 ${rec.timeStr} · ${rec.reportNo?('编号 '+esc(rec.reportNo)+' · '):''}${esc(rec.client||'无委托方')} · 报告日期 ${esc(rec.reportDate||'—')}</div>
         </div>
         <div class="rec-ops">
@@ -1152,17 +1186,53 @@ function openRecords(){
   h += '<div style="margin-top:12px;text-align:right"><button class="btn" onclick="closeRecModal()">关闭</button></div>'
   openRecModal(h)
 }
+/* 记录快照里的截图被剥离时，用当前本地真实截图回填，避免载入后截图被清空
+   回填规则：按环节（category）分组、按原顺序一一对应取用 */
+function restoreShots(snap){
+  const items = (snap && snap.attachments && snap.attachments.items) || []
+  const need = items.filter(x=>x && !x.dataUrl)
+  if(!need.length) return { msg:'', filled:0, lost:0 }
+  const pool = {}
+  ;(state.attachments.items||[]).forEach(x=>{
+    if(x && x.category && x.dataUrl) (pool[x.category]=pool[x.category]||[]).push(x)
+  })
+  let filled=0, lost=0
+  const kept=[]
+  items.forEach(x=>{
+    if(x.dataUrl){ kept.push(x); return }
+    const arr=pool[x.category]
+    if(arr && arr.length){
+      const src=arr.shift()
+      kept.push(Object.assign({}, src, { id:x.id, title:x.title||src.title }))
+      filled++
+    }else{ lost++ }   /* 本地也找不到，直接丢弃，避免空壳污染后续校验 */
+  })
+  snap.attachments.items = kept
+  const cat = {}
+  need.forEach(x=>{ cat[x.category]=1 })
+  let msg='⚠ 这条记录保存时因体积超限未包含截图内容。\n\n'
+    + '· 已用你当前已上传的截图回填 '+filled+' 张\n'
+    + (lost ? '· 仍有 '+lost+' 张本地也没有，请在对应环节重新上传\n' : '')
+    + '· 涉及环节：'+Object.keys(cat).map(c=>CAT_LABELS[c]||c).join('、')
+  return { msg, filled, lost }
+}
 function loadRecord(id){
   const rec = findRecord(id); if(!rec) return
-  if(!confirm("将载入「"+rec.timeStr+"」记录的完整数据（覆盖当前表单），确定？")) return
+  const tip = rec.stripped
+    ? '\n\n⚠ 该记录未保存截图内容（体积超限），载入后会尽量用你当前已上传的截图回填。'
+    : ''
+  if(!confirm("将载入「"+rec.timeStr+"」记录的完整数据（覆盖当前表单），确定？"+tip)) return
   try{
-    state = JSON.parse(rec.snapshot)
+    const snap = JSON.parse(rec.snapshot)
+    const fix = restoreShots(snap)      /* 先回填，再落到 state，避免空 dataUrl 写回 localStorage */
+    state = snap
     currentStep = STEPS.length-1
     doneSteps.clear()
     STEPS.slice(0,-1).forEach((_,i)=>doneSteps.add(i))
     saveState(); renderNav(); renderStep()
     closeRecModal()
     window.scrollTo({top:0,behavior:'smooth'})
+    if(fix.msg) setTimeout(()=>alert(fix.msg), 80)
   }catch(e){ alert("载入失败："+e.message) }
 }
 function viewRecord(id){
@@ -1175,7 +1245,12 @@ function viewRecord(id){
   h += '<div class="rec-kv"><span class="k">委托方</span><span class="v">'+esc(rec.client||'—')+'</span></div>'
   h += '<div class="rec-kv"><span class="k">报告编号</span><span class="v">'+esc(rec.reportNo||'—')+'</span></div>'
   h += '<div class="rec-kv"><span class="k">报告日期</span><span class="v">'+esc(rec.reportDate||'—')+'</span></div>'
-  h += '<div style="margin-top:10px;font-size:12.5px;color:#9a8a72">💡 点击「载入数据」可恢复该报告的完整填写内容（含截图，若记录过大则仅保留文本数据），到生成步骤即可重新导出 Word。</div>'
+  const si2 = recShotInfo(rec)
+  h += '<div style="margin-top:10px;font-size:12.5px;color:'+(si2.stripped?'#b91c1c':'#9a8a72')+'">'
+    + (si2.stripped
+        ? '💡 这条记录<b>未包含截图内容</b>（保存时体积超限）。点击「载入数据」可恢复全部文字内容，截图会尽量用你当前已上传的补齐，缺口会以弹窗告知。'
+        : '💡 点击「载入数据」可恢复该报告的完整填写内容（含 '+si2.count+' 张截图），到生成步骤即可重新导出 Word。')
+    + '</div>'
   h += '<div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">'
   h += '<button class="btn" style="background:#7a3e07;color:#fff;border:none" onclick="loadRecord(\''+rec.id+'\')">📂 载入数据并重新生成</button>'
   h += '<button class="btn" onclick="openRecords()">← 返回列表</button>'
