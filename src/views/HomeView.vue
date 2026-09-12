@@ -243,7 +243,7 @@ function dueLabel(due) {
 onMounted(loadTodos)
 
 /* 全部数据 key 统一来自 src/data/backupKeys.js（新增工具的 key 记得登记） */
-const APP_VERSION = 'v1.12.2' /* 2026-09-12 话术：复制改为 text/html 富文本，文字+全部图片一次带走 */
+const APP_VERSION = 'v1.13.0' /* 2026-09-12 话术：支持手动排序（卡片↑↓） */
 const fileInput = ref(null)
 const dataStatus = ref('')
 const dataStatusType = ref('ok')

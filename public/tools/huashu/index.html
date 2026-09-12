@@ -441,6 +441,16 @@ function load(){
   if(!cats){ cats = defaultCats(); safeSet(CAT_KEY, cats); }
   if(!vars){ vars = defaultVars(); safeSet(VAR_KEY, vars); }
   migrateCats();
+  migrateScripts();
+}
+/* 话术排序迁移：旧数据没有 sort 字段，按「收藏优先 + 创建时间倒序」补齐（与原显示顺序一致） */
+function migrateScripts(){
+  const ordered = scripts.slice().sort((a,b)=>{
+    const fa = favs.includes(a.id)?1:0, fb = favs.includes(b.id)?1:0;
+    if(fa!==fb) return fb-fa;
+    return (b.createdAt||0)-(a.createdAt||0);
+  });
+  ordered.forEach((s,i)=>{ if(s.sort===undefined || s.sort===null) s.sort = i; });
 }
 function saveScripts(){ safeSet(STORE_KEY, scripts); }
 function saveCats(){ safeSet(CAT_KEY, cats); }
@@ -544,13 +554,33 @@ function filteredScripts(){
       return title.includes(q) || content.includes(q) || code.includes(q) || tags.includes(q) || (qpi && titlePi.includes(qpi));
     });
   }
-  // 排序：收藏优先，然后按创建时间倒序
+  // 排序：收藏优先 → 手动 sort 升序 → 创建时间倒序（sort 可通过卡片 ↑↓ 调整）
   arr.sort((a,b)=>{
     const fa = favs.includes(a.id)?1:0, fb = favs.includes(b.id)?1:0;
     if(fa!==fb) return fb-fa;
+    const sa = a.sort===undefined||a.sort===null ? 1e9 : a.sort;
+    const sb = b.sort===undefined||b.sort===null ? 1e9 : b.sort;
+    if(sa!==sb) return sa-sb;
     return (b.createdAt||0)-(a.createdAt||0);
   });
   return arr;
+}
+
+/* 手动排序：在当前视图内与上/下一个话术交换位置 */
+function moveScript(id, dir){
+  const arr = filteredScripts();
+  const i = arr.findIndex(s=>s.id===id);
+  const j = i + dir;
+  if(i<0 || j<0 || j>=arr.length) return;
+  /* 收藏固定在顶部：跨收藏边界不交换（交换了视觉也不会变） */
+  if(favs.includes(arr[i].id) !== favs.includes(arr[j].id)) return;
+  /* 先把当前视图顺序固化成 sort，再交换，保证永远有效 */
+  arr.forEach((s,k)=>{ s.sort = k; });
+  const tmp = arr[i].sort;
+  arr[i].sort = arr[j].sort;
+  arr[j].sort = tmp;
+  saveScripts();
+  renderScripts();
 }
 
 function renderScripts(){
@@ -598,6 +628,8 @@ function scriptHtml(s){
       ${copyTextBtn}
       ${copyImgBtn}
       <div class="mini-acts">
+        <button class="icon-btn" title="上移" onclick="moveScript('${s.id}',-1)">↑</button>
+        <button class="icon-btn" title="下移" onclick="moveScript('${s.id}',1)">↓</button>
         <button class="icon-btn fav ${isFav?'':'off'}" title="收藏" onclick="toggleFav('${s.id}')">★</button>
         <button class="icon-btn" title="编辑" onclick="openScriptModal('${s.id}')">✎</button>
         <button class="icon-btn danger" title="删除" onclick="delScript('${s.id}')">🗑</button>
@@ -790,7 +822,9 @@ function saveScript(){
     const s = scripts.find(x=>x.id===editingId);
     Object.assign(s, data, {updatedAt:Date.now()});
   } else {
-    scripts.push({id:uid('s'), ...data, color:getCatColor(data.cat), createdAt:Date.now(), updatedAt:Date.now()});
+    /* 新话术排到最前（与原有「最新在前」习惯一致） */
+    const minSort = scripts.reduce((m,s)=>Math.min(m, (s.sort===undefined||s.sort===null)?1e9:s.sort), 0);
+    scripts.push({id:uid('s'), ...data, color:getCatColor(data.cat), createdAt:Date.now(), updatedAt:Date.now(), sort:minSort-1});
   }
   saveScripts();
   closeScriptModal();
