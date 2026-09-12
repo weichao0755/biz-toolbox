@@ -6,15 +6,15 @@
       "docs": [
         {
           "title": "入职第一周指南",
-          "file": "onboarding/onboarding/onboarding/onboarding/onboarding/onboarding/onboarding/onboarding/first-week.md"
+          "file": "onboarding/onboarding/onboarding/onboarding/onboarding/onboarding/onboarding/onboarding/onboarding/first-week.md"
         },
         {
           "title": "业务流程总览",
-          "file": "onboarding/onboarding/onboarding/onboarding/onboarding/onboarding/onboarding/onboarding/process-overview.md"
+          "file": "onboarding/onboarding/onboarding/onboarding/onboarding/onboarding/onboarding/onboarding/onboarding/process-overview.md"
         },
         {
           "title": "新人必学清单",
-          "file": "onboarding/onboarding/onboarding/onboarding/onboarding/onboarding/onboarding/onboarding/checklist.md"
+          "file": "onboarding/onboarding/onboarding/onboarding/onboarding/onboarding/onboarding/onboarding/onboarding/checklist.md"
         }
       ]
     },
@@ -24,19 +24,19 @@
       "docs": [
         {
           "title": "公司转让全流程",
-          "file": "business/business/business/business/business/business/business/business/transfer-process.md"
+          "file": "business/business/business/business/business/business/business/business/business/transfer-process.md"
         },
         {
           "title": "核心政策法规速览",
-          "file": "business/business/business/business/business/business/business/business/laws.md"
+          "file": "business/business/business/business/business/business/business/business/business/laws.md"
         },
         {
           "title": "常见公司类型与转让要点",
-          "file": "business/business/business/business/business/business/business/business/company-types.md"
+          "file": "business/business/business/business/business/business/business/business/business/company-types.md"
         },
         {
           "title": "材料清单与注意事项",
-          "file": "business/business/business/business/business/business/business/business/materials.md"
+          "file": "business/business/business/business/business/business/business/business/business/materials.md"
         }
       ]
     },
@@ -46,11 +46,11 @@
       "docs": [
         {
           "title": "成交案例：股权转让方案设计",
-          "file": "cases/cases/cases/cases/cases/cases/cases/cases/case-equity.md"
+          "file": "cases/cases/cases/cases/cases/cases/cases/cases/cases/case-equity.md"
         },
         {
           "title": "失败复盘：资料不全导致延期",
-          "file": "cases/cases/cases/cases/cases/cases/cases/cases/case-fail.md"
+          "file": "cases/cases/cases/cases/cases/cases/cases/cases/cases/case-fail.md"
         }
       ]
     },
@@ -60,11 +60,11 @@
       "docs": [
         {
           "title": "客户咨询应答话术",
-          "file": "scripts/scripts/scripts/scripts/scripts/scripts/scripts/scripts/faq-scripts.md"
+          "file": "scripts/scripts/scripts/scripts/scripts/scripts/scripts/scripts/scripts/faq-scripts.md"
         },
         {
           "title": "报价与合同模板",
-          "file": "scripts/scripts/scripts/scripts/scripts/scripts/scripts/scripts/templates.md"
+          "file": "scripts/scripts/scripts/scripts/scripts/scripts/scripts/scripts/scripts/templates.md"
         }
       ]
     },
@@ -74,11 +74,11 @@
       "docs": [
         {
           "title": "资深顾问避坑指南",
-          "file": "experts/experts/experts/experts/experts/experts/experts/experts/pitfalls.md"
+          "file": "experts/experts/experts/experts/experts/experts/experts/experts/experts/pitfalls.md"
         },
         {
           "title": "进阶学习路径",
-          "file": "experts/experts/experts/experts/experts/experts/experts/experts/learning-path.md"
+          "file": "experts/experts/experts/experts/experts/experts/experts/experts/experts/learning-path.md"
         }
       ]
     }
