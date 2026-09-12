@@ -347,6 +347,7 @@
 // ============ 存储 key ============
 const STORE_KEY = 'huashu_v1';
 const CAT_KEY = 'huashu_cats_v1';
+const CAT_EXPAND_KEY = 'huashu_cat_expand_v1';
 const VAR_KEY = 'huashu_vars_v1';
 const FAV_KEY = 'huashu_favs_v1';
 const STAT_KEY = 'huashu_stats_v1';
@@ -396,11 +397,12 @@ function toPinyinInitial(str){
 
 // ============ 状态 ============
 let scripts = [];   // {id, title, code, content, cat, tags:[], color, createdAt, updatedAt}
-let cats = [];      // {id, name, color, level, parentId, collapsed}
+let cats = [];      // {id, name, color, level, parentId}（展开状态存 expandedCats）
 let vars = {};      // {key: value}
 let favs = [];      // [id]
 let stats = { copy: 0 };
 let currentCat = 'all';
+let expandedCats = [];   // 当前展开的分类 id（默认全部折叠，只显示一级）
 let searchQ = '';
 let editingId = null;
 let addingSubCatTo = null;
@@ -477,6 +479,15 @@ function load(){
   if(!vars){ vars = defaultVars(); safeSet(VAR_KEY, vars); }
   migrateCats();
   migrateScripts();
+  expandedCats = safeGet(CAT_EXPAND_KEY, []);
+}
+function saveExpanded(){ safeSet(CAT_EXPAND_KEY, expandedCats); }
+/* 展开某分类及其全部祖先（点击分类时调用，确保能看到子分类） */
+function expandCat(id){
+  getPath(id).forEach(c=>{
+    if(!expandedCats.includes(c.id)) expandedCats.push(c.id);
+  });
+  saveExpanded();
 }
 /* 话术排序迁移：旧数据没有 sort 字段，按「收藏优先 + 创建时间倒序」补齐（与原显示顺序一致） */
 function migrateScripts(){
@@ -536,7 +547,8 @@ function buildCatTreeHtml(parentId, depth){
   let html = `<div class="${wrapClass}">`;
   children.forEach((c, idx)=>{
     const hasChildren = getChildren(c.id).length > 0;
-    const arrow = hasChildren ? (c.collapsed ? '▸' : '▾') : '';
+    const isOpen = expandedCats.includes(c.id);
+    const arrow = hasChildren ? (isOpen ? '▾' : '▸') : '';
     const arrowClass = hasChildren ? '' : 'leaf';
     const active = currentCat===c.id ? 'active' : '';
     const cnt = countScriptsInTree(c.id);
@@ -556,7 +568,7 @@ function buildCatTreeHtml(parentId, depth){
           <button class="del" title="删除" onclick="event.stopPropagation();delCat('${c.id}')">✕</button>
         </span>
       </div>`;
-    if(hasChildren && !c.collapsed){
+    if(hasChildren && isOpen){
       html += buildCatTreeHtml(c.id, depth+1);
     }
     if(addingSubCatTo===c.id){
@@ -680,13 +692,27 @@ function toggleExpand(id){
 // ============ 分类操作 ============
 function selectCat(id){
   currentCat = id;
+  /* 「全部/收藏/未分类」视图仅在当前会话内收起（不覆盖持久化状态，
+     避免页面初始化的 selectCat('all') 把上次展开状态清掉）；点击真实分类时展开它和祖先链 */
+  if(id==='all' || id==='fav' || id==='none'){
+    expandedCats = [];
+  } else if(cats.some(c=>c.id===id)){
+    expandCat(id);
+  }
+  renderSidebar();
   const titles = {all:'全部话术', fav:'★ 收藏话术', none:'未分类话术'};
   document.getElementById('catTitle').textContent = titles[id] || getFullCatName(id) || '话术';
   renderScripts();
 }
 function toggleCollapse(id){
-  const c = cats.find(x=>x.id===id);
-  if(c){ c.collapsed = !c.collapsed; saveCats(); renderSidebar(); }
+  if(expandedCats.includes(id)){
+    /* 折叠时连同把该分类下已展开的后代一并收起 */
+    expandedCats = expandedCats.filter(x=>x!==id && !getDescendants(id).includes(x));
+  } else {
+    expandedCats.push(id);
+  }
+  saveExpanded();
+  renderSidebar();
 }
 
 function addCatClick(){
@@ -699,6 +725,7 @@ function addSubCatClick(parentId){
   const parent = cats.find(x=>x.id===parentId);
   if(!parent || parent.level>=3){ alert('最多三级分类'); return; }
   addingSubCatTo = parentId;
+  expandCat(parentId);
   renderSidebar();
   const inp = document.getElementById('newSubCatInp');
   if(inp) inp.focus();
@@ -720,7 +747,7 @@ function createSubCat(){
   if(name && parent){
     const colors = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16'];
     cats.push({id:uid('c'), name, color:parent.color||colors[cats.length%colors.length], level:parent.level+1, parentId:parent.id, collapsed:false, sort:nextSort(parent.id)});
-    parent.collapsed = false;
+    expandCat(parent.id);
     saveCats(); renderScripts();
   }
   addingSubCatTo = null;
@@ -1365,7 +1392,11 @@ document.addEventListener('paste', onPasteImages);
 load();
 document.getElementById('todayLabel').textContent = '今天 ' + todayCN();
 document.getElementById('copyCount').textContent = stats.copy || 0;
-selectCat('all');
+/* 初始视图走 initView，不经过 selectCat('all')，避免清掉恢复的展开状态 */
+currentCat = 'all';
+document.getElementById('catTitle').textContent = '全部话术';
+renderSidebar();
+renderScripts();
 fetchShared();   /* 异步拉取线上共享话术库（同事端自动可见） */
 </script>
 </body>
