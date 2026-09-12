@@ -176,6 +176,8 @@
       <span class="pill">已复制 <b id="copyCount">0</b> 次</span>
       <button class="btn btn-ghost btn-sm" onclick="openVarsModal()">⚙ 变量</button>
       <button class="btn btn-ghost btn-sm" onclick="openDataModal()">⇅ 导入/导出</button>
+      <button class="btn btn-ghost btn-sm" onclick="openSharedModal()" title="查看管理员发布的共享话术库">☁ 共享库<span id="sharedBadge" style="display:none"></span></button>
+      <button class="btn btn-ghost btn-sm" onclick="openPublishModal()" title="把当前话术库发布为线上共享版">⬆ 发布</button>
     </div>
   </div>
 
@@ -303,6 +305,39 @@
     <div class="fg"><label>导出</label><button class="btn btn-ghost" onclick="exportData()">⬇ 导出全部话术（JSON）</button></div>
     <div class="fg"><label>导入</label><input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(event)"><button class="btn btn-ghost" onclick="document.getElementById('importFile').click()">⬆ 选择文件导入</button><div class="hint">导入会覆盖当前话术库，建议先导出备份。团队共享：一人导出，其他人导入即可同步话术。</div></div>
     <div class="modal-acts"><button class="btn btn-primary" onclick="closeDataModal()">关闭</button></div>
+  </div>
+</div>
+
+<!-- 共享话术库模态框（同事端查看） -->
+<div class="modal" id="sharedModal">
+  <div class="modal-box" style="max-width:640px">
+    <h3>☁ 共享话术库</h3>
+    <div class="fg"><div class="hint" id="sharedMeta">加载中…</div></div>
+    <div class="modal-acts" style="justify-content:flex-start;gap:8px">
+      <button class="btn btn-primary btn-sm" onclick="importAllShared()">⬇ 全部导入到我的话术</button>
+      <button class="btn btn-ghost btn-sm" onclick="fetchShared(true).then(renderSharedModal)">↻ 刷新</button>
+    </div>
+    <div class="shared-list" id="sharedList" style="max-height:420px;overflow:auto"></div>
+    <div class="modal-acts"><button class="btn btn-primary" onclick="closeSharedModal()">关闭</button></div>
+  </div>
+</div>
+
+<!-- 发布共享库模态框（管理员） -->
+<div class="modal" id="publishModal">
+  <div class="modal-box" style="max-width:520px">
+    <h3>⬆ 发布共享话术库</h3>
+    <div class="fg">
+      <label>第一步：配置 GitHub Token（仅第一次）</label>
+      <input type="password" id="ghToken" placeholder="粘贴 GitHub Token（ghp_ 或 github_pat_ 开头）">
+      <div class="hint">Token 只保存在你自己的浏览器里，不会进入代码或仓库。获取：github.com → Settings → Developer settings → Personal access tokens → 选仓库 weichao0755/biz-toolbox，权限勾 <b>Contents: Read and write</b>。</div>
+    </div>
+    <div class="fg">
+      <label>第二步：发布当前话术库</label>
+      <button class="btn btn-primary" id="publishBtn" onclick="publishShared()">🚀 发布到线上</button>
+      <div class="hint" id="publishStatus"></div>
+    </div>
+    <div class="fg"><div class="hint">发布内容：全部话术（含图片）+ 分类 + 变量。发布后约 1~2 分钟生效，同事打开本页点「☁ 共享库」即可看到，也能一键导入到自己的话术里。</div></div>
+    <div class="modal-acts"><button class="btn btn-primary" onclick="closePublishModal()">关闭</button></div>
   </div>
 </div>
 
@@ -1039,10 +1074,13 @@ function closeFillModal(){ document.getElementById('fillModal').classList.remove
 
 // 复制主入口：有图时先写纯文本兜底，再尝试「文字+图片」一体写入（写入失败时文本仍在剪贴板）
 async function doCopy(text, id){
-  let ok = await copyText(text);
-  let imgNote = '';
   const s = id && scripts.find(x=>x.id===id);
-  const imgs = (s && s.images) || [];
+  return doCopyRaw(text, (s && s.images) || []);
+}
+async function doCopyRaw(text, imgs){
+  let ok = await copyText(text);   /* 先写纯文本兜底 */
+  let imgNote = '';
+  imgs = imgs || [];
   if(imgs.length){
     try{
       await copyRichHtml(text, imgs);   /* 文字 + 全部图片（HTML 富文本） */
@@ -1127,6 +1165,178 @@ function importData(e){
   reader.readAsText(f);
 }
 
+// ============ 共享话术库（GitHub） ============
+const GH_REPO = 'weichao0755/biz-toolbox';
+const GH_PATH = 'public/data/huashu-shared.json';
+const GH_BRANCH = 'main';
+const GH_TOKEN_KEY = 'huashu_gh_token';
+const SHARED_KEY = 'huashu_shared_cache';
+let sharedData = null;   // { version, publishedAt, count, cats, scripts, vars }
+
+/* 站点根路径（兼容 GitHub Pages 子路径 / 本地 / 任意部署目录） */
+function siteRoot(){
+  return location.pathname.replace(/tools\/huashu\/[^\/]*$/, '');
+}
+function ghHeaders(){
+  const t = (localStorage.getItem(GH_TOKEN_KEY)||'').trim();
+  if(!t) throw new Error('请先在「⬆ 发布」里配置 GitHub Token');
+  return { 'Accept':'application/vnd.github+json', 'Authorization':'Bearer '+t, 'Content-Type':'application/json' };
+}
+/* 获取共享库文件 sha：先走 contents API，文件过大(403)退回 git trees API */
+async function ghFileSha(){
+  const H = ghHeaders();
+  const url = 'https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_PATH+'?ref='+GH_BRANCH;
+  const r = await fetch(url, {headers:H});
+  if(r.status===404) return null;
+  if(r.ok){ const j = await r.json(); return j.sha; }
+  if(r.status===403){
+    const ref = await (await fetch('https://api.github.com/repos/'+GH_REPO+'/git/ref/heads/'+GH_BRANCH, {headers:H})).json();
+    const commit = await (await fetch('https://api.github.com/repos/'+GH_REPO+'/git/commits/'+ref.object.sha, {headers:H})).json();
+    const tree = await (await fetch('https://api.github.com/repos/'+GH_REPO+'/git/trees/'+commit.tree.sha+'?recursive=1', {headers:H})).json();
+    const hit = (tree.tree||[]).find(x=>x.path===GH_PATH);
+    return hit ? hit.sha : null;
+  }
+  throw new Error('读取文件信息失败（HTTP '+r.status+'），请检查 Token 权限');
+}
+async function publishShared(){
+  const btn = document.getElementById('publishBtn');
+  const st = document.getElementById('publishStatus');
+  const token = document.getElementById('ghToken').value.trim();
+  if(token) localStorage.setItem(GH_TOKEN_KEY, token);
+  if(!(localStorage.getItem(GH_TOKEN_KEY)||'').trim()){ alert('请先粘贴 GitHub Token'); return; }
+  btn.disabled = true; st.textContent = '正在上传…';
+  try{
+    const payload = { app:'biz-toolbox-huashu-shared', version:1, publishedAt:Date.now(),
+      count:scripts.length, cats:cats, scripts:scripts, vars:vars };
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    const sha = await ghFileSha();
+    const body = { message:'chore(huashu): 发布共享话术库', content:content, branch:GH_BRANCH };
+    if(sha) body.sha = sha;
+    const r = await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_PATH, {
+      method:'PUT', headers:ghHeaders(), body:JSON.stringify(body)
+    });
+    if(!r.ok){
+      const err = await r.json().catch(()=>({}));
+      throw new Error(err.message || ('HTTP '+r.status));
+    }
+    const j = await r.json();
+    st.innerHTML = '✅ 发布成功（'+scripts.length+' 条话术）。GitHub 正在自动部署，约 <b>1~2 分钟</b>后同事即可看到。';
+    showToast('发布成功，1~2 分钟后同事可见');
+  }catch(e){
+    st.textContent = '❌ 发布失败：' + (e && e.message || e);
+  }
+  btn.disabled = false;
+}
+/* 同事端：拉取共享库（带 cache-buster 穿透 CDN） */
+async function fetchShared(force){
+  if(!force && sharedData) return sharedData;
+  try{
+    const cached = localStorage.getItem(SHARED_KEY);
+    if(!sharedData && cached){ try{ sharedData = JSON.parse(cached); }catch(e){} }
+    const r = await fetch(siteRoot()+'data/huashu-shared.json?t='+Date.now(), {cache:'no-store'});
+    if(!r.ok) return sharedData;
+    const j = await r.json();
+    if(!j || !Array.isArray(j.scripts) || !j.scripts.length) return sharedData;
+    sharedData = j;
+    try{ localStorage.setItem(SHARED_KEY, JSON.stringify(j)); }catch(e){}
+    const b = document.getElementById('sharedBadge');
+    if(b){ b.style.display='inline'; b.textContent = ' '+j.scripts.length; }
+  }catch(e){ /* 线上暂无共享库或网络失败：静默 */ }
+  return sharedData;
+}
+function sharedCatName(id){
+  if(!id || !sharedData || !Array.isArray(sharedData.cats)) return '';
+  const c = sharedData.cats.find(x=>x.id===id);
+  return c ? c.name : '';
+}
+function renderSharedModal(){
+  const meta = document.getElementById('sharedMeta');
+  const list = document.getElementById('sharedList');
+  if(!sharedData){
+    meta.textContent = '暂无共享话术库（管理员尚未发布，或刚发布还在部署中，可稍后点「刷新」）。';
+    list.innerHTML = '';
+    return;
+  }
+  const d = new Date(sharedData.publishedAt||Date.now());
+  const p = n=>String(n).padStart(2,'0');
+  const imgCount = sharedData.scripts.reduce((a,s)=>a+((s.images||[]).length),0);
+  meta.innerHTML = '共 <b>'+sharedData.scripts.length+'</b> 条话术（含 '+imgCount+' 张图），发布于 '
+    + d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())
+    + '。可直接复制，或导入到自己的话术里再修改。';
+  const mine = new Set(scripts.map(s=>s.id));
+  list.innerHTML = sharedData.scripts.map(s=>{
+    const cat = sharedCatName(s.cat);
+    const has = mine.has(s.id);
+    const imgs = (s.images||[]);
+    const preview = esc((s.content||'（无文字）')).slice(0,80) + ((s.content||'').length>80?'…':'');
+    return `<div class="script" style="margin-bottom:8px">
+      <div class="swatch" style="background:${s.color||'#f59e0b'}"></div>
+      <div class="body">
+        <div class="topline"><span class="title">${esc(s.title||'（无标题）')}</span>${cat?`<span class="tag">${esc(cat)}</span>`:''}${imgs.length?`<span class="tag">🖼 ${imgs.length} 张图</span>`:''}${has?'<span class="tag" style="color:#16a34a">✓ 已在我的话术</span>':''}</div>
+        ${s.content?`<div class="content">${preview}</div>`:''}
+      </div>
+      <div class="acts">
+        <button class="copy-btn" onclick="copySharedOne('${s.id}')">复制</button>
+        ${has?'':`<button class="copy-img-btn" onclick="importSharedOne('${s.id}')" style="margin-top:4px">⬇ 导入</button>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+function openSharedModal(){
+  document.getElementById('sharedModal').classList.add('show');
+  renderSharedModal();
+  fetchShared(true).then(renderSharedModal);
+}
+function closeSharedModal(){ document.getElementById('sharedModal').classList.remove('show'); }
+function openPublishModal(){
+  document.getElementById('publishModal').classList.add('show');
+  const t = localStorage.getItem(GH_TOKEN_KEY)||'';
+  if(t) document.getElementById('ghToken').value = t;
+}
+function closePublishModal(){ document.getElementById('publishModal').classList.remove('show'); }
+/* 把共享库的分类合并进个人分类（按 id 去重） */
+function mergeSharedCats(){
+  if(!sharedData || !Array.isArray(sharedData.cats)) return;
+  const have = new Set(cats.map(c=>c.id));
+  sharedData.cats.forEach(c=>{ if(!have.has(c.id)) cats.push(Object.assign({}, c)); });
+  saveCats();
+}
+function importSharedOne(id){
+  if(!sharedData) return;
+  const s = sharedData.scripts.find(x=>x.id===id);
+  if(!s) return;
+  if(scripts.some(x=>x.id===id)){ showToast('这条已经在你的话术里了'); return; }
+  mergeSharedCats();
+  if(sharedData.vars) Object.keys(sharedData.vars).forEach(k=>{ if(vars[k]===undefined) vars[k]=sharedData.vars[k]; });
+  saveVars();
+  scripts.push(Object.assign({}, s));
+  saveScripts();
+  renderScripts();
+  showToast('已导入「'+(s.title||'无标题')+'」');
+  renderSharedModal();
+}
+function importAllShared(){
+  if(!sharedData) return;
+  mergeSharedCats();
+  if(sharedData.vars) Object.keys(sharedData.vars).forEach(k=>{ if(vars[k]===undefined) vars[k]=sharedData.vars[k]; });
+  saveVars();
+  const mine = new Set(scripts.map(s=>s.id));
+  let n = 0;
+  sharedData.scripts.forEach(s=>{ if(!mine.has(s.id)){ scripts.push(Object.assign({}, s)); n++; } });
+  saveScripts();
+  renderScripts();
+  renderSharedModal();
+  showToast(n ? '已导入 '+n+' 条话术' : '全部话术都已在你的库里');
+}
+/* 复制共享话术（不导入也能直接发） */
+async function copySharedOne(id){
+  if(!sharedData) return;
+  const s = sharedData.scripts.find(x=>x.id===id);
+  if(!s) return;
+  const {result} = fillVars(s.content||'');
+  await doCopyRaw(result, s.images||[]);
+}
+
 // ============ Toast ============
 let toastTimer = null;
 function showToast(msg){
@@ -1156,6 +1366,7 @@ load();
 document.getElementById('todayLabel').textContent = '今天 ' + todayCN();
 document.getElementById('copyCount').textContent = stats.copy || 0;
 selectCat('all');
+fetchShared();   /* 异步拉取线上共享话术库（同事端自动可见） */
 </script>
 </body>
 </html>
