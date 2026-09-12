@@ -178,7 +178,7 @@
     <div class="card update-note">
       <h3>内容更新说明</h3>
       <p>平台为静态站点部署，更新流程：内容/工具更新 → 重新部署 → 全员刷新即可看到最新版本（推荐 Ctrl+F5 强制刷新）。需要更新内容时，联系管理员即可。</p>
-      <p class="ver-line">当前版本 {{ APP_VERSION }} · 更新于 2026-09-11</p>
+      <p class="ver-line">当前版本 {{ APP_VERSION }} · 更新于 2026-09-12</p>
     </div>
   </div>
 </template>
@@ -243,7 +243,7 @@ function dueLabel(due) {
 onMounted(loadTodos)
 
 /* 全部数据 key 统一来自 src/data/backupKeys.js（新增工具的 key 记得登记） */
-const APP_VERSION = 'v1.10.0' /* 2026-09-11 新增本地文件夹自动同步 */
+const APP_VERSION = 'v1.11.0' /* 2026-09-12 尽调专业版：开票数据改为导入税局全量发票 xlsx */
 const fileInput = ref(null)
 const dataStatus = ref('')
 const dataStatusType = ref('ok')

@@ -122,7 +122,45 @@ header .rec-btn:hover{background:#fbf5ea;border-color:#e0901a}
 footer{text-align:center;color:#9a8a72;font-size:12px;padding:20px}
 .notice{position:fixed;left:50%;bottom:36px;transform:translateX(-50%);background:#2a2118;color:#fff;padding:9px 18px;border-radius:20px;font-size:12.5px;z-index:99;opacity:0;transition:.25s;pointer-events:none;box-shadow:0 4px 14px rgba(42,33,24,.16)}
 .notice.show{opacity:1}
-@media(max-width:760px){.wrap{flex-direction:column}.side{width:100%;position:static;display:flex;flex-wrap:wrap}.side button{width:auto}.side .st-title{display:none}.ver-bar{flex-direction:column}}
+/* 开票数据导入面板 */
+.inv-box{background:#faf7f2;border:1px solid #f2e6d8;border-radius:10px;padding:12px 13px;margin-bottom:11px}
+.inv-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:9px}
+.inv-title{font-size:13px;font-weight:700;color:#7a3e07}
+.inv-meta{font-size:11px;color:#9a8a72}
+.inv-upload{border:1.5px dashed #f3c98a;background:#fdf4e6;color:#e0901a;border-radius:8px;padding:16px;text-align:center;font-size:13px;cursor:pointer;font-family:inherit;transition:.15s}
+.inv-upload:hover{border-color:#e0901a;background:#fbeccb}
+.inv-tip{font-size:11.5px;color:#9a8a72;line-height:1.75;margin-top:8px}
+.inv-tip b{color:#b45309}
+.inv-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:9px;margin-bottom:10px}
+.inv-card{background:#fff;border:1px solid #f2e6d8;border-radius:9px;padding:9px 11px}
+.inv-card .k{font-size:11px;color:#9a8a72;margin-bottom:3px}
+.inv-card .v{font-size:15px;color:#2a2118;font-weight:700;word-break:break-all}
+.inv-card .v.sm{font-size:12.5px;font-weight:600}
+.inv-card .v .u{font-size:11px;font-weight:400;color:#9a8a72;margin-left:2px}
+.inv-card.hi{background:#fdf4e6;border-color:#f3c98a}
+.inv-card.hi .v{color:#b45309}
+.inv-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.inv-chip{font-size:11px;color:#7a3e07;background:#fdf4e6;border:1px solid #f3c98a;border-radius:20px;padding:3px 10px}
+.inv-chip b{color:#b45309}
+.inv-chip.gray{color:#6b7280;background:#fff;border-color:#ece3d6}
+.inv-chip.gray b{color:#374151}
+.inv-search{margin-bottom:8px}
+.inv-search input{width:100%;box-sizing:border-box;border:1px solid #ece3d6;border-radius:8px;padding:7px 11px;font-size:12.5px;font-family:inherit;color:#2a2118;background:#fff}
+.inv-scroll{max-height:340px;overflow:auto;border:1px solid #f2e6d8;border-radius:8px;background:#fff}
+.inv-table{width:100%;border-collapse:collapse;font-size:11.5px}
+.inv-table th{position:sticky;top:0;background:#fdf6ea;color:#7a3e07;font-weight:700;padding:7px 8px;text-align:left;border-bottom:1px solid #f2e6d8;white-space:nowrap;z-index:1}
+.inv-table td{padding:6px 8px;border-bottom:1px solid #f7f1e8;color:#4a4035;vertical-align:top}
+.inv-table tr:last-child td{border-bottom:none}
+.inv-table tbody tr:hover{background:#fdfaf4}
+.inv-table .c{text-align:center;white-space:nowrap}
+.inv-table .r{text-align:right;white-space:nowrap}
+.inv-table .b{font-weight:700;color:#2a2118}
+.inv-table .mono{font-family:Consolas,Monaco,monospace;font-size:11px;color:#0C2D5D}
+.inv-more{margin-top:8px;border:1px dashed #f3c98a;background:#fdf4e6;color:#e0901a;border-radius:8px;padding:6px 14px;font-size:12.5px;cursor:pointer;font-family:inherit}
+.inv-more:hover{background:#fbeccb}
+.inv-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.inv-actions .btn{padding:6px 14px;font-size:12.5px}
+@media(max-width:760px){.wrap{flex-direction:column}.side{width:100%;position:static;display:flex;flex-wrap:wrap}.side button{width:auto}.side .st-title{display:none}.ver-bar{flex-direction:column}.inv-scroll{max-height:260px}}
 </style>
 </head>
 <body>
@@ -233,7 +271,8 @@ const CATS_BY_STEP = {
     company:   [ 'comp_license', 'comp_public' ],
     history:   [ 'hist_change', 'hist_shareholder', 'hist_pledge' ],
     license:   [ 'lic_cert', 'lic_check' ],
-    finance:   FIN_SLOTS.map(s=>s.cat).concat([ 'fin_years', 'fin_receivable' ]),
+    /* 专业版：开票数据改为导入税局全量发票文件，故不再需要该环节截图 */
+    finance:   FIN_SLOTS.map(s=>s.cat).filter(c=>c!=='fin_invoiceData').concat([ 'fin_years', 'fin_receivable' ]),
     tax:       [ 'tax_credit', 'tax_owe', 'tax_inspect' ],
     hr:        [ 'hr_social', 'hr_fund', 'hr_dispute' ],
     assets:    [ 'ast_ip', 'ast_property' ],
@@ -266,7 +305,9 @@ function emptyState(){
     license:{ items:[{name:'',no:'',issuer:'',validFrom:'',validTo:'',status:'',note:''}], annualCheck:'', conditionMet:'' },
     finance:{ accounts:{ social:'', housing:'', bank:'', bankName:'' },
       /* 专业版：近三年财务摘要 + 大额往来 */
-      years:[{year:'',revenue:'',profit:'',assets:'',liabilities:''}], receivable:'', payable:'', otherNote:'' },
+      years:[{year:'',revenue:'',profit:'',assets:'',liabilities:''}], receivable:'', payable:'', otherNote:'',
+      /* 专业版：税局全量发票导入 */
+      invoices:[], invoiceMeta:{ file:'', sheet:'', at:'', period:'' } },
     /* 专业版：税务合规 */
     tax:{ creditGrade:'', oweTax:'', inspection:'', penalty:'', preference:'', invoiceStatus:'' },
     /* 专业版：劳动用工 */
@@ -285,6 +326,9 @@ function emptyState(){
     attachments:{ items:[] }   /* { id, title, category, dataUrl, w, h, type } */
   }
 }
+/* 发票明细模板（导入的全量发票按此结构清洗） */
+const INV_TPL = { sn:'', no:'', code:'', sellerCode:'', seller:'', buyerCode:'', buyer:'', date:'',
+  amount:'', tax:'', total:'', source:'', type:'', status:'', positive:'', risk:'', drawer:'', remark:'' }
 function today(){
   const d=new Date();const p=n=>String(n).padStart(2,'0')
   return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())
@@ -308,6 +352,7 @@ function loadState(){
       merged.project.agency=AGENCY_NAME
       merged.finance=Object.assign({}, base.finance, s.finance||{})
       merged.finance.accounts=Object.assign({}, base.finance.accounts, (s.finance&&s.finance.accounts)||{})
+      merged.finance.invoiceMeta=Object.assign({}, base.finance.invoiceMeta, (s.finance&&s.finance.invoiceMeta)||{})
       merged.legal=Object.assign({}, base.legal, s.legal||{})
       merged.risk=Object.assign({}, base.risk, s.risk||{})
       merged.risk.scores=Object.assign({}, base.risk.scores, (s.risk&&s.risk.scores)||{})
@@ -334,6 +379,8 @@ function loadState(){
       merged.assets.ip=rows(merged.assets.ip,{type:'',name:'',no:'',owner:'',status:''})
       merged.contracts.major=rows(merged.contracts.major,{name:'',party:'',amount:'',term:'',status:''})
       merged.legal.penalties=rows(merged.legal.penalties,{date:'',authority:'',reason:'',amount:''})
+      /* 清洗：导入的全量发票（缺字段补齐，避免渲染 undefined） */
+      merged.finance.invoices=rows(merged.finance.invoices,INV_TPL)
       return merged
     }
   }catch(e){ console.error('[loadState] 异常:', e && (e.stack||e.message) || e) }
@@ -348,6 +395,7 @@ function saveState(){
     el.textContent='⚠ 截图过多导致超出浏览器存储上限，本次未保存（刷新会丢失）· 当前 '+n+' 张，建议删减后再试'
     el.classList.remove('saved')
   }
+  return ok
 }
 function resetState(){
   if(!confirm('确定清空所有已填写的尽调数据？此操作不可恢复。')) return
@@ -497,6 +545,268 @@ function processImage(file){
   })
 }
 
+/* ================= 全量发票导入（税局导出的 .xlsx） =================
+   零依赖实现：xlsx 本质是 zip，浏览器原生 DecompressionStream 即可解压，
+   税局导出文件多用 inlineStr 内联字符串，亦兼容 sharedStrings。          */
+function xmlUnesc(s){
+  return String(s==null?'':s)
+    .replace(/&#x([0-9a-fA-F]+);/g,(_,h)=>String.fromCodePoint(parseInt(h,16)))
+    .replace(/&#(\d+);/g,(_,n)=>String.fromCodePoint(+n))
+    .replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'")
+    .replace(/&amp;/g,'&')
+}
+async function xlsxUnzip(buf){
+  const dv=new DataView(buf), u8=new Uint8Array(buf)
+  let eocd=-1
+  for(let i=buf.byteLength-22;i>=Math.max(0,buf.byteLength-22-65536);i--){
+    if(dv.getUint32(i,true)===0x06054b50){ eocd=i; break }
+  }
+  if(eocd<0) throw new Error('不是有效的 xlsx 文件（文件可能已损坏或不是 Excel 格式）')
+  const count=dv.getUint16(eocd+10,true)
+  let off=dv.getUint32(eocd+16,true)
+  const entries=[]
+  for(let i=0;i<count;i++){
+    if(dv.getUint32(off,true)!==0x02014b50) break
+    const method=dv.getUint16(off+10,true)
+    const csize=dv.getUint32(off+20,true)
+    const nlen=dv.getUint16(off+28,true), elen=dv.getUint16(off+30,true), clen=dv.getUint16(off+32,true)
+    const lho=dv.getUint32(off+42,true)
+    const name=new TextDecoder().decode(u8.subarray(off+46,off+46+nlen))
+    entries.push({name,method,csize,lho})
+    off+=46+nlen+elen+clen
+  }
+  const out={}
+  for(const f of entries){
+    const lnl=dv.getUint16(f.lho+26,true), lel=dv.getUint16(f.lho+28,true)
+    const start=f.lho+30+lnl+lel
+    const data=u8.subarray(start,start+f.csize)
+    if(f.method===0){ out[f.name]=data }
+    else if(f.method===8){
+      if(typeof DecompressionStream==='undefined') throw new Error('当前浏览器不支持解压，请使用较新版本的 Chrome 或 Edge 浏览器')
+      const stream=new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))
+      out[f.name]=new Uint8Array(await new Response(stream).arrayBuffer())
+    }
+  }
+  return out
+}
+function xlsxCellText(xml){
+  return xmlUnesc((xml.match(/<t[^>]*>([\s\S]*?)<\/t>/g)||[]).map(x=>x.replace(/<[^>]+>/g,'')).join('')).trim()
+}
+function sheetRows(xml, shared){
+  const rows=[], rowRe=/<row[^>]*>([\s\S]*?)<\/row>/g
+  let m
+  while((m=rowRe.exec(xml))){
+    const cells={}, cRe=/<c\s+([^>]*?)\/>|<c\s+([^>]*?)>([\s\S]*?)<\/c>/g
+    let cm
+    while((cm=cRe.exec(m[1]))){
+      const attrs=cm[1]||cm[2]||'', inner=cm[3]||''
+      const rM=attrs.match(/r="([A-Z]+)\d+"/)
+      if(!rM) continue
+      const tM=attrs.match(/t="([^"]+)"/), t=tM?tM[1]:''
+      let v=''
+      if(t==='inlineStr'){ v=xlsxCellText(inner) }
+      else{
+        const vm=inner.match(/<v>([\s\S]*?)<\/v>/)
+        if(vm){ v=xmlUnesc(vm[1]); if(t==='s') v=shared[parseInt(v,10)]||'' }
+      }
+      cells[rM[1]]=v.trim()
+    }
+    if(Object.keys(cells).length) rows.push(cells)
+  }
+  return rows
+}
+async function readXlsx(buf){
+  const files=await xlsxUnzip(buf), dec=new TextDecoder('utf-8')
+  const shared=[]
+  if(files['xl/sharedStrings.xml']){
+    const xml=dec.decode(files['xl/sharedStrings.xml']), siRe=/<si>([\s\S]*?)<\/si>/g
+    let m
+    while((m=siRe.exec(xml))) shared.push(xlsxCellText(m[1]))
+  }
+  const rels={}
+  if(files['xl/_rels/workbook.xml.rels']){
+    const relXml=dec.decode(files['xl/_rels/workbook.xml.rels']), re=/<Relationship\s+([^>]*?)\/?>/g
+    let m
+    while((m=re.exec(relXml))){
+      const id=(m[1].match(/Id="([^"]+)"/)||[])[1], target=(m[1].match(/Target="([^"]+)"/)||[])[1]
+      if(id&&target) rels[id]=target
+    }
+  }
+  const wbXml=dec.decode(files['xl/workbook.xml']), sheets=[], shRe=/<sheet\s+([^>]*?)\/?>/g
+  let m
+  while((m=shRe.exec(wbXml))){
+    const name=xmlUnesc((m[1].match(/name="([^"]+)"/)||[])[1]||'')
+    const rid=(m[1].match(/r:id="([^"]+)"/)||[])[1]
+    let target=rels[rid]||''
+    if(target){ target=target.replace(/^\//,''); if(!/^xl\//.test(target)) target='xl/'+target }
+    if(name&&target&&files[target]) sheets.push({name, xml:dec.decode(files[target])})
+  }
+  if(!sheets.length) throw new Error('未在文件中找到任何工作表')
+  return { sheets, shared }
+}
+/* 列名别名表：兼容不同省份电子税务局的表头差异 */
+const INV_COLS = {
+  sn:['序号'],
+  no:['数电发票号码','全电发票号码','电子发票号码','发票号码'],
+  code:['发票代码'],
+  sellerCode:['销方识别号','销方纳税人识别号','销售方识别号','销售方纳税人识别号'],
+  seller:['销方名称','销售方名称','销方','销售方'],
+  buyerCode:['购方识别号','购买方识别号','购方纳税人识别号','购买方纳税人识别号'],
+  buyer:['购买方名称','购方名称','购买方','购方'],
+  date:['开票日期'],
+  amount:['金额','不含税金额','金额(不含税)'],
+  tax:['税额'],
+  total:['价税合计','合计金额','含税金额'],
+  source:['发票来源'],
+  type:['发票票种','发票种类','票种'],
+  status:['发票状态','状态'],
+  positive:['是否正数发票'],
+  risk:['发票风险等级','风险等级'],
+  drawer:['开票人'],
+  remark:['备注']
+}
+const INV_MAX = 3000   /* 最多保留的发票条数，超出部分截断（避免撑爆本地存储） */
+const INV_WORD_ROWS = 200  /* Word 报告最多列示的明细条数，超出则按价税合计取前 N 大 */
+async function importInvoices(file){
+  if(!file) return
+  if(!/\.xlsx$/i.test(file.name||'')) { alert('请上传 .xlsx 格式的税局导出文件（如是 .xls 请先用 Excel 另存为 .xlsx）'); return }
+  const { sheets, shared } = await readXlsx(await file.arrayBuffer())
+  /* 选表：优先「发票基础信息」（一票一行，最干净），其次「信息汇总表」，最后取第一个 */
+  let sheet = sheets.find(s=>s.name.indexOf('发票基础信息')>=0)
+             || sheets.find(s=>s.name.indexOf('发票')>=0)
+             || sheets[0]
+  const rows = sheetRows(sheet.xml, shared)
+  if(!rows.length) throw new Error('工作表「'+sheet.name+'」为空')
+  /* 找表头行：前 8 行内包含发票号码或价税合计的那一行 */
+  let hi = -1
+  for(let i=0;i<Math.min(8,rows.length);i++){
+    const vals = Object.values(rows[i]).join('|')
+    if(/数电发票号码|发票号码/.test(vals) || /价税合计/.test(vals)) { hi = i; break }
+  }
+  if(hi<0) throw new Error('未识别到发票表头，请确认导入的是电子税务局「全量发票查询」导出的原始文件（不要改动表头）')
+  const head = rows[hi]
+  const colOf = {}
+  Object.keys(head).forEach(c=>{ colOf[String(head[c]).trim()] = c })
+  /* 表头名 → 字段 */
+  const map = {}
+  Object.keys(INV_COLS).forEach(f=>{
+    for(const alias of INV_COLS[f]){
+      if(colOf[alias]!=null){ map[f]=colOf[alias]; break }
+    }
+  })
+  if(map.no==null && map.seller==null && map.buyer==null)
+    throw new Error('未识别到发票号码/销方/购方等必要列，请导入原始导出文件')
+  const get=(r,f)=> map[f]!=null ? String(r[map[f]]||'').trim() : ''
+  const list=[], seen={}
+  for(let i=hi+1;i<rows.length;i++){
+    const r=rows[i]
+    const noV=get(r,'no'), codeV=get(r,'code')
+    const key=noV || codeV || ''
+    const seller=get(r,'seller'), buyer=get(r,'buyer')
+    const sn=get(r,'sn')
+    /* 跳过合计行 / 小计行 / 空行（税局导出文件末尾通常带「合计行」） */
+    if(/合计|小计|总计|汇总/.test(sn)) continue
+    if(!key && !seller && !buyer) continue
+    if(key && seen[key]) continue          /* 信息汇总表一票多货 → 去重 */
+    if(key) seen[key]=1
+    const o=Object.assign({}, INV_TPL)
+    Object.keys(INV_TPL).forEach(f=>{ o[f]=get(r,f) })
+    o.date=(o.date||'').replace(/\s+\d{1,2}:\d{1,2}(:\d{1,2})?$/,'').trim()
+    list.push(o)
+    if(list.length>=INV_MAX) break
+  }
+  if(!list.length) throw new Error('未读到任何发票记录，请确认导出文件中含有发票数据')
+  /* 开票期间 */
+  const ds=list.map(x=>(x.date||'').slice(0,10)).filter(Boolean).sort()
+  const period = ds.length ? (ds[0]===(ds[ds.length-1]) ? ds[0] : ds[0]+' ~ '+ds[ds.length-1]) : ''
+  state.finance.invoices = list
+  state.finance.invoiceMeta = { file:file.name||'', sheet:sheet.name, at:today(), period:period }
+  const saved=saveState()
+  return { count:list.length, sheet:sheet.name, saved:!!saved, truncated: rows.length-1-hi > INV_MAX }
+}
+/* 发票汇总统计 */
+function invStats(list){
+  list = list || state.finance.invoices || []
+  const n=v=>parseFloat(String(v||'').replace(/,/g,''))||0
+  let amount=0, tax=0, total=0
+  const byType={}, byStatus={}
+  list.forEach(x=>{
+    amount+=n(x.amount); tax+=n(x.tax); total+=n(x.total)
+    const t=x.type||'未标注'; byType[t]=(byType[t]||0)+1
+    const s=x.status||'未标注'; byStatus[s]=(byStatus[s]||0)+1
+  })
+  const top=o=>Object.keys(o).map(k=>[k,o[k]]).sort((a,b)=>b[1]-a[1])
+  return { count:list.length, amount, tax, total, byType:top(byType), byStatus:top(byStatus) }
+}
+const money=v=>{
+  const n=parseFloat(String(v||'').replace(/,/g,''))||0
+  return n.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2})
+}
+
+/* ================= 开票数据导入面板（专业版） ================= */
+let _invQ='', _invAll=false
+const INV_PREVIEW=200
+function invoicePanel(){
+  const meta=state.finance.invoiceMeta||{}
+  const list=state.finance.invoices||[]
+  let h='<div class="inv-box"><div class="inv-head"><span class="inv-title">🧾 开票数据（税局全量发票导入）</span>'
+  if(list.length){
+    h+='<span class="inv-meta">'+esc(meta.file||'未记录文件名')+(meta.sheet?(' · 工作表「'+esc(meta.sheet)+'」'):'')+(meta.at?(' · 导入于 '+esc(meta.at)):'')+'</span>'
+  }
+  h+='</div>'
+  if(!list.length){
+    h+='<div class="inv-upload" data-inv="pick">📥 导入税局导出的全量发票文件（.xlsx）</div>'
+    h+='<div class="inv-tip">获取路径：电子税务局 → 我要办税 → 发票使用 → 发票查询统计 → <b>全量发票查询</b> → 选择属期后点「导出」。<br>导入后自动识别「发票基础信息」工作表，按发票号码去重、剔除合计行，并统计份数与价税合计，全部写入报告第五章。</div>'
+    h+='<input type="file" id="invFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none">'
+    h+='</div>'
+    return h
+  }
+  const st=invStats()
+  h+='<div class="inv-cards">'
+  h+=`<div class="inv-card"><div class="k">发票份数</div><div class="v">${st.count}<span class="u">份</span></div></div>`
+  h+=`<div class="inv-card hi"><div class="k">价税合计</div><div class="v">¥${esc(money(st.total))}</div></div>`
+  h+=`<div class="inv-card"><div class="k">金额合计（不含税）</div><div class="v">¥${esc(money(st.amount))}</div></div>`
+  h+=`<div class="inv-card"><div class="k">税额合计</div><div class="v">¥${esc(money(st.tax))}</div></div>`
+  h+=`<div class="inv-card"><div class="k">开票期间</div><div class="v sm">${esc(meta.period||'—')}</div></div>`
+  h+='</div>'
+  /* 状态 / 票种分布 */
+  h+='<div class="inv-chips">'
+  st.byStatus.forEach(x=>{ h+=`<span class="inv-chip">${esc(x[0])} <b>${x[1]}</b> 份</span>` })
+  st.byType.slice(0,4).forEach(x=>{ h+=`<span class="inv-chip gray">${esc(x[0])} <b>${x[1]}</b> 份</span>` })
+  h+='</div>'
+  h+=`<div class="inv-search"><input type="text" id="invQ" data-inv-q="1" placeholder="🔍 按发票号码 / 销方 / 购方筛选" value="${esc(_invQ)}"></div>`
+  const show=_invAll?list:list.slice(0,INV_PREVIEW)
+  h+='<div class="inv-scroll"><table class="inv-table"><thead><tr><th>#</th><th>数电发票号码</th><th>销方名称</th><th>购买方名称</th><th>开票日期</th><th>金额</th><th>税额</th><th>价税合计</th><th>票种</th><th>状态</th><th>风险等级</th></tr></thead><tbody>'
+  show.forEach((x,i)=>{
+    const kw=(x.no+' '+x.seller+' '+x.buyer+' '+x.date).toLowerCase()
+    h+=`<tr data-kw="${esc(kw)}"><td class="c">${i+1}</td><td class="mono">${esc(x.no||'—')}</td><td>${esc(x.seller||'—')}</td><td>${esc(x.buyer||'—')}</td><td class="c">${esc(x.date||'—')}</td><td class="r">${esc(x.amount||'—')}</td><td class="r">${esc(x.tax||'—')}</td><td class="r b">${esc(x.total||'—')}</td><td class="c">${esc(x.type||'—')}</td><td class="c">${esc(x.status||'—')}</td><td class="c">${esc(x.risk||'—')}</td></tr>`
+  })
+  h+='</tbody></table></div>'
+  if(list.length>INV_PREVIEW && !_invAll){
+    h+=`<button class="inv-more" data-inv="all">显示全部 ${list.length} 条 ↓</button>`
+  }
+  h+=`<div class="inv-actions"><button class="btn btn-ghost" data-inv="pick">↻ 重新导入</button><button class="btn btn-danger" data-inv="clear">清空发票数据</button></div>`
+  h+='<input type="file" id="invFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none">'
+  h+='</div>'
+  return h
+}
+async function doImportInvoice(file){
+  try{
+    const r=await importInvoices(file)
+    if(!r) return
+    _invAll=false; _invQ=''
+    renderStep()
+    let msg='已导入 '+r.count+' 条发票（工作表「'+r.sheet+'」）'
+    if(r.truncated) msg+='，超出 '+INV_MAX+' 条部分已截断'
+    if(!r.saved) msg+='。⚠ 数据量超出浏览器本地存储上限，本次未自动保存，请先删减截图或改用首页「本地文件夹同步」后再导入'
+    flash(msg)
+    if(!r.saved) setTimeout(()=>alert(msg), 60)
+  }catch(err){
+    console.error('[发票导入]', err)
+    alert('发票导入失败：'+(err && err.message || err))
+  }
+}
+
 /* 轻提示 */
 let _noticeTimer=null
 function flash(msg){
@@ -508,12 +818,28 @@ function flash(msg){
 
 /* ================= 事件委托 ================= */
 document.addEventListener('input', e=>{
+  /* 发票明细筛选（不重渲染，避免输入焦点丢失） */
+  if(e.target.dataset && e.target.dataset.invQ){
+    _invQ=e.target.value
+    const kw=String(_invQ||'').trim().toLowerCase()
+    document.querySelectorAll('.inv-table tbody tr').forEach(tr=>{
+      tr.style.display = !kw || (tr.dataset.kw||'').indexOf(kw)>=0 ? '' : 'none'
+    })
+    return
+  }
   const k=e.target.dataset.k
   if(k){ const parts=k.split('.'); let o=state; for(let i=0;i<parts.length-1;i++) o=o[parts[i]]; o[parts[parts.length-1]]=e.target.value; saveState() }
   const rk=e.target.dataset.rk
   if(rk){ const parts=rk.split('.'); let o=state; for(let i=0;i<parts.length-2;i++) o=o[parts[i]]; o[parts[parts.length-2]][parts[parts.length-1]]=e.target.value; saveState() }
 })
 document.addEventListener('change', e=>{
+  /* 全量发票文件导入 */
+  if(e.target.id==='invFile'){
+    const f=e.target.files && e.target.files[0]
+    if(f) doImportInvoice(f)
+    e.target.value=''
+    return
+  }
   const k=e.target.dataset.k
   if(k){
     const parts=k.split('.'); let o=state; for(let i=0;i<parts.length-1;i++) o=o[parts[i]]; o[parts[parts.length-1]]=e.target.value
@@ -525,6 +851,20 @@ document.addEventListener('change', e=>{
   }
 })
 document.addEventListener('click', e=>{
+  /* 开票数据导入面板 */
+  const inv=e.target.closest('[data-inv]')
+  if(inv){
+    const act=inv.dataset.inv
+    if(act==='pick'){ const f=document.getElementById('invFile'); if(f) f.click() }
+    else if(act==='all'){ _invAll=true; renderStep() }
+    else if(act==='clear'){
+      if(confirm('确定清空已导入的 '+((state.finance.invoices||[]).length)+' 条发票数据？')){
+        state.finance.invoices=[]; state.finance.invoiceMeta={file:'',sheet:'',at:'',period:''}
+        _invAll=false; _invQ=''; saveState(); renderStep(); flash('已清空发票数据')
+      }
+    }
+    return
+  }
   /* 版本切换 */
   const ver=e.target.closest('[data-ver]')
   if(ver){ setVersion(ver.dataset.ver); return }
@@ -670,8 +1010,12 @@ function stepEquity(){
 
 function stepFinance(){
   let h='<div class="step-help"><b>💰 财务概况：以电子税务局系统核查为准。</b>请逐项粘贴或上传税局系统截图（每项均可上传多张，可 <b>Ctrl+V</b> 直接粘贴，按顺序自动分配到还没有图的环节），并选择社保、公积金、银行账户开通情况。截图将全部嵌入报告的「财务概况」章节。</div>'
-  h+='<div class="sec-title">税局系统核查截图（必传 8 项 · 每项可多张）</div>'
-  FIN_SLOTS.forEach(s=>{ h+=shotSlot(s.cat, s.label, {req:1, note:'必传，可多张'}) })
+  h+='<div class="sec-title">税局系统核查截图（必传 '+(state.version==='pro'?'7':'8')+' 项 · 每项可多张）</div>'
+  FIN_SLOTS.forEach(s=>{
+    /* 专业版：开票数据改为导入税局全量发票文件，不再要求截图 */
+    if(state.version==='pro' && s.cat==='fin_invoiceData'){ h+=invoicePanel(); return }
+    h+=shotSlot(s.cat, s.label, {req:1, note:'必传，可多张'})
+  })
   h+='<div class="sec-title">账户开通情况</div>'
   const ac=state.finance.accounts
   h+=`<div class="frow">${field('finance.accounts','social','社保账户开通情况',{req:1,type:'select',options:['','有','无','销户']})}${field('finance.accounts','housing','公积金账户开通情况',{req:1,type:'select',options:['','有','无','销户']})}${field('finance.accounts','bank','银行账户开通情况',{req:1,type:'select',options:['','有','无','销户']})}</div>`
@@ -987,7 +1331,7 @@ function stepReport(){
   const ver=VERSIONS.find(v=>v.id===state.version)||VERSIONS[0]
   const verName=ver.name
   const struct=isPro
-    ? '封面 · 保密声明 · 目录 · 一、报告摘要与结论 · 二、公司基本情况 · 三、历史沿革与股权 · 四、资质与行政许可 · 五、财务状况 · 六、税务合规 · 七、劳动用工 · 八、资产与知识产权 · 九、重大合同与债权债务 · 十、诉讼仲裁与行政处罚 · 十一、风险矩阵与评级 · 十二、结论与建议 · 落款'
+    ? '封面 · 保密声明 · 目录 · 一、报告摘要与结论 · 二、公司基本情况 · 三、历史沿革与股权 · 四、资质与行政许可 · 五、财务状况（含税局全量发票明细） · 六、税务合规 · 七、劳动用工 · 八、资产与知识产权 · 九、重大合同与债权债务 · 十、诉讼仲裁与行政处罚 · 十一、风险矩阵与评级 · 十二、结论与建议 · 落款'
     : '封面 · 保密声明 · 目录 · 报告摘要与结论 · 公司基本信息 · 股权结构（截图） · 财务概况（税局截图＋账户情况） · 法律合规 · 风险提示与综合结论 · 落款'
   let h=`<div class="step-help"><b>📌 最后一步</b>点击下方按钮，系统将根据已填写内容自动生成一份完整、排版正式的《企业尽职调查报告》（${verName}）Word 文档，可直接打印或提交。</div>`
   h+='<div class="summary-grid">'
@@ -1051,7 +1395,10 @@ function validate(i){
     if(!shotsOf('equity').length) miss.push('公司章程/股权结构图截图（至少 1 张）')
   }
   if(s==='finance'){
-    FIN_SLOTS.forEach(sl=>{ if(!shotsOf(sl.cat).length) miss.push('财务截图：'+sl.label) })
+    const slots=(state.version==='pro') ? FIN_SLOTS.filter(x=>x.cat!=='fin_invoiceData') : FIN_SLOTS
+    slots.forEach(sl=>{ if(!shotsOf(sl.cat).length) miss.push('财务截图：'+sl.label) })
+    /* 专业版：开票数据改为导入税局全量发票 */
+    if(state.version==='pro' && !(state.finance.invoices||[]).length) miss.push('开票数据：需导入税局「全量发票查询」导出的 .xlsx 文件')
     const ac=state.finance.accounts
     if(!ac.social) miss.push('社保账户开通情况')
     if(!ac.housing) miss.push('公积金账户开通情况')
@@ -1397,7 +1744,7 @@ function buildDocxPro(){
   /* ===== 五、财务状况 ===== */
   children.push(H1('五、财务状况'))
   children.push(H2('5.1 电子税务局核查截图'))
-  FIN_SLOTS.forEach((sl,idx)=>{
+  FIN_SLOTS.filter(sl=>sl.cat!=='fin_invoiceData').forEach((sl,idx)=>{
     const arr=shotsOf(sl.cat)
     if(arr.length){
       arr.forEach((it,k)=>{ shotBlock('5.1.'+(idx+1)+' '+sl.label+(arr.length>1?('（'+(k+1)+'）'):''), it).forEach(x=>children.push(x)) })
@@ -1406,18 +1753,60 @@ function buildDocxPro(){
       children.push(p(r('（未提供截图）',{color:C.gray})))
     }
   })
-  children.push(H2('5.2 近三年主要财务数据'))
+  /* 5.2 开票数据（税局全量发票导入） */
+  children.push(H2('5.2 开票数据（税局全量发票导入）'))
+  const invs=d.finance.invoices||[]
+  const im=d.finance.invoiceMeta||{}
+  if(!invs.length){
+    children.push(body('未导入税局全量发票数据。'))
+  }else{
+    const stt=invStats(invs)
+    children.push(body('数据来源：电子税务局「全量发票查询」导出文件'+(im.file?('（'+im.file+'）'):'')+(im.sheet?('，工作表「'+im.sheet+'」'):'')+(im.at?('，导入日期 '+im.at):'')+'。系统已按发票号码去重并剔除合计行。'))
+    children.push(KVTable([
+      ['发票份数', stt.count+' 份'],
+      ['金额合计（不含税）', '¥'+money(stt.amount)],
+      ['税额合计', '¥'+money(stt.tax)],
+      ['价税合计', '¥'+money(stt.total)],
+      ['开票期间', im.period||'—']
+    ]))
+    if(stt.byStatus.length){
+      children.push(p(r('5.2.1 按发票状态分布',{bold:true,font:F.hei,size:22,color:C.primary})))
+      children.push(DataTable(['发票状态','份数','占比'],
+        stt.byStatus.map(x=>[x[0], String(x[1]), (stt.count?(x[1]/stt.count*100).toFixed(1):'0')+'%']),
+        ['left','center','center']))
+    }
+    if(stt.byType.length){
+      children.push(p(r('5.2.2 按发票票种分布',{bold:true,font:F.hei,size:22,color:C.primary})))
+      children.push(DataTable(['发票票种','份数','占比'],
+        stt.byType.map(x=>[x[0], String(x[1]), (stt.count?(x[1]/stt.count*100).toFixed(1):'0')+'%']),
+        ['left','center','center']))
+    }
+    const nAll=invs.length
+    let detail
+    if(nAll<=INV_WORD_ROWS){
+      detail=invs.slice()
+      children.push(p(r('5.2.3 发票明细（全部 '+nAll+' 条）',{bold:true,font:F.hei,size:22,color:C.primary})))
+    }else{
+      const num=v=>parseFloat(String(v||'').replace(/,/g,''))||0
+      detail=invs.slice().sort((a,b)=>num(b.total)-num(a.total)).slice(0,INV_WORD_ROWS)
+      children.push(p(r('5.2.3 发票明细（价税合计前 '+INV_WORD_ROWS+' 大，共 '+nAll+' 条）',{bold:true,font:F.hei,size:22,color:C.primary})))
+    }
+    children.push(DataTable(['序号','发票号码','销方名称','购买方名称','开票日期','金额','税额','价税合计','状态'],
+      detail.map((x,i)=>[String(i+1), x.no||'—', x.seller||'—', x.buyer||'—', x.date||'—', x.amount||'—', x.tax||'—', x.total||'—', x.status||'—']),
+      ['center','left','left','left','center','right','right','right','center']))
+  }
+  children.push(H2('5.3 近三年主要财务数据'))
   const yrs=(d.finance.years||[]).filter(x=>String(x.year||'').trim())
   if(yrs.length){
     children.push(DataTable(['年度','营业收入(万)','净利润(万)','资产总额(万)','负债总额(万)'],
       yrs.map(x=>[x.year,x.revenue||'—',x.profit||'—',x.assets||'—',x.liabilities||'—']),
       ['center','center','center','center','center']))
   }else{ children.push(p(r('未录入财务数据。',{}))) }
-  children.push(H2('5.3 大额往来款'))
+  children.push(H2('5.4 大额往来款'))
   children.push(body('应收款：'+(d.finance.receivable||'—')))
   children.push(body('应付款：'+(d.finance.payable||'—')))
   if(String(d.finance.otherNote||'').trim()) children.push(body('其他说明：'+d.finance.otherNote))
-  children.push(H2('5.4 账户开通情况'))
+  children.push(H2('5.5 账户开通情况'))
   const ac=d.finance.accounts
   children.push(KVTable([
     ['社保账户开通情况', ac.social||'—'],
@@ -1585,6 +1974,8 @@ function buildDocxPro(){
 /* ===== 封面（基础版与专业版共用；verLabel 为版本标签文案） ===== */
 function pushCover(children, pj, companyName, dateStr, verLabel){
   /* ===== 封面（科技风：幽蓝色带 + 青色细节线 + 拉距英文标） ===== */
+  /* 报告标题：本函数内自持，避免依赖调用方作用域（专业版曾因此报 reportTitle 未定义） */
+  const reportTitle='企业尽职调查报告'
   const DEEP_MAR={ fill:C.deep, type:ShadingType.CLEAR }
   const NILB={ style:BorderStyle.NONE, size:0, color:'FFFFFF' }
   const NO_TB={ top:NILB, bottom:NILB, left:NILB, right:NILB, insideHorizontal:NILB, insideVertical:NILB }
