@@ -243,7 +243,7 @@ function dueLabel(due) {
 onMounted(loadTodos)
 
 /* 全部数据 key 统一来自 src/data/backupKeys.js（新增工具的 key 记得登记） */
-const APP_VERSION = 'v1.15.0' /* 2026-09-12 新增需求确认单生成器（销售类） */
+const APP_VERSION = 'v1.15.1' /* 2026-09-12 需求确认单去掉底部客户确认/落款栏 */
 const fileInput = ref(null)
 const dataStatus = ref('')
 const dataStatusType = ref('ok')

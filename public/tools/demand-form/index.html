@@ -44,11 +44,6 @@ h2.sec{font-size:13px;color:var(--accent);margin:0 0 12px;letter-spacing:1px;fon
 #imgCard .d-row .k{width:132px;flex:0 0 132px;background:#fdf7ec;color:#7c3f06;font-weight:700;font-size:13px;padding:11px 12px;border-right:1px solid #f2e6d8}
 #imgCard .d-row .v{flex:1;padding:11px 14px;font-size:13.5px;line-height:1.7;white-space:pre-wrap;word-break:break-word;min-height:40px}
 #imgCard .d-note{margin-top:16px;font-size:12px;color:#8a7a62;line-height:1.8;border-left:3px solid #f2e6d8;padding-left:10px}
-#imgCard .d-foot{margin-top:22px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px}
-#imgCard .d-sign{font-size:13px;color:#2a2118;line-height:2.2}
-#imgCard .d-sign .line{display:inline-block;min-width:110px;border-bottom:1px solid #c9b8a0}
-#imgCard .d-stamp{text-align:right;font-size:12.5px;color:#6b5d4a;line-height:1.9}
-#imgCard .d-stamp .nm{color:#7c3f06;font-weight:700;font-size:13.5px}
 .hist{flex:1 1 100%;padding:16px 18px;margin:0 20px 30px}
 .hist-list{display:flex;flex-direction:column;gap:8px}
 .hist-item{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:9px;padding:9px 12px;background:#fffdf8;font-size:13px}
@@ -167,7 +162,7 @@ function renderForm(){
       html += '<div class="fld"><label>'+esc(f.label)+'</label><input id="f_'+f.key+'" list="dl_'+f.key+'" value="'+esc(v)+'" placeholder="'+esc(f.ph||'')+'" oninput="onField(\''+f.key+'\',this.value)">'+dl+'</div>';
     }
   }
-  html += '<div class="fld"><label>落款单位（确认单底部展示）</label><input id="f_co" value="'+esc(form.co||DEFAULT_CO)+'" oninput="onField(\'co\',this.value)"></div>';
+  html += '<div class="fld"><label>抬头单位（确认单顶部展示）</label><input id="f_co" value="'+esc(form.co||DEFAULT_CO)+'" oninput="onField(\'co\',this.value)"></div>';
   document.getElementById('formBox').innerHTML = html;
 }
 function onField(key,val){
@@ -200,11 +195,7 @@ function renderCard(d){
     + '<div class="d-sub">编号 '+esc(d.no)+'　|　日期 '+esc(d.date)+'</div>'
     + '</div>'
     + rows
-    + '<div class="d-note">本确认单用于明确客户收购/办理需求，作为资源匹配与报价依据；最终以双方签署的正式合同及工商登记信息为准。</div>'
-    + '<div class="d-foot">'
-    + '<div class="d-sign">客户确认：<span class="line"></span>　　日期：<span class="line"></span></div>'
-    + '<div class="d-stamp"><div class="nm">'+esc(d.co)+'</div><div>联系电话：______________</div></div>'
-    + '</div>';
+    + '<div class="d-note">本确认单用于明确客户收购/办理需求，作为资源匹配与报价依据；最终以双方签署的正式合同及工商登记信息为准。</div>';
   applyScale();
 }
 function genCard(){
