@@ -256,7 +256,7 @@
       <div class="img-list" id="fImages"></div>
       <button class="img-add" id="imgAddBtn" onclick="addImageClick()" title="上传图片">＋</button>
       <input type="file" id="imgFile" accept="image/*" multiple style="display:none" onchange="onImagePick(event)">
-      <div class="hint">点击「＋」上传，或直接把图片粘贴（Ctrl+V）进来；自动压缩保存。点「复制」时文字＋图片会一起进剪贴板，微信里 Ctrl+V 直接出图。</div>
+      <div class="hint">点击「＋」上传，或直接把图片粘贴（Ctrl+V）进来；自动压缩保存。<br>点「复制」= 文字＋全部图片一次进剪贴板（微信 Ctrl+V 文字和图一起出来）；只要文字点「📄 文字」，只要图片点「📷 图」。</div>
     </div>
     <div class="modal-acts">
       <button class="btn btn-ghost" onclick="closeScriptModal()">取消</button>
@@ -575,7 +575,8 @@ function scriptHtml(s){
       <img src="${d}" alt="">
       ${imgs.length>1?`<span class="n">${i+1}</span>`:''}
     </div>`).join('')}</div>` : '';
-  const copyImgBtn = imgs.length ? `<button class="copy-img-btn" onclick="copyImages('${s.id}')" title="只复制图片（图文一起复制请点「复制」）">📷 复制图</button>` : '';
+  const copyImgBtn = imgs.length ? `<button class="copy-img-btn" onclick="copyImages('${s.id}')" title="只复制第 1 张图（微信发纯图用）">📷 图</button>` : '';
+  const copyTextBtn = (s.content && imgs.length) ? `<button class="copy-img-btn" onclick="copyScript('${s.id}',1)" title="只复制文字，不带图">📄 文字</button>` : '';
   return `<div class="script" id="script-${s.id}">
     <div class="swatch" style="background:${color}"></div>
     <div class="body">
@@ -590,10 +591,11 @@ function scriptHtml(s){
       ${s.content?`<span class="expand" onclick="toggleExpand('${s.id}')">展开/收起</span>`:''}
     </div>
     <div class="acts">
-      ${s.content?`<button class="copy-btn" onclick="copyScript('${s.id}')" title="${imgs.length?'复制文字＋第1张图片（一次粘贴全带上）':'复制到剪贴板'}">
+      ${s.content?`<button class="copy-btn" onclick="copyScript('${s.id}')" title="${imgs.length?'复制文字＋全部图片（一次粘贴）':'复制到剪贴板'}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
         复制
       </button>`:''}
+      ${copyTextBtn}
       ${copyImgBtn}
       <div class="mini-acts">
         <button class="icon-btn fav ${isFav?'':'off'}" title="收藏" onclick="toggleFav('${s.id}')">★</button>
@@ -869,13 +871,22 @@ function toPngBlob(dataUrl){
   });
 }
 
-// 图文一体复制：一次写入 text/plain + image/png，粘贴端自取（微信 Ctrl+V 出图，聊天框可粘文本）
-async function copyRich(text, pngBlob){
-  const item = new ClipboardItem({
+/* 富文本剪贴板：文字 + 全部图片（一次粘贴全带）。
+   关键：这里【不写 image/png 原生位图】—— 微信/QQ 一旦在剪贴板里检测到位图就会走「发图片」流程并丢弃文字，
+   这正是之前「只有一张图、文字消失」的原因。改为写 CF_HTML（文字 + <img>），接收端按富文本渲染。 */
+function buildClipHtml(text, imgs){
+  const body = esc(text||'').replace(/\r?\n/g,'<br>');
+  const tags = (imgs||[]).map(d=>`<img src="${d}">`).join('<br>');
+  return '<html><body><!--StartFragment-->'
+       + '<div style="font-size:15px;line-height:1.75;color:#222">' + body + '</div>'
+       + (tags ? '<div>' + tags + '</div>' : '')
+       + '<!--EndFragment--></body></html>';
+}
+async function copyRichHtml(text, imgs){
+  await navigator.clipboard.write([new ClipboardItem({
     'text/plain': new Blob([text],{type:'text/plain'}),
-    'image/png': pngBlob
-  });
-  await navigator.clipboard.write([item]);
+    'text/html':  new Blob([buildClipHtml(text,imgs)],{type:'text/html'})
+  })]);
 }
 
 function copyImage(dataUrl){
@@ -956,13 +967,14 @@ function fillVars(content){
 
 let pendingFill = {};
 
-function copyScript(id){
+function copyScript(id, textOnly){
   const s = scripts.find(x=>x.id===id);
   if(!s) return;
   const {result, missing} = fillVars(s.content);
   const uniq = [...new Set(missing)];
+  const copyId = textOnly ? null : s.id;   /* textOnly：不带图，只复制文字 */
   if(uniq.length){
-    pendingFill = {content: s.content, keys: uniq, id: s.id};
+    pendingFill = {content: s.content, keys: uniq, id: copyId};
     const list = document.getElementById('fillList');
     list.innerHTML = uniq.map(k=>`
       <div class="fg">
@@ -972,7 +984,7 @@ function copyScript(id){
     document.getElementById('fillModal').classList.add('show');
     const first = list.querySelector('input'); if(first) first.focus();
   } else {
-    doCopy(result, s.id);
+    doCopy(result, copyId);
   }
 }
 
@@ -999,14 +1011,11 @@ async function doCopy(text, id){
   const imgs = (s && s.images) || [];
   if(imgs.length){
     try{
-      const png = await toPngBlob(imgs[0]);
-      await copyRich(text, png);
+      await copyRichHtml(text, imgs);   /* 文字 + 全部图片（HTML 富文本） */
       ok = true;
-      imgNote = imgs.length>1
-        ? '已复制 文字＋第1张图（共'+imgs.length+'张图，其余点缩略图下载后发）'
-        : '已复制 文字＋图片，去微信 Ctrl+V 直接粘贴';
+      imgNote = '已复制 文字＋' + imgs.length + ' 张图，一次粘贴全带上';
     }catch(e){
-      imgNote = '已复制文字；图片复制失败，请单独点「📷 复制图」';
+      imgNote = '已复制文字；图片复制失败，请点「📷 图」单独发图';
     }
   }
   stats.copy = (stats.copy||0) + 1;
