@@ -652,7 +652,7 @@ function scriptHtml(s){
       <img src="${d}" alt="">
       ${imgs.length>1?`<span class="n">${i+1}</span>`:''}
     </div>`).join('')}</div>` : '';
-  const copyImgBtn = imgs.length ? `<button class="copy-img-btn" onclick="copyImages('${s.id}')" title="只复制第 1 张图（微信发纯图用）">📷 图</button>` : '';
+  const copyImgBtn = imgs.length ? `<button class="copy-img-btn" onclick="copyImages('${s.id}')" title="复制全部图片（微信发纯图用）">📷 图</button>` : '';
   const copyTextBtn = (s.content && imgs.length) ? `<button class="copy-img-btn" onclick="copyScript('${s.id}',1)" title="只复制文字，不带图">📄 文字</button>` : '';
   return `<div class="script" id="script-${s.id}">
     <div class="swatch" style="background:${color}"></div>
@@ -993,18 +993,34 @@ function copyImage(dataUrl){
 
 async function copyImages(id){
   const s = scripts.find(x=>x.id===id);
-  if(!s || !(s.images||[]).length) return;
+  const imgs = (s && s.images) || [];
+  if(!imgs.length) return;
+  /* 剪贴板位图只能放 1 张；要一次带走全部图片必须走 text/html（内嵌全部 <img>），
+     且不能同时写位图——否则微信检测到位图就只发那 1 张 */
   try{
-    const blob = await toPngBlob(s.images[0]);
-    await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+    await navigator.clipboard.write([new ClipboardItem({
+      'text/html': new Blob([buildClipHtml('', imgs)],{type:'text/html'})
+    })]);
     stats.copy = (stats.copy||0) + 1;
     saveStats();
     document.getElementById('copyCount').textContent = stats.copy;
-    showToast((s.images||[]).length>1
-      ? '已复制第 1 张图（共 '+(s.images||[]).length+' 张，其余点缩略图下载）'
+    showToast(imgs.length>1
+      ? '已复制全部 '+imgs.length+' 张图，去微信 Ctrl+V 一次粘贴'
       : '图片已复制，去微信 Ctrl+V 粘贴');
   }catch(e){
-    showToast('复制图片失败，请点击缩略图下载后手动发送');
+    /* 降级：HTML 写入失败（如浏览器不支持），退回单张位图 */
+    try{
+      const blob = await toPngBlob(imgs[0]);
+      await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+      stats.copy = (stats.copy||0) + 1;
+      saveStats();
+      document.getElementById('copyCount').textContent = stats.copy;
+      showToast(imgs.length>1
+        ? '已复制第 1 张图（共 '+imgs.length+' 张；当前浏览器不支持多图复制，其余点缩略图下载）'
+        : '图片已复制，去微信 Ctrl+V 粘贴');
+    }catch(e2){
+      showToast('复制图片失败，请点击缩略图下载后手动发送');
+    }
   }
 }
 
