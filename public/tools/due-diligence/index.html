@@ -140,6 +140,15 @@ footer{text-align:center;color:#9a8a72;font-size:12px;padding:20px}
 .inv-card.hi{background:#fdf4e6;border-color:#f3c98a}
 .inv-card.hi .v{color:#b45309}
 .inv-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+/* 来源文件列表 */
+.inv-src{margin-bottom:10px;border:1px solid #f2e6d8;border-radius:8px;background:#fff;overflow:hidden}
+.inv-src-t{font-size:11px;color:#9a8a72;padding:6px 10px 4px}
+.inv-src-row{display:flex;align-items:center;gap:8px;padding:5px 10px;border-top:1px solid #f7f1e8;font-size:11.5px}
+.inv-src-row:first-of-type{border-top:none}
+.inv-src-row .nm{color:#2a2118;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inv-src-row .sub{color:#9a8a72;white-space:nowrap}
+.inv-src-del{border:1px solid #ece3d6;background:#fff;color:#9a8a72;border-radius:5px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.inv-src-del:hover{border-color:#DC2626;color:#DC2626}
 .inv-chip{font-size:11px;color:#7a3e07;background:#fdf4e6;border:1px solid #f3c98a;border-radius:20px;padding:3px 10px}
 .inv-chip b{color:#b45309}
 .inv-chip.gray{color:#6b7280;background:#fff;border-color:#ece3d6}
@@ -306,8 +315,8 @@ function emptyState(){
     finance:{ accounts:{ social:'', housing:'', bank:'', bankName:'' },
       /* 专业版：近三年财务摘要 + 大额往来 */
       years:[{year:'',revenue:'',profit:'',assets:'',liabilities:''}], receivable:'', payable:'', otherNote:'',
-      /* 专业版：税局全量发票导入 */
-      invoices:[], invoiceMeta:{ file:'', sheet:'', at:'', period:'' } },
+      /* 专业版：税局全量发票导入（files[] 记录每个来源文件，支持多表格累积导入） */
+      invoices:[], invoiceMeta:{ file:'', sheet:'', at:'', period:'', files:[] } },
     /* 专业版：税务合规 */
     tax:{ creditGrade:'', oweTax:'', inspection:'', penalty:'', preference:'', invoiceStatus:'' },
     /* 专业版：劳动用工 */
@@ -327,7 +336,7 @@ function emptyState(){
   }
 }
 /* 发票明细模板（导入的全量发票按此结构清洗） */
-const INV_TPL = { sn:'', no:'', code:'', sellerCode:'', seller:'', buyerCode:'', buyer:'', date:'',
+const INV_TPL = { sn:'', no:'', code:'', srcId:'', sellerCode:'', seller:'', buyerCode:'', buyer:'', date:'',
   amount:'', tax:'', total:'', source:'', type:'', status:'', positive:'', risk:'', drawer:'', remark:'' }
 function today(){
   const d=new Date();const p=n=>String(n).padStart(2,'0')
@@ -353,6 +362,12 @@ function loadState(){
       merged.finance=Object.assign({}, base.finance, s.finance||{})
       merged.finance.accounts=Object.assign({}, base.finance.accounts, (s.finance&&s.finance.accounts)||{})
       merged.finance.invoiceMeta=Object.assign({}, base.finance.invoiceMeta, (s.finance&&s.finance.invoiceMeta)||{})
+      /* 来源文件列表（旧数据无 files 字段时，用最后一次的单文件信息补一条，保证兼容） */
+      if(!Array.isArray(merged.finance.invoiceMeta.files)) merged.finance.invoiceMeta.files=[]
+      if(!merged.finance.invoiceMeta.files.length && merged.finance.invoiceMeta.file){
+        merged.finance.invoiceMeta.files=[{ id:'legacy', name:merged.finance.invoiceMeta.file,
+          sheet:merged.finance.invoiceMeta.sheet||'', at:merged.finance.invoiceMeta.at||'', count:'' }]
+      }
       merged.legal=Object.assign({}, base.legal, s.legal||{})
       merged.risk=Object.assign({}, base.risk, s.risk||{})
       merged.risk.scores=Object.assign({}, base.risk.scores, (s.risk&&s.risk.scores)||{})
@@ -381,6 +396,10 @@ function loadState(){
       merged.legal.penalties=rows(merged.legal.penalties,{date:'',authority:'',reason:'',amount:''})
       /* 清洗：导入的全量发票（缺字段补齐，避免渲染 undefined） */
       merged.finance.invoices=rows(merged.finance.invoices,INV_TPL)
+      /* 旧数据（单文件时代）迁移：补一条 legacy 来源，并把无 srcId 的发票挂上去，保证「移除来源」仍可用 */
+      if(merged.finance.invoiceMeta.files.length===1 && merged.finance.invoiceMeta.files[0].id==='legacy'){
+        merged.finance.invoices.forEach(x=>{ if(!x.srcId) x.srcId='legacy' })
+      }
       return merged
     }
   }catch(e){ console.error('[loadState] 异常:', e && (e.stack||e.message) || e) }
@@ -697,7 +716,12 @@ async function importInvoices(file){
   if(map.no==null && map.seller==null && map.buyer==null)
     throw new Error('未识别到发票号码/销方/购方等必要列，请导入原始导出文件')
   const get=(r,f)=> map[f]!=null ? String(r[map[f]]||'').trim() : ''
+  const srcId='f'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)
   const list=[], seen={}
+  /* 已有发票按号码建索引，跨文件重复导入自动跳过 */
+  const exist=state.finance.invoices||[]
+  exist.forEach(x=>{ const k=(x.no||x.code||'').trim(); if(k) seen[k]=1 })
+  let dup=0, over=0
   for(let i=hi+1;i<rows.length;i++){
     const r=rows[i]
     const noV=get(r,'no'), codeV=get(r,'code')
@@ -707,22 +731,49 @@ async function importInvoices(file){
     /* 跳过合计行 / 小计行 / 空行（税局导出文件末尾通常带「合计行」） */
     if(/合计|小计|总计|汇总/.test(sn)) continue
     if(!key && !seller && !buyer) continue
-    if(key && seen[key]) continue          /* 信息汇总表一票多货 → 去重 */
+    if(key && seen[key]){ dup++; continue }   /* 本次文件内重复 + 与历史文件重复 */
     if(key) seen[key]=1
+    /* 总量上限：超出部分不再写入 */
+    if(exist.length+list.length>=INV_MAX){ over++; continue }
     const o=Object.assign({}, INV_TPL)
     Object.keys(INV_TPL).forEach(f=>{ o[f]=get(r,f) })
+    o.srcId=srcId
     o.date=(o.date||'').replace(/\s+\d{1,2}:\d{1,2}(:\d{1,2})?$/,'').trim()
     list.push(o)
-    if(list.length>=INV_MAX) break
   }
-  if(!list.length) throw new Error('未读到任何发票记录，请确认导出文件中含有发票数据')
-  /* 开票期间 */
-  const ds=list.map(x=>(x.date||'').slice(0,10)).filter(Boolean).sort()
+  if(!list.length)
+    throw new Error(dup ? ('本次未新增任何发票：'+dup+' 条全部与已导入数据重复') : '未读到任何发票记录，请确认导出文件中含有发票数据')
+  /* 累积合并（支持多个表格文件） */
+  const all=exist.concat(list)
+  /* 开票期间（按合并后的全体数据重算） */
+  const ds=all.map(x=>(x.date||'').slice(0,10)).filter(Boolean).sort()
   const period = ds.length ? (ds[0]===(ds[ds.length-1]) ? ds[0] : ds[0]+' ~ '+ds[ds.length-1]) : ''
-  state.finance.invoices = list
-  state.finance.invoiceMeta = { file:file.name||'', sheet:sheet.name, at:today(), period:period }
+  const meta=state.finance.invoiceMeta||{}
+  if(!Array.isArray(meta.files)) meta.files=[]
+  meta.files.push({ id:srcId, name:file.name||'未命名文件', sheet:sheet.name, at:today(), count:list.length })
+  state.finance.invoices = all
+  state.finance.invoiceMeta = Object.assign({}, meta, {
+    file:file.name||'', sheet:sheet.name, at:today(), period:period, files:meta.files
+  })
   const saved=saveState()
-  return { count:list.length, sheet:sheet.name, saved:!!saved, truncated: rows.length-1-hi > INV_MAX }
+  return { count:list.length, dup:dup, over:over, total:all.length, files:meta.files.length,
+    sheet:sheet.name, saved:!!saved }
+}
+/* 移除某个来源文件的全部发票 */
+function removeInvoiceSource(id){
+  const meta=state.finance.invoiceMeta||{}
+  const f=(meta.files||[]).find(x=>x.id===id)
+  if(!f) return 0
+  const before=(state.finance.invoices||[]).length
+  state.finance.invoices=(state.finance.invoices||[]).filter(x=>x.srcId!==id)
+  meta.files=(meta.files||[]).filter(x=>x.id!==id)
+  /* 期间按剩余数据重算 */
+  const ds=(state.finance.invoices||[]).map(x=>(x.date||'').slice(0,10)).filter(Boolean).sort()
+  meta.period = ds.length ? (ds[0]===(ds[ds.length-1]) ? ds[0] : ds[0]+' ~ '+ds[ds.length-1]) : ''
+  if(!meta.files.length){ meta.file=''; meta.sheet=''; meta.at='' }
+  state.finance.invoiceMeta=meta
+  saveState()
+  return before-state.finance.invoices.length
 }
 /* 发票汇总统计 */
 function invStats(list){
@@ -751,13 +802,14 @@ function invoicePanel(){
   const list=state.finance.invoices||[]
   let h='<div class="inv-box"><div class="inv-head"><span class="inv-title">🧾 开票数据（税局全量发票导入）</span>'
   if(list.length){
-    h+='<span class="inv-meta">'+esc(meta.file||'未记录文件名')+(meta.sheet?(' · 工作表「'+esc(meta.sheet)+'」'):'')+(meta.at?(' · 导入于 '+esc(meta.at)):'')+'</span>'
+    const fc=(meta.files||[]).length
+    h+='<span class="inv-meta">'+(fc>1?('已合并 '+fc+' 个文件 · 共 '+list.length+' 条'):(esc(meta.file||'未记录文件名')+(meta.sheet?(' · 工作表「'+esc(meta.sheet)+'」'):'')))+(meta.at?(' · 最近导入 '+esc(meta.at)):'')+'</span>'
   }
   h+='</div>'
   if(!list.length){
-    h+='<div class="inv-upload" data-inv="pick">📥 导入税局导出的全量发票文件（.xlsx）</div>'
-    h+='<div class="inv-tip">获取路径：电子税务局 → 我要办税 → 发票使用 → 发票查询统计 → <b>全量发票查询</b> → 选择属期后点「导出」。<br>导入后自动识别「发票基础信息」工作表，按发票号码去重、剔除合计行，并统计份数与价税合计，全部写入报告第五章。</div>'
-    h+='<input type="file" id="invFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none">'
+    h+='<div class="inv-upload" data-inv="pick">📥 导入税局导出的全量发票文件（.xlsx，可多次导入自动合并）</div>'
+    h+='<div class="inv-tip">获取路径：电子税务局 → 我要办税 → 发票使用 → 发票查询统计 → <b>全量发票查询</b> → 选择属期后点「导出」。<br>可<b>分多个文件多次导入</b>（如按年度/属期分别导出），系统按发票号码自动去重合并，不会重复计数。<br>导入后自动识别「发票基础信息」工作表，剔除合计行，并统计份数与价税合计，全部写入报告第五章。</div>'
+    h+='<input type="file" id="invFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple style="display:none">'
     h+='</div>'
     return h
   }
@@ -769,6 +821,15 @@ function invoicePanel(){
   h+=`<div class="inv-card"><div class="k">税额合计</div><div class="v">¥${esc(money(st.tax))}</div></div>`
   h+=`<div class="inv-card"><div class="k">开票期间</div><div class="v sm">${esc(meta.period||'—')}</div></div>`
   h+='</div>'
+  /* 来源文件列表：可单独移除某个文件 */
+  const files=meta.files||[]
+  if(files.length){
+    h+='<div class="inv-src"><div class="inv-src-t">来源文件（'+files.length+'）</div>'
+    files.forEach(f=>{
+      h+=`<div class="inv-src-row"><span class="nm" title="${esc(f.name||'')}">📄 ${esc(f.name||'未命名文件')}</span><span class="sub">${f.sheet?('「'+esc(f.sheet)+'」'):''}${f.count?(' '+f.count+' 条'):''}${f.at?(' · '+esc(f.at)):''}</span><button class="inv-src-del" data-inv="del" data-src="${esc(f.id||'')}">移除</button></div>`
+    })
+    h+='</div>'
+  }
   /* 状态 / 票种分布 */
   h+='<div class="inv-chips">'
   st.byStatus.forEach(x=>{ h+=`<span class="inv-chip">${esc(x[0])} <b>${x[1]}</b> 份</span>` })
@@ -785,8 +846,8 @@ function invoicePanel(){
   if(list.length>INV_PREVIEW && !_invAll){
     h+=`<button class="inv-more" data-inv="all">显示全部 ${list.length} 条 ↓</button>`
   }
-  h+=`<div class="inv-actions"><button class="btn btn-ghost" data-inv="pick">↻ 重新导入</button><button class="btn btn-danger" data-inv="clear">清空发票数据</button></div>`
-  h+='<input type="file" id="invFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none">'
+  h+=`<div class="inv-actions"><button class="btn btn-ghost" data-inv="pick">＋ 继续导入（可多选文件）</button><button class="btn btn-danger" data-inv="clear">清空全部发票数据</button></div>`
+  h+='<input type="file" id="invFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple style="display:none">'
   h+='</div>'
   return h
 }
@@ -796,8 +857,10 @@ async function doImportInvoice(file){
     if(!r) return
     _invAll=false; _invQ=''
     renderStep()
-    let msg='已导入 '+r.count+' 条发票（工作表「'+r.sheet+'」）'
-    if(r.truncated) msg+='，超出 '+INV_MAX+' 条部分已截断'
+    let msg='本次新增 '+r.count+' 条（工作表「'+r.sheet+'」），当前共 '+r.total+' 条'
+    if(r.dup) msg+='；重复自动跳过 '+r.dup+' 条'
+    if(r.over) msg+='；超出 '+INV_MAX+' 条上限未写入 '+r.over+' 条'
+    if(r.files>1) msg+='（已合并 '+r.files+' 个文件）'
     if(!r.saved) msg+='。⚠ 数据量超出浏览器本地存储上限，本次未自动保存，请先删减截图或改用首页「本地文件夹同步」后再导入'
     flash(msg)
     if(!r.saved) setTimeout(()=>alert(msg), 60)
@@ -805,6 +868,24 @@ async function doImportInvoice(file){
     console.error('[发票导入]', err)
     alert('发票导入失败：'+(err && err.message || err))
   }
+}
+/* 一次选择多个文件时排队逐个导入（避免并发写 state 出错） */
+async function doImportInvoiceBatch(fileList){
+  const arr=Array.prototype.slice.call(fileList||[])
+  if(!arr.length) return
+  const errs=[]
+  for(let i=0;i<arr.length;i++){
+    try{
+      await importInvoices(arr[i])
+    }catch(err){
+      errs.push((arr[i].name||('文件'+(i+1)))+'：'+(err && err.message || err))
+    }
+  }
+  _invAll=false; _invQ=''
+  renderStep()
+  const n=(state.finance.invoices||[]).length
+  if(errs.length) alert('已导入完成，其中 '+errs.length+' 个文件失败：\n· '+errs.join('\n· '))
+  else flash('已导入 '+arr.length+' 个文件，当前共 '+n+' 条发票')
 }
 
 /* 轻提示 */
@@ -833,10 +914,11 @@ document.addEventListener('input', e=>{
   if(rk){ const parts=rk.split('.'); let o=state; for(let i=0;i<parts.length-2;i++) o=o[parts[i]]; o[parts[parts.length-2]][parts[parts.length-1]]=e.target.value; saveState() }
 })
 document.addEventListener('change', e=>{
-  /* 全量发票文件导入 */
+  /* 全量发票文件导入（支持一次多选多个文件） */
   if(e.target.id==='invFile'){
-    const f=e.target.files && e.target.files[0]
-    if(f) doImportInvoice(f)
+    const fs=e.target.files
+    if(fs && fs.length>1) doImportInvoiceBatch(fs)
+    else if(fs && fs.length===1) doImportInvoice(fs[0])
     e.target.value=''
     return
   }
@@ -857,9 +939,17 @@ document.addEventListener('click', e=>{
     const act=inv.dataset.inv
     if(act==='pick'){ const f=document.getElementById('invFile'); if(f) f.click() }
     else if(act==='all'){ _invAll=true; renderStep() }
+    else if(act==='del'){
+      const id=inv.dataset.src
+      const f=(state.finance.invoiceMeta.files||[]).find(x=>x.id===id)
+      if(confirm('确定移除来源文件「'+((f&&f.name)||id)+'」及其发票数据？')){
+        const n=removeInvoiceSource(id)
+        _invAll=false; _invQ=''; renderStep(); flash('已移除 '+n+' 条发票')
+      }
+    }
     else if(act==='clear'){
-      if(confirm('确定清空已导入的 '+((state.finance.invoices||[]).length)+' 条发票数据？')){
-        state.finance.invoices=[]; state.finance.invoiceMeta={file:'',sheet:'',at:'',period:''}
+      if(confirm('确定清空已导入的 '+((state.finance.invoices||[]).length)+' 条发票数据（含全部来源文件）？')){
+        state.finance.invoices=[]; state.finance.invoiceMeta={file:'',sheet:'',at:'',period:'',files:[]}
         _invAll=false; _invQ=''; saveState(); renderStep(); flash('已清空发票数据')
       }
     }
@@ -1761,7 +1851,15 @@ function buildDocxPro(){
     children.push(body('未导入税局全量发票数据。'))
   }else{
     const stt=invStats(invs)
-    children.push(body('数据来源：电子税务局「全量发票查询」导出文件'+(im.file?('（'+im.file+'）'):'')+(im.sheet?('，工作表「'+im.sheet+'」'):'')+(im.at?('，导入日期 '+im.at):'')+'。系统已按发票号码去重并剔除合计行。'))
+    const srcFiles=(im.files||[])
+    if(srcFiles.length>1){
+      children.push(body('本次开票数据由 '+srcFiles.length+' 个税局导出文件合并而成，系统已按发票号码跨文件去重（同一张发票重复出现在多个文件中只计一次）。'))
+      children.push(DataTable(['序号','来源文件','工作表','导入日期','贡献条数'],
+        srcFiles.map((f,i)=>[String(i+1), f.name||'—', f.sheet||'—', f.at||'—', (f.count===''? '—' : String(f.count))]),
+        ['center','left','center','center','center']))
+    }else{
+      children.push(body('数据来源：电子税务局「全量发票查询」导出文件'+(im.file?('（'+im.file+'）'):'')+(im.sheet?('，工作表「'+im.sheet+'」'):'')+(im.at?('，导入日期 '+im.at):'')+'。系统已按发票号码去重并剔除合计行。'))
+    }
     children.push(KVTable([
       ['发票份数', stt.count+' 份'],
       ['金额合计（不含税）', '¥'+money(stt.amount)],
