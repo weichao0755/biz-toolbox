@@ -84,6 +84,9 @@ header .rec-btn:hover{background:#fbf5ea;border-color:#e0901a}
 .shot-no{position:absolute;top:2px;left:2px;background:rgba(12,45,93,.82);color:#fff;border-radius:4px;font-size:10px;padding:1px 5px;line-height:1.4}
 .shot-clear{margin-top:6px;border:1px solid #e8dcd0;background:#fff;color:#9a8a72;border-radius:6px;padding:4px 10px;font-size:11.5px;cursor:pointer;font-family:inherit}
 .shot-clear:hover{border-color:#DC2626;color:#DC2626}
+.risk-summary{margin-top:12px;padding:10px 14px;border-radius:8px;background:#fdf6ea;border:1px solid #ece3d6;font-size:13px;color:#2a2118}
+.risk-summary b{color:#b45309;font-size:14px}
+.risk-summary.empty{background:#f7f5f1;color:#9a8a72}
 .shot-upload{border:1.5px dashed #f3c98a;background:#fdf4e6;color:#e0901a;border-radius:8px;padding:12px;text-align:center;font-size:12.5px;cursor:pointer;font-family:inherit;transition:.15s}
 .shot-upload:hover{border-color:#e0901a;background:#fbeccb}
 /* 单选卡片 */
@@ -152,7 +155,7 @@ footer{text-align:center;color:#9a8a72;font-size:12px;padding:20px}
 /* ================= 版本定义 ================= */
 const VERSIONS = [
   { id:'basic',    name:'基础版', badge:'摸底尽调', desc:'股权结构、税局系统核查、账户开立、诉讼核查', ready:true },
-  { id:'pro',      name:'专业版', badge:'',          desc:'完整深度尽调（开发中，敬请期待）', ready:false },
+  { id:'pro',      name:'专业版', badge:'深度尽调', desc:'十二章完整深度尽调：历史沿革、资质许可、财税、用工、资产、合同、诉讼、风险矩阵', ready:true },
   { id:'hightech', name:'高新版', badge:'',          desc:'高新/专精特新专项尽调（开发中，敬请期待）', ready:false }
 ]
 const STEPS_BY_VERSION = {
@@ -163,16 +166,51 @@ const STEPS_BY_VERSION = {
     { id:'legal',   icon:'⚖️', title:'法律合规', desc:'未完成诉讼核查' },
     { id:'risk',    icon:'⚠️', title:'风险与结论', desc:'风险点、综合评估与调查结论' },
     { id:'report',  icon:'📄', title:'生成报告', desc:'一键生成并下载正式 Word 报告' }
+  ],
+  pro: [
+    { id:'project',    icon:'📋', title:'项目信息',     desc:'委托方、目标公司、调查范围与方法' },
+    { id:'company',    icon:'🏢', title:'公司基本情况', desc:'登记事项、经营范围、年报与实缴情况' },
+    { id:'history',    icon:'🏛️', title:'历史沿革与股权', desc:'设立及历次变更、股东穿透、分支机构与对外投资、股权限制' },
+    { id:'license',    icon:'📜', title:'资质与行政许可', desc:'目标资质清单、有效期、年检与许可条件符合性' },
+    { id:'finance',    icon:'💰', title:'财务状况',     desc:'税局系统核查截图 + 近三年财务摘要 + 大额往来' },
+    { id:'tax',        icon:'🧾', title:'税务合规',     desc:'纳税信用等级、欠税、税务稽查与处罚、税收优惠' },
+    { id:'hr',         icon:'👥', title:'劳动用工',     desc:'员工人数、劳动合同、社保公积金、劳动争议与欠薪' },
+    { id:'assets',     icon:'🧩', title:'资产与知识产权', desc:'商标/专利/著作权/域名、不动产与车辆' },
+    { id:'contracts',  icon:'📑', title:'重大合同与债权债务', desc:'重大合同、借款、担保与抵押、对外担保' },
+    { id:'litigation', icon:'⚖️', title:'诉讼仲裁与行政处罚', desc:'裁判文书、被执行人、失信限高、经营异常、行政处罚' },
+    { id:'matrix',     icon:'📊', title:'风险矩阵与评分', desc:'八大类风险打分，自动汇总综合风险等级' },
+    { id:'conclusion', icon:'📝', title:'结论与建议',   desc:'主要风险点、调查结论、交易建议与交割前置条件' },
+    { id:'report',     icon:'📄', title:'生成报告',     desc:'一键生成并下载正式 Word 报告（十二章）' }
   ]
 }
 let STEPS = STEPS_BY_VERSION.basic
 
 /* 截图槽位定义（基础版） */
 const CAT_LABELS = {
+  /* 基础版 */
   equity:'公司章程/股权结构图',
   fin_grade:'纳税人级别', fin_info:'纳税人信息', fin_violation:'违法违章记录', fin_cancel:'注销预检',
   fin_financial:'最新一期财务报表', fin_invoice:'发票界面', fin_invoiceData:'开票数据', fin_taxData:'纳税数据',
-  legal_nolawsuit:'无诉讼证明'
+  legal_nolawsuit:'无诉讼证明',
+  /* 专业版：公司基本情况 */
+  comp_license:'营业执照', comp_public:'工商公示信息',
+  /* 专业版：历史沿革与股权 */
+  hist_change:'工商变更记录', hist_shareholder:'股东及出资信息', hist_pledge:'股权出质/冻结查询',
+  /* 专业版：资质与行政许可 */
+  lic_cert:'资质/许可证书', lic_check:'资质年检或延续记录',
+  /* 专业版：财务（补充） */
+  fin_years:'近三年财务报表', fin_receivable:'大额往来款明细',
+  /* 专业版：税务合规 */
+  tax_credit:'纳税信用等级', tax_owe:'欠税查询', tax_inspect:'税务稽查/处罚记录',
+  /* 专业版：劳动用工 */
+  hr_social:'社保缴纳记录', hr_fund:'公积金缴纳记录', hr_dispute:'劳动争议查询',
+  /* 专业版：资产与知识产权 */
+  ast_ip:'知识产权查询', ast_property:'不动产/车辆查询',
+  /* 专业版：重大合同与债权债务 */
+  con_major:'重大合同', con_guarantee:'担保/抵押查询',
+  /* 专业版：诉讼仲裁与行政处罚 */
+  lit_judgment:'裁判文书', lit_executed:'被执行人信息', lit_dishonest:'失信/限高信息',
+  lit_abnormal:'经营异常名录', lit_penalty:'行政处罚记录'
 }
 const FIN_SLOTS = [
   { cat:'fin_grade',      label:'纳税人级别' },
@@ -184,11 +222,28 @@ const FIN_SLOTS = [
   { cat:'fin_invoiceData',label:'开票数据' },
   { cat:'fin_taxData',    label:'纳税数据' }
 ]
-/* 各步骤可粘贴的截图槽（按顺序） */
+/* 各步骤可粘贴的截图槽（按版本区分，每个环节均可多张） */
 const CATS_BY_STEP = {
-  equity:[ 'equity' ],
-  finance: FIN_SLOTS.map(s=>s.cat),
-  legal: [ 'legal_nolawsuit' ]
+  basic: {
+    equity:[ 'equity' ],
+    finance: FIN_SLOTS.map(s=>s.cat),
+    legal: [ 'legal_nolawsuit' ]
+  },
+  pro: {
+    company:   [ 'comp_license', 'comp_public' ],
+    history:   [ 'hist_change', 'hist_shareholder', 'hist_pledge' ],
+    license:   [ 'lic_cert', 'lic_check' ],
+    finance:   FIN_SLOTS.map(s=>s.cat).concat([ 'fin_years', 'fin_receivable' ]),
+    tax:       [ 'tax_credit', 'tax_owe', 'tax_inspect' ],
+    hr:        [ 'hr_social', 'hr_fund', 'hr_dispute' ],
+    assets:    [ 'ast_ip', 'ast_property' ],
+    contracts: [ 'con_major', 'con_guarantee' ],
+    litigation:[ 'lit_judgment', 'lit_executed', 'lit_dishonest', 'lit_abnormal', 'lit_penalty' ]
+  }
+}
+function catsOfStep(stepId){
+  const m=CATS_BY_STEP[state.version]||CATS_BY_STEP.basic
+  return m[stepId]||[]
 }
 
 /* ================= 数据模型（自动保存） ================= */
@@ -199,10 +254,34 @@ const AGENCY_EN   = 'SHENZHEN JINMI QIHANG ENTERPRISE SERVICE CO., LTD.'
 function emptyState(){
   return {
     version:'basic',
-    project:{ reportNo:'', client:'', agency:AGENCY_NAME, company:'', creditCode:'', address:'', legalRep:'', regCapital:'', founded:'', baseDate:'', reportDate:today() },
-    finance:{ accounts:{ social:'', housing:'', bank:'', bankName:'' } },
-    legal:{ hasLawsuit:'', lawsuits:[{no:'',cause:'',amount:'',status:'审理中'}] },
-    risk:{ risks:[{type:'',desc:'',level:'中',suggest:''}], overall:'', conclusion:'', advice:'' },
+    project:{ reportNo:'', client:'', agency:AGENCY_NAME, company:'', creditCode:'', address:'', legalRep:'', regCapital:'', founded:'', baseDate:'', reportDate:today(),
+      /* 专业版：报告开篇要素 */
+      scope:'', method:'', limitation:'' },
+    /* 专业版：公司基本情况 */
+    company:{ bizScope:'', regStatus:'', regAuthority:'', annualReport:'', paidIn:'', paidInRatio:'', bizTerm:'', taxpayerType:'', controller:'' },
+    /* 专业版：历史沿革与股权 */
+    history:{ changes:[{date:'',item:'',before:'',after:''}], shareholders:[{name:'',type:'',ratio:'',paid:'',pledge:'',freeze:''}],
+      branches:'', investments:[{name:'',ratio:'',status:''}], equityLimit:'' },
+    /* 专业版：资质与行政许可 */
+    license:{ items:[{name:'',no:'',issuer:'',validFrom:'',validTo:'',status:'',note:''}], annualCheck:'', conditionMet:'' },
+    finance:{ accounts:{ social:'', housing:'', bank:'', bankName:'' },
+      /* 专业版：近三年财务摘要 + 大额往来 */
+      years:[{year:'',revenue:'',profit:'',assets:'',liabilities:''}], receivable:'', payable:'', otherNote:'' },
+    /* 专业版：税务合规 */
+    tax:{ creditGrade:'', oweTax:'', inspection:'', penalty:'', preference:'', invoiceStatus:'' },
+    /* 专业版：劳动用工 */
+    hr:{ employeeCount:'', laborContract:'', socialStatus:'', fundStatus:'', dispute:'', wageArrears:'' },
+    /* 专业版：资产与知识产权 */
+    assets:{ ip:[{type:'',name:'',no:'',owner:'',status:''}], property:'', vehicles:'', other:'' },
+    /* 专业版：重大合同与债权债务 */
+    contracts:{ major:[{name:'',party:'',amount:'',term:'',status:''}], borrow:'', guarantee:'', mortgage:'', note:'' },
+    legal:{ hasLawsuit:'', lawsuits:[{no:'',cause:'',amount:'',status:'审理中'}],
+      /* 专业版：诉讼与处罚扩展 */
+      judgment:'', executed:'', dishonest:'', abnormal:'', penalties:[{date:'',authority:'',reason:'',amount:''}] },
+    risk:{ risks:[{type:'',desc:'',level:'中',suggest:''}], overall:'', conclusion:'', advice:'',
+      /* 专业版：风险矩阵打分（八大类）+ 交割前置条件 + 承诺与保证建议 */
+      scores:{ company:'', equity:'', finance:'', tax:'', legal:'', license:'', hr:'', contract:'' },
+      conditions:'', warranties:'' },
     attachments:{ items:[] }   /* { id, title, category, dataUrl, w, h, type } */
   }
 }
@@ -211,6 +290,8 @@ function today(){
   return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())
 }
 let state = loadState()
+/* 按已保存数据的版本挂载对应步骤表（基础版 / 专业版） */
+STEPS = STEPS_BY_VERSION[state.version] || STEPS_BY_VERSION.basic
 function loadState(){
   try{
     const raw=localStorage.getItem(LS_KEY)
@@ -229,12 +310,30 @@ function loadState(){
       merged.finance.accounts=Object.assign({}, base.finance.accounts, (s.finance&&s.finance.accounts)||{})
       merged.legal=Object.assign({}, base.legal, s.legal||{})
       merged.risk=Object.assign({}, base.risk, s.risk||{})
+      merged.risk.scores=Object.assign({}, base.risk.scores, (s.risk&&s.risk.scores)||{})
       merged.attachments=Object.assign({}, base.attachments, s.attachments||{})
+      /* 专业版各组：深合并顶层对象，行数组单独清洗 */
+      merged.company=Object.assign({}, base.company, s.company||{})
+      merged.history=Object.assign({}, base.history, s.history||{})
+      merged.license=Object.assign({}, base.license, s.license||{})
+      merged.tax=Object.assign({}, base.tax, s.tax||{})
+      merged.hr=Object.assign({}, base.hr, s.hr||{})
+      merged.assets=Object.assign({}, base.assets, s.assets||{})
+      merged.contracts=Object.assign({}, base.contracts, s.contracts||{})
       /* 清洗：仅保留带 category 的截图（旧版无 category 的孤儿数据丢弃） */
       merged.attachments.items=(merged.attachments.items||[]).filter(x=>x&&x.category&&x.dataUrl)
-      /* 清洗：案件详情/风险点默认行结构 */
-      merged.legal.lawsuits=(merged.legal.lawsuits||[]).map(x=>Object.assign({no:'',cause:'',amount:'',status:'审理中'},x))
-      merged.risk.risks=(merged.risk.risks||[]).map(x=>Object.assign({type:'',desc:'',level:'中',suggest:''},x))
+      /* 清洗：动态表格行结构（缺字段用空串补齐，避免渲染 undefined） */
+      const rows=(arr,tpl)=>(arr||[]).map(x=>Object.assign({}, tpl, x||{}))
+      merged.legal.lawsuits=rows(merged.legal.lawsuits,{no:'',cause:'',amount:'',status:'审理中'})
+      merged.risk.risks=rows(merged.risk.risks,{type:'',desc:'',level:'中',suggest:''})
+      merged.history.changes=rows(merged.history.changes,{date:'',item:'',before:'',after:''})
+      merged.history.shareholders=rows(merged.history.shareholders,{name:'',type:'',ratio:'',paid:'',pledge:'',freeze:''})
+      merged.history.investments=rows(merged.history.investments,{name:'',ratio:'',status:''})
+      merged.license.items=rows(merged.license.items,{name:'',no:'',issuer:'',validFrom:'',validTo:'',status:'',note:''})
+      merged.finance.years=rows(merged.finance.years,{year:'',revenue:'',profit:'',assets:'',liabilities:''})
+      merged.assets.ip=rows(merged.assets.ip,{type:'',name:'',no:'',owner:'',status:''})
+      merged.contracts.major=rows(merged.contracts.major,{name:'',party:'',amount:'',term:'',status:''})
+      merged.legal.penalties=rows(merged.legal.penalties,{date:'',authority:'',reason:'',amount:''})
       return merged
     }
   }catch(e){ console.error('[loadState] 异常:', e && (e.stack||e.message) || e) }
@@ -252,7 +351,12 @@ function saveState(){
 }
 function resetState(){
   if(!confirm('确定清空所有已填写的尽调数据？此操作不可恢复。')) return
-  state=emptyState(); saveState(); currentStep=0; doneSteps.clear(); renderNav(); renderStep()
+  /* 保留当前报告版本，避免清空后被切回基础版 */
+  const keepVer=state.version
+  state=emptyState()
+  state.version=keepVer
+  STEPS=STEPS_BY_VERSION[keepVer]||STEPS_BY_VERSION.basic
+  saveState(); currentStep=0; doneSteps.clear(); renderNav(); renderStep()
 }
 
 /* ================= 状态 ================= */
@@ -416,6 +520,8 @@ document.addEventListener('change', e=>{
     saveState()
     /* 银行账户选择变化时刷新条件字段 */
     if(k==='finance.accounts.bank') renderStep()
+    /* 风险矩阵打分变化时局部刷新综合评级 */
+    if(k.indexOf('risk.scores.')===0) updateRiskSummary()
   }
 })
 document.addEventListener('click', e=>{
@@ -481,7 +587,7 @@ document.addEventListener('click', e=>{
 /* 全局粘贴：分配到当前步骤的第一个空截图槽 */
 document.addEventListener('paste', e=>{
   const stepId=STEPS[currentStep].id
-  const cats=CATS_BY_STEP[stepId]
+  const cats=catsOfStep(stepId)
   if(!cats || !cats.length) return
   /* 法律合规步骤：无诉讼槽仅在选"否"时有效 */
   if(stepId==='legal' && state.legal.hasLawsuit!=='否') return
@@ -509,12 +615,23 @@ function stepContent(i){
   let html=`<h2>${s.icon} ${s.title}</h2><p class="hint">${s.desc}</p>`
   if(i===0) html+=versionBar()
   switch(s.id){
-    case 'project': html+=stepProject(); break
-    case 'equity':  html+=stepEquity(); break
-    case 'finance': html+=stepFinance(); break
-    case 'legal':   html+=stepLegal(); break
-    case 'risk':    html+=stepRisk(); break
-    case 'report':  html+=stepReport(); break
+    case 'project':    html+=stepProject(); break
+    case 'equity':     html+=stepEquity(); break
+    case 'finance':    html+=stepFinance(); break
+    case 'legal':      html+=stepLegal(); break
+    case 'risk':       html+=stepRisk(); break
+    case 'report':     html+=stepReport(); break
+    /* 专业版 */
+    case 'company':    html+=stepCompany(); break
+    case 'history':    html+=stepHistory(); break
+    case 'license':    html+=stepLicense(); break
+    case 'tax':        html+=stepTax(); break
+    case 'hr':         html+=stepHR(); break
+    case 'assets':     html+=stepAssets(); break
+    case 'contracts':  html+=stepContracts(); break
+    case 'litigation': html+=stepLitigation(); break
+    case 'matrix':     html+=stepMatrix(); break
+    case 'conclusion': html+=stepConclusion(); break
   }
   /* 底部操作按钮 */
   html+=`<div class="tools">`
@@ -535,6 +652,12 @@ function stepProject(){
   h+=`<div class="frow">${field(g,'company','目标公司名称',{req:1,placeholder:'以营业执照全称为准'})}</div>`
   h+=`<div class="frow">${field(g,'creditCode','统一社会信用代码',{placeholder:'18 位信用代码'})}${field(g,'legalRep','法定代表人',{})}${field(g,'regCapital','注册资本（万元）',{type:'number'})}${field(g,'founded','成立日期',{placeholder:'如 2015-03-12'})}</div>`
   h+=`<div class="frow">${field(g,'address','注册地址',{placeholder:'以营业执照登记地址为准',type:'textarea'})}</div>`
+  if(state.version==='pro'){
+    h+='<div class="sec-title">调查范围、方法与限制（专业版）</div>'
+    h+=`<div class="frow">${field(g,'scope','调查范围',{type:'textarea',placeholder:'如：目标公司的主体资格、股权结构、资质许可、财务税务、劳动用工、重大合同、诉讼与行政处罚等'})}</div>`
+    h+=`<div class="frow">${field(g,'method','调查方法',{type:'textarea',placeholder:'如：查阅目标公司提供的资料、查询国家企业信用信息公示系统及电子税务局、检索裁判文书网及执行公开信息、访谈目标公司负责人'})}</div>`
+    h+=`<div class="frow">${field(g,'limitation','调查限制',{type:'textarea',placeholder:'如：本报告依赖目标公司提供资料的真实性与完整性；对未提供的资料及非公开事项不作判断'})}</div>`
+  }
   return h
 }
 
@@ -554,6 +677,23 @@ function stepFinance(){
   h+=`<div class="frow">${field('finance.accounts','social','社保账户开通情况',{req:1,type:'select',options:['','有','无','销户']})}${field('finance.accounts','housing','公积金账户开通情况',{req:1,type:'select',options:['','有','无','销户']})}${field('finance.accounts','bank','银行账户开通情况',{req:1,type:'select',options:['','有','无','销户']})}</div>`
   if(ac.bank==='有'){
     h+=`<div class="frow">${field('finance.accounts','bankName','银行名称（开户银行）',{req:1,placeholder:'如：中国工商银行深圳南山支行'})}</div>`
+  }
+  if(state.version==='pro'){
+    h+='<div class="sec-title">近三年主要财务数据（专业版）</div>'
+    h+=dynTable('finance','years',[
+      {k:'year',label:'年度',req:1,placeholder:'如 2025'},
+      {k:'revenue',label:'营业收入(万)'},
+      {k:'profit',label:'净利润(万)'},
+      {k:'assets',label:'资产总额(万)'},
+      {k:'liabilities',label:'负债总额(万)'}
+    ])
+    h+='<div class="sec-title">大额往来款（专业版）</div>'
+    h+=`<div class="frow">${field('finance','receivable','大额应收款',{type:'textarea',placeholder:'如：应收 A 公司货款 120 万，账龄 1 年以上；如无请填"无"'})}</div>`
+    h+=`<div class="frow">${field('finance','payable','大额应付款',{type:'textarea',placeholder:'如：应付股东借款 80 万；如无请填"无"'})}</div>`
+    h+=`<div class="frow">${field('finance','otherNote','其他财务说明',{type:'textarea'})}</div>`
+    h+='<div class="sec-title">佐证截图</div>'
+    h+=shotSlot('fin_years','近三年财务报表',{note:'可多张'})
+    h+=shotSlot('fin_receivable','大额往来款明细',{note:'可多张'})
   }
   return h
 }
@@ -577,6 +717,253 @@ function stepLegal(){
   return h
 }
 
+/* ================= 专业版：风险矩阵定义 ================= */
+const RISK_LEVELS = ['低风险','较低风险','中等风险','较高风险','高风险']
+const RISK_SCORE  = { '低风险':1,'较低风险':2,'中等风险':3,'较高风险':4,'高风险':5 }
+const RISK_CATS = [
+  { k:'company',  label:'工商与主体资格' },
+  { k:'equity',   label:'股权结构与沿革' },
+  { k:'finance',  label:'财务与经营状况' },
+  { k:'tax',      label:'税务合规' },
+  { k:'legal',    label:'诉讼与行政处罚' },
+  { k:'license',  label:'资质与行政许可' },
+  { k:'hr',       label:'劳动用工' },
+  { k:'contract', label:'合同与债权债务' }
+]
+/* 八大类打分 → 综合风险等级（取已打分项的平均值） */
+function riskOverall(scores){
+  let sum=0, n=0
+  RISK_CATS.forEach(c=>{ const v=RISK_SCORE[scores&&scores[c.k]]; if(v){ sum+=v; n++ } })
+  if(!n) return ''
+  const avg=sum/n
+  if(avg<=1.5) return '整体风险较低'
+  if(avg<=2.5) return '整体风险可控'
+  if(avg<=3.5) return '整体风险中等'
+  if(avg<=4.5) return '整体风险较高'
+  return '整体风险高，需审慎决策'
+}
+
+/* ================= 专业版：公司基本情况 ================= */
+function stepCompany(){
+  const g='company'
+  let h='<div class="step-help"><b>🏢 公司基本情况</b>反映目标公司在登记机关的最新状态。请对照营业执照与「国家企业信用信息公示系统」填写，并上传佐证截图。</div>'
+  h+=`<div class="frow">${field('project','regCapital','注册资本（万元）',{type:'number'})}${field(g,'paidIn','实缴资本（万元）',{type:'number'})}${field(g,'paidInRatio','实缴比例',{placeholder:'如 30%'})}${field(g,'annualReport','年报报送情况',{type:'select',options:['','已报送至最新年度','有漏报','未报送']})}</div>`
+  h+=`<div class="frow">${field(g,'regStatus','登记状态',{type:'select',options:['','存续','在业','吊销','注销','迁出','停业','清算']})}${field(g,'regAuthority','登记机关',{placeholder:'如 深圳市市场监督管理局'})}${field(g,'bizTerm','营业期限',{placeholder:'如 2015-03-12 至 长期'})}${field(g,'taxpayerType','纳税人类型',{type:'select',options:['','小规模纳税人','一般纳税人']})}</div>`
+  h+=`<div class="frow">${field(g,'bizScope','经营范围',{type:'textarea',placeholder:'以营业执照登记为准，可摘录主要经营项目'})}</div>`
+  h+=`<div class="frow">${field(g,'controller','实际控制人',{placeholder:'自然人姓名或上级主体名称'})}</div>`
+  h+='<div class="sec-title">佐证截图</div>'
+  h+=shotSlot('comp_license','营业执照',{req:1,note:'必传，可多张'})
+  h+=shotSlot('comp_public','工商公示信息',{req:1,note:'必传，可多张'})
+  return h
+}
+
+/* ================= 专业版：历史沿革与股权 ================= */
+function stepHistory(){
+  const g='history'
+  let h='<div class="step-help"><b>🏛️ 历史沿革与股权</b>梳理目标公司自设立以来的主要变更，并穿透核查股东结构与股权限制。频繁变更（尤其近期变更法定代表人或股东）本身即为关注点。</div>'
+  h+='<div class="sec-title">历次变更记录</div>'
+  h+=dynTable(g,'changes',[
+    {k:'date',label:'变更日期',placeholder:'如 2020-05-18'},
+    {k:'item',label:'变更事项',placeholder:'如 股东变更 / 注册资本变更 / 经营范围变更'},
+    {k:'before',label:'变更前'},
+    {k:'after',label:'变更后'}
+  ])
+  h+='<div class="sec-title">股东及出资情况（穿透至最终自然人或国有主体）</div>'
+  h+=dynTable(g,'shareholders',[
+    {k:'name',label:'股东名称/姓名',req:1},
+    {k:'type',label:'股东类型',type:'select',options:['','自然人','企业','其他']},
+    {k:'ratio',label:'持股比例',placeholder:'如 60%'},
+    {k:'paid',label:'实缴出资(万)'},
+    {k:'pledge',label:'是否出质',type:'select',options:['','否','是']},
+    {k:'freeze',label:'是否冻结',type:'select',options:['','否','是']}
+  ])
+  h+='<div class="sec-title">分支机构与对外投资</div>'
+  h+=dynTable(g,'investments',[
+    {k:'name',label:'分支机构/被投资企业名称'},
+    {k:'ratio',label:'持股或隶属关系',placeholder:'如 100% 全资 / 分公司'},
+    {k:'status',label:'状态',type:'select',options:['','存续','注销','吊销','其他']}
+  ])
+  h+=`<div class="frow">${field(g,'branches','分支机构说明',{type:'textarea',placeholder:'如无分支机构请填"无"'})}</div>`
+  h+=`<div class="frow">${field(g,'equityLimit','股权限制情况',{type:'textarea',placeholder:'股权质押、冻结、代持、优先购买权等；如无请填"无"'})}</div>`
+  h+='<div class="sec-title">佐证截图</div>'
+  h+=shotSlot('hist_change','工商变更记录',{req:1,note:'必传，可多张'})
+  h+=shotSlot('hist_shareholder','股东及出资信息',{req:1,note:'必传，可多张'})
+  h+=shotSlot('hist_pledge','股权出质/冻结查询结果',{note:'可多张'})
+  return h
+}
+
+/* ================= 专业版：资质与行政许可 ================= */
+function stepLicense(){
+  const g='license'
+  let h='<div class="step-help"><b>📜 资质与行政许可</b>若本次交易的核心标的就是某项资质，请重点核对：证书是否在有效期内、年检/延续是否完成、许可条件（注册资本、人员、场地）是否仍满足。</div>'
+  h+='<div class="sec-title">资质 / 许可清单</div>'
+  h+=dynTable(g,'items',[
+    {k:'name',label:'资质/许可名称',req:1,placeholder:'如 增值电信业务经营许可证（ICP）'},
+    {k:'no',label:'证书编号'},
+    {k:'issuer',label:'发证机关'},
+    {k:'validFrom',label:'发证日期',placeholder:'如 2023-06-01'},
+    {k:'validTo',label:'有效期至',placeholder:'如 2028-05-31'},
+    {k:'status',label:'当前状态',type:'select',options:['','有效','即将到期','已过期','已注销','异常']},
+    {k:'note',label:'备注'}
+  ])
+  h+=`<div class="frow">${field(g,'annualCheck','年检/年报或延续情况',{type:'textarea',placeholder:'如：2025 年度年报已报送；ICP 许可证到期前 90 日需申请延续'})}</div>`
+  h+=`<div class="frow">${field(g,'conditionMet','许可条件符合性',{type:'textarea',placeholder:'注册资本、专业人员、场地、社保人数等是否仍满足许可要求'})}</div>`
+  h+='<div class="sec-title">佐证截图</div>'
+  h+=shotSlot('lic_cert','资质/许可证书',{req:1,note:'必传，可多张'})
+  h+=shotSlot('lic_check','年检或延续记录',{note:'可多张'})
+  return h
+}
+
+/* ================= 专业版：税务合规 ================= */
+function stepTax(){
+  const g='tax'
+  let h='<div class="step-help"><b>🧾 税务合规</b>核查纳税信用、欠税、稽查与处罚。纳税信用 A 级对收购方是加分项；D 级会导致发票领用受限、出口退税从严，属重大风险。</div>'
+  h+=`<div class="frow">${field(g,'creditGrade','纳税信用等级',{type:'select',options:['','A 级','B 级','M 级','C 级','D 级','未评级']})}${field(g,'oweTax','是否存在欠税',{type:'select',options:['','否','是']})}${field(g,'inspection','是否存在税务稽查',{type:'select',options:['','否','是']})}${field(g,'penalty','是否存在税务处罚',{type:'select',options:['','否','是']})}</div>`
+  h+=`<div class="frow">${field(g,'invoiceStatus','发票使用情况',{type:'textarea',placeholder:'如：可正常开具增值税专用发票，最高开票限额 10 万元，无异常凭证'})}</div>`
+  h+=`<div class="frow">${field(g,'preference','税收优惠与财政返还',{type:'textarea',placeholder:'如：享受小型微利企业所得税优惠；某园区财政返还（请注明政策依据与延续性）'})}</div>`
+  h+='<div class="sec-title">佐证截图</div>'
+  h+=shotSlot('tax_credit','纳税信用等级查询',{req:1,note:'必传，可多张'})
+  h+=shotSlot('tax_owe','欠税查询',{note:'可多张'})
+  h+=shotSlot('tax_inspect','税务稽查/处罚记录',{note:'可多张'})
+  return h
+}
+
+/* ================= 专业版：劳动用工 ================= */
+function stepHR(){
+  const g='hr'
+  let h='<div class="step-help"><b>👥 劳动用工</b>员工与社保是收购后最容易爆雷的部分：隐性欠薪、社保欠缴会在交割后由目标公司继续承担。</div>'
+  h+=`<div class="frow">${field(g,'employeeCount','在职员工人数',{type:'number',placeholder:'如 12'})}${field(g,'laborContract','劳动合同签订情况',{type:'select',options:['','全部签订','部分签订','未签订','无员工']})}${field(g,'socialStatus','社保缴纳情况',{type:'select',options:['','正常缴纳','欠缴','未开户','无员工']})}${field(g,'fundStatus','公积金缴纳情况',{type:'select',options:['','正常缴纳','欠缴','未开户','无员工']})}</div>`
+  h+=`<div class="frow">${field(g,'wageArrears','是否存在欠薪',{type:'select',options:['','否','是']})}${field(g,'dispute','劳动争议情况',{type:'textarea',placeholder:'如：无未决劳动仲裁；如无请填"无"'})}</div>`
+  h+='<div class="sec-title">佐证截图</div>'
+  h+=shotSlot('hr_social','社保缴纳记录',{note:'可多张'})
+  h+=shotSlot('hr_fund','公积金缴纳记录',{note:'可多张'})
+  h+=shotSlot('hr_dispute','劳动争议查询结果',{note:'可多张'})
+  return h
+}
+
+/* ================= 专业版：资产与知识产权 ================= */
+function stepAssets(){
+  const g='assets'
+  let h='<div class="step-help"><b>🧩 资产与知识产权</b>核查商标、专利、著作权、域名等无形资产权属是否清晰，以及不动产、车辆等实物资产。</div>'
+  h+='<div class="sec-title">知识产权清单</div>'
+  h+=dynTable(g,'ip',[
+    {k:'type',label:'类型',type:'select',options:['','商标','专利','著作权','域名','其他']},
+    {k:'name',label:'名称',req:1},
+    {k:'no',label:'注册号/登记号'},
+    {k:'owner',label:'权利人',placeholder:'须与目标公司一致'},
+    {k:'status',label:'状态',type:'select',options:['','有效','审查中','已失效','质押/冻结']}
+  ])
+  h+=`<div class="frow">${field(g,'property','不动产情况',{type:'textarea',placeholder:'如：无自有不动产，办公场所为租赁（租期至 2027-03）'})}</div>`
+  h+=`<div class="frow">${field(g,'vehicles','车辆情况',{type:'textarea',placeholder:'如：无登记车辆；如无请填"无"'})}</div>`
+  h+=`<div class="frow">${field(g,'other','其他重要资产或说明',{type:'textarea'})}</div>`
+  h+='<div class="sec-title">佐证截图</div>'
+  h+=shotSlot('ast_ip','知识产权查询',{note:'可多张'})
+  h+=shotSlot('ast_property','不动产/车辆查询',{note:'可多张'})
+  return h
+}
+
+/* ================= 专业版：重大合同与债权债务 ================= */
+function stepContracts(){
+  const g='contracts'
+  let h='<div class="step-help"><b>📑 重大合同与债权债务</b>重点关注：借款与担保（收购后可能由目标公司承担）、客户集中度、以及是否有对赌或回购安排。</div>'
+  h+='<div class="sec-title">重大合同清单</div>'
+  h+=dynTable(g,'major',[
+    {k:'name',label:'合同名称',req:1},
+    {k:'party',label:'相对方'},
+    {k:'amount',label:'金额(万)'},
+    {k:'term',label:'期限',placeholder:'如 2024-01 至 2026-12'},
+    {k:'status',label:'履行状态',type:'select',options:['','正常履行','已履行完毕','违约/争议','变更中']}
+  ])
+  h+=`<div class="frow">${field(g,'borrow','借款情况',{type:'textarea',placeholder:'如：无银行借款、无股东借款；如无请填"无"'})}</div>`
+  h+=`<div class="frow">${field(g,'guarantee','对外担保情况',{type:'textarea',placeholder:'为目标公司以外主体提供的保证/抵押/质押；如无请填"无"'})}</div>`
+  h+=`<div class="frow">${field(g,'mortgage','资产抵押/质押情况',{type:'textarea',placeholder:'目标公司自有资产是否被设定担保；如无请填"无"'})}</div>`
+  h+=`<div class="frow">${field(g,'note','其他债权债务说明',{type:'textarea'})}</div>`
+  h+='<div class="sec-title">佐证截图</div>'
+  h+=shotSlot('con_major','重大合同',{note:'可多张'})
+  h+=shotSlot('con_guarantee','担保/抵押查询结果',{note:'可多张'})
+  return h
+}
+
+/* ================= 专业版：诉讼仲裁与行政处罚 ================= */
+function stepLitigation(){
+  let h='<div class="step-help"><b>⚖️ 诉讼仲裁与行政处罚</b>下面五项为公开渠道可查的司法与行政风险。即使选「无未完成诉讼」，也建议逐项检索并留证。</div>'
+  h+=radioCards('legal','hasLawsuit','是否存在未完成诉讼？',['是','否'],{req:1})
+  const hl=state.legal.hasLawsuit
+  if(hl==='是'){
+    h+='<div class="sec-title">未完成诉讼案件详情</div>'
+    h+=dynTable('legal','lawsuits',[
+      {k:'no',label:'案号',req:1,placeholder:'如 (2026)粤03民初123号'},
+      {k:'cause',label:'案由',req:1,placeholder:'如 买卖合同纠纷'},
+      {k:'amount',label:'涉案金额(万)',placeholder:'数字'},
+      {k:'status',label:'进展状态',type:'select',options:['审理中','仲裁中','一审','二审','其他']}
+    ])
+  }else if(hl==='否'){
+    h+='<div class="sec-title">无诉讼证明截图</div>'
+    h+=shotSlot('legal_nolawsuit','无未完成诉讼证明',{note:'可多张，如裁判文书网/企查查查询结果'})
+  }
+  h+=`<div class="frow">${field('legal','judgment','裁判文书查询结论',{type:'textarea',placeholder:'如：检索到历史案件 2 起，均已结案，无未履行义务'})}${field('legal','executed','被执行人信息',{type:'select',options:['','无','有']})}${field('legal','dishonest','失信/限制高消费',{type:'select',options:['','无','有']})}${field('legal','abnormal','经营异常名录',{type:'select',options:['','无','有','曾列入已移出']})}</div>`
+  h+='<div class="sec-title">行政处罚记录</div>'
+  h+=dynTable('legal','penalties',[
+    {k:'date',label:'处罚日期',placeholder:'如 2024-08-12'},
+    {k:'authority',label:'处罚机关',placeholder:'如 市场监管局'},
+    {k:'reason',label:'处罚事由'},
+    {k:'amount',label:'金额(万)'}
+  ])
+  h+='<div class="sec-title">佐证截图</div>'
+  h+=shotSlot('lit_judgment','裁判文书查询',{req:1,note:'必传，可多张'})
+  h+=shotSlot('lit_executed','被执行人查询',{req:1,note:'必传，可多张'})
+  h+=shotSlot('lit_dishonest','失信/限高查询',{note:'可多张'})
+  h+=shotSlot('lit_abnormal','经营异常名录查询',{note:'可多张'})
+  h+=shotSlot('lit_penalty','行政处罚查询',{note:'可多张'})
+  return h
+}
+
+/* ================= 专业版：风险矩阵与评分 ================= */
+function stepMatrix(){
+  const sc=state.risk.scores||{}
+  const ov=riskOverall(sc)
+  let h='<div class="step-help"><b>📊 风险矩阵与评分</b>对八大类风险逐项定级，系统按平均值自动汇总出综合风险等级。<br>· 已填「高/较高」的类别会在报告中标红提示；<br>· 综合等级可在下一步「结论与建议」中手动调整，以你的专业判断为准。</div>'
+  h+='<div class="list-scroll"><table class="dyn-table"><tr><th style="width:38%">风险类别</th><th>风险等级</th></tr>'
+  RISK_CATS.forEach(c=>{
+    const cur=sc[c.k]||''
+    h+=`<tr><td>${c.label}</td><td><select data-k="risk.scores.${c.k}"><option value="">请选择</option>`
+    RISK_LEVELS.forEach(o=>{ h+=`<option value="${o}" ${cur===o?'selected':''}>${o}</option>` })
+    h+=`</select></td></tr>`
+  })
+  h+='</table></div>'
+  h+=`<div class="risk-summary ${ov?'':'empty'}" id="riskSummary">${ov?('综合风险等级（自动汇总）：<b>'+ov+'</b>'):'完成打分后自动生成综合风险等级'}</div>`
+  return h
+}
+/* 打分变化时局部刷新综合评级，避免整页重绘打断选择 */
+function updateRiskSummary(){
+  const el=document.getElementById('riskSummary')
+  if(!el) return
+  const ov=riskOverall(state.risk.scores||{})
+  if(ov) el.classList.remove('empty'); else el.classList.add('empty')
+  el.innerHTML = ov?('综合风险等级（自动汇总）：<b>'+esc(ov)+'</b>'):'完成打分后自动生成综合风险等级'
+}
+
+/* ================= 专业版：结论与建议 ================= */
+function stepConclusion(){
+  const g='risk'
+  const auto=riskOverall(state.risk.scores||{})
+  let h='<div class="step-help"><b>📝 结论与建议</b>汇总主要风险点并给出交易建议。'+(auto?('风险矩阵自动评级为「<b>'+auto+'</b>」，你可在下方手动调整整体评估。'):'')+'</div>'
+  h+='<div class="sec-title">主要风险点</div>'
+  h+=dynTable(g,'risks',[
+    {k:'type',label:'风险类别',placeholder:'如 税务风险'},
+    {k:'desc',label:'风险描述',placeholder:'具体描述'},
+    {k:'level',label:'风险等级',type:'select',options:['高','中','低']},
+    {k:'suggest',label:'应对建议',placeholder:'处置建议'}
+  ])
+  h+=`<div class="frow">${field(g,'overall','整体风险评估',{req:1,type:'select',options:['','整体风险较低','整体风险可控','整体风险中等','整体风险较高','整体风险高，需审慎决策']})}</div>`
+  h+=`<div class="frow">${field(g,'conclusion','调查结论',{req:1,type:'textarea',placeholder:'如：经核查，目标公司主体资格有效、资质齐备，主要风险集中在……综合评估认为……'})}</div>`
+  h+=`<div class="frow">${field(g,'advice','交易建议',{req:1,type:'textarea',placeholder:'如：建议按 XX 方式推进，并设置对赌/担保条款以对冲 XX 风险'})}</div>`
+  h+='<div class="sec-title">交割前置条件与承诺保证</div>'
+  h+=`<div class="frow">${field(g,'conditions','交割前置条件',{type:'textarea',placeholder:'如：① 完成税务清缴并取得无欠税证明 ② 解除股权质押 ③ 完成员工安置与社保补缴'})}</div>`
+  h+=`<div class="frow">${field(g,'warranties','建议写入协议的承诺与保证',{type:'textarea',placeholder:'如：转让方承诺目标公司在交割日前无未披露债务，如有由转让方全额承担'})}</div>`
+  return h
+}
+
 function stepRisk(){
   const g='risk'
   let h='<div class="step-help"><b>📌 风险与结论</b>结合前面各步骤核查的信息，汇总主要风险点并给出整体评估结论。报告将把本步内容作为「摘要与结论」的核心输出。</div>'
@@ -596,9 +983,15 @@ function stepRisk(){
 function stepReport(){
   const p=state.project
   const shots=state.attachments.items.length
-  let h='<div class="step-help"><b>📌 最后一步</b>点击下方按钮，系统将根据已填写内容自动生成一份完整、排版正式的《企业尽职调查报告》（基础版）Word 文档，可直接打印或提交。</div>'
+  const isPro=state.version==='pro'
+  const ver=VERSIONS.find(v=>v.id===state.version)||VERSIONS[0]
+  const verName=ver.name
+  const struct=isPro
+    ? '封面 · 保密声明 · 目录 · 一、报告摘要与结论 · 二、公司基本情况 · 三、历史沿革与股权 · 四、资质与行政许可 · 五、财务状况 · 六、税务合规 · 七、劳动用工 · 八、资产与知识产权 · 九、重大合同与债权债务 · 十、诉讼仲裁与行政处罚 · 十一、风险矩阵与评级 · 十二、结论与建议 · 落款'
+    : '封面 · 保密声明 · 目录 · 报告摘要与结论 · 公司基本信息 · 股权结构（截图） · 财务概况（税局截图＋账户情况） · 法律合规 · 风险提示与综合结论 · 落款'
+  let h=`<div class="step-help"><b>📌 最后一步</b>点击下方按钮，系统将根据已填写内容自动生成一份完整、排版正式的《企业尽职调查报告》（${verName}）Word 文档，可直接打印或提交。</div>`
   h+='<div class="summary-grid">'
-  h+=`<div class="sum-card"><div class="k">报告版本</div><div class="v">基础版</div></div>`
+  h+=`<div class="sum-card"><div class="k">报告版本</div><div class="v">${esc(verName)}</div></div>`
   h+=`<div class="sum-card"><div class="k">目标公司</div><div class="v">${esc(p.company||'—')}</div></div>`
   h+=`<div class="sum-card"><div class="k">委托方</div><div class="v">${esc(p.client||'—')}</div></div>`
   h+=`<div class="sum-card"><div class="k">报告编号</div><div class="v">${esc(p.reportNo||'—')}</div></div>`
@@ -608,10 +1001,15 @@ function stepReport(){
   const hot=kb>3000
   h+=`<div class="sum-card"><div class="k">本地占用</div><div class="v" style="${hot?'color:#DC2626':''}">${kb>=1024?(kb/1024).toFixed(1)+' MB':kb+' KB'}</div></div>`
   h+=`<div class="sum-card"><div class="k">尽调完成进度</div><div class="v">${doneSteps.size>0?Math.round(doneSteps.size/(STEPS.length-1)*100):0}%</div></div>`
+  if(isPro){
+    const sc=state.risk.scores||{}
+    const ov=riskOverall(sc)
+    h+=`<div class="sum-card"><div class="k">综合风险等级</div><div class="v">${esc(ov||'待评分')}</div></div>`
+  }
   h+='</div>'
   h+='<div class="gen-box">'
-  h+='<div class="t">📄 生成企业尽职调查报告（基础版 · Word）</div>'
-  h+='<div class="d">报告包含：封面 · 保密声明 · 目录 · 报告摘要与结论 · 公司基本信息 · 股权结构（截图） · 财务概况（税局截图＋账户情况） · 法律合规 · 风险提示与综合结论 · 落款</div>'
+  h+=`<div class="t">📄 生成企业尽职调查报告（${esc(verName)} · Word）</div>`
+  h+=`<div class="d">报告包含：${struct}</div>`
   h+='<button class="btn" id="btnGen" onclick="generateDocx()">⬇ 生成并下载 Word 报告</button>'
   h+='</div>'
   h+='<div class="report-struct"><b>报告体例说明：</b><br>正文：宋体小四（12pt），1.5 倍行距；一级标题：黑体三号；二级标题：黑体四号；表格：宋体五号。<br>页眉：报告名称＋机密标识；页脚：页码＋"本报告仅供委托方内部使用"。<br>下载后请用 Word / WPS 打开，可继续编辑微调后再定稿打印。</div>'
@@ -668,10 +1066,46 @@ function validate(i){
       if(!ls.length) miss.push('未完成诉讼案件详情（至少 1 行）')
     }
   }
-  if(s==='risk'){
+  if(s==='risk' || s==='conclusion'){
     if(!state.risk.overall) miss.push('整体风险评估')
     if(!String(state.risk.conclusion||'').trim()) miss.push('调查结论')
     if(!String(state.risk.advice||'').trim()) miss.push('交易/合作建议')
+  }
+  /* ===== 专业版 ===== */
+  if(s==='company'){
+    if(!shotsOf('comp_license').length) miss.push('营业执照截图')
+    if(!shotsOf('comp_public').length) miss.push('工商公示信息截图')
+  }
+  if(s==='history'){
+    if(!shotsOf('hist_change').length) miss.push('工商变更记录截图')
+    if(!shotsOf('hist_shareholder').length) miss.push('股东及出资信息截图')
+    const sh=state.history.shareholders.filter(x=>String(x.name||'').trim())
+    if(!sh.length) miss.push('股东及出资情况（至少 1 行）')
+  }
+  if(s==='license'){
+    if(!shotsOf('lic_cert').length) miss.push('资质/许可证书截图')
+    const it=state.license.items.filter(x=>String(x.name||'').trim())
+    if(!it.length) miss.push('资质/许可清单（至少 1 行；如无资质请填「无」）')
+  }
+  if(s==='tax'){
+    if(!shotsOf('tax_credit').length) miss.push('纳税信用等级查询截图')
+    const t=state.tax
+    if(!t.creditGrade) miss.push('纳税信用等级')
+    if(!t.oweTax) miss.push('是否存在欠税')
+  }
+  if(s==='litigation'){
+    if(!state.legal.hasLawsuit) miss.push('是否存在未完成诉讼')
+    else if(state.legal.hasLawsuit==='是'){
+      const ls=state.legal.lawsuits.filter(x=>String(x.no||'').trim()||String(x.cause||'').trim())
+      if(!ls.length) miss.push('未完成诉讼案件详情（至少 1 行）')
+    }
+    if(!shotsOf('lit_judgment').length) miss.push('裁判文书查询截图')
+    if(!shotsOf('lit_executed').length) miss.push('被执行人查询截图')
+  }
+  if(s==='matrix'){
+    const sc=state.risk.scores||{}
+    const done=RISK_CATS.filter(c=>sc[c.k])
+    if(done.length<RISK_CATS.length) miss.push('八大类风险定级（还有 '+(RISK_CATS.length-done.length)+' 类未评）')
   }
   if(miss.length){ alert('请先完成以下必填项：\n· '+miss.join('\n· ')); return false }
   return true
@@ -829,16 +1263,327 @@ function shotBlock(title, it){
   return arr
 }
 
-function buildDocx(){
+/* ================= 专业版：十二章完整报告 ================= */
+function buildDocxPro(){
   const d=state
   const pj=d.project
-  const reportTitle='企业尽职调查报告'
-  const dateStr=(pj.reportDate||today()).replace(/-/,' 年 ').replace(/-/,' 月 ')+' 日'
   const companyName=pj.company||'（目标公司）'
-  const risks=d.risk.risks.filter(x=>String(x.desc||'').trim())
-
+  const dateStr=(pj.reportDate||today()).replace(/-/,' 年 ').replace(/-/,' 月 ')+' 日'
+  const risks=(d.risk.risks||[]).filter(x=>String(x.desc||'').trim())
+  const scores=d.risk.scores||{}
+  const auto=riskOverall(scores)
+  const PG=CATS_BY_STEP.pro
   const children=[]
 
+  /* 输出一组截图：某章节下所有环节，每个环节的全部图片 */
+  const pushShots=(secNo, cats)=>{
+    (cats||[]).forEach((cat,idx)=>{
+      const arr=shotsOf(cat)
+      const label=CAT_LABELS[cat]||cat
+      if(arr.length){
+        arr.forEach((it,k)=>{
+          shotBlock(secNo+'.'+(idx+1)+' '+label+(arr.length>1?('（'+(k+1)+'）'):''), it).forEach(x=>children.push(x))
+        })
+      }else{
+        children.push(H2(secNo+'.'+(idx+1)+' '+label))
+        children.push(p(r('（未提供截图）',{color:C.gray})))
+      }
+    })
+  }
+
+  /* ===== 封面 ===== */
+  pushCover(children, pj, companyName, dateStr, '专业版 · PROFESSIONAL EDITION')
+
+  /* ===== 保密声明 ===== */
+  children.push(H1('保密声明'))
+  children.push(body('本报告由'+AGENCY_NAME+'（以下简称"调查机构"）受'+(pj.client||'委托方')+'委托，就'+companyName+'（以下简称"目标公司"）出具的尽职调查报告。报告内容涉及目标公司的商业信息与财务数据，仅供委托方内部决策使用。'))
+  children.push(body('未经委托方书面同意，任何单位和个人不得复制、传播、引用本报告的全部或部分内容。报告内容基于调查基准日前可获取的公开信息与目标公司提供资料作出，调查机构对因资料不完整、不真实导致的判断偏差不承担责任。'))
+  children.push(new Paragraph({ children:[new PageBreak()] }))
+
+  /* ===== 目录 ===== */
+  children.push(H1('目 录'))
+  const toc=[
+    '一、报告摘要与结论','二、公司基本情况','三、历史沿革与股权','四、资质与行政许可',
+    '五、财务状况','六、税务合规','七、劳动用工','八、资产与知识产权',
+    '九、重大合同与债权债务','十、诉讼仲裁与行政处罚','十一、风险矩阵与评级','十二、结论与建议'
+  ]
+  toc.forEach(t=>children.push(p(r(t,{size:26}),{spacing:{after:140,line:360,lineRule:'auto'}})))
+  children.push(new Paragraph({ children:[new PageBreak()] }))
+
+  /* ===== 一、报告摘要与结论 ===== */
+  children.push(H1('一、报告摘要与结论'))
+  children.push(H2('1.1 项目概况'))
+  children.push(KVTable([
+    ['委托方', pj.client||'—'],
+    ['目标公司', companyName],
+    ['统一社会信用代码', pj.creditCode||'—'],
+    ['法定代表人', pj.legalRep||'—'],
+    ['注册资本（万元）', pj.regCapital||'—'],
+    ['成立日期', pj.founded||'—'],
+    ['调查基准日', pj.baseDate||'—'],
+    ['报告编号', pj.reportNo||'—'],
+    ['调查机构', AGENCY_NAME]
+  ]))
+  children.push(H2('1.2 调查范围与方法'))
+  children.push(body(pj.scope||'—'))
+  children.push(body(pj.method||'—'))
+  if(String(pj.limitation||'').trim()){
+    children.push(H2('1.3 调查限制'))
+    children.push(body(pj.limitation))
+  }
+  children.push(H2('1.4 核心结论'))
+  const overallTxt=d.risk.overall||auto||'—'
+  children.push(body('综合风险等级：'+overallTxt+(auto&&d.risk.overall&&auto!==d.risk.overall?('（风险矩阵自动评级为「'+auto+'」，以本次人工评估为准）'):'')))
+  children.push(body(d.risk.conclusion||'——'))
+  children.push(new Paragraph({ children:[new PageBreak()] }))
+
+  /* ===== 二、公司基本情况 ===== */
+  children.push(H1('二、公司基本情况'))
+  children.push(body('本节根据营业执照及工商登记信息整理，反映调查基准日状态。'))
+  children.push(KVTable([
+    ['登记状态', d.company.regStatus||'—'],
+    ['登记机关', d.company.regAuthority||'—'],
+    ['营业期限', d.company.bizTerm||'—'],
+    ['纳税人类型', d.company.taxpayerType||'—'],
+    ['实缴资本（万元）', d.company.paidIn||'—'],
+    ['实缴比例', d.company.paidInRatio||'—'],
+    ['年报报送情况', d.company.annualReport||'—'],
+    ['实际控制人', d.company.controller||'—'],
+    ['注册地址', pj.address||'—'],
+    ['经营范围', d.company.bizScope||'—']
+  ]))
+  pushShots('2', PG.company)
+  children.push(new Paragraph({ children:[new PageBreak()] }))
+
+  /* ===== 三、历史沿革与股权 ===== */
+  children.push(H1('三、历史沿革与股权'))
+  children.push(H2('3.1 历次变更记录'))
+  const chg=(d.history.changes||[]).filter(x=>String(x.item||'').trim()||String(x.date||'').trim())
+  if(chg.length){
+    children.push(DataTable(['变更日期','变更事项','变更前','变更后'], chg.map(x=>[x.date||'—',x.item||'—',x.before||'—',x.after||'—']), ['center','left','left','left']))
+  }else{ children.push(p(r('未录入变更记录。',{}))) }
+  children.push(H2('3.2 股东及出资情况'))
+  const sh=(d.history.shareholders||[]).filter(x=>String(x.name||'').trim())
+  if(sh.length){
+    children.push(DataTable(['股东名称/姓名','类型','持股比例','实缴出资(万)','是否出质','是否冻结'],
+      sh.map(x=>[x.name,x.type||'—',x.ratio||'—',x.paid||'—',x.pledge||'—',x.freeze||'—']),
+      ['left','center','center','center','center','center']))
+  }else{ children.push(p(r('未录入股东信息。',{}))) }
+  children.push(H2('3.3 分支机构与对外投资'))
+  const inv=(d.history.investments||[]).filter(x=>String(x.name||'').trim())
+  if(inv.length){
+    children.push(DataTable(['分支机构/被投资企业','持股或隶属关系','状态'], inv.map(x=>[x.name,x.ratio||'—',x.status||'—']), ['left','center','center']))
+  }else{ children.push(p(r(d.history.branches||'无。',{}))) }
+  children.push(H2('3.4 股权限制情况'))
+  children.push(body(d.history.equityLimit||'—'))
+  pushShots('3', PG.history)
+  children.push(new Paragraph({ children:[new PageBreak()] }))
+
+  /* ===== 四、资质与行政许可 ===== */
+  children.push(H1('四、资质与行政许可'))
+  const lic=(d.license.items||[]).filter(x=>String(x.name||'').trim())
+  if(lic.length){
+    children.push(DataTable(['资质/许可名称','证书编号','发证机关','发证日期','有效期至','当前状态','备注'],
+      lic.map(x=>[x.name,x.no||'—',x.issuer||'—',x.validFrom||'—',x.validTo||'—',x.status||'—',x.note||'—']),
+      ['left','center','left','center','center','center','left']))
+  }else{ children.push(p(r('目标公司无相关资质或许可（或未提供）。',{}))) }
+  children.push(H2('4.1 年检/年报与延续情况'))
+  children.push(body(d.license.annualCheck||'—'))
+  children.push(H2('4.2 许可条件符合性'))
+  children.push(body(d.license.conditionMet||'—'))
+  pushShots('4', PG.license)
+  children.push(new Paragraph({ children:[new PageBreak()] }))
+
+  /* ===== 五、财务状况 ===== */
+  children.push(H1('五、财务状况'))
+  children.push(H2('5.1 电子税务局核查截图'))
+  FIN_SLOTS.forEach((sl,idx)=>{
+    const arr=shotsOf(sl.cat)
+    if(arr.length){
+      arr.forEach((it,k)=>{ shotBlock('5.1.'+(idx+1)+' '+sl.label+(arr.length>1?('（'+(k+1)+'）'):''), it).forEach(x=>children.push(x)) })
+    }else{
+      children.push(H2('5.1.'+(idx+1)+' '+sl.label))
+      children.push(p(r('（未提供截图）',{color:C.gray})))
+    }
+  })
+  children.push(H2('5.2 近三年主要财务数据'))
+  const yrs=(d.finance.years||[]).filter(x=>String(x.year||'').trim())
+  if(yrs.length){
+    children.push(DataTable(['年度','营业收入(万)','净利润(万)','资产总额(万)','负债总额(万)'],
+      yrs.map(x=>[x.year,x.revenue||'—',x.profit||'—',x.assets||'—',x.liabilities||'—']),
+      ['center','center','center','center','center']))
+  }else{ children.push(p(r('未录入财务数据。',{}))) }
+  children.push(H2('5.3 大额往来款'))
+  children.push(body('应收款：'+(d.finance.receivable||'—')))
+  children.push(body('应付款：'+(d.finance.payable||'—')))
+  if(String(d.finance.otherNote||'').trim()) children.push(body('其他说明：'+d.finance.otherNote))
+  children.push(H2('5.4 账户开通情况'))
+  const ac=d.finance.accounts
+  children.push(KVTable([
+    ['社保账户开通情况', ac.social||'—'],
+    ['公积金账户开通情况', ac.housing||'—'],
+    ['银行账户开通情况', ac.bank==='有'?(ac.bank+'（开户银行：'+(ac.bankName||'—')+'）'):(ac.bank||'—')]
+  ]))
+  pushShots('5', PG.finance)
+  children.push(new Paragraph({ children:[new PageBreak()] }))
+
+  /* ===== 六、税务合规 ===== */
+  children.push(H1('六、税务合规'))
+  children.push(KVTable([
+    ['纳税信用等级', d.tax.creditGrade||'—'],
+    ['是否存在欠税', d.tax.oweTax||'—'],
+    ['是否存在税务稽查', d.tax.inspection||'—'],
+    ['是否存在税务处罚', d.tax.penalty||'—']
+  ]))
+  children.push(H2('6.1 发票使用情况'))
+  children.push(body(d.tax.invoiceStatus||'—'))
+  children.push(H2('6.2 税收优惠与财政返还'))
+  children.push(body(d.tax.preference||'—'))
+  pushShots('6', PG.tax)
+  children.push(new Paragraph({ children:[new PageBreak()] }))
+
+  /* ===== 七、劳动用工 ===== */
+  children.push(H1('七、劳动用工'))
+  children.push(KVTable([
+    ['在职员工人数', d.hr.employeeCount||'—'],
+    ['劳动合同签订情况', d.hr.laborContract||'—'],
+    ['社保缴纳情况', d.hr.socialStatus||'—'],
+    ['公积金缴纳情况', d.hr.fundStatus||'—'],
+    ['是否存在欠薪', d.hr.wageArrears||'—']
+  ]))
+  children.push(H2('7.1 劳动争议情况'))
+  children.push(body(d.hr.dispute||'—'))
+  pushShots('7', PG.hr)
+  children.push(new Paragraph({ children:[new PageBreak()] }))
+
+  /* ===== 八、资产与知识产权 ===== */
+  children.push(H1('八、资产与知识产权'))
+  const ip=(d.assets.ip||[]).filter(x=>String(x.name||'').trim())
+  if(ip.length){
+    children.push(DataTable(['类型','名称','注册号/登记号','权利人','状态'],
+      ip.map(x=>[x.type||'—',x.name,x.no||'—',x.owner||'—',x.status||'—']),
+      ['center','left','center','left','center']))
+  }else{ children.push(p(r('未录入知识产权信息。',{}))) }
+  children.push(H2('8.1 不动产'))
+  children.push(body(d.assets.property||'—'))
+  children.push(H2('8.2 车辆'))
+  children.push(body(d.assets.vehicles||'—'))
+  if(String(d.assets.other||'').trim()){ children.push(H2('8.3 其他')); children.push(body(d.assets.other)) }
+  pushShots('8', PG.assets)
+  children.push(new Paragraph({ children:[new PageBreak()] }))
+
+  /* ===== 九、重大合同与债权债务 ===== */
+  children.push(H1('九、重大合同与债权债务'))
+  const mj=(d.contracts.major||[]).filter(x=>String(x.name||'').trim())
+  if(mj.length){
+    children.push(DataTable(['合同名称','相对方','金额(万)','期限','履行状态'],
+      mj.map(x=>[x.name,x.party||'—',x.amount||'—',x.term||'—',x.status||'—']),
+      ['left','left','center','center','center']))
+  }else{ children.push(p(r('未录入重大合同。',{}))) }
+  children.push(H2('9.1 借款情况'))
+  children.push(body(d.contracts.borrow||'—'))
+  children.push(H2('9.2 对外担保情况'))
+  children.push(body(d.contracts.guarantee||'—'))
+  children.push(H2('9.3 资产抵押/质押情况'))
+  children.push(body(d.contracts.mortgage||'—'))
+  if(String(d.contracts.note||'').trim()){ children.push(H2('9.4 其他债权债务说明')); children.push(body(d.contracts.note)) }
+  pushShots('9', PG.contracts)
+  children.push(new Paragraph({ children:[new PageBreak()] }))
+
+  /* ===== 十、诉讼仲裁与行政处罚 ===== */
+  children.push(H1('十、诉讼仲裁与行政处罚'))
+  children.push(H2('10.1 未完成诉讼核查'))
+  if(d.legal.hasLawsuit==='是'){
+    const ls=(d.legal.lawsuits||[]).filter(x=>String(x.no||'').trim()||String(x.cause||'').trim())
+    if(ls.length){
+      children.push(DataTable(['案号','案由','涉案金额(万)','进展状态'], ls.map(x=>[x.no||'—',x.cause||'—',x.amount||'—',x.status||'—']), ['center','left','center','left']))
+    }else{ children.push(p(r('未录入案件详情。',{}))) }
+  }else if(d.legal.hasLawsuit==='否'){
+    children.push(body('经核查，目标公司不存在未完成的诉讼/仲裁案件，相关证明截图见 10.2。'))
+    const nlArr=shotsOf('legal_nolawsuit')
+    if(nlArr.length){ nlArr.forEach((it,k)=>{ shotBlock('10.2 无诉讼证明'+(nlArr.length>1?('（'+(k+1)+'）'):''), it).forEach(x=>children.push(x)) }) }
+  }else{ children.push(p(r('未选择。',{}))) }
+  children.push(H2('10.3 司法与行政风险核查'))
+  children.push(KVTable([
+    ['裁判文书查询结论', d.legal.judgment||'—'],
+    ['被执行人信息', d.legal.executed||'—'],
+    ['失信/限制高消费', d.legal.dishonest||'—'],
+    ['经营异常名录', d.legal.abnormal||'—']
+  ]))
+  children.push(H2('10.4 行政处罚记录'))
+  const pen=(d.legal.penalties||[]).filter(x=>String(x.reason||'').trim()||String(x.authority||'').trim())
+  if(pen.length){
+    children.push(DataTable(['处罚日期','处罚机关','处罚事由','金额(万)'], pen.map(x=>[x.date||'—',x.authority||'—',x.reason||'—',x.amount||'—']), ['center','left','left','center']))
+  }else{ children.push(p(r('未检索到行政处罚记录。',{}))) }
+  pushShots('10', PG.litigation)
+  children.push(new Paragraph({ children:[new PageBreak()] }))
+
+  /* ===== 十一、风险矩阵与评级 ===== */
+  children.push(H1('十一、风险矩阵与评级'))
+  children.push(body('本节按八大类风险逐项定级，等级由低到高为：低风险、较低风险、中等风险、较高风险、高风险。综合等级取已评分类别的平均值。'))
+  children.push(DataTable(['风险类别','风险等级'],
+    RISK_CATS.map(c=>[c.label, scores[c.k]||'—']),
+    ['left','center']))
+  const high=RISK_CATS.filter(c=>scores[c.k]==='高风险'||scores[c.k]==='较高风险')
+  if(high.length){
+    children.push(body('需重点关注：'+high.map(c=>c.label+'（'+scores[c.k]+'）').join('、')+'。'))
+  }
+  children.push(H2('11.1 综合风险等级'))
+  children.push(body((d.risk.overall||auto||'—')+(auto?('（风险矩阵自动评级：'+auto+'）'):'')))
+  children.push(new Paragraph({ children:[new PageBreak()] }))
+
+  /* ===== 十二、结论与建议 ===== */
+  children.push(H1('十二、结论与建议'))
+  children.push(H2('12.1 主要风险点'))
+  if(risks.length){
+    children.push(DataTable(['风险类别','风险描述','风险等级','应对建议'], risks.map(x=>[x.type||'—',x.desc,x.level||'—',x.suggest||'—']), ['center','left','center','left']))
+  }else{ children.push(p(r('未录入具体风险点。',{}))) }
+  children.push(H2('12.2 调查结论'))
+  children.push(body(d.risk.conclusion||'——'))
+  children.push(H2('12.3 交易建议'))
+  children.push(body(d.risk.advice||'——'))
+  children.push(H2('12.4 交割前置条件'))
+  children.push(body(d.risk.conditions||'——'))
+  children.push(H2('12.5 建议写入协议的承诺与保证'))
+  children.push(body(d.risk.warranties||'——'))
+
+  /* ===== 落款 ===== */
+  children.push(p(r('',{spacing:{before:400}})))
+  children.push(p([r('调查机构（盖章）：'+AGENCY_NAME,{size:26})],{alignment:AlignmentType.RIGHT,spacing:{before:1000}}))
+  children.push(p([r('报告出具日期：'+dateStr,{size:26})],{alignment:AlignmentType.RIGHT,spacing:{before:160}}))
+
+  /* 页眉页脚 */
+  const header=new Header({ children:[
+    new Paragraph({
+      tabStops:[{ type:TabStopType.RIGHT, position:TabStopPosition.MAX }],
+      spacing:{after:40}, border:{ bottom:{style:BorderStyle.SINGLE,size:6,color:C.accent} },
+      children:[
+        r('金米启航 ',{font:F.yahei,size:18,bold:true,color:C.primary}),
+        r('| 企业尽职调查报告 · 专业版',{font:F.yahei,size:18,color:C.gray}),
+        new TextRun({ text:'\t' }),
+        r('CONFIDENTIAL',{font:F.yahei,size:16,color:C.accent,csp:50})
+      ] })
+  ]})
+  const footer=new Footer({ children:[
+    new Paragraph({ alignment:AlignmentType.CENTER, spacing:{before:40}, border:{ top:{style:BorderStyle.SINGLE,size:6,color:C.accent} },
+      children:[
+        r('— 第 ',{size:18,color:C.gray}), new TextRun({children:[PageNumber.CURRENT],size:18,color:C.gray,font:F.song}), r(' 页 · 本报告仅供委托方内部使用 —',{size:18,color:C.gray})
+      ] })
+  ]})
+
+  return new Document({
+    styles:{ default:{ document:{ run:{ font:F.song, size:24 } } } },
+    sections:[{
+      properties:{ page:{ margin:{ top:convertInchesToTwip(1), bottom:convertInchesToTwip(1), left:convertInchesToTwip(1.1), right:convertInchesToTwip(1.1) } } },
+      headers:{ default:header },
+      footers:{ default:footer },
+      children
+    }]
+  })
+}
+
+/* ===== 封面（基础版与专业版共用；verLabel 为版本标签文案） ===== */
+function pushCover(children, pj, companyName, dateStr, verLabel){
   /* ===== 封面（科技风：幽蓝色带 + 青色细节线 + 拉距英文标） ===== */
   const DEEP_MAR={ fill:C.deep, type:ShadingType.CLEAR }
   const NILB={ style:BorderStyle.NONE, size:0, color:'FFFFFF' }
@@ -862,7 +1607,7 @@ function buildDocx(){
   /* 英文副标（拉开字距） */
   children.push(new Paragraph({ spacing:{before:0,after:240}, alignment:AlignmentType.CENTER, children:[r('CORPORATE DUE DILIGENCE REPORT',{font:F.yahei,size:17,color:C.gray,csp:70})] }))
   /* 版本标签 */
-  children.push(new Paragraph({ spacing:{before:100,after:600}, alignment:AlignmentType.CENTER, children:[r('基础版 · BASIC EDITION',{font:F.yahei,size:22,bold:true,color:'2E75B6',csp:40})] }))
+  children.push(new Paragraph({ spacing:{before:100,after:600}, alignment:AlignmentType.CENTER, children:[r(verLabel,{font:F.yahei,size:22,bold:true,color:'2E75B6',csp:40})] }))
   /* 目标公司 + 短青线 */
   children.push(new Paragraph({ spacing:{before:240,after:100}, alignment:AlignmentType.CENTER, children:[r(companyName,{font:F.yahei,size:34,bold:true,color:C.primary})] }))
   children.push(new Paragraph({ spacing:{after:520}, alignment:AlignmentType.CENTER, indent:{left:3300,right:3300}, border:{ bottom:{style:BorderStyle.SINGLE,size:12,color:C.accent} }, children:[r('',{})] }))
@@ -897,6 +1642,23 @@ function buildDocx(){
       ] }) ] }) ]
   }))
   children.push(new Paragraph({ children:[new PageBreak()] }))
+
+}
+
+function buildDocx(){
+  const d=state
+  const pj=d.project
+  const reportTitle='企业尽职调查报告'
+  const dateStr=(pj.reportDate||today()).replace(/-/,' 年 ').replace(/-/,' 月 ')+' 日'
+  const companyName=pj.company||'（目标公司）'
+  const risks=d.risk.risks.filter(x=>String(x.desc||'').trim())
+  /* 专业版走独立的十二章报告生成器 */
+  if(state.version==='pro') return buildDocxPro()
+
+  const children=[]
+
+  /* ===== 封面 ===== */
+  pushCover(children, pj, companyName, dateStr, '基础版 · BASIC EDITION')
 
   /* ===== 保密声明 ===== */
   children.push(H1('保密声明'))
@@ -1069,7 +1831,8 @@ async function generateDocx(){
   try{
     const doc=buildDocx()
     const blob=await Packer.toBlob(doc)
-    const name='企业尽职调查报告（基础版）_'+(state.project.company||'目标公司')+'_'+(state.project.reportDate||today())+'.docx'
+    const vName=(VERSIONS.find(v=>v.id===state.version)||VERSIONS[0]).name
+    const name='企业尽职调查报告（'+vName+'）_'+(state.project.company||'目标公司')+'_'+(state.project.reportDate||today())+'.docx'
     const a=document.createElement('a')
     a.href=URL.createObjectURL(blob)
     a.download=name
