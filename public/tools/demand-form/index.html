@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>需求确认单生成器</title>
+<script src="./html2canvas.min.js"></script>
+<style>
+:root{
+  --accent:#b45309; --accent-2:#e0901a; --accent-grad:linear-gradient(135deg,#e0901a,#b45309);
+  --bg:#faf7f2; --surface:#fffefb; --border:#ece3d6; --text:#2a2118; --muted:#8a7a62;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;font-size:14px}
+.topbar{background:linear-gradient(135deg,#fffdf9,#fdf3e3);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:5}
+.topbar .logo{width:30px;height:30px;border-radius:8px;background:var(--accent-grad);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+.topbar h1{font-size:16px;margin:0;font-weight:700;letter-spacing:1px}
+.topbar .sub{font-size:12px;color:var(--muted);margin-left:auto}
+.wrap{display:flex;gap:16px;padding:16px 20px 40px;align-items:flex-start;flex-wrap:wrap}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 1px 3px rgba(120,90,40,.06)}
+.form{flex:1 1 420px;min-width:360px;padding:18px}
+.preview{flex:1 1 520px;min-width:380px;padding:14px;display:flex;flex-direction:column;gap:10px}
+h2.sec{font-size:13px;color:var(--accent);margin:0 0 12px;letter-spacing:1px;font-weight:700}
+.fld{margin-bottom:11px}
+.fld label{display:block;font-size:12.5px;color:#6b5d4a;margin-bottom:5px;font-weight:600}
+.fld input,.fld select,.fld textarea{width:100%;border:1px solid var(--border);background:#fffdf8;border-radius:8px;padding:8px 10px;font-size:13.5px;color:var(--text);font-family:inherit;outline:none}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--accent-2)}
+.fld textarea{min-height:62px;resize:vertical;line-height:1.6}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.btn{border:none;border-radius:8px;padding:9px 16px;font-size:13.5px;cursor:pointer;font-family:inherit;font-weight:600}
+.btn-main{background:var(--accent-grad);color:#fff}
+.btn-main:hover{filter:brightness(1.05)}
+.btn-ghost{background:#fff;color:var(--text);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--accent-2);color:var(--accent)}
+.prev-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.prev-bar .sp{margin-left:auto}
+.canvas-wrap{background:#fff;border:1px dashed var(--border);border-radius:10px;overflow:hidden}
+#imgCard{width:750px;transform-origin:top left;background:#fff;padding:30px 34px 34px;box-sizing:border-box;color:#2a2118}
+#imgCard .d-head{text-align:center;padding-bottom:14px;border-bottom:2px solid #b45309}
+#imgCard .d-co{font-size:12px;color:#8a7a62;letter-spacing:2px}
+#imgCard .d-title{font-size:27px;font-weight:700;letter-spacing:8px;padding-left:8px;margin-top:8px;color:#7c3f06}
+#imgCard .d-sub{font-size:12px;color:#6b5d4a;margin-top:8px}
+#imgCard .d-row{display:flex;border-bottom:1px solid #f2e6d8}
+#imgCard .d-row .k{width:132px;flex:0 0 132px;background:#fdf7ec;color:#7c3f06;font-weight:700;font-size:13px;padding:11px 12px;border-right:1px solid #f2e6d8}
+#imgCard .d-row .v{flex:1;padding:11px 14px;font-size:13.5px;line-height:1.7;white-space:pre-wrap;word-break:break-word;min-height:40px}
+#imgCard .d-note{margin-top:16px;font-size:12px;color:#8a7a62;line-height:1.8;border-left:3px solid #f2e6d8;padding-left:10px}
+#imgCard .d-foot{margin-top:22px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px}
+#imgCard .d-sign{font-size:13px;color:#2a2118;line-height:2.2}
+#imgCard .d-sign .line{display:inline-block;min-width:110px;border-bottom:1px solid #c9b8a0}
+#imgCard .d-stamp{text-align:right;font-size:12.5px;color:#6b5d4a;line-height:1.9}
+#imgCard .d-stamp .nm{color:#7c3f06;font-weight:700;font-size:13.5px}
+.hist{flex:1 1 100%;padding:16px 18px;margin:0 20px 30px}
+.hist-list{display:flex;flex-direction:column;gap:8px}
+.hist-item{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:9px;padding:9px 12px;background:#fffdf8;font-size:13px}
+.hist-item .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-item .d{color:var(--muted);font-size:12px;flex:0 0 auto}
+.mini{border:1px solid var(--border);background:#fff;color:var(--text);border-radius:6px;padding:4px 9px;font-size:12px;cursor:pointer;font-family:inherit}
+.mini:hover{border-color:var(--accent-2);color:var(--accent)}
+.mini.del:hover{border-color:#dc2626;color:#dc2626}
+.empty{text-align:center;color:var(--muted);font-size:13px;padding:14px}
+.toast{position:fixed;left:50%;bottom:40px;transform:translateX(-50%) translateY(20px);background:rgba(42,33,24,.92);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;transition:.25s;pointer-events:none;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:900px){.wrap{padding:12px}.form,.preview{flex:1 1 100%;min-width:0}.hist{margin:0 12px 24px}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">需</div>
+  <h1>需求确认单生成器</h1>
+  <div class="sub">填 8 项 → 一键生成精美确认单，可直接发客户</div>
+</div>
+
+<div class="wrap">
+  <section class="panel form">
+    <h2 class="sec">① 填写需求信息</h2>
+    <div id="formBox"></div>
+    <div class="acts">
+      <button class="btn btn-main" onclick="genCard()">生成确认单</button>
+      <button class="btn btn-ghost" onclick="saveRecord()">保存记录</button>
+      <button class="btn btn-ghost" onclick="copyImage()">复制图片</button>
+      <button class="btn btn-ghost" onclick="downloadImage()">下载图片</button>
+      <button class="btn btn-ghost" onclick="copySummary()">复制文字</button>
+    </div>
+  </section>
+
+  <section class="panel preview">
+    <div class="prev-bar">
+      <span>预览（750px 微信卡片）</span>
+      <button class="mini" onclick="setScale(0.6)">缩小</button>
+      <button class="mini" onclick="setScale(1)">100%</button>
+      <button class="mini" onclick="setScale(2)">放大</button>
+      <span class="sp"></span>
+      <span id="scaleTip"></span>
+    </div>
+    <div class="canvas-wrap" id="canvasWrap">
+      <div id="imgCard"></div>
+    </div>
+  </section>
+</div>
+
+<section class="panel hist">
+  <h2 class="sec">历史记录（保存后可复用，仅存本机）</h2>
+  <div class="hist-list" id="histList"></div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= 字段配置 ================= */
+var FIELDS = [
+  {key:'purpose',  label:'收购目的', type:'input', list:['办理ICP许可证','办理医疗器械资质','招投标接项目','入驻电商平台','短剧/网络文化资质','一般纳税人开票','实际经营使用','落户园区享政策'], ph:'例：办理 ICP 经营许可证'},
+  {key:'years',    label:'公司年限', type:'select', options:['不限','1年以下','1-3年','3-5年','5-8年','8年以上']},
+  {key:'industry', label:'行业表述', type:'input', list:['科技','贸易','医疗器械','建筑工程','文化传播','教育培训','电子商务','咨询服务'], ph:'例：科技 / 互联网信息服务'},
+  {key:'city',     label:'公司城市', type:'input', list:['深圳','广州','北京','上海','杭州','成都','武汉','西安'], ph:'例：深圳'},
+  {key:'scope',    label:'经营范围', type:'textarea', ph:'例：技术服务、技术开发、技术咨询；货物进出口；电子商务'},
+  {key:'capital',  label:'注册资金', type:'input', list:['50万以内','100万','100万以内','200万','500万','1000万','不限'], ph:'例：100万（认缴，无需实缴）'},
+  {key:'budget',   label:'预算范围', type:'input', list:['1万以内','1-3万','3-5万','5-10万','10-20万','20万以上','面议'], ph:'例：3-5 万'},
+  {key:'extra',    label:'其他需求', type:'textarea', ph:'例：需带 1 个对公账户、无异常经营记录、可配合尽调'}
+];
+var LS_FORM = 'demand_form_v1';
+var LS_REC  = 'demand_form_records_v1';
+var DEFAULT_CO = '深圳市金米启航企业服务有限公司';
+var form = {};       // 当前表单值
+var records = [];    // 历史记录
+var scale = 1;
+var lastData = null; // 最近一次生成的数据（用于复制/下载）
+
+/* ================= 工具函数 ================= */
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function safeGet(k,d){ try{ var v=JSON.parse(localStorage.getItem(k)); return (v===null||v===undefined)?d:v; }catch(e){ return d; } }
+function safeSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ return false; } }
+function toast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._tm); t._tm=setTimeout(function(){ t.classList.remove('show'); },2400);
+}
+function uid(p){ return (p||'r')+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function pad(n){ return n<10?'0'+n:''+n; }
+function todayCN(){ var d=new Date(); return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日'; }
+function stampNum(){
+  var d=new Date(), s=d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate());
+  var n=1;
+  for(var i=0;i<records.length;i++){ if(records[i].no && records[i].no.indexOf('XQ-'+s)===0) n++; }
+  return 'XQ-'+s+'-'+pad(n);
+}
+
+/* ================= 表单 ================= */
+function renderForm(){
+  var html='';
+  for(var i=0;i<FIELDS.length;i++){
+    var f=FIELDS[i], v=form[f.key]||'';
+    if(f.type==='select'){
+      var opts='';
+      for(var j=0;j<f.options.length;j++){
+        opts += '<option value="'+esc(f.options[j])+'"'+(v===f.options[j]?' selected':'')+'>'+esc(f.options[j])+'</option>';
+      }
+      html += '<div class="fld"><label>'+esc(f.label)+'</label><select id="f_'+f.key+'" onchange="onField(\''+f.key+'\',this.value)">'+opts+'</select></div>';
+    } else if(f.type==='textarea'){
+      html += '<div class="fld"><label>'+esc(f.label)+'</label><textarea id="f_'+f.key+'" placeholder="'+esc(f.ph||'')+'" oninput="onField(\''+f.key+'\',this.value)">'+esc(v)+'</textarea></div>';
+    } else {
+      var dl='';
+      if(f.list && f.list.length){
+        var os='';
+        for(var k=0;k<f.list.length;k++){ os += '<option value="'+esc(f.list[k])+'"></option>'; }
+        dl = '<datalist id="dl_'+f.key+'">'+os+'</datalist>';
+      }
+      html += '<div class="fld"><label>'+esc(f.label)+'</label><input id="f_'+f.key+'" list="dl_'+f.key+'" value="'+esc(v)+'" placeholder="'+esc(f.ph||'')+'" oninput="onField(\''+f.key+'\',this.value)">'+dl+'</div>';
+    }
+  }
+  html += '<div class="fld"><label>落款单位（确认单底部展示）</label><input id="f_co" value="'+esc(form.co||DEFAULT_CO)+'" oninput="onField(\'co\',this.value)"></div>';
+  document.getElementById('formBox').innerHTML = html;
+}
+function onField(key,val){
+  form[key]=val;
+  safeSet(LS_FORM, form);
+}
+
+/* ================= 卡片 ================= */
+function readForm(){
+  var d={};
+  for(var i=0;i<FIELDS.length;i++){ d[FIELDS[i].key]=form[FIELDS[i].key]||''; }
+  d.co = form.co || DEFAULT_CO;
+  d.no = (lastData && lastData.no) ? lastData.no : stampNum();
+  d.date = todayCN();
+  return d;
+}
+function rowHtml(k,v){
+  return '<div class="d-row"><div class="k">'+esc(k)+'</div><div class="v">'+(v?esc(v):'<span style="color:#c3b6a2">（未填写）</span>')+'</div></div>';
+}
+function renderCard(d){
+  lastData=d;
+  var rows='';
+  for(var i=0;i<FIELDS.length;i++){
+    rows += rowHtml(FIELDS[i].label, d[FIELDS[i].key]);
+  }
+  document.getElementById('imgCard').innerHTML =
+    '<div class="d-head">'
+    + '<div class="d-co">'+esc(d.co)+'</div>'
+    + '<div class="d-title">需 求 确 认 单</div>'
+    + '<div class="d-sub">编号 '+esc(d.no)+'　|　日期 '+esc(d.date)+'</div>'
+    + '</div>'
+    + rows
+    + '<div class="d-note">本确认单用于明确客户收购/办理需求，作为资源匹配与报价依据；最终以双方签署的正式合同及工商登记信息为准。</div>'
+    + '<div class="d-foot">'
+    + '<div class="d-sign">客户确认：<span class="line"></span>　　日期：<span class="line"></span></div>'
+    + '<div class="d-stamp"><div class="nm">'+esc(d.co)+'</div><div>联系电话：______________</div></div>'
+    + '</div>';
+  applyScale();
+}
+function genCard(){
+  var d=readForm();
+  renderCard(d);
+  toast('已生成需求确认单');
+}
+function setScale(s){
+  scale=s; applyScale();
+}
+function applyScale(){
+  var card=document.getElementById('imgCard');
+  var wrap=document.getElementById('canvasWrap');
+  card.style.transform='scale('+scale+')';
+  wrap.style.height=Math.ceil(card.scrollHeight*scale)+'px';
+  document.getElementById('scaleTip').textContent='当前 '+Math.round(scale*100)+'%';
+}
+
+/* ================= 导出 ================= */
+function cardCanvas(){
+  if(!window.html2canvas) return Promise.reject(new Error('截图库未加载'));
+  var card=document.getElementById('imgCard');
+  var old=card.style.transform;
+  card.style.transform='scale(1)';
+  return html2canvas(card,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false}).then(function(c){
+    card.style.transform=old;
+    return c;
+  },function(e){ card.style.transform=old; throw e; });
+}
+/* 复制/下载前统一按当前表单重渲染，避免改了字段没点「生成」就拿到旧内容 */
+function syncCard(){ renderCard(readForm()); }
+function copyImage(){
+  syncCard();
+  cardCanvas().then(function(c){
+    return new Promise(function(res,rej){ c.toBlob(function(b){ b?res(b):rej(new Error('toBlob 失败')); },'image/png'); });
+  }).then(function(blob){
+    return navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+  }).then(function(){
+    toast('图片已复制，去微信 Ctrl+V 粘贴');
+  }).catch(function(){
+    downloadImage();
+    toast('浏览器不支持直接复制图片，已改为下载');
+  });
+}
+function downloadImage(){
+  syncCard();
+  cardCanvas().then(function(c){
+    return new Promise(function(res){ c.toBlob(function(b){ res(b); },'image/png'); });
+  }).then(function(blob){
+    var d=new Date(), p=function(n){return n<10?'0'+n:''+n;};
+    var ts=''+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes());
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='需求确认单-'+ts+'.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); },1500);
+    toast('图片已下载');
+  }).catch(function(){ toast('截图失败，请重试'); });
+}
+function summaryText(){
+  syncCard();
+  var d=lastData, lines=[];
+  lines.push('【需求确认单】'+d.no+'（'+d.date+'）');
+  for(var i=0;i<FIELDS.length;i++){
+    var v=d[FIELDS[i].key];
+    if(v) lines.push(FIELDS[i].label+'：'+v);
+  }
+  lines.push('——'+d.co);
+  return lines.join('\n');
+}
+function copySummary(){
+  var text=summaryText();
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ toast('文字已复制'); },function(){ fallbackCopy(text); });
+  } else { fallbackCopy(text); }
+}
+function fallbackCopy(text){
+  var ta=document.createElement('textarea');
+  ta.value=text; ta.style.position='fixed'; ta.style.left='-9999px';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  var ok=false;
+  try{ ok=document.execCommand('copy'); }catch(e){}
+  document.body.removeChild(ta);
+  toast(ok?'文字已复制':'复制失败，请手动选择');
+}
+
+/* ================= 历史记录 ================= */
+function saveRecord(){
+  var d=readForm();
+  d.no=stampNum();          /* 每次保存都是一张新单，编号按当天递增（编辑草稿时不跳号） */
+  renderCard(d);
+  records.unshift({id:uid('r'), at:Date.now(), no:d.no, data:d});
+  if(records.length>50) records=records.slice(0,50);
+  safeSet(LS_REC, records);
+  renderHistory();
+  toast('已保存，可在下方历史记录里复用');
+}
+function renderHistory(){
+  var box=document.getElementById('histList');
+  if(!records.length){ box.innerHTML='<div class="empty">暂无记录，填好信息点「保存记录」即可留存</div>'; return; }
+  var html='';
+  for(var i=0;i<records.length;i++){
+    var r=records[i], d=r.data||{};
+    var brief=[d.purpose,d.city,d.years,d.budget].filter(function(x){return x;}).join(' · ')||'（空）';
+    var dt=new Date(r.at), p=function(n){return n<10?'0'+n:''+n;};
+    var time=(dt.getMonth()+1)+'/'+dt.getDate()+' '+p(dt.getHours())+':'+p(dt.getMinutes());
+    html += '<div class="hist-item">'
+      + '<span class="d">'+esc(time)+'</span>'
+      + '<span class="t">'+esc(brief)+'</span>'
+      + '<button class="mini" onclick="loadRecord(\''+r.id+'\')">载入</button>'
+      + '<button class="mini del" onclick="delRecord(\''+r.id+'\')">删除</button>'
+      + '</div>';
+  }
+  box.innerHTML=html;
+}
+function loadRecord(id){
+  var r=null;
+  for(var i=0;i<records.length;i++){ if(records[i].id===id) r=records[i]; }
+  if(!r) return;
+  form = {};
+  for(var k in (r.data||{})){ if(k!=='no'&&k!=='date'&&k!=='co') form[k]=r.data[k]; }
+  if(r.data && r.data.co) form.co=r.data.co;
+  safeSet(LS_FORM, form);
+  renderForm();
+  renderCard(readForm());
+  toast('已载入该记录，可修改后重新生成');
+}
+function delRecord(id){
+  records=records.filter(function(r){ return r.id!==id; });
+  safeSet(LS_REC, records);
+  renderHistory();
+  toast('已删除');
+}
+
+/* ================= 初始化 ================= */
+function init(){
+  form = safeGet(LS_FORM, {});
+  if(!form.co) form.co = DEFAULT_CO;
+  records = safeGet(LS_REC, []);
+  renderForm();
+  renderHistory();
+  renderCard(readForm());
+  window.addEventListener('resize', function(){ applyScale(); });
+}
+init();
+</script>
+</body>
+</html>

@@ -138,6 +138,20 @@ export const TOOLS = [
     component: EmbeddedToolView
   },
   {
+    path: '/tools/demand-form',
+    name: 'demand-form',
+    title: '需求确认单生成器',
+    desc: '销售录入收购目的/年限/行业/城市/经营范围/注册资金/预算/其他需求八项，一键生成精美需求确认单图片，可直接发客户，支持保存历史复用',
+    color: '#ea580c',
+    category: 'sales',
+    iconSvg: svgWrap(`
+      <path d="M9 3h6a1 1 0 0 1 1 1v1h2a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2V4a1 1 0 0 1 1-1z"/>
+      <path d="M9.5 12.5l1.8 1.8 3.7-3.8"/>
+    `),
+    url: 'tools/demand-form/index.html',
+    component: EmbeddedToolView
+  },
+  {
     path: '/tools/todo',
     name: 'todo',
     title: '待办事项清单',
