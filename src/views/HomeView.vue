@@ -243,7 +243,7 @@ function dueLabel(due) {
 onMounted(loadTodos)
 
 /* 全部数据 key 统一来自 src/data/backupKeys.js（新增工具的 key 记得登记） */
-const APP_VERSION = 'v1.12.0' /* 2026-09-12 尽调专业版：开票数据支持多个税局表格累积导入合并 */
+const APP_VERSION = 'v1.12.1' /* 2026-09-12 话术工具：复制改为图文一体 + 修复复制图片 MIME 失败 */
 const fileInput = ref(null)
 const dataStatus = ref('')
 const dataStatusType = ref('ok')

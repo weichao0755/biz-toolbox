@@ -256,7 +256,7 @@
       <div class="img-list" id="fImages"></div>
       <button class="img-add" id="imgAddBtn" onclick="addImageClick()" title="上传图片">＋</button>
       <input type="file" id="imgFile" accept="image/*" multiple style="display:none" onchange="onImagePick(event)">
-      <div class="hint">点击「＋」上传，或直接把图片粘贴（Ctrl+V）进来；自动压缩保存。复制话术时可单独复制图片发微信。</div>
+      <div class="hint">点击「＋」上传，或直接把图片粘贴（Ctrl+V）进来；自动压缩保存。点「复制」时文字＋图片会一起进剪贴板，微信里 Ctrl+V 直接出图。</div>
     </div>
     <div class="modal-acts">
       <button class="btn btn-ghost" onclick="closeScriptModal()">取消</button>
@@ -575,7 +575,7 @@ function scriptHtml(s){
       <img src="${d}" alt="">
       ${imgs.length>1?`<span class="n">${i+1}</span>`:''}
     </div>`).join('')}</div>` : '';
-  const copyImgBtn = imgs.length ? `<button class="copy-img-btn" onclick="copyImages('${s.id}')" title="复制图片到剪贴板，去微信粘贴">📷 复制图</button>` : '';
+  const copyImgBtn = imgs.length ? `<button class="copy-img-btn" onclick="copyImages('${s.id}')" title="只复制图片（图文一起复制请点「复制」）">📷 复制图</button>` : '';
   return `<div class="script" id="script-${s.id}">
     <div class="swatch" style="background:${color}"></div>
     <div class="body">
@@ -590,7 +590,7 @@ function scriptHtml(s){
       ${s.content?`<span class="expand" onclick="toggleExpand('${s.id}')">展开/收起</span>`:''}
     </div>
     <div class="acts">
-      ${s.content?`<button class="copy-btn" onclick="copyScript('${s.id}')" title="复制到剪贴板">
+      ${s.content?`<button class="copy-btn" onclick="copyScript('${s.id}')" title="${imgs.length?'复制文字＋第1张图片（一次粘贴全带上）':'复制到剪贴板'}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
         复制
       </button>`:''}
@@ -854,8 +854,32 @@ function onPasteImages(e){
   if(hasImg) e.preventDefault();
 }
 
+// 图片 dataUrl → PNG Blob（剪贴板只接受 image/png，存的是 jpeg 必须转码，否则 MIME 不匹配必失败）
+function toPngBlob(dataUrl){
+  return new Promise((resolve,reject)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      c.getContext('2d').drawImage(img,0,0);
+      c.toBlob(b=>{ b ? resolve(b) : reject(new Error('转码失败')) }, 'image/png');
+    };
+    img.onerror = ()=>reject(new Error('图片解码失败'));
+    img.src = dataUrl;
+  });
+}
+
+// 图文一体复制：一次写入 text/plain + image/png，粘贴端自取（微信 Ctrl+V 出图，聊天框可粘文本）
+async function copyRich(text, pngBlob){
+  const item = new ClipboardItem({
+    'text/plain': new Blob([text],{type:'text/plain'}),
+    'image/png': pngBlob
+  });
+  await navigator.clipboard.write([item]);
+}
+
 function copyImage(dataUrl){
-  return fetch(dataUrl).then(r=>r.blob()).then(blob=>{
+  return toPngBlob(dataUrl).then(blob=>{
     return navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
   });
 }
@@ -864,14 +888,14 @@ async function copyImages(id){
   const s = scripts.find(x=>x.id===id);
   if(!s || !(s.images||[]).length) return;
   try{
-    const blobs = await Promise.all((s.images||[]).map(d=>fetch(d).then(r=>r.blob())));
-    const items = new ClipboardItem({'image/png': blobs[0]});
-    // 剪贴板通常一次一张图，这里复制第一张；多张时提示逐张复制
-    await navigator.clipboard.write([items]);
+    const blob = await toPngBlob(s.images[0]);
+    await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
     stats.copy = (stats.copy||0) + 1;
     saveStats();
     document.getElementById('copyCount').textContent = stats.copy;
-    showToast('图片已复制，去微信 Ctrl+V 粘贴');
+    showToast((s.images||[]).length>1
+      ? '已复制第 1 张图（共 '+(s.images||[]).length+' 张，其余点缩略图下载）'
+      : '图片已复制，去微信 Ctrl+V 粘贴');
   }catch(e){
     showToast('复制图片失败，请点击缩略图下载后手动发送');
   }
@@ -938,7 +962,7 @@ function copyScript(id){
   const {result, missing} = fillVars(s.content);
   const uniq = [...new Set(missing)];
   if(uniq.length){
-    pendingFill = {content: s.content, keys: uniq};
+    pendingFill = {content: s.content, keys: uniq, id: s.id};
     const list = document.getElementById('fillList');
     list.innerHTML = uniq.map(k=>`
       <div class="fg">
@@ -948,7 +972,7 @@ function copyScript(id){
     document.getElementById('fillModal').classList.add('show');
     const first = list.querySelector('input'); if(first) first.focus();
   } else {
-    doCopy(result);
+    doCopy(result, s.id);
   }
 }
 
@@ -958,20 +982,37 @@ function confirmFill(){
   inputs.forEach(inp=>{ vals[inp.dataset.key] = inp.value.trim(); });
   document.getElementById('fillModal').classList.remove('show');
   let content = pendingFill.content;
+  const fillId = pendingFill.id;
   pendingFill.keys.forEach(k=>{
     if(vals[k]) content = content.split('{'+k+'}').join(vals[k]);
   });
-  doCopy(content);
+  pendingFill={};
+  doCopy(content, fillId);
 }
 function closeFillModal(){ document.getElementById('fillModal').classList.remove('show'); pendingFill={}; }
 
-function doCopy(text){
-  copyText(text).then(ok=>{
-    stats.copy = (stats.copy||0) + 1;
-    saveStats();
-    document.getElementById('copyCount').textContent = stats.copy;
-    showToast(ok ? '已复制，去粘贴吧（Ctrl+V）' : '复制失败，请手动选中复制');
-  });
+// 复制主入口：有图时先写纯文本兜底，再尝试「文字+图片」一体写入（写入失败时文本仍在剪贴板）
+async function doCopy(text, id){
+  let ok = await copyText(text);
+  let imgNote = '';
+  const s = id && scripts.find(x=>x.id===id);
+  const imgs = (s && s.images) || [];
+  if(imgs.length){
+    try{
+      const png = await toPngBlob(imgs[0]);
+      await copyRich(text, png);
+      ok = true;
+      imgNote = imgs.length>1
+        ? '已复制 文字＋第1张图（共'+imgs.length+'张图，其余点缩略图下载后发）'
+        : '已复制 文字＋图片，去微信 Ctrl+V 直接粘贴';
+    }catch(e){
+      imgNote = '已复制文字；图片复制失败，请单独点「📷 复制图」';
+    }
+  }
+  stats.copy = (stats.copy||0) + 1;
+  saveStats();
+  document.getElementById('copyCount').textContent = stats.copy;
+  showToast(ok ? imgNote || '已复制，去粘贴吧（Ctrl+V）' : '复制失败，请手动选中复制');
 }
 
 // ============ 变量管理 ============
