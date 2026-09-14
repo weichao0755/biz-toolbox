@@ -338,7 +338,24 @@ function load(){
     safeSet(LIST_KEY, lists);
   }
   dedupeRepeats();
+  migrateStuckRepeats();
   checkRepeats();
+}
+
+/* 存量修复：老版本里「无到期日的重复任务」完成后 due 始终为空，
+   checkRepeats 永远跳过它 → 任务永久卡在已完成。这里一次性解救。 */
+function migrateStuckRepeats(){
+  let changed = false;
+  todos.forEach(t=>{
+    if(t.repeat && t.done && !t.due){
+      t.done = false;
+      t.completedAt = null;
+      t.due = nextDue(todayStr(), t.repeat);
+      if(t.subs) t.subs.forEach(s=>s.done=false);
+      changed = true;
+    }
+  });
+  if(changed) saveTodos();
 }
 
 // 清理旧逻辑产生的重复任务：同一（标题+周期+清单）只保留一条
@@ -571,7 +588,8 @@ function toggleDone(id){
     t.completedAt = Date.now();
     // 重复任务：把到期日推进到下一个周期，任务保持在「已完成」里
     // 等真实日期到达下一周期时，checkRepeats 会自动复活它
-    if(t.repeat && t.due){ t.due = nextDue(t.due, t.repeat); }
+    // （没填到期日的，以今天为基准推进，保证周期能持续滚动）
+    if(t.repeat){ t.due = nextDue(t.due || todayStr(), t.repeat); }
   } else {
     t.done = false;
     t.completedAt = null;
@@ -724,6 +742,21 @@ load();
 initCal();
 document.getElementById('todayLabel').textContent = '今天 ' + todayStr();
 selectList('all');
+
+/* 跨天自动刷新：页面一直开着（不重新打开），日期一变就重置重复任务并重绘。
+   每分钟比对一次日期 + 切回页面时兜底检查。 */
+let _todoDay = todayStr();
+function refreshIfNewDay(){
+  const d = todayStr();
+  if(d === _todoDay) return;
+  _todoDay = d;
+  document.getElementById('todayLabel').textContent = '今天 ' + d;
+  load();
+  renderTodos();
+  if(document.getElementById('viewCalendar').style.display!=='none') renderCalendar();
+}
+setInterval(refreshIfNewDay, 60*1000);
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) refreshIfNewDay(); });
 </script>
 </body>
 </html>
