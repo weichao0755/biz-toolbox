@@ -426,20 +426,22 @@ function defaultCats(){
   ];
 }
 
-function defaultScripts(){
-  const now = Date.now();
-  return [
-    {id:uid('s'), title:'开场白', code:'kcb', cat:'open', tags:['开场','介绍'], color:'#3b82f6', createdAt:now, content:'您好{客户称呼}，我是{公司名}的小金，专注公司转让和资质办理多年。请问您是想收购一家现成的公司，还是有资质方面的需求？我帮您快速匹配。'},
-    {id:uid('s'), title:'转让业务介绍', code:'zrjs', cat:'transfer', tags:['转让','介绍'], color:'#8b5cf6', createdAt:now, content:'我们主要做一线城市的公司转让和资质办理，ICP、医疗器械、短剧三证、建筑工程资质都有现成的老执照（3年以上），手续齐全、可随时过户。您有具体想要的类型或城市吗？'},
-    {id:uid('s'), title:'ICP资质', code:'icp', cat:'icp', tags:['ICP','资质'], color:'#06b6d4', createdAt:now, content:'ICP 我们这边有现成的（含3年以上老执照），过户周期快、手续齐全。价格根据执照年限和经营范围有所不同。您打算做哪类业务？我帮您推荐合适的。'},
-    {id:uid('s'), title:'医疗器械资质', code:'ylqx', cat:'medical', tags:['医疗','资质'], color:'#10b981', createdAt:now, content:'医疗器械资质我们有现成的经营许可证，含二类/三类备案，执照年限老、经营范围全。需要确认下您要经营的具体品类，我帮您精准匹配。'},
-    {id:uid('s'), title:'报价话术', code:'bj', cat:'price', tags:['报价'], color:'#f59e0b', createdAt:now, content:'{客户称呼}，您看中的这家公司，价格是 ¥{金额}，包含过户、变更等全部手续。这个价格在同类里性价比很高了，您要是今天能定，我帮您再争取个优惠。'},
-    {id:uid('s'), title:'收定金', code:'dj', cat:'price', tags:['定金','收款'], color:'#f59e0b', createdAt:now, content:'确认合作的话，需要先付 ¥{金额} 定金锁定公司，我们这边就开始走流程，定金到账后尽快完成过户。您看方便什么时候安排？'},
-    {id:uid('s'), title:'催办跟进', code:'cb', cat:'follow', tags:['跟进','催办'], color:'#ef4444', createdAt:now, content:'{客户称呼}，打扰了。上次跟您聊的那家公司，目前还有另一位客户也在看，您这边考虑得怎么样了？需要的话我帮您先做个预留。'},
-    {id:uid('s'), title:'售后回访', code:'sh', cat:'follow', tags:['售后','回访'], color:'#ef4444', createdAt:now, content:'{客户称呼}，公司过户已经办妥，相关证照您都收到了吗？后续代账、报税这些如果有需要，我这边也可以一起帮您对接，有任何问题随时找我。'},
-    {id:uid('s'), title:'价格异议处理', code:'jgyy', cat:'price', tags:['异议','议价'], color:'#f59e0b', createdAt:now, content:'理解您的顾虑。这个价格主要贵在执照年限和经营范围上，老执照（3年以上）在银行开户、业务投标上都更占优势。您要是觉得合适，我可以再帮您申请一点优惠。'},
-    {id:uid('s'), title:'结束语', code:'jsw', cat:'follow', tags:['结束','留资'], color:'#ef4444', createdAt:now, content:'好的{客户称呼}，那我这边先帮您留意合适的资源，有进展第一时间通知您。您也可以加我微信，方便随时沟通。'}
+/* 旧版预置话术（2026-09-16 起不再预置）：仅用于识别并清理同事本地存量，标题+内容+code 完全一致才判定为预置 */
+const PRESET_SCRIPTS = [
+    {id:uid('s'), title:'开场白', code:'kcb', cat:'open', tags:['开场','介绍'], color:'#3b82f6', createdAt:0, content:'您好{客户称呼}，我是{公司名}的小金，专注公司转让和资质办理多年。请问您是想收购一家现成的公司，还是有资质方面的需求？我帮您快速匹配。'},
+    {id:uid('s'), title:'转让业务介绍', code:'zrjs', cat:'transfer', tags:['转让','介绍'], color:'#8b5cf6', createdAt:0, content:'我们主要做一线城市的公司转让和资质办理，ICP、医疗器械、短剧三证、建筑工程资质都有现成的老执照（3年以上），手续齐全、可随时过户。您有具体想要的类型或城市吗？'},
+    {id:uid('s'), title:'ICP资质', code:'icp', cat:'icp', tags:['ICP','资质'], color:'#06b6d4', createdAt:0, content:'ICP 我们这边有现成的（含3年以上老执照），过户周期快、手续齐全。价格根据执照年限和经营范围有所不同。您打算做哪类业务？我帮您推荐合适的。'},
+    {id:uid('s'), title:'医疗器械资质', code:'ylqx', cat:'medical', tags:['医疗','资质'], color:'#10b981', createdAt:0, content:'医疗器械资质我们有现成的经营许可证，含二类/三类备案，执照年限老、经营范围全。需要确认下您要经营的具体品类，我帮您精准匹配。'},
+    {id:uid('s'), title:'报价话术', code:'bj', cat:'price', tags:['报价'], color:'#f59e0b', createdAt:0, content:'{客户称呼}，您看中的这家公司，价格是 ¥{金额}，包含过户、变更等全部手续。这个价格在同类里性价比很高了，您要是今天能定，我帮您再争取个优惠。'},
+    {id:uid('s'), title:'收定金', code:'dj', cat:'price', tags:['定金','收款'], color:'#f59e0b', createdAt:0, content:'确认合作的话，需要先付 ¥{金额} 定金锁定公司，我们这边就开始走流程，定金到账后尽快完成过户。您看方便什么时候安排？'},
+    {id:uid('s'), title:'催办跟进', code:'cb', cat:'follow', tags:['跟进','催办'], color:'#ef4444', createdAt:0, content:'{客户称呼}，打扰了。上次跟您聊的那家公司，目前还有另一位客户也在看，您这边考虑得怎么样了？需要的话我帮您先做个预留。'},
+    {id:uid('s'), title:'售后回访', code:'sh', cat:'follow', tags:['售后','回访'], color:'#ef4444', createdAt:0, content:'{客户称呼}，公司过户已经办妥，相关证照您都收到了吗？后续代账、报税这些如果有需要，我这边也可以一起帮您对接，有任何问题随时找我。'},
+    {id:uid('s'), title:'价格异议处理', code:'jgyy', cat:'price', tags:['异议','议价'], color:'#f59e0b', createdAt:0, content:'理解您的顾虑。这个价格主要贵在执照年限和经营范围上，老执照（3年以上）在银行开户、业务投标上都更占优势。您要是觉得合适，我可以再帮您申请一点优惠。'},
+    {id:uid('s'), title:'结束语', code:'jsw', cat:'follow', tags:['结束','留资'], color:'#ef4444', createdAt:0, content:'好的{客户称呼}，那我这边先帮您留意合适的资源，有进展第一时间通知您。您也可以加我微信，方便随时沟通。'}
   ];
+
+function defaultScripts(){
+  return [];   /* 不再预置任何话术，新用户从共享库导入 */
 }
 
 function defaultVars(){
@@ -477,6 +479,7 @@ function load(){
   if(!scripts){ scripts = defaultScripts(); safeSet(STORE_KEY, scripts); }
   if(!cats){ cats = defaultCats(); safeSet(CAT_KEY, cats); }
   if(!vars){ vars = defaultVars(); safeSet(VAR_KEY, vars); }
+  removePresets();
   migrateCats();
   migrateScripts();
   expandedCats = safeGet(CAT_EXPAND_KEY, []);
@@ -490,6 +493,13 @@ function expandCat(id){
   saveExpanded();
 }
 /* 话术排序迁移：旧数据没有 sort 字段，按「收藏优先 + 创建时间倒序」补齐（与原显示顺序一致） */
+/* 清理旧版预置的 10 条话术：标题+内容+code 三者与预置完全一致才删除（用户改过内容的不动） */
+function removePresets(){
+  const before=scripts.length;
+  scripts=scripts.filter(s=>!PRESET_SCRIPTS.some(p=>p.title===s.title && p.content===s.content && p.code===s.code));
+  if(scripts.length!==before){ saveScripts(); }
+}
+
 function migrateScripts(){
   const ordered = scripts.slice().sort((a,b)=>{
     const fa = favs.includes(a.id)?1:0, fb = favs.includes(b.id)?1:0;
