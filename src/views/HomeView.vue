@@ -243,7 +243,7 @@ function dueLabel(due) {
 onMounted(loadTodos)
 
 /* 全部数据 key 统一来自 src/data/backupKeys.js（新增工具的 key 记得登记） */
-const APP_VERSION = 'v1.15.3' /* 2026-09-16 合同签订日期默认生成当天 */
+const APP_VERSION = 'v1.15.3' /* 2026-09-16 强制同步话术共享库（12条） */
 const fileInput = ref(null)
 const dataStatus = ref('')
 const dataStatusType = ref('ok')
