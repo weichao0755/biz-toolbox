@@ -234,6 +234,17 @@ function today(){
   const p=n=>String(n).padStart(2,'0')
   return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())
 }
+/* ISO 日期 → 中文（2026-09-16 → 2026年9月16日） */
+function fmtDateCN(iso){
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso||''))
+  if(!m) return ''
+  return m[1]+'年'+Number(m[2])+'月'+Number(m[3])+'日'
+}
+/* 落款「签署日期」行：有签订日期就填中文日期，否则留空白横线供手写 */
+function signDateLine(){
+  const cn = fmtDateCN(state.meta && state.meta.signDate)
+  return cn ? '签署日期：'+cn : '签署日期：　　年　　月　　日'
+}
 function autoContractNo(){
   const d=new Date()
   const p=n=>String(n).padStart(2,'0')
@@ -262,7 +273,7 @@ function emptyState(){
       changeDate:''                   /* 债务债权：营业执照变更生效日期 */
     },
     extra: { clauses: [] },
-    meta: { contractNo:autoContractNo(), signDate:today(), signPlace:'深圳市' }
+    meta: { contractNo:autoContractNo(), signDate:today(), signDateManual:false, signPlace:'深圳市' }
   }
 }
 
@@ -294,6 +305,8 @@ function loadState(){
       m.extra = { clauses: Array.isArray(s.extra&&s.extra.clauses) ? s.extra.clauses.filter(c=>c&&(c.title||c.content)).map(c=>({title:String(c.title||''),content:String(c.content||''),aiDesc:String(c.aiDesc||'')})) : [] }
       m.meta = Object.assign({}, base.meta, s.meta||{})
       if(!m.meta.contractNo) m.meta.contractNo = autoContractNo()
+      /* 签订日期默认=当天：只要用户没手动改过，每次打开草稿都刷新为今天 */
+      if(!m.meta.signDateManual) m.meta.signDate = today()
       return m
     }
   }catch(e){ console.error('[loadState]', e) }
@@ -337,6 +350,8 @@ function areaField(obj,key,label,opt={}){
 }
 function setVal(group,key,v){
   state[group][key]=v
+  /* 签订日期被手动改过就记住，之后不再自动覆盖为当天 */
+  if(group==='meta' && key==='signDate') state.meta.signDateManual = true
   saveState()
 }
 
@@ -1054,7 +1069,7 @@ function stepGen(){
       ${partyBHtml}
       <h3>合同要素</h3>
       ${elemKv}
-      ${kv('合同编号', state.meta.contractNo)}${kv('签订日期', state.meta.signDate)}${kv('签订地点', state.meta.signPlace)}
+      ${kv('合同编号', state.meta.contractNo)}${kv('签订日期', fmtDateCN(state.meta.signDate)||state.meta.signDate)}${kv('签订地点', state.meta.signPlace)}
       <h3>补充条款</h3>
       ${clauses.length ? clauses.map(c=>`<div class="kv"><span class="k">${esc(c.title||'补充条款')}</span><span class="v">${esc(c.content||'（未填内容）')}</span></div>`).join('') : '<div class="kv"><span class="k">补充条款</span><span class="v empty">无</span></div>'}
     </div>
@@ -1422,6 +1437,9 @@ function validateBeforeGen(){
 async function doGenerate(){
   const err = validateBeforeGen()
   if(err){ alert(err); return }
+  /* 签订日期默认=生成当天：用户没手动改过就统一按今天，避免用旧草稿的日期 */
+  if(!state.meta.signDateManual || !state.meta.signDate) state.meta.signDate = today()
+  saveState()
   const btn = document.getElementById('genBtn')
   btn.disabled = true; btn.textContent = '正在生成…'
   try{
@@ -1558,7 +1576,7 @@ async function doGenerate(){
         signLines.push(new Paragraph({ children:[R('法定代表人或授权代表（签字）：',{size:24})], spacing:{ line:360, lineRule:'auto', after:200 } }))
       }
       if(p && p.address) signLines.push(new Paragraph({ children:[R('联系地址：'+p.address,{size:24})], spacing:{ line:360, lineRule:'auto', after:200 } }))
-      signLines.push(new Paragraph({ children:[R('签署日期：　　年　　月　　日',{size:24})], spacing:{ line:360, lineRule:'auto' } }))
+      signLines.push(new Paragraph({ children:[R(signDateLine(),{size:24})], spacing:{ line:360, lineRule:'auto' } }))
       return new TableCell({
         width:{ size:cellWidth||50, type:WidthType.PERCENTAGE },
         borders:{ top:{style:BorderStyle.NONE}, bottom:{style:BorderStyle.NONE}, left:{style:BorderStyle.NONE}, right:{style:BorderStyle.NONE} },
@@ -1711,7 +1729,7 @@ function viewRecord(id){
   h += '<div class="kv"><span class="k">标的公司</span><span class="v">'+esc(rec.target)+'</span></div>'
   h += '<div class="kv"><span class="k">签约主体</span><span class="v">'+esc(rec.parties)+'</span></div>'
   h += '<div class="kv"><span class="k">合同编号</span><span class="v">'+esc(rec.contractNo||'—')+'</span></div>'
-  h += '<div class="kv"><span class="k">签订日期</span><span class="v">'+esc(rec.signDate||'—')+'</span></div>'
+  h += '<div class="kv"><span class="k">签订日期</span><span class="v">'+esc(fmtDateCN(rec.signDate)||rec.signDate||'—')+'</span></div>'
   h += '<div style="margin-top:10px;font-size:12.5px;color:#8a7a62">💡 点击「载入数据」可恢复该合同的全部填写内容，到生成步骤即可重新导出 Word。</div>'
   h += '<div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">'
   h += '<button class="btn btn-primary" onclick="loadRecord(\''+rec.id+'\')">📂 载入数据并重新生成</button>'
