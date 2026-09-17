@@ -35,6 +35,14 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,"
 .bar-row .bf{height:100%;background:var(--accent-grad);border-radius:5px}
 .bar-row .bv{width:34px;flex:0 0 34px;text-align:right;color:#6b5d4a}
 
+/* 视图切换 */
+.views{display:flex;gap:6px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:7px;margin-bottom:12px;box-shadow:0 1px 3px rgba(120,90,40,.06)}
+.viewtab{border:1px solid transparent;background:transparent;color:#6b5d4a;border-radius:9px;padding:7px 16px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+.viewtab:hover{background:#fdf6ea}
+.viewtab.on{background:var(--accent-grad);color:#fff;box-shadow:0 1px 4px rgba(180,83,9,.25)}
+.viewtab .vc{font-size:11.5px;font-weight:700;background:rgba(0,0,0,.08);border-radius:20px;padding:1px 7px;min-width:18px;text-align:center}
+.viewtab.on .vc{background:rgba(255,255,255,.30)}
+
 /* 工具栏 */
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:14px}
 .toolbar input,.toolbar select{border:1px solid var(--border);background:#fffdf8;border-radius:8px;padding:7px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none}
@@ -58,11 +66,16 @@ thead th{background:#fdf6ea;color:#6b5d4a;text-align:left;padding:10px 12px;font
 tbody td{padding:9px 12px;border-bottom:1px solid #f2ece1;vertical-align:middle}
 tbody tr.row{cursor:pointer;transition:background .12s}
 tbody tr.row:hover{background:#fffaf0}
-tbody tr.row.overdue td{border-left:3px solid var(--over-bd)}
-tbody tr.row.today td{border-left:3px solid var(--today-bd)}
-td.nd.today{background:var(--today);color:#9a6b00;font-weight:700;border-radius:4px}
-td.nd.overdue{background:var(--over);color:#c0392b;font-weight:700;border-radius:4px}
+tbody tr.row.stale-warn{background:#fff8e8}
+tbody tr.row.stale-danger{background:#ffeaea}
+td.rec.warn{color:#b45309;font-weight:700}
+td.rec.danger{color:#c0392b;font-weight:700}
+td.rec .gap{display:inline-block;margin-left:5px;font-size:11px;font-weight:700;background:rgba(0,0,0,.06);border-radius:10px;padding:0 6px}
+td.rec.danger .gap{background:#fbdcdc;color:#c0392b}
+.subcode{font-size:11px;color:var(--muted);margin-top:3px;letter-spacing:.2px}
 .tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap}
+.tagsel{border:none;border-radius:20px;padding:2px 2px 2px 10px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;outline:none;max-width:118px}
+.tagsel:hover{filter:brightness(.96)}
 .t-type{background:#eef4ff;color:#2563eb}
 .lvl-A{background:#fde8e8;color:#c0392b}
 .lvl-B{background:#fff3da;color:#b45309}
@@ -71,7 +84,8 @@ td.nd.overdue{background:var(--over);color:#c0392b;font-weight:700;border-radius
 .st-已联系{background:#e8f6ee;color:#16a34a}
 .st-已报价{background:#fff3da;color:#b45309}
 .st-已成交{background:#e9e2f8;color:#5f3dc4}
-.st-暂搁置{background:#f1f1f1;color:#777}
+.st-已流失{background:#f1f1f1;color:#777}
+.st-待维护{background:#e0f2f1;color:#0f766e}
 .ops button{margin-right:4px}
 .empty{text-align:center;color:var(--muted);padding:34px;font-size:13.5px}
 
@@ -118,19 +132,21 @@ tr.expand td{background:#fffdf8;padding:0}
 <div class="topbar">
   <div class="logo">客</div>
   <h1>意向客户表格</h1>
-  <div class="sub">本机客户管理 · 跟进提醒 · 统计看板 · 数据导出</div>
+  <div class="sub">本机客户管理 · 视图分桶 · 统计看板 · 数据导出</div>
 </div>
 
 <div class="wrap">
   <section class="dash" id="dash"></section>
 
+  <div class="views" id="views"></div>
+
   <div class="toolbar">
-    <input class="search" id="search" placeholder="搜索 姓名 / 微信 / 电话 / 需求" data-act="search">
+    <input class="search" id="search" placeholder="搜索 编号 / 姓名 / 微信 / 电话 / 推荐人 / 需求" data-act="search">
     <select id="fType" data-act="filter"><option value="">全部类型</option></select>
     <select id="fStatus" data-act="filter"><option value="">全部状态</option></select>
     <select id="fLevel" data-act="filter"><option value="">全部等级</option></select>
     <select id="fSource" data-act="filter"><option value="">全部来源</option></select>
-    <select id="sort" data-act="filter"><option value="next">排序：下次跟进日</option><option value="level">排序：意向等级</option><option value="created">排序：创建时间</option><option value="updated">排序：更新时间</option></select>
+    <select id="sort" data-act="filter"><option value="updated">排序：更新时间</option><option value="level">排序：意向等级</option><option value="created">排序：创建时间</option></select>
     <span class="sp"></span>
     <button class="btn btn-ghost" data-act="fields">字段管理</button>
     <button class="btn btn-ghost" data-act="exportExcel">导出 Excel</button>
@@ -141,7 +157,7 @@ tr.expand td{background:#fffdf8;padding:0}
   <div class="table-card">
     <table>
       <thead><tr>
-        <th>客户</th><th>微信</th><th>电话</th><th>意向类型</th><th>等级</th><th>状态</th><th>下次跟进日</th><th>最近跟进</th><th>操作</th>
+        <th>客户</th><th>微信</th><th>电话</th><th>意向类型</th><th>等级</th><th>状态</th><th>最近跟进</th><th>操作</th>
       </tr></thead>
       <tbody id="tbody"></tbody>
     </table>
@@ -162,20 +178,29 @@ tr.expand td{background:#fffdf8;padding:0}
 /* ================= 配置 ================= */
 var LS_KEY = 'lead_table_v1';
 var TYPES = ['收购公司','资质办理','转让标的','注册公司','代账','其他'];
-var SOURCES = ['视频号','朋友圈','转介绍','官网','其他'];
+var SOURCES = ['推广','推荐','自营','扩增'];
 var LEVELS = ['A','B','C'];
-var STATUSES = ['待联系','已联系','已报价','已成交','暂搁置'];
+var STATUSES = ['待联系','已联系','已报价','已成交','已流失','待维护'];
+// 视图：把明细状态归入四个视图分桶（默认进入「跟进中」）
+var VIEWS = [
+  {key:'跟进中', statuses:['待联系','已联系','已报价']},
+  {key:'已成交', statuses:['已成交']},
+  {key:'已流失', statuses:['已流失']},
+  {key:'待维护', statuses:['待维护']}
+];
 
 var FIELDS = [
+  {key:'custNo', label:'客户编号', type:'input', ph:'如 KH-2026-001'},
+  {key:'oppNo',  label:'商机编号', type:'input', ph:'如 SJ-2026-001'},
   {key:'name',   label:'客户姓名', type:'input', req:true, ph:'客户称呼'},
   {key:'wechat', label:'微信', type:'input', ph:'微信号'},
   {key:'phone',  label:'电话', type:'input', ph:'手机号'},
   {key:'type',   label:'意向类型', type:'select', options:TYPES},
   {key:'need',   label:'具体需求', type:'textarea', ph:'客户需求描述'},
   {key:'source', label:'客户来源', type:'select', options:SOURCES},
+  {key:'referrer', label:'推荐人', type:'input', ph:'推荐人姓名 / 渠道'},
   {key:'level',  label:'意向等级', type:'select', options:LEVELS, def:'B'},
   {key:'status', label:'跟进状态', type:'select', options:STATUSES, def:'待联系'},
-  {key:'nextDate', label:'下次跟进日', type:'date'},
   {key:'note',   label:'备注', type:'textarea', ph:'其他补充'}
 ];
 
@@ -183,9 +208,10 @@ var FIELDS = [
 var state = {
   leads: [],
   custom: [],          // {key,label,type,options:[]}
+  view: '跟进中',       // 当前视图，默认「跟进中」
   filter: {type:'', status:'', level:'', source:''},
   search: '',
-  sort: 'next',
+  sort: 'updated',
   expanded: null,
   editing: null,
   draftFollow: {}
@@ -195,44 +221,48 @@ var state = {
 function $(id){ return document.getElementById(id); }
 function esc(s){ s = (s==null?'':String(s)); return s.replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function uid(){ return 'L' + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
-function todayStr(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function fmtDateTime(ts){ if(!ts) return ''; var d=new Date(ts); var p=function(n){return String(n).padStart(2,'0');}; return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes()); }
-function load(){ try{ var raw=localStorage.getItem(LS_KEY); if(raw){ var o=JSON.parse(raw); if(o&&o.leads) state.leads=o.leads; if(o&&o.custom) state.custom=o.custom; } }catch(e){} }
+function load(){ try{ var raw=localStorage.getItem(LS_KEY); if(raw){ var o=JSON.parse(raw); if(o&&o.leads) state.leads=o.leads.map(function(l){ if(l.status==='暂搁置') l.status='待维护'; return l; }); if(o&&o.custom) state.custom=o.custom; } }catch(e){} }
 function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify({leads:state.leads, custom:state.custom})); }catch(e){ toast('保存失败：本地存储可能已满'); } }
 function toast(msg){ var t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(function(){ t.classList.remove('show'); },1900); }
 
 /* ================= 筛选 / 排序 ================= */
+function viewStatuses(v){
+  var hit = VIEWS.filter(function(x){ return x.key===v; })[0];
+  return hit? hit.statuses : [];
+}
 function visibleLeads(){
   var arr = state.leads.slice();
   var f = state.filter, s = (state.search||'').trim().toLowerCase();
+  var vst = viewStatuses(state.view);
   arr = arr.filter(function(l){
+    if(vst.length && vst.indexOf(l.status)<0) return false;
     if(f.type && l.type!==f.type) return false;
     if(f.status && l.status!==f.status) return false;
     if(f.level && l.level!==f.level) return false;
     if(f.source && l.source!==f.source) return false;
-    if(s){ var hay=(l.name+' '+l.wechat+' '+l.phone+' '+(l.need||'')+' '+(l.note||'')).toLowerCase(); if(hay.indexOf(s)<0) return false; }
+    if(s){ var hay=((l.custNo||'')+' '+(l.oppNo||'')+' '+l.name+' '+l.wechat+' '+l.phone+' '+(l.need||'')+' '+(l.referrer||'')+' '+(l.note||'')).toLowerCase(); if(hay.indexOf(s)<0) return false; }
     return true;
   });
   var lv={'A':0,'B':1,'C':2};
   arr.sort(function(a,b){
     if(state.sort==='level'){ var r=(lv[a.level]||9)-(lv[b.level]||9); if(r) return r; }
     else if(state.sort==='created'){ if((b.createdAt||0)-(a.createdAt||0)) return (b.createdAt||0)-(a.createdAt||0); }
-    else if(state.sort==='updated'){ if((b.updatedAt||0)-(a.updatedAt||0)) return (b.updatedAt||0)-(a.updatedAt||0); }
-    else { var na=a.nextDate||'9999', nb=b.nextDate||'9999'; if(na!==nb) return na<nb?-1:1; }
     return (b.updatedAt||0)-(a.updatedAt||0);
   });
   return arr;
 }
-
-function nextState(l){
-  if(!l.nextDate) return '';
-  if(l.status==='已成交'||l.status==='暂搁置') return '';
-  var t=todayStr(), n=l.nextDate;
-  if(n<t) return 'overdue';
-  if(n===t) return 'today';
-  return '';
-}
 function lastFollow(l){ if(l.timeline&&l.timeline.length){ var x=l.timeline[l.timeline.length-1]; return x; } return null; }
+// 最近跟进距今：>=2天 高亮提醒(warn)，>3天 深红警告(danger)；未跟进则以创建时间计；已成交/已流失 不再提醒
+function staleInfo(l){
+  if(l.status==='已成交'||l.status==='已流失') return {state:'',days:0};
+  var base = (l.timeline&&l.timeline.length)? l.timeline[l.timeline.length-1].t : l.createdAt;
+  if(!base) return {state:'',days:0};
+  var ms = Date.now() - base;
+  var days = Math.floor(ms/86400000);
+  var st = ms > 3*86400000 ? 'danger' : (ms >= 2*86400000 ? 'warn' : '');
+  return {state:st, days:days};
+}
 
 /* ================= 看板 ================= */
 function renderDash(){
@@ -247,8 +277,6 @@ function renderDash(){
     +'<div class="kpi"><div class="n">'+total+'</div><div class="l">客户总数</div></div>'
     +'<div class="kpi"><div class="n">'+deal+'</div><div class="l">已成交</div></div>'
     +'<div class="kpi"><div class="n">'+rate+'%</div><div class="l">成交转化率</div></div>'
-    +'<div class="kpi"><div class="n">'+leads.filter(function(l){return nextState(l)==='overdue';}).length+'</div><div class="l">已逾期</div></div>'
-    +'<div class="kpi"><div class="n">'+leads.filter(function(l){return nextState(l)==='today';}).length+'</div><div class="l">今日待跟进</div></div>'
     +'</div>';
   html+='<div class="bars">';
   html+=barGroup('按意向类型', TYPES, function(l){return l.type;});
@@ -270,27 +298,53 @@ function barGroup(title, keys, get){
   return '<div class="bar-group"><div class="bg-title">'+esc(title)+'</div>'+rows+'</div>';
 }
 
+/* ================= 视图切换 ================= */
+function renderViews(){
+  var counts={}; VIEWS.forEach(function(v){ counts[v.key]=0; });
+  state.leads.forEach(function(l){
+    VIEWS.forEach(function(v){ if(v.statuses.indexOf(l.status)>=0) counts[v.key]++; });
+  });
+  var h='';
+  VIEWS.forEach(function(v){
+    h+='<button class="viewtab'+(state.view===v.key?' on':'')+'" data-act="view" data-view="'+v.key+'">'+esc(v.key)+'<span class="vc">'+counts[v.key]+'</span></button>';
+  });
+  $('views').innerHTML=h;
+}
+
 /* ================= 表格 ================= */
+function codeLine(l){
+  var parts=[];
+  if(l.custNo) parts.push('客户 '+l.custNo);
+  if(l.oppNo) parts.push('商机 '+l.oppNo);
+  return parts.length? '<div class="subcode">'+esc(parts.join(' · '))+'</div>' : '';
+}
+function quickSel(l, field, opts){
+  var val=l[field]||'';
+  var cls = field==='level' ? ('lvl-'+(val||'C')) : ('st-'+val);
+  var h='<select class="tagsel '+cls+'" data-qk="'+field+'" data-id="'+l.id+'" title="点击可修改">';
+  opts.forEach(function(o){ h+='<option value="'+esc(o)+'"'+(o===val?' selected':'')+'>'+esc(o)+'</option>'; });
+  h+='</select>';
+  return h;
+}
 function renderTable(){
   var rows=visibleLeads();
   var tb=$('tbody');
-  if(!rows.length){ tb.innerHTML='<tr><td colspan="9"><div class="empty">暂无客户，点右上角「+ 新建客户」开始登记</div></td></tr>'; return; }
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="8"><div class="empty">暂无客户，点右上角「+ 新建客户」开始登记</div></td></tr>'; return; }
   var html='';
   rows.forEach(function(l){
-    var ns=nextState(l); var lf=lastFollow(l);
-    html+='<tr class="row '+ns+'" data-act="toggle" data-id="'+l.id+'">'
-      +'<td><b>'+esc(l.name||'(未命名)')+'</b></td>'
+    var lf=lastFollow(l); var si=staleInfo(l);
+    html+='<tr class="row'+(si.state?' stale-'+si.state:'')+'" data-act="toggle" data-id="'+l.id+'">'
+      +'<td><b>'+esc(l.name||'(未命名)')+'</b>'+codeLine(l)+'</td>'
       +'<td>'+esc(l.wechat||'')+'</td>'
       +'<td>'+esc(l.phone||'')+'</td>'
       +'<td><span class="tag t-type">'+esc(l.type||'')+'</span></td>'
-      +'<td><span class="tag lvl-'+(l.level||'C')+'">'+(l.level||'')+'</span></td>'
-      +'<td><span class="tag st-'+(l.status||'')+'">'+(l.status||'')+'</span></td>'
-      +'<td class="nd '+ns+'">'+(l.nextDate||'<span style="color:#bbb">—</span>')+'</td>'
-      +'<td>'+(lf?('<span title="'+esc(lf.content)+'">'+esc(fmtDateTime(lf.t).slice(5))+'</span>'):'<span style="color:#bbb">—</span>')+'</td>'
+      +'<td>'+quickSel(l,'level',LEVELS)+'</td>'
+      +'<td>'+quickSel(l,'status',STATUSES)+'</td>'
+      +'<td class="rec '+si.state+'">'+(lf?('<span title="'+esc(lf.content)+'">'+esc(fmtDateTime(lf.t).slice(5))+'</span>'):'<span style="color:#bbb">未跟进</span>')+(si.state?'<span class="gap">'+si.days+'天</span>':'')+'</td>'
       +'<td class="ops"><button class="mini" data-act="edit" data-id="'+l.id+'">编辑</button> <button class="mini del" data-act="del" data-id="'+l.id+'">删除</button></td>'
       +'</tr>';
     if(state.expanded===l.id){
-      html+='<tr class="expand"><td colspan="9"><div class="expand-inner">'
+      html+='<tr class="expand"><td colspan="8"><div class="expand-inner">'
         +renderDetail(l)
         +renderTimeline(l)
         +'</div></td></tr>';
@@ -342,7 +396,8 @@ function openForm(id){
     } else if(f.type==='textarea'){
       body+='<textarea data-fkey="'+f.key+'" placeholder="'+esc(f.ph||'')+'">'+esc(v)+'</textarea>';
     } else {
-      body+='<input type="'+f.type+'" data-fkey="'+f.key+'" value="'+esc(v)+'" placeholder="'+esc(f.ph||'')+'">';
+      var itype = (f.type==='input'? 'text' : f.type);
+      body+='<input type="'+itype+'" data-fkey="'+f.key+'" value="'+esc(v)+'" placeholder="'+esc(f.ph||'')+'">';
     }
     body+='</div>';
   });
@@ -446,13 +501,13 @@ function delCf(key){
 /* ================= 导出 ================= */
 function exportRows(){
   var leads=state.leads;
-  var header=['客户姓名','微信','电话','意向类型','具体需求','客户来源','意向等级','跟进状态','下次跟进日','备注','最近跟进时间','最近跟进内容','跟进次数'];
+  var header=['客户编号','商机编号','客户姓名','微信','电话','意向类型','具体需求','客户来源','推荐人','意向等级','跟进状态','备注','最近跟进时间','最近跟进内容','跟进次数'];
   state.custom.forEach(function(cf){ header.push(cf.label); });
   header.push('创建时间');
   var rows=[header];
   leads.forEach(function(l){
     var lf=lastFollow(l);
-    var r=[l.name||'', l.wechat||'', l.phone||'', l.type||'', l.need||'', l.source||'', l.level||'', l.status||'', l.nextDate||'', l.note||'',
+    var r=[l.custNo||'', l.oppNo||'', l.name||'', l.wechat||'', l.phone||'', l.type||'', l.need||'', l.source||'', l.referrer||'', l.level||'', l.status||'', l.note||'',
       lf?fmtDateTime(lf.t):'', lf?lf.content:'', (l.timeline?l.timeline.length:0)];
     state.custom.forEach(function(cf){ r.push(l.custom? (l.custom[cf.key]||''):''); });
     r.push(l.createdAt?fmtDateTime(l.createdAt):'');
@@ -485,19 +540,27 @@ function exportExcel(){
 }
 
 /* ================= 渲染 & 事件 ================= */
-function renderAll(){ renderDash(); renderTable(); }
+function renderAll(){ renderViews(); renderDash(); renderTable(); }
 function toggleExpand(id){ state.expanded = state.expanded===id? null : id; renderTable(); }
 
 function bindToolbar(){
   // 初始化筛选下拉
   fillSelect($('fType'), TYPES);
-  fillSelect($('fStatus'), STATUSES);
   fillSelect($('fLevel'), LEVELS);
   fillSelect($('fSource'), SOURCES);
+}
+function syncStatusOptions(){
+  var sel=$('fStatus'); if(!sel) return;
+  var st=viewStatuses(state.view);
+  sel.innerHTML='<option value="">全部状态</option>'+st.map(function(o){ return '<option value="'+esc(o)+'">'+esc(o)+'</option>'; }).join('');
+  if(st.indexOf(state.filter.status)<0) state.filter.status='';
+  sel.value=state.filter.status||'';
+  if(sel.style) sel.style.display = st.length>1 ? '' : 'none';
 }
 function fillSelect(sel, arr){ arr.forEach(function(o){ var op=document.createElement('option'); op.value=o; op.textContent=o; sel.appendChild(op); }); }
 
 document.addEventListener('click', function(e){
+  if(e.target.closest('[data-qk]')) return; // 行内下拉快速编辑：不触发行展开
   var el=e.target.closest('[data-act]'); if(!el) return;
   var act=el.getAttribute('data-act'); var id=el.getAttribute('data-id'); var key=el.getAttribute('data-key');
   if(act==='new') openForm();
@@ -512,6 +575,7 @@ document.addEventListener('click', function(e){
   else if(act==='delCf') delCf(key);
   else if(act==='exportExcel') exportExcel();
   else if(act==='exportCSV') exportCSV();
+  else if(act==='view'){ state.view=el.getAttribute('data-view'); state.filter.status=''; syncStatusOptions(); renderAll(); }
   else if(act==='toggleDash'){ state.dashOpen=!state.dashOpen; renderDash(); }
 });
 document.addEventListener('input', function(e){
@@ -521,6 +585,13 @@ document.addEventListener('input', function(e){
 });
 document.addEventListener('change', function(e){
   var el=e.target;
+  var qk=el.getAttribute('data-qk');
+  if(qk){
+    var lid=el.getAttribute('data-id');
+    var lead=state.leads.find(function(x){return x.id===lid;});
+    if(lead){ lead[qk]=el.value; lead.updatedAt=Date.now(); save(); renderAll(); toast('已更新'+(qk==='level'?'等级':'状态')); }
+    return;
+  }
   if(el.getAttribute('data-act')==='filter'){
     var id=el.id;
     if(id==='fType') state.filter.type=el.value;
@@ -532,7 +603,7 @@ document.addEventListener('change', function(e){
   }
 });
 
-function init(){ state.dashOpen=true; load(); bindToolbar(); renderAll(); }
+function init(){ state.dashOpen=true; load(); bindToolbar(); syncStatusOptions(); renderAll(); }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else init();
 </script>
 </body>
