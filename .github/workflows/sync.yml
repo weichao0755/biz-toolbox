@@ -4,9 +4,9 @@ on:
   # 源码推送即重新构建部署（保证团队每次更新都能上线）
   push:
     branches: [main]
-  schedule:
-    # 每天 2 次：UTC 02:00 / 10:00 = 北京时间 10:00 / 18:00
-    - cron: '0 2,10 * * *'
+  # ⚠️ 2026-09-17 关闭 ima 知识库定时同步：原 schedule 每天 UTC 02:00/10:00 会自动
+  # 执行 sync-ima.mjs 并提交「chore: 同步知识库」，用户已不再使用 ima，故移除定时触发器。
+  # 如需手动同步知识库：Actions → Sync & Deploy Pages → Run workflow（workflow_dispatch）
   workflow_dispatch:
 
 # GitHub Pages 部署 + 定时同步提交权限
