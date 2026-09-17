@@ -178,7 +178,7 @@
     <div class="card update-note">
       <h3>内容更新说明</h3>
       <p>平台为静态站点部署，更新流程：内容/工具更新 → 重新部署 → 全员刷新即可看到最新版本（推荐 Ctrl+F5 强制刷新）。需要更新内容时，联系管理员即可。</p>
-      <p class="ver-line">当前版本 {{ APP_VERSION }} · 更新于 2026-09-12</p>
+      <p class="ver-line">当前版本 {{ APP_VERSION }} · 更新于 2026-09-17</p>
     </div>
   </div>
 </template>
@@ -243,7 +243,7 @@ function dueLabel(due) {
 onMounted(loadTodos)
 
 /* 全部数据 key 统一来自 src/data/backupKeys.js（新增工具的 key 记得登记） */
-const APP_VERSION = 'v1.15.3' /* 2026-09-16 强制同步话术共享库（12条） */
+const APP_VERSION = 'v1.16.0' /* 2026-09-17 新增效率工具：意向客户表格（lead-table） */
 const fileInput = ref(null)
 const dataStatus = ref('')
 const dataStatusType = ref('ok')

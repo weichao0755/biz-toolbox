@@ -34,6 +34,7 @@ export const BACKUP_KEYS = [
   'huashu_favs_v1',
   'huashu_stats_v1',
   'demand_form_v1',
-  'demand_form_records_v1'
+  'demand_form_records_v1',
+  'lead_table_v1'
 ]
 export default BACKUP_KEYS

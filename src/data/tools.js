@@ -169,6 +169,22 @@ export const TOOLS = [
     newTab: true // 待办工具新窗口打开，与首页「进入待办」摘要卡片行为保持一致
   },
   {
+    path: '/tools/lead-table',
+    name: 'lead-table',
+    title: '意向客户表格',
+    desc: '本机客户管理：意向类型/等级/状态分级，下次跟进日到期高亮提醒，统计看板看转化，跟进时间线留痕，支持自定义字段与 Excel/CSV 导出',
+    color: '#5f3dc4',
+    category: 'efficiency',
+    iconSvg: svgWrap(`
+      <rect x="3" y="4" width="18" height="16" rx="2"/>
+      <line x1="3" y1="9" x2="21" y2="9"/>
+      <line x1="3" y1="14" x2="21" y2="14"/>
+      <line x1="9" y1="4" x2="9" y2="20"/>
+    `),
+    url: 'tools/lead-table/index.html',
+    component: EmbeddedToolView
+  },
+  {
     path: '/tools/huashu',
     name: 'huashu',
     title: '话术快捷回复',
