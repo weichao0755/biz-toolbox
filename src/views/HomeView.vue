@@ -7,6 +7,7 @@
         <RouterLink to="/knowledge"><button>进入知识库</button></RouterLink>
         <RouterLink to="/tools"><button class="secondary">打开工具箱</button></RouterLink>
         <a href="https://operate-workbench-admin.jinmicaishui.com/#/crm/home/workbench" target="_blank" rel="noopener"><button class="secondary">CRM管理系统</button></a>
+        <a href="tools/lead-table/index.html" target="_blank" rel="noopener"><button class="secondary">意向客户表格</button></a>
       </div>
     </div>
 
@@ -244,7 +245,7 @@ function dueLabel(due) {
 onMounted(loadTodos)
 
 /* 全部数据 key 统一来自 src/data/backupKeys.js（新增工具的 key 记得登记） */
-const APP_VERSION = 'v1.16.1' /* 2026-09-18 首页新增 CRM管理系统 外链按钮 */
+const APP_VERSION = 'v1.16.2' /* 2026-09-18 首页新增「意向客户表格」快捷入口按钮 */
 const fileInput = ref(null)
 const dataStatus = ref('')
 const dataStatusType = ref('ok')
