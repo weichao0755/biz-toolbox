@@ -6,6 +6,7 @@
       <div class="hero-actions">
         <RouterLink to="/knowledge"><button>进入知识库</button></RouterLink>
         <RouterLink to="/tools"><button class="secondary">打开工具箱</button></RouterLink>
+        <a href="https://operate-workbench-admin.jinmicaishui.com/#/crm/home/workbench" target="_blank" rel="noopener"><button class="secondary">CRM管理系统</button></a>
       </div>
     </div>
 
@@ -178,7 +179,7 @@
     <div class="card update-note">
       <h3>内容更新说明</h3>
       <p>平台为静态站点部署，更新流程：内容/工具更新 → 重新部署 → 全员刷新即可看到最新版本（推荐 Ctrl+F5 强制刷新）。需要更新内容时，联系管理员即可。</p>
-      <p class="ver-line">当前版本 {{ APP_VERSION }} · 更新于 2026-09-17</p>
+      <p class="ver-line">当前版本 {{ APP_VERSION }} · 更新于 2026-09-18</p>
     </div>
   </div>
 </template>
@@ -243,7 +244,7 @@ function dueLabel(due) {
 onMounted(loadTodos)
 
 /* 全部数据 key 统一来自 src/data/backupKeys.js（新增工具的 key 记得登记） */
-const APP_VERSION = 'v1.16.0' /* 2026-09-17 新增效率工具：意向客户表格（lead-table） */
+const APP_VERSION = 'v1.16.1' /* 2026-09-18 首页新增 CRM管理系统 外链按钮 */
 const fileInput = ref(null)
 const dataStatus = ref('')
 const dataStatusType = ref('ok')
