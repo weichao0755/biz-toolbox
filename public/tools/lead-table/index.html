@@ -42,6 +42,14 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,"
 .viewtab.on{background:var(--accent-grad);color:#fff;box-shadow:0 1px 4px rgba(180,83,9,.25)}
 .viewtab .vc{font-size:11.5px;font-weight:700;background:rgba(0,0,0,.08);border-radius:20px;padding:1px 7px;min-width:18px;text-align:center}
 .viewtab.on .vc{background:rgba(255,255,255,.30)}
+/* 二层切换：等级（蓝）/ 状态（绿），选中态用浅色底区分于主视图 */
+.subtabs{padding:5px;margin-bottom:8px}
+.subtabs .viewtab{padding:4px 12px;font-size:12.5px}
+.subtabs .viewtab .vc{padding:0 6px;min-width:16px;font-size:11px}
+.subtabs .ltab.on{background:#eaf1ff;color:#2563eb;box-shadow:none;border-color:#c9daff}
+.subtabs .ltab.on .vc{background:rgba(37,99,235,.14)}
+.subtabs .stab.on{background:#e9f7ee;color:#15803d;box-shadow:none;border-color:#c7e9d4}
+.subtabs .stab.on .vc{background:rgba(22,163,74,.14)}
 
 /* 工具栏 */
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:14px}
@@ -139,6 +147,8 @@ tr.expand td{background:#fffdf8;padding:0}
   <section class="dash" id="dash"></section>
 
   <div class="views" id="views"></div>
+  <div class="views subtabs" id="levelTabs"></div>
+  <div class="views subtabs" id="statusTabs"></div>
 
   <div class="toolbar">
     <input class="search" id="search" placeholder="搜索 编号 / 姓名 / 微信 / 电话 / 推荐人 / 需求" data-act="search">
@@ -309,6 +319,45 @@ function renderViews(){
     h+='<button class="viewtab'+(state.view===v.key?' on':'')+'" data-act="view" data-view="'+v.key+'">'+esc(v.key)+'<span class="vc">'+counts[v.key]+'</span></button>';
   });
   $('views').innerHTML=h;
+}
+
+/* ================= 二层切换：意向等级 / 状态 ================= */
+// 统计当前视图内按某字段分组的数量（不受其它筛选影响，与主视图徽标口径一致）
+function tabCounts(getKey){
+  var vst=viewStatuses(state.view); var counts={};
+  state.leads.forEach(function(l){
+    if(vst.indexOf(l.status)<0) return;
+    var k=getKey(l)||''; counts[k]=(counts[k]||0)+1;
+  });
+  return counts;
+}
+function renderLevelTabs(){
+  var el=$('levelTabs'); if(!el) return;
+  var c=tabCounts(function(l){return l.level;});
+  var items=[{v:'',label:'全部等级'}].concat(LEVELS.map(function(x){ return {v:x,label:x}; }));
+  var total=0; items.forEach(function(it){ total+=(c[it.v]||0); });
+  var h='';
+  items.forEach(function(it){
+    var n=it.v===''? total : (c[it.v]||0);
+    h+='<button class="viewtab ltab'+(state.filter.level===it.v?' on':'')+'" data-act="ltab" data-val="'+esc(it.v)+'">'+esc(it.label)+'<span class="vc">'+n+'</span></button>';
+  });
+  el.innerHTML=h;
+}
+function renderStatusTabs(){
+  var el=$('statusTabs'); if(!el) return;
+  var st=viewStatuses(state.view);
+  // 单状态视图（已成交/已流失/待维护）不再显示状态行，与「全部状态」下拉的隐藏逻辑一致
+  if(st.length<=1){ el.innerHTML=''; el.style.display='none'; return; }
+  el.style.display='';
+  var c=tabCounts(function(l){return l.status;});
+  var items=[{v:'',label:'全部状态'}].concat(st.map(function(x){ return {v:x,label:x}; }));
+  var total=0; items.forEach(function(it){ total+=(c[it.v]||0); });
+  var h='';
+  items.forEach(function(it){
+    var n=it.v===''? total : (c[it.v]||0);
+    h+='<button class="viewtab stab'+(state.filter.status===it.v?' on':'')+'" data-act="stab" data-val="'+esc(it.v)+'">'+esc(it.label)+'<span class="vc">'+n+'</span></button>';
+  });
+  el.innerHTML=h;
 }
 
 /* ================= 表格 ================= */
@@ -540,7 +589,7 @@ function exportExcel(){
 }
 
 /* ================= 渲染 & 事件 ================= */
-function renderAll(){ renderViews(); renderDash(); renderTable(); }
+function renderAll(){ renderViews(); renderLevelTabs(); renderStatusTabs(); renderDash(); renderTable(); }
 function toggleExpand(id){ state.expanded = state.expanded===id? null : id; renderTable(); }
 
 function bindToolbar(){
@@ -576,6 +625,8 @@ document.addEventListener('click', function(e){
   else if(act==='exportExcel') exportExcel();
   else if(act==='exportCSV') exportCSV();
   else if(act==='view'){ state.view=el.getAttribute('data-view'); state.filter.status=''; syncStatusOptions(); renderAll(); }
+  else if(act==='ltab'){ var lv=el.getAttribute('data-val'); state.filter.level=(state.filter.level===lv?'':lv); $('fLevel').value=state.filter.level||''; renderAll(); }
+  else if(act==='stab'){ var sv=el.getAttribute('data-val'); state.filter.status=(state.filter.status===sv?'':sv); $('fStatus').value=state.filter.status||''; renderAll(); }
   else if(act==='toggleDash'){ state.dashOpen=!state.dashOpen; renderDash(); }
 });
 document.addEventListener('input', function(e){
@@ -599,7 +650,7 @@ document.addEventListener('change', function(e){
     else if(id==='fLevel') state.filter.level=el.value;
     else if(id==='fSource') state.filter.source=el.value;
     else if(id==='sort') state.sort=el.value;
-    renderTable();
+    renderAll(); // 同步刷新二层切换 tab 的选中态
   }
 });
 
