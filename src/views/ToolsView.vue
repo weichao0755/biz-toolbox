@@ -1,7 +1,11 @@
 <template>
   <div class="page">
-    <h1 class="page-title">工具箱</h1>
-    <p class="page-sub">业务效率工具合集，按业务分类组织。输入数据即出结果，新工具会持续加入。</p>
+    <h1 class="page-title">{{ pageTitle }}</h1>
+    <p class="page-sub">{{ pageSub }}</p>
+
+    <div v-if="catInfo" class="cat-switch">
+      <RouterLink to="/tools" class="cat-switch-link">← 查看全部分区</RouterLink>
+    </div>
 
     <section v-for="cat in grouped" :key="cat.key" class="cat">
       <div class="cat-head">
@@ -25,14 +29,30 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { TOOLS, CATEGORIES } from '../data/tools'
 
-const grouped = CATEGORIES
-  .map(c => ({ ...c, tools: TOOLS.filter(t => t.category === c.key) }))
-  .filter(c => c.tools.length > 0)
+const route = useRoute()
+
+// /tools/:cat 分区视图：只显示该分区的工具；/tools 显示全部分区
+const catInfo = computed(() => CATEGORIES.find(c => c.key === route.params.cat) || null)
+const grouped = computed(() => {
+  const all = CATEGORIES
+    .map(c => ({ ...c, tools: TOOLS.filter(t => t.category === c.key) }))
+    .filter(c => c.tools.length > 0)
+  return catInfo.value ? all.filter(c => c.key === catInfo.value.key) : all
+})
+const pageTitle = computed(() => catInfo.value ? catInfo.value.label.replace(/类$/, '区') : '工具箱')
+const pageSub = computed(() => catInfo.value
+  ? catInfo.value.desc + '。输入数据即出结果，新工具会持续加入。'
+  : '业务效率工具合集，按业务分类组织。输入数据即出结果，新工具会持续加入。')
 </script>
 
 <style scoped>
+.cat-switch { margin-bottom: 18px; }
+.cat-switch-link { font-size: 13px; color: var(--accent); text-decoration: none; }
+.cat-switch-link:hover { text-decoration: underline; }
 .cat { margin-bottom: 26px; }
 .cat-head {
   display: flex; align-items: center; gap: 10px;

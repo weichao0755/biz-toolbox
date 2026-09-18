@@ -47,12 +47,13 @@
         <RouterLink to="/knowledge" class="nav-item" :class="{ active: $route.path.startsWith('/knowledge') }">
           <span class="nav-dot" style="background:#c2740a"></span>知识库
         </RouterLink>
-        <RouterLink to="/tools" class="nav-item" :class="{ active: $route.path === '/tools' }">
-          <span class="nav-dot" style="background:#b45309"></span>工具箱
+        <RouterLink v-for="c in cats" :key="c.key" :to="'/tools/' + c.key" class="nav-item"
+          :class="{ active: $route.params.cat === c.key }">
+          <span class="nav-dot" :style="{ background: c.color }"></span>{{ c.label }}
         </RouterLink>
       </nav>
       <div class="side-foot">
-        <span class="foot-hint">v1.9.0 · 金米启航强袭军业务辅助平台</span>
+        <span class="foot-hint">v1.16.3 · 金米启航强袭军业务辅助平台</span>
       </div>
     </aside>
     <main class="main">
@@ -65,6 +66,10 @@
 import { ref, onMounted } from 'vue'
 import { BACKUP_KEYS } from './data/backupKeys'
 import { initVault } from './utils/localVault'
+import { CATEGORIES } from './data/tools'
+
+// 侧边栏工具分区入口（原「工具箱」拆分）：管理区/高新区/转让区/资质区/销售区/效率区
+const cats = CATEGORIES.map(c => ({ key: c.key, label: c.label.replace(/类$/, '区'), color: c.color }))
 
 // 平台门户访问密码（仅锁首页/知识库/工具箱等门户页，工具独立 HTML 不受影响）
 const LOCK_PWD = '940214'

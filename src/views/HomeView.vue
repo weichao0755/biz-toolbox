@@ -245,7 +245,7 @@ function dueLabel(due) {
 onMounted(loadTodos)
 
 /* 全部数据 key 统一来自 src/data/backupKeys.js（新增工具的 key 记得登记） */
-const APP_VERSION = 'v1.16.2' /* 2026-09-18 首页新增「意向客户表格」快捷入口按钮 */
+const APP_VERSION = 'v1.16.3' /* 2026-09-18 侧边栏「工具箱」拆分为六个分区入口（管理区/高新区/转让区/资质区/销售区/效率区） */
 const fileInput = ref(null)
 const dataStatus = ref('')
 const dataStatusType = ref('ok')
