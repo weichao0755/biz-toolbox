@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>变更信息确认单生成器</title>
+<script src="./html2canvas.min.js"></script>
+<style>
+:root{
+  --accent:#b45309; --accent-2:#e0901a; --accent-grad:linear-gradient(135deg,#e0901a,#b45309);
+  --bg:#faf7f2; --surface:#fffefb; --border:#ece3d6; --text:#2a2118; --muted:#8a7a62;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;font-size:14px}
+.topbar{background:linear-gradient(135deg,#fffdf9,#fdf3e3);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:5}
+.topbar .logo{width:30px;height:30px;border-radius:8px;background:var(--accent-grad);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+.topbar h1{font-size:16px;margin:0;font-weight:700;letter-spacing:1px}
+.topbar .sub{font-size:12px;color:var(--muted);margin-left:auto}
+.wrap{display:flex;gap:16px;padding:16px 20px 40px;align-items:flex-start;flex-wrap:wrap}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 1px 3px rgba(120,90,40,.06)}
+.form{flex:1 1 420px;min-width:360px;padding:18px}
+.preview{flex:1 1 520px;min-width:380px;padding:14px;display:flex;flex-direction:column;gap:10px}
+h2.sec{font-size:13px;color:var(--accent);margin:0 0 12px;letter-spacing:1px;font-weight:700}
+.fld{margin-bottom:11px}
+.fld label{display:block;font-size:12.5px;color:#6b5d4a;margin-bottom:5px;font-weight:600}
+.fld input,.fld select,.fld textarea{width:100%;border:1px solid var(--border);background:#fffdf8;border-radius:8px;padding:8px 10px;font-size:13.5px;color:var(--text);font-family:inherit;outline:none}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--accent-2)}
+.fld textarea{min-height:62px;resize:vertical;line-height:1.6}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.btn{border:none;border-radius:8px;padding:9px 16px;font-size:13.5px;cursor:pointer;font-family:inherit;font-weight:600}
+.btn-main{background:var(--accent-grad);color:#fff}
+.btn-main:hover{filter:brightness(1.05)}
+.btn-ghost{background:#fff;color:var(--text);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--accent-2);color:var(--accent)}
+.prev-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.prev-bar .sp{margin-left:auto}
+.canvas-wrap{background:#fff;border:1px dashed var(--border);border-radius:10px;overflow:hidden}
+#imgCard{width:750px;transform-origin:top left;background:#fff;padding:30px 34px 34px;box-sizing:border-box;color:#2a2118}
+#imgCard .d-head{text-align:center;padding-bottom:14px;border-bottom:2px solid #b45309}
+#imgCard .d-co{font-size:12px;color:#8a7a62;letter-spacing:2px}
+#imgCard .d-title{font-size:27px;font-weight:700;letter-spacing:8px;padding-left:8px;margin-top:8px;color:#7c3f06}
+#imgCard .d-sub{font-size:12px;color:#6b5d4a;margin-top:8px}
+#imgCard .d-row{display:flex;border-bottom:1px solid #f2e6d8}
+#imgCard .d-row .k{width:132px;flex:0 0 132px;background:#fdf7ec;color:#7c3f06;font-weight:700;font-size:13px;padding:11px 12px;border-right:1px solid #f2e6d8}
+#imgCard .d-row .v{flex:1;padding:11px 14px;font-size:13.5px;line-height:1.7;white-space:pre-wrap;word-break:break-word;min-height:40px}
+#imgCard .d-sec-t{font-size:14px;font-weight:700;color:#7c3f06;margin:18px 0 8px;letter-spacing:1px;border-left:4px solid #b45309;padding-left:9px}
+#imgCard .d-items{width:100%;border-collapse:collapse}
+#imgCard .d-items th{background:#fdf7ec;color:#7c3f06;font-size:12.5px;padding:9px 10px;border:1px solid #f2e6d8;text-align:left;font-weight:700}
+#imgCard .d-items td{padding:9px 10px;border:1px solid #f2e6d8;font-size:13px;line-height:1.6;vertical-align:top;white-space:pre-wrap;word-break:break-word}
+#imgCard .d-items .c-name{width:16%}
+#imgCard .d-items .c-id{width:30%}
+#imgCard .d-items .c-phone{width:18%}
+#imgCard .d-items .c-email{width:36%}
+#imgCard .d-confirm{margin-top:18px;border:1.5px solid #b45309;border-radius:8px;padding:14px 16px;background:#fffdf8}
+#imgCard .d-confirm .ct{font-size:13.5px;font-weight:700;color:#7c3f06;margin-bottom:8px;letter-spacing:1px}
+#imgCard .d-confirm .cp{font-size:12.5px;color:#4a3c2c;line-height:1.9}
+#imgCard .d-confirm .csign{display:flex;gap:30px;flex-wrap:wrap;margin-top:16px;font-size:13px;color:#2a2118}
+#imgCard .d-confirm .csign .s{flex:1 1 220px}
+#imgCard .d-confirm .csign .s .ln{border-bottom:1px solid #b9a586;height:26px;margin-top:4px}
+#imgCard .d-note{margin-top:16px;font-size:12px;color:#8a7a62;line-height:1.8;border-left:3px solid #f2e6d8;padding-left:10px}
+.sh-row{display:flex;gap:6px;align-items:flex-start;margin-bottom:8px}
+.sh-row .ci{flex:1 1 0;min-width:0}
+.sh-row .ci .cl{font-size:11px;color:#9b8c74;margin-bottom:3px;display:block}
+.sh-row .ci input{width:100%;border:1px solid var(--border);background:#fffdf8;border-radius:7px;padding:7px 9px;font-size:13px;font-family:inherit;outline:none}
+.sh-row .ci input:focus{border-color:var(--accent-2)}
+.sh-row .rm{border:1px solid var(--border);background:#fff;color:#b45309;border-radius:6px;padding:6px 9px;font-size:12px;cursor:pointer;font-family:inherit;align-self:flex-end}
+.sh-row .rm:hover{border-color:#dc2626;color:#dc2626}
+.add-item{border:1px dashed var(--accent-2);background:#fffdf8;color:var(--accent);border-radius:8px;padding:8px 12px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:600;width:100%}
+.add-item:hover{background:#fdf3e3}
+.hist{flex:1 1 100%;padding:16px 18px;margin:0 20px 30px}
+.hist-list{display:flex;flex-direction:column;gap:8px}
+.hist-item{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:9px;padding:9px 12px;background:#fffdf8;font-size:13px}
+.hist-item .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-item .d{color:var(--muted);font-size:12px;flex:0 0 auto}
+.mini{border:1px solid var(--border);background:#fff;color:var(--text);border-radius:6px;padding:4px 9px;font-size:12px;cursor:pointer;font-family:inherit}
+.mini:hover{border-color:var(--accent-2);color:var(--accent)}
+.mini.del:hover{border-color:#dc2626;color:#dc2626}
+.empty{text-align:center;color:var(--muted);font-size:13px;padding:14px}
+.toast{position:fixed;left:50%;bottom:40px;transform:translateX(-50%) translateY(20px);background:rgba(42,33,24,.92);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;transition:.25s;pointer-events:none;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:900px){.wrap{padding:12px}.form,.preview{flex:1 1 100%;min-width:0}.hist{margin:0 12px 24px}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">变</div>
+  <h1>变更信息确认单生成器</h1>
+  <div class="sub">填变更后公司信息 → 生成确认单，发购买方做变更前最后核对</div>
+</div>
+
+<div class="wrap">
+  <section class="panel form">
+    <h2 class="sec">① 填写变更后公司信息</h2>
+    <div id="formBox"></div>
+
+    <h2 class="sec" style="margin-top:6px">② 股东信息（可增删）</h2>
+    <div id="shareBox"></div>
+    <button class="add-item" onclick="addShare()">＋ 添加股东</button>
+
+    <div class="acts">
+      <button class="btn btn-main" onclick="genCard()">生成确认单</button>
+      <button class="btn btn-ghost" onclick="saveRecord()">保存记录</button>
+      <button class="btn btn-ghost" onclick="copyImage()">复制图片</button>
+      <button class="btn btn-ghost" onclick="downloadImage()">下载图片</button>
+      <button class="btn btn-ghost" onclick="copySummary()">复制文字</button>
+    </div>
+  </section>
+
+  <section class="panel preview">
+    <div class="prev-bar">
+      <span>预览（750px 微信卡片）</span>
+      <button class="mini" onclick="setScale(0.6)">缩小</button>
+      <button class="mini" onclick="setScale(1)">100%</button>
+      <button class="mini" onclick="setScale(2)">放大</button>
+      <span class="sp"></span>
+      <span id="scaleTip"></span>
+    </div>
+    <div class="canvas-wrap" id="canvasWrap">
+      <div id="imgCard"></div>
+    </div>
+  </section>
+</div>
+
+<section class="panel hist">
+  <h2 class="sec">历史记录（保存后可复用，仅存本机）</h2>
+  <div class="hist-list" id="histList"></div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= 字段配置 ================= */
+var FIELDS = [
+  {key:'companyName', label:'公司名称（变更后）', type:'input', list:['深圳市XX科技有限公司','深圳市XX贸易有限公司','XX（深圳）电子商务有限公司'], ph:'例：深圳市XX科技有限公司（新名称）'},
+  {key:'scope', label:'经营范围（变更后）', type:'textarea', ph:'例：技术服务、技术开发、技术咨询；货物进出口；电子商务'},
+  {key:'capital', label:'注册资金（变更后）', type:'input', list:['100万','200万','500万','1000万','认缴，无需实缴'], ph:'例：100 万（认缴）'},
+  {key:'address', label:'注册地址（变更后）', type:'input', list:['深圳市南山区','深圳市福田区','深圳市宝安区'], ph:'例：深圳市南山区XX路XX号'},
+  {key:'buyer', label:'购买方（确认方）', type:'input', list:['新股东','李四','新法定代表人'], ph:'例：李四（新股东/法定代表人）'},
+  {key:'remark', label:'备注', type:'textarea', ph:'例：以上信息用于工商变更登记，请核对无误后签字确认'}
+];
+var LS_FORM = 'change_confirm_v1';
+var LS_REC  = 'change_confirm_records_v1';
+var DEFAULT_CO = '深圳市金米启航企业服务有限公司'; /* 经办方 */
+var form = {};
+var records = [];
+var scale = 1;
+var lastData = null;
+
+/* ================= 工具函数 ================= */
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function safeGet(k,d){ try{ var v=JSON.parse(localStorage.getItem(k)); return (v===null||v===undefined)?d:v; }catch(e){ return d; } }
+function safeSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ return false; } }
+function toast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._tm); t._tm=setTimeout(function(){ t.classList.remove('show'); },2400);
+}
+function uid(p){ return (p||'r')+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function pad(n){ return n<10?'0'+n:''+n; }
+function todayCN(){ var d=new Date(); return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日'; }
+function stampNum(){
+  var d=new Date(), s=d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate());
+  var n=1;
+  for(var i=0;i<records.length;i++){ if(records[i].no && records[i].no.indexOf('BG-'+s)===0) n++; }
+  return 'BG-'+s+'-'+pad(n);
+}
+
+/* ================= 表单 ================= */
+function renderForm(){
+  var html='';
+  for(var i=0;i<FIELDS.length;i++){
+    var f=FIELDS[i], v=form[f.key]||'';
+    if(f.type==='textarea'){
+      html += '<div class="fld"><label>'+esc(f.label)+'</label><textarea id="f_'+f.key+'" placeholder="'+esc(f.ph||'')+'" oninput="onField(\''+f.key+'\',this.value)">'+esc(v)+'</textarea></div>';
+    } else {
+      var dl='';
+      if(f.list && f.list.length){
+        var os='';
+        for(var k=0;k<f.list.length;k++){ os += '<option value="'+esc(f.list[k])+'"></option>'; }
+        dl = '<datalist id="dl_'+f.key+'">'+os+'</datalist>';
+      }
+      html += '<div class="fld"><label>'+esc(f.label)+'</label><input id="f_'+f.key+'" list="dl_'+f.key+'" value="'+esc(v)+'" placeholder="'+esc(f.ph||'')+'" oninput="onField(\''+f.key+'\',this.value)">'+dl+'</div>';
+    }
+  }
+  html += '<div class="fld"><label>经办方（办理单位，确认单抬头）</label><input id="f_agency" value="'+esc(form.agency||DEFAULT_CO)+'" oninput="onField(\'agency\',this.value)"></div>';
+  document.getElementById('formBox').innerHTML = html;
+}
+function onField(key,val){
+  form[key]=val;
+  safeSet(LS_FORM, form);
+}
+function renderShare(){
+  if(!form.shareholders || !form.shareholders.length) form.shareholders=[{name:'',idno:'',phone:'',email:''}];
+  var box=document.getElementById('shareBox');
+  var html='';
+  var cols=[['name','姓名','例：张三'],['idno','身份证号','例：4403XXXXXXXXXXXXXX'],['phone','手机号','例：138XXXX8888'],['email','电子邮箱','例：name@xx.com']];
+  for(var i=0;i<form.shareholders.length;i++){
+    var sh=form.shareholders[i], row='<div class="sh-row">';
+    for(var c=0;c<cols.length;c++){
+      row += '<div class="ci"><span class="cl">'+cols[c][1]+'</span><input id="sh_'+i+'_'+cols[c][0]+'" value="'+esc(sh[cols[c][0]]||'')+'" placeholder="'+cols[c][2]+'" oninput="onShare('+i+',\''+cols[c][0]+'\',this.value)"></div>';
+    }
+    row += (form.shareholders.length>1?'<button class="rm" onclick="delShare('+i+')">删除</button>':'') + '</div>';
+    html += row;
+  }
+  box.innerHTML=html;
+}
+function addShare(){ if(!form.shareholders) form.shareholders=[]; form.shareholders.push({name:'',idno:'',phone:'',email:''}); safeSet(LS_FORM,form); renderShare(); }
+function delShare(i){ if(!form.shareholders) return; form.shareholders.splice(i,1); if(!form.shareholders.length) form.shareholders=[{name:'',idno:'',phone:'',email:''}]; safeSet(LS_FORM,form); renderShare(); }
+function onShare(i,field,val){ if(!form.shareholders) form.shareholders=[]; if(!form.shareholders[i]) form.shareholders[i]={}; form.shareholders[i][field]=val; safeSet(LS_FORM,form); }
+
+/* ================= 卡片 ================= */
+function readForm(){
+  var d={};
+  for(var i=0;i<FIELDS.length;i++){ d[FIELDS[i].key]=form[FIELDS[i].key]||''; }
+  d.agency = form.agency || DEFAULT_CO;
+  d.shareholders = (form.shareholders||[]).map(function(x){ return {name:x.name||'',idno:x.idno||'',phone:x.phone||'',email:x.email||''}; });
+  d.no = (lastData && lastData.no) ? lastData.no : stampNum();
+  d.date = todayCN();
+  return d;
+}
+function rowHtml(k,v){
+  return '<div class="d-row"><div class="k">'+esc(k)+'</div><div class="v">'+(v?esc(v):'<span style="color:#c3b6a2">（未填写）</span>')+'</div></div>';
+}
+function renderCard(d){
+  lastData=d;
+  var rows='';
+  for(var i=0;i<FIELDS.length;i++){ rows += rowHtml(FIELDS[i].label, d[FIELDS[i].key]); }
+  rows += rowHtml('经办方', d.agency);
+  var sh=d.shareholders.filter(function(x){ return x.name||x.idno||x.phone||x.email; });
+  var shareHtml='';
+  if(sh.length){
+    shareHtml = '<table class="d-items"><thead><tr><th class="c-name">姓名</th><th class="c-id">身份证号</th><th class="c-phone">手机号</th><th class="c-email">电子邮箱</th></tr></thead><tbody>';
+    for(var j=0;j<sh.length;j++){
+      shareHtml += '<tr><td>'+(esc(sh[j].name)||'<span class="d-empty">（未填）</span>')+'</td><td>'+(esc(sh[j].idno)||'<span class="d-empty">（未填）</span>')+'</td><td>'+(esc(sh[j].phone)||'<span class="d-empty">（未填）</span>')+'</td><td>'+(esc(sh[j].email)||'<span class="d-empty">（未填）</span>')+'</td></tr>';
+    }
+    shareHtml += '</tbody></table>';
+  } else {
+    shareHtml = '<div class="d-empty">（暂无股东信息，请在左侧「股东信息」中添加）</div>';
+  }
+  document.getElementById('imgCard').innerHTML =
+    '<div class="d-head">'
+    + '<div class="d-co">'+esc(d.agency)+'</div>'
+    + '<div class="d-title">变 更 信 息 确 认 单</div>'
+    + '<div class="d-sub">编号 '+esc(d.no)+'　|　日期 '+esc(d.date)+'</div>'
+    + '</div>'
+    + rows
+    + '<div class="d-sec-t">股东信息</div>'
+    + shareHtml
+    + '<div class="d-confirm">'
+    +   '<div class="ct">购买方确认</div>'
+    +   '<div class="cp">本人（单位）确认上述变更信息为我本人提供，真实、准确、完整，同意委托 '+esc(d.agency)+' 据此办理工商变更登记手续，并已知悉相关办理事项。</div>'
+    +   '<div class="csign"><span class="s">购买方（签字 / 盖章）：<div class="ln"></div></span><span class="s">日期：______ 年 ___ 月 ___ 日<div class="ln"></div></span></div>'
+    + '</div>'
+    + '<div class="d-note">本确认单用于工商变更登记前的最终信息核对，由购买方确认其提供的变更内容无误；最终以市场监督管理部门核准登记信息为准。本单由 '+esc(d.agency)+' 出具。</div>';
+  applyScale();
+}
+function genCard(){
+  var d=readForm();
+  renderCard(d);
+  toast('已生成变更信息确认单');
+}
+function setScale(s){
+  scale=s; applyScale();
+}
+function applyScale(){
+  var card=document.getElementById('imgCard');
+  var wrap=document.getElementById('canvasWrap');
+  card.style.transform='scale('+scale+')';
+  wrap.style.height=Math.ceil(card.scrollHeight*scale)+'px';
+  document.getElementById('scaleTip').textContent='当前 '+Math.round(scale*100)+'%';
+}
+
+/* ================= 导出 ================= */
+function cardCanvas(){
+  if(!window.html2canvas) return Promise.reject(new Error('截图库未加载'));
+  var card=document.getElementById('imgCard');
+  var old=card.style.transform;
+  card.style.transform='scale(1)';
+  return html2canvas(card,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false}).then(function(c){
+    card.style.transform=old;
+    return c;
+  },function(e){ card.style.transform=old; throw e; });
+}
+function syncCard(){ renderCard(readForm()); }
+function copyImage(){
+  syncCard();
+  cardCanvas().then(function(c){
+    return new Promise(function(res,rej){ c.toBlob(function(b){ b?res(b):rej(new Error('toBlob 失败')); },'image/png'); });
+  }).then(function(blob){
+    return navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+  }).then(function(){
+    toast('图片已复制，去微信 Ctrl+V 粘贴');
+  }).catch(function(){
+    downloadImage();
+    toast('浏览器不支持直接复制图片，已改为下载');
+  });
+}
+function downloadImage(){
+  syncCard();
+  cardCanvas().then(function(c){
+    return new Promise(function(res){ c.toBlob(function(b){ res(b); },'image/png'); });
+  }).then(function(blob){
+    var d=new Date(), p=function(n){return n<10?'0'+n:''+n;};
+    var ts=''+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes());
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='变更信息确认单-'+ts+'.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); },1500);
+    toast('图片已下载');
+  }).catch(function(){ toast('截图失败，请重试'); });
+}
+function summaryText(){
+  syncCard();
+  var d=lastData, lines=[];
+  lines.push('【变更信息确认单】'+d.no+'（'+d.date+'）');
+  lines.push('公司名称（变更后）：'+(d.companyName||'—'));
+  if(d.scope) lines.push('经营范围（变更后）：'+d.scope);
+  lines.push('注册资金（变更后）：'+(d.capital||'—'));
+  lines.push('注册地址（变更后）：'+(d.address||'—'));
+  lines.push('购买方（确认方）：'+(d.buyer||'—'));
+  var sh=d.shareholders.filter(function(x){ return x.name||x.idno||x.phone||x.email; });
+  if(sh.length){ lines.push('—— 股东信息 ——'); for(var i=0;i<sh.length;i++){ lines.push((i+1)+'. '+sh[i].name+'｜身份证 '+sh[i].idno+'｜手机 '+sh[i].phone+'｜邮箱 '+sh[i].email); } }
+  if(d.remark) lines.push('备注：'+d.remark);
+  lines.push('经办方：'+d.agency);
+  return lines.join('\n');
+}
+function copySummary(){
+  var text=summaryText();
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ toast('文字已复制'); },function(){ fallbackCopy(text); });
+  } else { fallbackCopy(text); }
+}
+function fallbackCopy(text){
+  var ta=document.createElement('textarea');
+  ta.value=text; ta.style.position='fixed'; ta.style.left='-9999px';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  var ok=false;
+  try{ ok=document.execCommand('copy'); }catch(e){}
+  document.body.removeChild(ta);
+  toast(ok?'文字已复制':'复制失败，请手动选择');
+}
+
+/* ================= 历史记录 ================= */
+function saveRecord(){
+  var d=readForm();
+  d.no=stampNum();
+  renderCard(d);
+  records.unshift({id:uid('r'), at:Date.now(), no:d.no, data:d});
+  if(records.length>50) records=records.slice(0,50);
+  safeSet(LS_REC, records);
+  renderHistory();
+  toast('已保存，可在下方历史记录里复用');
+}
+function renderHistory(){
+  var box=document.getElementById('histList');
+  if(!records.length){ box.innerHTML='<div class="empty">暂无记录，填好信息点「保存记录」即可留存</div>'; return; }
+  var html='';
+  for(var i=0;i<records.length;i++){
+    var r=records[i], d=r.data||{};
+    var cnt=(d.shareholders||[]).filter(function(x){ return x.name||x.idno||x.phone||x.email; }).length;
+    var brief=[d.companyName,d.buyer].filter(function(x){return x;}).join(' · ')||'（空）';
+    brief += '（'+cnt+' 名股东）';
+    var dt=new Date(r.at), p=function(n){return n<10?'0'+n:''+n;};
+    var time=(dt.getMonth()+1)+'/'+dt.getDate()+' '+p(dt.getHours())+':'+p(dt.getMinutes());
+    html += '<div class="hist-item">'
+      + '<span class="d">'+esc(time)+'</span>'
+      + '<span class="t">'+esc(brief)+'</span>'
+      + '<button class="mini" onclick="loadRecord(\''+r.id+'\')">载入</button>'
+      + '<button class="mini del" onclick="delRecord(\''+r.id+'\')">删除</button>'
+      + '</div>';
+  }
+  box.innerHTML=html;
+}
+function loadRecord(id){
+  var r=null;
+  for(var i=0;i<records.length;i++){ if(records[i].id===id) r=records[i]; }
+  if(!r) return;
+  form={};
+  for(var k in (r.data||{})){ if(k!=='no'&&k!=='date'&&k!=='agency'&&k!=='shareholders') form[k]=r.data[k]; }
+  if(r.data && r.data.agency) form.agency=r.data.agency;
+  if(r.data && r.data.shareholders) form.shareholders=r.data.shareholders.map(function(x){ return {name:x.name||'',idno:x.idno||'',phone:x.phone||'',email:x.email||''}; });
+  safeSet(LS_FORM, form);
+  renderForm(); renderShare(); renderCard(readForm());
+  toast('已载入该记录，可修改后重新生成');
+}
+function delRecord(id){
+  records=records.filter(function(r){ return r.id!==id; });
+  safeSet(LS_REC, records);
+  renderHistory();
+  toast('已删除');
+}
+
+/* ================= 初始化 ================= */
+function init(){
+  form = safeGet(LS_FORM, {});
+  if(!form.agency) form.agency = DEFAULT_CO;
+  if(!form.shareholders) form.shareholders = [{name:'',idno:'',phone:'',email:''}];
+  records = safeGet(LS_REC, []);
+  renderForm();
+  renderShare();
+  renderHistory();
+  renderCard(readForm());
+  window.addEventListener('resize', function(){ applyScale(); });
+}
+init();
+</script>
+</body>
+</html>

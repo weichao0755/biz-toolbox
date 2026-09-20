@@ -36,16 +36,31 @@ export default {
     // 工具内部是步骤式交互，切换标签/展开内容会改变高度，
     // 周期性检测并自动适配 iframe 高度，避免出现双滚动条。
     this.timer = setInterval(() => this.fitHeight(), 800)
+    // 工具主动上报内容高度（生成方案等动态内容后立即通知），优先采用，避免轮询时差导致内容不可滚动。
+    this._onResizeMsg = (e) => {
+      try {
+        const d = e.data
+        if (d && d.type === 'tool-resize' && typeof d.height === 'number') {
+          this.frameHeight = Math.max(200, Math.round(d.height))
+          this.loading = false
+        }
+      } catch (_) {}
+    }
+    window.addEventListener('message', this._onResizeMsg)
   },
   beforeUnmount() {
     if (this.timer) clearInterval(this.timer)
+    if (this._onResizeMsg) window.removeEventListener('message', this._onResizeMsg)
   },
   methods: {
     fitHeight() {
       try {
         const doc = this.$refs.frame && this.$refs.frame.contentDocument
         if (doc && doc.documentElement) {
-          const h = doc.documentElement.scrollHeight
+          const h = Math.max(
+            doc.documentElement.scrollHeight || 0,
+            doc.body ? doc.body.scrollHeight || 0 : 0
+          )
           if (h > 200) {
             this.frameHeight = h + 24
             this.loading = false

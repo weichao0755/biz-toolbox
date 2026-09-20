@@ -614,6 +614,7 @@ function render(){
   const steps=STEPS[atype];
   document.getElementById("sideNav").innerHTML = steps.map((s,i)=>`<button class="${i===stepIdx?'active':''}" onclick="goStep(${i})">${i+1}. ${s.title}</button>`).join("");
   renderStep();
+  requestAnimationFrame(notifyHeight);
 }
 function switchType(k){ saveStep(); atype=k; stepIdx=0; render(); }
 function goStep(i){ saveStep(); stepIdx=i; render(); }
@@ -647,6 +648,21 @@ function saveStep(){
   persist();
 }
 function persist(){ try{ localStorage.setItem("qual_app_v1",JSON.stringify({data})); }catch(e){} }
+/* 通知父框架（Vue 外壳）当前内容真实高度，避免动态生成方案后 iframe 高度未撑开、方案不可滚动查看 */
+function notifyHeight(){
+  try{
+    const de=document.documentElement, b=document.body;
+    const h=Math.max(
+      de?de.scrollHeight||0:0,
+      de?de.offsetHeight||0:0,
+      b?b.scrollHeight||0:0,
+      b?b.offsetHeight||0:0
+    );
+    if(h>0 && window.parent && window.parent!==window){
+      window.parent.postMessage({type:'tool-resize', height:h+24}, '*');
+    }
+  }catch(e){}
+}
 function renderStep(){
   const step=STEPS[atype][stepIdx], d=data[atype];
   if(step.isReport){ genReport(); return; }
@@ -733,18 +749,21 @@ function saveItem(idx){
   persist(); closeModal(); renderStep();
 }
 let _bodyOverflow='';
+let _modalDepth=0;
 function showModal(h){
   const modal=document.getElementById("modal"), body=document.body;
   document.getElementById("modalBody").innerHTML=h;
   modal.style.display="flex";
   document.getElementById("modalBg").style.display="block";
-  _bodyOverflow=body.style.overflow;
-  body.style.overflow="hidden";
+  _modalDepth++;
+  if(_modalDepth===1){ _bodyOverflow=body.style.overflow; body.style.overflow="hidden"; }
 }
 function closeModal(){
   document.getElementById("modal").style.display="none";
   document.getElementById("modalBg").style.display="none";
-  document.body.style.overflow=_bodyOverflow;
+  _modalDepth=Math.max(0,_modalDepth-1);
+  if(_modalDepth===0){ document.body.style.overflow=_bodyOverflow; }
+  requestAnimationFrame(notifyHeight);
 }
 (function trapModalScroll(){
   const el=document.getElementById("modalBody");
@@ -885,6 +904,20 @@ function mdToHtml(md){
   if(inTable)flushTable();
   return html;
 }
+/* 将 Markdown 行内强调（**加粗** / *斜体*）拆成 {t,b} 片段，并清除残留的 *、`、~~ 标记，
+   避免 AI 生成内容里出现裸露的 ** 字符；b=true 表示应加粗 */
+function mdRuns(text){
+  const s=String(text==null?"":text).replace(/`/g,"").replace(/~~/g,"");
+  const out=[]; let last=0; const re=/\*\*(.+?)\*\*|\*(.+?)\*/g; let m;
+  while((m=re.exec(s))){
+    if(m.index>last) out.push({t:s.slice(last,m.index),b:false});
+    if(m[1]!=null) out.push({t:m[1],b:true});
+    else if(m[2]!=null) out.push({t:m[2],b:false});
+    last=re.lastIndex;
+  }
+  if(last<s.length) out.push({t:s.slice(last),b:false});
+  return out.map(x=>({t:x.t.replace(/\*/g,""),b:x.b}));
+}
 function actionPlan(r,d){
   if(atype==="gaoxin"){
     const gap=r.meta.rd_gap||0, tn=r.meta.trans_n||0, AY=recommendYear(r,d);
@@ -931,8 +964,9 @@ async function downloadWordText(){
     const para=(t,o)=>{o=o||{};return new Paragraph(Object.assign({spacing:{after:80,line:300},children:Array.isArray(t)?t:[run(t)]},o));};
     const h1=(t)=>new Paragraph({spacing:{before:340,after:180,line:300},
       border:{bottom:{style:BorderStyle.SINGLE,size:10,color:"1E3A8A",space:6}},
-      children:[run(t,{bold:true,size:30,color:"1E3A8A"})]});
-    const h2=(t)=>new Paragraph({spacing:{before:200,after:80,line:300},children:[run(t,{bold:true,size:24,color:"1E3A8A"})]});
+      children:r2(mdRuns(t),{bold:true,size:30,color:"1E3A8A"})});
+    const h2=(t)=>new Paragraph({spacing:{before:200,after:80,line:300},children:r2(mdRuns(t),{bold:true,size:24,color:"1E3A8A"})});
+    const r2=(arr,o)=>arr.map(x=>new TextRun(Object.assign({text:String(x.t),font:F},o||{},x.b?{bold:true}:{})));
     const NONE={style:BorderStyle.NONE,size:0,color:"FFFFFF"};
     const noBorders={top:NONE,bottom:NONE,left:NONE,right:NONE};
     const TBL={style:BorderStyle.SINGLE,size:4,color:"CBD5E1"};
@@ -996,7 +1030,8 @@ async function downloadWordText(){
             new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:0,line:300},children:[run(recommendYear(r,d)+"年申报",{size:16,color:"9CA3AF"})]})]})
       ]})]}));
     kids.push(new Paragraph({}));
-    kids.push(para("本报告由企业自主填报数据生成，仅供申报参考，最终以官方审核结果为准。",{size:16,color:"9CA3AF",alignment:AlignmentType.CENTER}));
+    kids.push(para("本报告所应用数据信息源为企业提供",{size:16,color:"9CA3AF",alignment:AlignmentType.CENTER,spacing:{after:160,line:300}}));
+    kids.push(para("本报告出具方案仅作为申报参考，具体落地方案需根据企业情况实时更新",{size:16,color:"9CA3AF",alignment:AlignmentType.CENTER,spacing:{after:80,line:300}}));
     /* —— 正文 —— */
     kids.push(new Paragraph({pageBreakBefore:true,children:[run("")]}));
     kids.push(h1("一、评估结论"));
@@ -1055,16 +1090,16 @@ async function downloadWordText(){
           const lv=m[1].length;
           if(lv===1) kids.push(new Paragraph({spacing:{before:240,after:120,line:300},
             border:{bottom:{style:BorderStyle.SINGLE,size:8,color:"1E3A8A",space:4}},
-            children:[run(m[2],{bold:true,size:26,color:"1E3A8A"})]}));
+            children:r2(mdRuns(m[2]),{bold:true,size:26,color:"1E3A8A"})}));
           else if(lv===2) kids.push(h2(m[2]));
-          else kids.push(para(m[2],{bold:true,color:"1E3A8A"}));
+          else kids.push(para(r2(mdRuns(m[2]),{bold:true,color:"1E3A8A"}),{bold:true,color:"1E3A8A"}));
         }
         else if(m=t.match(/^>\s?(.*)$/)) kids.push(new Paragraph({spacing:{after:80,line:300},
           border:{left:{style:BorderStyle.SINGLE,size:12,color:"CBD5E1",space:6}},
-          children:[run(m[1],{size:20,color:"6B7280",italics:true})]}));
-        else if(m=t.match(/^[-*•]\s+(.*)$/)) kids.push(para("·  "+m[1],{size:20}));
-        else if(m=t.match(/^\d+[.、)]\s+(.*)$/)) kids.push(para(m[1],{size:20}));
-        else kids.push(para(t,{size:22}));
+          children:r2(mdRuns(m[1]),{size:20,color:"6B7280",italics:true})}));
+        else if(m=t.match(/^[-*•]\s+(.*)$/)) kids.push(para(r2(mdRuns("·  "+m[1]),{size:20}),{size:20}));
+        else if(m=t.match(/^\d+[.、)]\s+(.*)$/)) kids.push(para(r2(mdRuns(m[1]),{size:20}),{size:20}));
+        else kids.push(para(r2(mdRuns(t),{size:22}),{size:22}));
       });
       flushTbl();
     } else {
@@ -1111,8 +1146,9 @@ async function downloadSalesWord(){
     const para=(t,o)=>{o=o||{};return new Paragraph(Object.assign({spacing:{after:80,line:300},children:Array.isArray(t)?t:[run(t)]},o));};
     const h1=(t)=>new Paragraph({spacing:{before:340,after:180,line:300},
       border:{bottom:{style:BorderStyle.SINGLE,size:10,color:"7C3AED",space:6}},
-      children:[run(t,{bold:true,size:30,color:"7C3AED"})]});
-    const h2=(t)=>new Paragraph({spacing:{before:200,after:80,line:300},children:[run(t,{bold:true,size:24,color:"6D28D9"})]});
+      children:r2(mdRuns(t),{bold:true,size:30,color:"7C3AED"})});
+    const h2=(t)=>new Paragraph({spacing:{before:200,after:80,line:300},children:r2(mdRuns(t),{bold:true,size:24,color:"6D28D9"})});
+    const r2=(arr,o)=>arr.map(x=>new TextRun(Object.assign({text:String(x.t),font:F},o||{},x.b?{bold:true}:{})));
     const NONE={style:BorderStyle.NONE,size:0,color:"FFFFFF"};
     const noBorders={top:NONE,bottom:NONE,left:NONE,right:NONE};
     const TBL={style:BorderStyle.SINGLE,size:4,color:"CBD5E1"};
@@ -1180,8 +1216,8 @@ async function downloadSalesWord(){
     let tblRows=null;
     const flushTbl=()=>{
       if(tblRows&&tblRows.length){
-        const header=tblRows[0].map(x=>x.replace(/\*\*/g,""));
-        const body=tblRows.slice(1).map(row=>row.map(c=>({t:c.replace(/\*\*/g,""),b:c.indexOf("**")>-1})));
+        const header=tblRows[0].map(x=>x.replace(/\*\*/g,"").replace(/\*/g,""));
+        const body=tblRows.slice(1).map(row=>row.map(c=>({t:c.replace(/\*\*/g,"").replace(/\*/g,""),b:/\*\*/.test(c)})));
         kids.push(styledTable(header,body));
         kids.push(new Paragraph({}));
       }
@@ -1203,14 +1239,14 @@ async function downloadSalesWord(){
         const lv=m[1].length;
         if(lv===1) kids.push(h1(m[2]));
         else if(lv===2) kids.push(h2(m[2]));
-        else kids.push(para(m[2],{bold:true,color:"6D28D9"}));
+        else kids.push(para(r2(mdRuns(m[2]),{bold:true,color:"6D28D9"}),{bold:true,color:"6D28D9"}));
       }
       else if(m=t.match(/^>\s?(.*)$/)) kids.push(new Paragraph({spacing:{after:80,line:300},
         border:{left:{style:BorderStyle.SINGLE,size:12,color:"CBD5E1",space:6}},
-        children:[run(m[1],{size:20,color:"6B7280",italics:true})]}));
-      else if(m=t.match(/^[-*•]\s+(.*)$/)) kids.push(para("·  "+m[1],{size:20}));
-      else if(m=t.match(/^\d+[.、)]\s+(.*)$/)) kids.push(para(m[1],{size:20}));
-      else kids.push(para(t,{size:22}));
+        children:r2(mdRuns(m[1]),{size:20,color:"6B7280",italics:true})}));
+      else if(m=t.match(/^[-*•]\s+(.*)$/)) kids.push(para(r2(mdRuns("·  "+m[1]),{size:20}),{size:20}));
+      else if(m=t.match(/^\d+[.、)]\s+(.*)$/)) kids.push(para(r2(mdRuns(m[1]),{size:20}),{size:20}));
+      else kids.push(para(r2(mdRuns(t),{size:22}),{size:22}));
     });
     flushTbl();
     kids.push(new Paragraph({}));

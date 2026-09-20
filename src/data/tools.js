@@ -88,6 +88,22 @@ export const TOOLS = [
     component: EmbeddedToolView
   },
   {
+    path: '/tools/change-confirm',
+    name: 'change-confirm',
+    title: '变更信息确认单生成器',
+    desc: '填标的公司变更信息（事项/变更前/变更后），一键生成变更信息确认单图片，发购买方签字确认；支持保存历史复用',
+    color: '#2563eb',
+    category: 'transfer',
+    iconSvg: svgWrap(`
+      <path d="M4 9a4 4 0 0 1 7-2.5L13 9"/>
+      <path d="M20 15a4 4 0 0 1-7 2.5L11 15"/>
+      <polyline points="13 4 13 9 8 9"/>
+      <polyline points="11 20 11 15 16 15"/>
+    `),
+    url: 'tools/change-confirm/index.html',
+    component: EmbeddedToolView
+  },
+  {
     path: '/tools/qualification',
     name: 'qualification',
     title: '建筑工程资质办理查询助手',
