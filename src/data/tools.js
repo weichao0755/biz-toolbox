@@ -104,6 +104,20 @@ export const TOOLS = [
     component: EmbeddedToolView
   },
   {
+    path: '/tools/contract-screen',
+    name: 'contract-screen',
+    title: '合同法务筛选',
+    desc: '上传合同、选我方立场，AI 或内置规则引擎筛查漏洞风险，输出修改意见书与修订版两份 Word（金米启航）',
+    color: '#2563eb',
+    category: 'transfer',
+    iconSvg: svgWrap(`
+      <path d="M9 11l3 3 8-8"/>
+      <path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/>
+    `),
+    url: 'tools/contract-screen/index.html',
+    component: EmbeddedToolView
+  },
+  {
     path: '/tools/qualification',
     name: 'qualification',
     title: '建筑工程资质办理查询助手',

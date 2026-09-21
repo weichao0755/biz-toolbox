@@ -37,6 +37,8 @@ export const BACKUP_KEYS = [
   'demand_form_records_v1',
   'lead_table_v1',
   'change_confirm_v1',
-  'change_confirm_records_v1'
+  'change_confirm_records_v1',
+  'contract_screen_v1',
+  'contract_screen_ai_cfg'
 ]
 export default BACKUP_KEYS

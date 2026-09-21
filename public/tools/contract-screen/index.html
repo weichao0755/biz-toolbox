@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>合同法务筛选 · 金米启航</title>
+<script src="docx.umd.js"></script>
+<style>
+:root{
+  --accent:#b45309; --accent-2:#e0901a; --accent-grad:linear-gradient(135deg,#e0901a,#b45309);
+  --bg:#faf7f2; --surface:#fffefb; --surface-2:#fdf8f0; --border:#ece3d6; --border-strong:#e0d2bd;
+  --text:#2a2118; --muted:#8a7a62; --gold-band:#fbf3e6;
+  --red:#c0392b; --orange:#d97706; --green:#15803d; --blue:#2563eb;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;font-size:15px;line-height:1.65}
+.wrap{max-width:980px;margin:0 auto;padding:24px 18px 60px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:42px;height:42px;border-radius:11px;background:var(--accent-grad);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:17px;box-shadow:0 6px 16px rgba(180,83,9,.25)}
+.brand h1{font-size:19px;margin:0;font-weight:800;letter-spacing:.5px}
+.brand .sub{font-size:12px;color:var(--muted);margin-top:2px}
+.btn-ghost-sm{background:var(--surface);border:1px solid var(--border-strong);color:var(--accent);border-radius:9px;padding:7px 13px;font-size:13px;cursor:pointer;font-weight:600}
+.btn-ghost-sm:hover{background:var(--surface-2)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 20px 22px;margin-bottom:18px;box-shadow:0 4px 18px rgba(120,90,40,.05)}
+.card h2{font-size:16px;margin:0 0 4px;display:flex;align-items:center;gap:9px}
+.card h2 .n{width:24px;height:24px;border-radius:7px;background:var(--accent-grad);color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:800}
+.card .hint{color:var(--muted);font-size:12.5px;margin:0 0 14px}
+.steps{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 20px}
+.step{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:7px 14px;font-size:13px;color:var(--muted)}
+.step.on{background:var(--gold-band);border-color:var(--accent-2);color:var(--accent);font-weight:700}
+.step .dot{width:18px;height:18px;border-radius:50%;background:#e7dcc8;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.step.on .dot{background:var(--accent)}
+.drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border:2px dashed var(--border-strong);border-radius:14px;padding:30px 18px;background:var(--surface-2);cursor:pointer;transition:.15s;text-align:center}
+.drop:hover{border-color:var(--accent-2);background:#fff6e9}
+.drop .ic{font-size:30px}
+.drop .t{font-weight:700;color:var(--accent)}
+.drop .s{font-size:12.5px;color:var(--muted);max-width:520px}
+textarea{width:100%;border:1px solid var(--border-strong);border-radius:10px;padding:11px 12px;font-size:14px;font-family:inherit;resize:vertical;background:#fffefb;color:var(--text)}
+textarea:focus{outline:none;border-color:var(--accent-2)}
+.row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+.fg{flex:1;min-width:200px}
+.fg label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
+.fg .sub2{font-size:11.5px;color:var(--muted);font-weight:400}
+input[type=text],select{border:1px solid var(--border-strong);border-radius:9px;padding:9px 11px;font-size:14px;width:100%;background:#fffefb;color:var(--text);font-family:inherit}
+input[type=text]:focus,select:focus{outline:none;border-color:var(--accent-2)}
+.filelist{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+.fileitem{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:9px 12px}
+.fileitem .nm{font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fileitem .mt{font-size:11.5px;color:var(--muted)}
+.fileitem .x{cursor:pointer;color:var(--muted);border:none;background:none;font-size:16px}
+.fileitem .x:hover{color:var(--red)}
+.preview{margin-top:14px}
+.preview .ph{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--muted);margin-bottom:6px}
+.preview .box{background:#fffdf8;border:1px solid var(--border);border-radius:10px;padding:12px;max-height:230px;overflow:auto;white-space:pre-wrap;font-size:13px;line-height:1.7;color:#4a3d2c}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{background:var(--surface-2);border:1px solid var(--border-strong);border-radius:999px;padding:7px 13px;font-size:13px;cursor:pointer;color:var(--muted);user-select:none}
+.chip.on{background:var(--gold-band);border-color:var(--accent-2);color:var(--accent);font-weight:700}
+.radios{display:flex;gap:10px;flex-wrap:wrap}
+.radios label{display:flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:9px;padding:8px 14px;cursor:pointer;font-size:13.5px}
+.radios label.on{border-color:var(--accent-2);background:var(--gold-band);color:var(--accent);font-weight:700}
+.btn{background:var(--accent-grad);color:#fff;border:none;border-radius:10px;padding:12px 20px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 6px 16px rgba(180,83,9,.22)}
+.btn:hover{filter:brightness(1.04)}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.btn.sec{background:#fff;border:1px solid var(--border-strong);color:var(--accent);box-shadow:none}
+.btn-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px}
+.summary{background:var(--gold-band);border:1px solid #f0dcb8;border-radius:12px;padding:14px 16px;font-size:14px;margin:4px 0 16px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.stat{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;min-width:90px;text-align:center}
+.stat b{display:block;font-size:20px}
+.stat.high b{color:var(--red)} .stat.mid b{color:var(--orange)} .stat.low b{color:var(--blue)} .stat.total b{color:var(--accent)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.fbtn{background:#fff;border:1px solid var(--border-strong);border-radius:999px;padding:6px 13px;font-size:12.5px;cursor:pointer;color:var(--muted)}
+.fbtn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.find{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--muted);border-radius:11px;padding:14px 16px;margin-bottom:12px}
+.find.high{border-left-color:var(--red)} .find.mid{border-left-color:var(--orange)} .find.low{border-left-color:var(--blue)}
+.find .fh{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.sev{font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:6px;color:#fff}
+.sev.high{background:var(--red)} .sev.mid{background:var(--orange)} .sev.low{background:var(--blue)}
+.find .idx{font-weight:800;color:var(--accent)}
+.find .clause{font-size:12.5px;color:var(--muted);background:var(--surface-2);border-radius:7px;padding:5px 9px;margin-bottom:8px;white-space:pre-wrap}
+.find .lab{font-size:12px;font-weight:800;color:var(--accent);margin:8px 0 3px}
+.find .txt{font-size:13.5px;white-space:pre-wrap}
+.find .rev{background:var(--gold-band);border:1px solid #f0dcb8;border-radius:8px;padding:9px 11px;white-space:pre-wrap;font-size:13.5px;margin-top:3px}
+.empty{color:var(--muted);font-size:13.5px;text-align:center;padding:24px}
+.loading{color:var(--accent);font-size:14px;padding:18px;text-align:center}
+.disclaimer{font-size:12px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-top:14px;line-height:1.6}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(40,30,15,.4);z-index:50;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
+.modal-bg.show{display:flex}
+.modal{background:var(--surface);border-radius:16px;max-width:560px;width:100%;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.modal .mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.modal .mh h3{margin:0;font-size:16px}
+.modal .x{border:none;background:none;font-size:20px;cursor:pointer;color:var(--muted)}
+.foot{text-align:center;color:var(--muted);font-size:12px;margin-top:10px}
+.toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#2a2118;color:#fff;padding:11px 20px;border-radius:10px;font-size:14px;z-index:80;opacity:0;transition:.25s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">法</div>
+      <div>
+        <h1>合同法务筛选</h1>
+        <div class="sub">站在我方立场 · 一键筛查漏洞风险 · 输出修改意见与修订版</div>
+      </div>
+    </div>
+    <button class="btn-ghost-sm" onclick="openAiCfg()">⚙ AI 接口配置</button>
+  </div>
+
+  <div class="steps">
+    <div class="step on" id="st1"><span class="dot">1</span>上传合同</div>
+    <div class="step" id="st2"><span class="dot">2</span>选择立场</div>
+    <div class="step" id="st3"><span class="dot">3</span>风险筛查</div>
+    <div class="step" id="st4"><span class="dot">4</span>产出文件</div>
+  </div>
+
+  <!-- 步骤一：上传合同 -->
+  <div class="card" id="card1">
+    <h2><span class="n">1</span>上传合同文档</h2>
+    <p class="hint">支持 .txt / .md / .json / .csv / .html / .docx / .pdf 等文本类合同；也可直接粘贴合同正文。可上传多份（主合同 + 补充协议将自动合并）。</p>
+    <div class="drop" id="drop" onclick="document.getElementById('fileInput').click()">
+      <div class="ic">📄</div>
+      <div class="t">点击或拖拽文件到此处上传</div>
+      <div class="s">本地解析，合同内容不会上传到除你所配置 AI 接口以外的任何服务器；用 AI 筛查时，合同文本会发送给你所选的大模型服务商。</div>
+    </div>
+    <input type="file" id="fileInput" multiple accept=".txt,.md,.json,.csv,.log,.html,.htm,.js,.xml,.rtf,.docx,.pdf" style="display:none" onchange="onFiles(this.files)">
+    <div class="filelist" id="fileList"></div>
+    <div class="preview" id="previewBox" style="display:none">
+      <div class="ph"><span>合同正文预览</span><span id="charCount">0 字</span></div>
+      <div class="box" id="previewText"></div>
+    </div>
+    <div style="margin-top:14px">
+      <label class="fg" style="display:block;font-weight:700;margin-bottom:6px">或粘贴合同正文</label>
+      <textarea id="pasteBox" rows="7" placeholder="将合同全文粘贴到此处（支持与上传文件合并）…" oninput="onPaste()"></textarea>
+    </div>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn" id="toStep2" onclick="goStep2()">下一步：选择立场 →</button>
+    </div>
+  </div>
+
+  <!-- 步骤二：选择立场 -->
+  <div class="card" id="card2" style="display:none">
+    <h2><span class="n">2</span>选择我方立场</h2>
+    <p class="hint">明确「我方」是谁，筛查将完全站在我方利益角度识别漏洞与风险。</p>
+    <div class="fg" style="margin-bottom:14px">
+      <label>我方身份</label>
+      <div class="radios" id="partyRadios">
+        <label class="on" data-v="甲方"><input type="radio" name="party" value="甲方" checked onchange="onParty('甲方')">甲方</label>
+        <label data-v="乙方"><input type="radio" name="party" value="乙方" onchange="onParty('乙方')">乙方</label>
+        <label data-v="丙方"><input type="radio" name="party" value="丙方" onchange="onParty('丙方')">丙方</label>
+        <label data-v="custom"><input type="radio" name="party" value="custom" onchange="onParty('custom')">自定义</label>
+      </div>
+      <input type="text" id="partyCustom" placeholder="例如：受让方 / 出借人 / 雇主" style="display:none;margin-top:8px" oninput="state.partyCustom=this.value;saveState()">
+    </div>
+    <div class="row">
+      <div class="fg">
+        <label>对方身份 <span class="sub2">（选填，便于定位条款）</span></label>
+        <input type="text" id="otherParty" placeholder="例如：转让方 / 借款人 / 员工" oninput="state.other=this.value;saveState()">
+      </div>
+      <div class="fg">
+        <label>合同名称 / 编号 <span class="sub2">（选填，用于报告标题）</span></label>
+        <input type="text" id="contractName" placeholder="例如：股权转让协议（2026-转-018）" oninput="state.contractName=this.value;saveState()">
+      </div>
+    </div>
+    <div class="fg" style="margin-top:14px">
+      <label>合同类型 <span class="sub2">（选填，帮助 AI 聚焦常见风险）</span></label>
+      <select id="contractType" onchange="state.type=this.value;saveState()">
+        <option value="">请选择 / 其他</option>
+        <option>买卖合同</option><option>服务合同</option><option>股权转让合同</option>
+        <option>公司收购合同</option><option>借款合同</option><option>租赁合同</option>
+        <option>保密协议（NDA）</option><option>劳动合同</option><option>合作 / 联营合同</option>
+        <option>委托合同</option><option>保证 / 担保合同</option><option>其他</option>
+      </select>
+    </div>
+    <div class="fg" style="margin-top:14px">
+      <label>重点关注 <span class="sub2">（可多选，不选中则全面筛查）</span></label>
+      <div class="chips" id="focusChips"></div>
+    </div>
+    <div class="btn-row" style="margin-top:16px">
+      <button class="btn sec" onclick="goStep(1)">← 上一步</button>
+      <button class="btn" onclick="goStep3()">下一步：开始筛查 →</button>
+    </div>
+  </div>
+
+  <!-- 步骤三：风险筛查 -->
+  <div class="card" id="card3" style="display:none">
+    <h2><span class="n">3</span>风险筛查</h2>
+    <p class="hint" id="screenHint">配置 AI 接口后将以大模型深度审查；未配置也可用内置规则引擎做基础筛查。</p>
+    <div class="btn-row">
+      <button class="btn" id="screenBtn" onclick="runScreen()">🔍 开始筛查</button>
+      <button class="btn sec" onclick="goStep(2)">← 调整立场</button>
+    </div>
+    <div id="screenOut"></div>
+  </div>
+
+  <!-- 步骤四：产出文件 -->
+  <div class="card" id="card4" style="display:none">
+    <h2><span class="n">4</span>产出文件</h2>
+    <p class="hint">一键生成两份 Word 文档：①风险详解与修改意见书 ②已修改版本的成型文件。</p>
+    <div class="btn-row">
+      <button class="btn" id="genBtn" onclick="generateBoth()">⬇ 生成并下载两份文件</button>
+      <button class="btn sec" onclick="goStep(3)">← 返回筛查结果</button>
+    </div>
+    <div class="disclaimer">
+      ⚠️ 免责声明：本工具为合同审查<b>辅助手段</b>，基于通用法律规则与所选大模型的语义理解给出风险提示与修改建议，<b>不构成正式法律意见</b>。涉及金额较大、标的重大或关系复杂的合同，务必由执业律师结合交易背景最终审定。
+    </div>
+  </div>
+
+  <div class="foot">金米启航 · 企业服务工具箱 · 合同法务筛选 v1.0</div>
+</div>
+
+<!-- AI 配置弹窗 -->
+<div class="modal-bg" id="aiCfgBg" onclick="if(event.target===this)closeAiCfg()">
+  <div class="modal" id="aiCfg">
+    <div class="mh"><h3>AI 接口配置（本工具独立）</h3><button class="x" onclick="closeAiCfg()">✕</button></div>
+    <div class="fg" style="margin-bottom:12px">
+      <label>服务商</label>
+      <select id="acPf" onchange="acOnProvider()"></select>
+    </div>
+    <div class="fg" style="margin-bottom:12px">
+      <label>API Key</label>
+      <input type="text" id="acKey" placeholder="sk-... / ark-...">
+    </div>
+    <div class="fg" style="margin-bottom:12px">
+      <label>Base URL <span class="sub2">OpenAI 兼容接口地址，留空用默认</span></label>
+      <input type="text" id="acUrl" placeholder="https://api.xxx.com/v1">
+    </div>
+    <div class="fg" style="margin-bottom:12px">
+      <label>文本大模型</label>
+      <input type="text" id="acModel" placeholder="模型 ID">
+    </div>
+    <div class="disclaimer" style="margin-top:0">配置仅本工具生效，不共享给其他工具；留空则使用内置规则引擎。</div>
+    <div class="btn-row" style="margin-top:14px;justify-content:flex-end">
+      <button class="btn sec" onclick="closeAiCfg()">取消</button>
+      <button class="btn" onclick="saveAiCfg()">保存配置</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   合同法务筛选 —— 单文件工具
+   依赖：本地 docx.umd.js（Word 导出）
+   AI：OpenAI 兼容接口，本工具独立配置（contract_screen_ai_cfg）
+   ============================================================ */
+const STORE_KEY = 'contract_screen_v1'
+const AI_CFG_KEY = 'contract_screen_ai_cfg'
+const DEFAULT_AI_KEY = ''
+
+const AI_PROVIDERS = {
+  volcengine:{ name:'火山引擎方舟',     baseUrl:'https://ark.cn-beijing.volces.com/api/v3', model:'doubao-seed-2-1-pro-260628', text:true },
+  deepseek:{ name:'DeepSeek',        baseUrl:'https://api.deepseek.com/v1',          model:'deepseek-chat',        text:true },
+  silicon: { name:'硅基流动',         baseUrl:'https://api.siliconflow.cn/v1',        model:'Qwen/Qwen2.5-7B-Instruct', text:true },
+  zhipu:   { name:'智谱 GLM',         baseUrl:'https://open.bigmodel.cn/api/paas/v4', model:'glm-4-flash',              text:true },
+  moonshot:{ name:'月之暗面 Moonshot', baseUrl:'https://api.moonshot.cn/v1',          model:'moonshot-v1-8k',           text:true },
+  qwen:    { name:'阿里云百炼(通义)', baseUrl:'https://dashscope.aliyun.com/compatible-mode/v1', model:'qwen-turbo', text:true },
+  hunyuan: { name:'腾讯混元',         baseUrl:'https://api.hunyuan.cloud.tencent.com/v1',       model:'hunyuan-turbo-s',    text:true },
+  baidu:   { name:'百度千帆',         baseUrl:'https://qianfan.baidubce.com/v2',               model:'ernie-speed-128k',   text:true },
+  openai:  { name:'OpenAI',           baseUrl:'https://api.openai.com/v1',            model:'gpt-4o-mini',            text:true },
+  custom:  { name:'自定义（OpenAI 兼容）', baseUrl:'',                                model:'',                         text:true }
+}
+const AI_REQUIRED_CAPS = { text:true }
+
+/* ---------- 安全写入 localStorage（配额兜底） ---------- */
+function tryWrite(key, val){
+  try{ localStorage.setItem(key, val) }catch(e){
+    try{ localStorage.removeItem('contract_screen_v1'); localStorage.setItem(key, val) }catch(e2){ /* 配额不足，放弃持久化 */ }
+  }
+}
+
+/* ---------- AI 配置 ---------- */
+function loadAiCfg(){
+  try{
+    const raw = localStorage.getItem(AI_CFG_KEY) || '{}'
+    const cfg = Object.assign({ provider:'volcengine', key:DEFAULT_AI_KEY, baseUrl:'', model:'doubao-seed-2-1-pro-260628' }, JSON.parse(raw))
+    if(!cfg.key) cfg.key = DEFAULT_AI_KEY
+    if(cfg.provider==='tencent'){ cfg.provider='hunyuan'; if(!cfg.model) cfg.model=AI_PROVIDERS.hunyuan.model }
+    return cfg
+  }catch(e){ return { provider:'volcengine', key:DEFAULT_AI_KEY, baseUrl:'', model:'doubao-seed-2-1-pro-260628' } }
+}
+function acProviderOptions(sel){
+  return Object.keys(AI_PROVIDERS).filter(k=>{ const p=AI_PROVIDERS[k]; for(const c in AI_REQUIRED_CAPS){ if(AI_REQUIRED_CAPS[c]&&!p[c]) return false } return true })
+    .map(k=>'<option value="'+k+'" '+(sel===k?'selected':'')+'>'+AI_PROVIDERS[k].name+'</option>').join('')
+}
+function openAiCfg(){
+  const cfg = loadAiCfg()
+  document.getElementById('acPf').innerHTML = acProviderOptions(cfg.provider)
+  document.getElementById('acKey').value = cfg.key || ''
+  const p = AI_PROVIDERS[cfg.provider]
+  document.getElementById('acUrl').value = cfg.baseUrl || (p&&p.baseUrl||'')
+  document.getElementById('acModel').value = cfg.model || (p&&p.model||'')
+  document.getElementById('aiCfgBg').classList.add('show')
+}
+function closeAiCfg(){ document.getElementById('aiCfgBg').classList.remove('show') }
+function acOnProvider(){
+  const k = document.getElementById('acPf').value
+  const p = AI_PROVIDERS[k]
+  if(p){ document.getElementById('acModel').value = p.model||''; if(p.baseUrl) document.getElementById('acUrl').value = p.baseUrl }
+}
+function saveAiCfg(){
+  const provider = document.getElementById('acPf').value
+  const key = document.getElementById('acKey').value.trim()
+  const baseUrl = document.getElementById('acUrl').value.trim()
+  const model = document.getElementById('acModel').value.trim()
+  tryWrite(AI_CFG_KEY, JSON.stringify({provider,key,baseUrl,model}))
+  closeAiCfg()
+  toast('AI 接口配置已保存（仅本工具生效）')
+  refreshEngineHint()
+}
+window.addEventListener('storage', e=>{ if(e.key===AI_CFG_KEY) refreshEngineHint() })
+
+/* ---------- 状态 ---------- */
+const state = {
+  files: [],          // {name, text}
+  paste: '',
+  party: '甲方',
+  partyCustom: '',
+  other: '',
+  contractName: '',
+  type: '',
+  focus: [],
+  findings: [],
+  summary: '',
+  revisedContract: '',
+  engine: 'local'
+}
+function contractText(){
+  const parts = []
+  state.files.forEach(f=>{ if(f.text && f.text.trim()) parts.push('===== '+f.name+' =====\n'+f.text.trim()) })
+  const p = (state.paste||'').trim()
+  if(p) parts.push('===== 粘贴正文 =====\n'+p)
+  return parts.join('\n\n')
+}
+function partyName(){ return state.party==='custom' ? (state.partyCustom||'我方') : state.party }
+function saveState(){
+  tryWrite(STORE_KEY, JSON.stringify({
+    files: state.files, paste: state.paste, party: state.party, partyCustom: state.partyCustom,
+    other: state.other, contractName: state.contractName, type: state.type, focus: state.focus,
+    findings: state.findings, summary: state.summary, revisedContract: state.revisedContract, engine: state.engine
+  }))
+}
+function loadState(){
+  try{
+    const s = JSON.parse(localStorage.getItem(STORE_KEY)||'{}')
+    Object.assign(state, s)
+    if(!Array.isArray(state.files)) state.files = []
+    if(!Array.isArray(state.focus)) state.focus = []
+  }catch(e){}
+}
+
+/* ---------- 工具函数 ---------- */
+function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+function $(id){ return document.getElementById(id) }
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2200) }
+
+/* ---------- 关注重点 chips ---------- */
+const FOCUS_OPTS = ['付款与价款','违约责任','交割与变更','保密条款','知识产权','争议解决','税务与发票','解除与终止','保证与担保','效力与管辖']
+function renderFocusChips(){
+  $('focusChips').innerHTML = FOCUS_OPTS.map(f=>{
+    const on = state.focus.includes(f) ? ' on':''
+    return '<span class="chip'+on+'" onclick="toggleFocus(\''+f+'\')">'+f+'</span>'
+  }).join('')
+}
+function toggleFocus(f){
+  const i = state.focus.indexOf(f)
+  if(i>=0) state.focus.splice(i,1); else state.focus.push(f)
+  renderFocusChips(); saveState()
+}
+
+/* ---------- 步骤切换 ---------- */
+function setStep(n){
+  for(let i=1;i<=4;i++){ $('card'+i).style.display = (i===n?'block':'none'); $('st'+i).className = 'step'+(i===n?' on':'') }
+}
+function goStep(n){ setStep(n); if(n===3) refreshEngineHint(); if(n===4 && state.findings.length) renderResults() }
+function goStep2(){
+  if(!contractText().trim()){ toast('请先上传或粘贴合同正文'); return }
+  setStep(2); refreshEngineHint()
+}
+function goStep3(){
+  if(!contractText().trim()){ toast('请先上传或粘贴合同正文'); return }
+  setStep(3); refreshEngineHint(); if(state.findings.length) renderResults()
+}
+
+/* ---------- 上传与解析 ---------- */
+function onPaste(){
+  state.paste = $('pasteBox').value
+  saveState(); renderPreview()
+}
+const TEXT_EXT = ['txt','md','json','csv','log','html','htm','js','xml','rtf','text']
+async function onFiles(fileList){
+  for(const file of Array.from(fileList)){
+    const ext = (file.name.split('.').pop()||'').toLowerCase()
+    let text = ''
+    try{
+      if(TEXT_EXT.includes(ext)){ text = await file.text() }
+      else if(ext==='docx'){ text = await parseDocx(file) }
+      else if(ext==='pdf'){ text = await parsePdf(file) }
+      else { text = await file.text() }
+    }catch(e){ toast('解析失败：'+file.name+'（'+e.message+'）'); continue }
+    if(!text || !text.trim()){ toast('未能提取文本：'+file.name+'，可改为粘贴正文'); continue }
+    state.files.push({ name:file.name, text })
+  }
+  $('fileInput').value = ''
+  saveState(); renderFiles(); renderPreview()
+}
+async function parseDocx(file){
+  if(!window.mammoth){
+    await loadScript('https://cdn.jsdelivr.net/npm/mammoth@1.9.0/mammoth.browser.min.js')
+  }
+  if(!window.mammoth) throw new Error('mammoth 加载失败')
+  const buf = await file.arrayBuffer()
+  const res = await window.mammoth.extractRawText({ arrayBuffer: buf })
+  return res.value || ''
+}
+async function parsePdf(file){
+  if(!window.pdfjsLib){
+    await loadScript('https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js')
+    if(window.pdfjsLib){
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.worker.min.js'
+    }
+  }
+  if(!window.pdfjsLib) throw new Error('pdf.js 加载失败')
+  const data = new Uint8Array(await file.arrayBuffer())
+  const doc = await window.pdfjsLib.getDocument({ data }).promise
+  let out = ''
+  for(let i=1;i<=doc.numPages;i++){
+    const page = await doc.getPage(i)
+    const content = await page.getTextContent()
+    out += content.items.map(it=>it.str).join(' ') + '\n'
+  }
+  return out
+}
+function loadScript(src){
+  return new Promise((resolve,reject)=>{
+    if(document.querySelector('script[src="'+src+'"]')){ resolve(); return }
+    const s = document.createElement('script'); s.src = src; s.onload = ()=>resolve(); s.onerror = ()=>reject(new Error('加载失败：'+src)); document.head.appendChild(s)
+  })
+}
+function renderFiles(){
+  if(!state.files.length){ $('fileList').innerHTML=''; return }
+  $('fileList').innerHTML = state.files.map((f,i)=>{
+    const n = (f.text||'').length
+    return '<div class="fileitem"><div><div class="nm">'+esc(f.name)+'</div><div class="mt">'+n+' 字</div></div><button class="x" onclick="removeFile('+i+')">✕</button></div>'
+  }).join('')
+}
+function removeFile(i){ state.files.splice(i,1); saveState(); renderFiles(); renderPreview() }
+function renderPreview(){
+  const t = contractText()
+  if(t.trim()){ $('previewBox').style.display='block'; $('previewText').textContent = t.slice(0, 4000) + (t.length>4000?' …（预览截断，全文已用于筛查）':''); $('charCount').textContent = t.length+' 字' }
+  else { $('previewBox').style.display='none' }
+}
+
+/* ---------- 本地规则引擎（无 Key 兜底 / 双引擎之一） ---------- */
+const RISK_RULES = [
+  { re:/不承担(任何)?责任|概不负责|一律不赔|免除.{0,6}责任|无需承担/gi, sev:'高', msg:'「不承担任何责任 / 概不负责」类表述可能构成格式条款无效情形（参照《民法典》第497条），建议改为限定性表述，如"因不可抗力等法定事由导致损失的，依法减免责任"。' },
+  { re:/放弃.{0,8}(诉权|起诉|诉讼|仲裁)|不得(起诉|诉讼|仲裁)|禁止维权/gi, sev:'高', msg:'约定放弃起诉 / 仲裁等救济权利违反法律规定，相关条款无效，建议删除。' },
+  { re:/无需(纳税|缴税|交税|缴纳)|不缴(税|费)|不承担税费|税费.{0,6}(乙方|对方)?(全部|一律)/gi, sev:'高', msg:'纳税义务由法律法规强制规定，约定"无需缴税 / 税费一律由某方承担"可能无效并带来税务风险，建议改为"税费由双方依法各自承担，法律法规无明确规定的由双方协商"。' },
+  { re:/口头|口头约定|口头承诺/gi, sev:'中', msg:'口头约定难以举证，建议全部以书面形式明确并签字盖章确认。' },
+  { re:/个人|私人账户|私账/gi, sev:'中', msg:'约定向个人账户付款存在税务与合规风险，建议收款账户主体与合同主体一致，并明确开户行与账号。' },
+  { re:/代扣|直接抵扣|自行扣除/gi, sev:'中', msg:'涉及款项直接抵扣的约定，建议写明抵扣依据、金额与事先通知义务，避免争议。' },
+  { re:/第三方(应|须|承担|负责|支付|保证)/gi, sev:'中', msg:'涉及第三方义务的约定，建议确保第三方知情或取得其书面同意，否则对我方约束力不足。' },
+  { re:/自动(续约|延期|展期)/gi, sev:'中', msg:'"自动续约 / 自动延期"建议明确续约条件与通知期，避免未经确认自动延长合同关系。' },
+  { re:/仲裁/gi, sev:'中', msg:'约定仲裁须写明具体仲裁机构全称（如"提交深圳国际仲裁院仲裁"），未写明仲裁机构的仲裁协议可能无效。' },
+  { re:/管辖/gi, sev:'中', msg:'争议解决条款须明确管辖法院或仲裁机构（如"由合同签订地有管辖权的人民法院管辖"），约定不明可能导致条款无效。' },
+  { re:/立即|随时|尽快|及时/gi, sev:'低', msg:'"立即 / 随时 / 尽快"等表述不够明确，易引发履约争议，建议改为具体期限（如"X 个工作日内"）。' },
+  { re:/永久|无条件|无限期|一律/gi, sev:'低', msg:'"永久 / 无条件 / 无限期"等绝对化表述可能显失公平，建议限定适用范围或期限。' },
+  { re:/违约.{0,30}(万分之|百分之|千分之)\d+/gi, sev:'低', msg:'违约金约定过高的，对方可请求法院或仲裁机构适当减少（参照《民法典》第585条），建议控制在合理区间（如日万分之五以内）。' }
+]
+function splitClauses(text){
+  const cleaned = text.replace(/\r/g,'')
+  const blocks = cleaned.split(/\n{1,}/).map(s=>s.trim()).filter(Boolean)
+  const out = []
+  blocks.forEach(b=>{
+    // 按句号/分号进一步切分长段，便于定位
+    const subs = b.split(/(?<=[。；])/).map(s=>s.trim()).filter(s=>s.length>6)
+    if(subs.length>1) out.push(...subs); else if(b.length>6) out.push(b)
+  })
+  return out
+}
+function localScreen(text){
+  const clauses = splitClauses(text)
+  const findings = []
+  let idx = 0
+  clauses.forEach(cl=>{
+    RISK_RULES.forEach(rule=>{
+      rule.re.lastIndex = 0
+      if(rule.re.test(cl)){
+        idx++
+        findings.push({
+          idx, clause: cl.length>160?cl.slice(0,160)+'…':cl,
+          risk: '（本地规则引擎）'+rule.msg,
+          severity: rule.sev, suggestion: rule.msg, revised: '',
+          source: 'local'
+        })
+      }
+    })
+  })
+  // 去重：同一条款同规则只留一次
+  const seen = new Set(); const uniq = []
+  findings.forEach(f=>{ const k=f.clause.slice(0,40)+'|'+f.risk.slice(0,20); if(!seen.has(k)){ seen.add(k); uniq.push(f) } })
+  uniq.sort((a,b)=> sevRank(b.severity)-sevRank(a.severity))
+  uniq.forEach((f,i)=>f.idx=i+1)
+  const summary = uniq.length
+    ? '本地规则引擎共发现 '+uniq.length+' 处疑似风险点（高 '+uniq.filter(x=>x.severity==='高').length+' / 中 '+uniq.filter(x=>x.severity==='中').length+' / 低 '+uniq.filter(x=>x.severity==='低').length+'）。此为基于通用法律规则的初步筛查，建议配置 AI 接口获取条款级修改文本，或由执业律师最终审定。'
+    : '本地规则引擎未发现明显高频风险表述，但无法替代逐条专业审查。'
+  return { summary, findings: uniq, revisedContract: '' }
+}
+function sevRank(s){ return s==='高'?3 : s==='中'?2 : 1 }
+
+/* ---------- AI 引擎 ---------- */
+async function aiCallLLM(messages){
+  const cfg = loadAiCfg()
+  if(!cfg.key || !cfg.model) return null
+  const base = cfg.baseUrl || (AI_PROVIDERS[cfg.provider] && AI_PROVIDERS[cfg.provider].baseUrl) || ''
+  const url = base.replace(/\/+$/,'') + '/chat/completions'
+  const res = await fetch(url, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+cfg.key },
+    body: JSON.stringify({ model: cfg.model, messages, temperature:0.2, max_tokens:4000 })
+  })
+  if(!res.ok) throw new Error('AI 接口错误：HTTP '+res.status)
+  const data = await res.json()
+  return (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || ''
+}
+function buildPrompt(text){
+  const focus = state.focus.length ? state.focus.join('、') : '（全面筛查）'
+  return [
+    { role:'system', content:'你是一名资深合同审查律师，擅长站在合同一方立场识别漏洞与风险，并给出可落地的修改意见。你必须只输出 JSON，不要输出 JSON 以外的任何文字、解释或 markdown 代码块标记。' },
+    { role:'user', content:
+      '请站在【我方：'+partyName()+'】的立场，审查以下合同。\n'+
+      '合同类型：'+(state.type||'未指定')+'\n'+
+      '对方身份：'+(state.other||'未指定')+'\n'+
+      '重点关注：'+focus+'\n\n'+
+      '合同全文：\n<<<<CONTRACT>>>>\n'+text+'\n<<<<END>>>>\n\n'+
+      '请输出如下 JSON（不要包含 ``` 等标记）：\n'+
+      '{\n'+
+      '  "summary": "总体风险结论（2-4 句，说明我方整体风险与最需关注的条款）",\n'+
+      '  "findings": [\n'+
+      '    {\n'+
+      '      "clause": "问题条款的原文摘录或定位（如「第X条 …」）",\n'+
+      '      "risk": "该条款对我方造成的具体风险",\n'+
+      '      "severity": "高" 或 "中" 或 "低",\n'+
+      '      "suggestion": "具体修改意见",\n'+
+      '      "revised": "建议修改后的条款完整表述（可直接替换的成型文本）"\n'+
+      '    }\n'+
+      '  ],\n'+
+      '  "revisedContract": "将全部修改建议落实到原文后的完整修订版合同全文。保持原合同结构与未修改部分原样，仅替换或增补问题条款，不要省略任何未修改的章节。"\n'+
+      '}\n'+
+      '要求：findings 按严重程度从高到低排列；severity 只能取 高/中/低；revised 必须是可直接替换的成型条款文本；revisedContract 为完整文档，不得省略未修改部分。'
+    }
+  ]
+}
+function parseAIJson(content){
+  let s = (content||'').trim()
+  s = s.replace(/^```(?:json)?/i,'').replace(/```$/i,'').trim()
+  const a = s.indexOf('{'); const b = s.lastIndexOf('}')
+  if(a>=0 && b>a) s = s.slice(a, b+1)
+  const obj = JSON.parse(s)
+  if(!obj.findings || !Array.isArray(obj.findings)) throw new Error('AI 返回结构异常')
+  return obj
+}
+async function runScreen(){
+  const text = contractText()
+  if(!text.trim()){ toast('请先上传或粘贴合同正文'); return }
+  const btn = $('screenBtn'); btn.disabled = true; btn.textContent = '筛查中…'
+  $('screenOut').innerHTML = '<div class="loading">⏳ 正在审查合同，请稍候…</div>'
+  // 截断以保护接口与性能
+  const sendText = text.length>16000 ? text.slice(0,16000)+'\n…（原文较长，已截断至此用于筛查）' : text
+  try{
+    const cfg = loadAiCfg()
+    if(cfg.key && cfg.model){
+      const raw = await aiCallLLM(buildPrompt(sendText))
+      if(raw){
+        const obj = parseAIJson(raw)
+        state.findings = obj.findings.map((f,i)=>({
+          idx:i+1, clause:f.clause||'', risk:f.risk||'', severity:(f.severity==='高'||f.severity==='中'||f.severity==='低')?f.severity:'中',
+          suggestion:f.suggestion||'', revised:f.revised||'', source:'ai'
+        }))
+        state.summary = obj.summary || ''
+        state.revisedContract = obj.revisedContract || ''
+        state.engine = 'ai'
+        saveState(); renderResults(); setStep(4)
+        toast('AI 筛查完成，已生成两份文件的素材')
+        return
+      }
+    }
+    // 兜底：本地规则引擎
+    const r = localScreen(sendText)
+    state.findings = r.findings; state.summary = r.summary; state.revisedContract = ''; state.engine='local'
+    saveState(); renderResults(); setStep(4)
+    toast('已使用内置规则引擎筛查（未配置 AI Key）')
+  }catch(e){
+    console.error(e)
+    // AI 失败也尝试本地兜底
+    try{
+      const r = localScreen(sendText)
+      state.findings = r.findings; state.summary = (r.summary+'（AI 调用失败：'+e.message+'，已自动切换内置规则引擎）'); state.revisedContract=''; state.engine='local'
+      saveState(); renderResults(); setStep(4); toast('AI 调用失败，已用本地规则引擎兜底')
+    }catch(e2){
+      $('screenOut').innerHTML = '<div class="empty">筛查失败：'+esc(e.message)+'</div>'
+    }
+  }finally{
+    btn.disabled = false; btn.textContent = '🔍 重新筛查'
+  }
+}
+
+/* ---------- 结果渲染 ---------- */
+let filterSev = 'all'
+function renderResults(){
+  const box = $('screenOut')
+  if(!state.findings.length){ box.innerHTML = '<div class="empty">未发现风险点。'+(state.engine==='local'?'可配置 AI 接口获取更深层审查。':'')+'</div>'; return }
+  const counts = { 高:0, 中:0, 低:0 }
+  state.findings.forEach(f=>{ if(counts[f.severity]!=null) counts[f.severity]++ })
+  let h = ''
+  h += '<div class="summary"><b>总体结论：</b>'+esc(state.summary||'（无）')+'</div>'
+  h += '<div class="stats">'+
+    '<div class="stat total"><b>'+state.findings.length+'</b>风险点</div>'+
+    '<div class="stat high"><b>'+counts['高']+'</b>高风险</div>'+
+    '<div class="stat mid"><b>'+counts['中']+'</b>中风险</div>'+
+    '<div class="stat low"><b>'+counts['低']+'</b>低风险</div>'+
+    '<div class="stat"><b>'+(state.engine==='ai'?'AI':'本地')+'</b>引擎</div></div>'
+  h += '<div class="filters">'+
+    '<span class="fbtn '+(filterSev==='all'?'on':'')+'" onclick="setFilter(\'all\')">全部</span>'+
+    '<span class="fbtn '+(filterSev==='高'?'on':'')+'" onclick="setFilter(\'高\')">高</span>'+
+    '<span class="fbtn '+(filterSev==='中'?'on':'')+'" onclick="setFilter(\'中\')">中</span>'+
+    '<span class="fbtn '+(filterSev==='低'?'on':'')+'" onclick="setFilter(\'低\')">低</span></div>'
+  const list = state.findings.filter(f=>filterSev==='all'||f.severity===filterSev)
+  if(!list.length){ h += '<div class="empty">该等级暂无风险点。</div>' }
+  list.forEach(f=>{
+    h += '<div class="find '+f.severity+'">'+
+      '<div class="fh"><span class="sev '+f.severity+'">'+f.severity+'风险</span><span class="idx">#'+(f.idx||'')+'</span></div>'+
+      (f.clause?'<div class="clause">📌 '+esc(f.clause)+'</div>':'')+
+      '<div class="lab">风险分析</div><div class="txt">'+esc(f.risk||'')+'</div>'+
+      '<div class="lab">修改意见</div><div class="txt">'+esc(f.suggestion||'')+'</div>'+
+      (f.revised?'<div class="lab">建议修改后条款</div><div class="rev">'+esc(f.revised)+'</div>':'')+
+      '</div>'
+  })
+  box.innerHTML = h
+}
+function setFilter(s){ filterSev = s; renderResults() }
+function refreshEngineHint(){
+  const cfg = loadAiCfg()
+  $('screenHint').textContent = (cfg.key && cfg.model)
+    ? '已配置 AI 接口（'+AI_PROVIDERS[cfg.provider].name+'），将以大模型深度审查并生成修订版全文。'
+    : '未配置 AI 接口：将使用内置规则引擎做基础筛查（不生成条款级修改文本）。点击右上角「AI 接口配置」可启用深度审查。'
+}
+
+/* ---------- Word 导出 ---------- */
+function docxReady(){ return !!window.docx }
+const F = { song:{ascii:'Times New Roman',hAnsi:'Times New Roman',eastAsia:'宋体'}, hei:{ascii:'Arial',hAnsi:'Arial',eastAsia:'微软雅黑'} }
+const C = { primary:'8a4b08', band:'fbf3e6', zebra:'fdf8f0', line:'e0d2bd', gray:'8a7a62' }
+const CELL_MAR = { top:80, bottom:80, left:120, right:120 }
+function docxBorders(){
+  const bs = docx.BorderStyle.SINGLE
+  return { top:{style:bs,size:6,color:C.line}, bottom:{style:bs,size:6,color:C.line}, left:{style:bs,size:6,color:C.line}, right:{style:bs,size:6,color:C.line}, insideHorizontal:{style:bs,size:4,color:'efe3cf'}, insideVertical:{style:bs,size:4,color:'efe3cf'} }
+}
+function dR(text,o){ o=o||{}; return new docx.TextRun({ text:String(text==null?'':text), font:o.font||F.song, size:o.size||24, bold:o.bold, color:o.color }) }
+function dP(children,o){ o=o||{}; return new docx.Paragraph({ children:Array.isArray(children)?children:[children], alignment:o.align, spacing:o.spacing||{ line:360, lineRule:'auto', before:o.before||0, after:o.after||0 }, indent:o.indent, keepNext:o.keepNext }) }
+function dBody(text){ return dP(dR(String(text||'')),{ align:docx.AlignmentType.JUSTIFIED, indent:{ firstLine:480 } }) }
+function dH1(text){ return new docx.Paragraph({ children:[ dR('■ ',{font:F.hei,size:26,bold:true,color:C.primary}), dR(text,{font:F.hei,size:30,bold:true,color:C.primary}) ], spacing:{ before:380, after:200, line:360, lineRule:'auto' }, keepNext:true, shading:{ fill:'fbf3e6', type:docx.ShadingType.CLEAR }, border:{ left:{ style:docx.BorderStyle.SINGLE, size:24, color:C.primary, space:6 }, bottom:{ style:docx.BorderStyle.SINGLE, size:6, color:'e0901a', space:2 } } }) }
+function dH2(text){ return new docx.Paragraph({ children:[ dR('▎',{font:F.hei,size:30,bold:true,color:'e0901a'}), dR(' '+text,{font:F.hei,size:24,bold:true,color:C.primary}) ], spacing:{ before:240, after:120, line:340, lineRule:'auto' }, keepNext:true }) }
+function dCell(txt,o){ o=o||{}; return dP(dR(txt,{ font:o.font||F.song, size:o.size||20, bold:o.bold, color:o.color }),{ spacing:{ line:300, lineRule:'auto', after:o.after!=null?o.after:30, before:o.before!=null?o.before:30 }, alignment:o.align }) }
+function dKV(rows,w){ const widths=w||[28,72]; return new docx.Table({ width:{size:100,type:docx.WidthType.PERCENTAGE}, borders:docxBorders(), rows:rows.map((row,i)=>new docx.TableRow({ children:[ new docx.TableCell({ width:{size:widths[0],type:docx.WidthType.PERCENTAGE}, margins:CELL_MAR, shading:{fill:C.band,type:docx.ShadingType.CLEAR}, verticalAlign:docx.VerticalAlign.CENTER, children:[dCell(row[0],{font:F.hei,bold:true,color:C.primary})] }), new docx.TableCell({ width:{size:widths[1],type:docx.WidthType.PERCENTAGE}, margins:CELL_MAR, shading:i%2?{fill:C.zebra,type:docx.ShadingType.CLEAR}:undefined, verticalAlign:docx.VerticalAlign.CENTER, children:[dCell(row[1])] }) ] })) }) }
+function dTable(headers, rows, aligns){ return new docx.Table({ width:{size:100,type:docx.WidthType.PERCENTAGE}, borders:docxBorders(), rows:[ new docx.TableRow({ children:headers.map((h)=>new docx.TableCell({ width:{size:Math.floor(100/headers.length),type:docx.WidthType.PERCENTAGE}, margins:CELL_MAR, shading:{fill:C.primary,type:docx.ShadingType.CLEAR}, verticalAlign:docx.VerticalAlign.CENTER, children:[dCell(h,{font:F.hei,bold:true,color:'ffffff',align:docx.AlignmentType.CENTER})] })) }), ...rows.map((row,i)=>new docx.TableRow({ children:row.map((c,j)=>new docx.TableCell({ width:{size:Math.floor(100/headers.length),type:docx.WidthType.PERCENTAGE}, margins:CELL_MAR, shading:i%2?{fill:C.zebra,type:docx.ShadingType.CLEAR}:undefined, verticalAlign:docx.VerticalAlign.CENTER, children:[dCell(c,{align:(aligns&&aligns[j])||docx.AlignmentType.LEFT})] })) }) ) ] }) }
+function genDocx(children){
+  const doc = new docx.Document({ styles:{ default:{ document:{ run:{ font:F.song, size:24 } } } }, sections:[{ properties:{ page:{ margin:{ top:docx.convertInchesToTwip(1), bottom:docx.convertInchesToTwip(1), left:docx.convertInchesToTwip(1.1), right:docx.convertInchesToTwip(1.1) } } }, children }] })
+  return docx.Packer.toBlob(doc)
+}
+async function downloadBlob(blob, name){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 5000)
+}
+function reportChildren(){
+  const title = state.contractName ? '《'+state.contractName+'》' : '《合同》'
+  const meta = [
+    ['委托审查方（我方）', partyName()],
+    ['对方身份', state.other||'未指定'],
+    ['合同类型', state.type||'未指定'],
+    ['重点关注', state.focus.length?state.focus.join('、'):'全面筛查'],
+    ['文件数量', String(state.files.length+(state.paste.trim()?1:0))+' 份'],
+    ['审查引擎', state.engine==='ai'?'AI 大模型深度审查':'内置规则引擎（基础筛查）'],
+    ['出具日期', new Date().toISOString().slice(0,10)]
+  ]
+  const kids = []
+  kids.push(new docx.Paragraph({ children:[ new docx.TextRun({ text:'合同风险筛查与漏洞详解 & 修改意见书', font:{ascii:'Arial',hAnsi:'Arial',eastAsia:'微软雅黑'}, size:40, bold:true, color:'8a4b08' }) ], alignment:docx.AlignmentType.CENTER, spacing:{ before:600, after:200 } }))
+  kids.push(new docx.Paragraph({ children:[ new docx.TextRun({ text:title+' 法务审查报告', font:{ascii:'Arial',hAnsi:'Arial',eastAsia:'微软雅黑'}, size:26, color:'8a7a62' }) ], alignment:docx.AlignmentType.CENTER, spacing:{ after:400 } }))
+  kids.push(new docx.Paragraph({ children:[ new docx.TextRun({ text:'金米启航 · 企业服务工具箱', font:{ascii:'Arial',hAnsi:'Arial',eastAsia:'微软雅黑'}, size:20, color:'8a7a62' }) ], alignment:docx.AlignmentType.CENTER, spacing:{ after:200 } }))
+  kids.push(new docx.Paragraph({ children:[ new docx.PageBreak() ] }))
+  kids.push(dH1('一、审查说明'))
+  kids.push(dBody('本报告由「合同法务筛选」工具基于'+partyName()+'立场，对'+title+'进行风险筛查后自动生成。审查范围覆盖合同文本中的权利义务、付款、违约、交割、保密、争议解决、税务等核心条款。'))
+  kids.push(dBody('以下风险点按严重程度由高到低排列，每条均附风险分析、修改意见与建议修改后的条款文本，供我方谈判与定稿参考。'))
+  kids.push(dH1('二、合同与审查要素'))
+  kids.push(dKV(meta))
+  kids.push(dH1('三、总体风险结论'))
+  kids.push(dBody(state.summary || '（未生成总体结论）'))
+  kids.push(dH1('四、风险明细汇总'))
+  if(state.findings.length){
+    kids.push(dTable(['#','等级','条款定位','风险概述','修改意见'], state.findings.map(f=>[ String(f.idx||''), f.severity||'', (f.clause||'').slice(0,60), (f.risk||'').slice(0,80), (f.suggestion||'').slice(0,80) ]), ['center','center','left','left','left']))
+  }else{
+    kids.push(dBody('未发现明显风险点。'))
+  }
+  kids.push(dH1('五、逐条风险详解与修改意见'))
+  if(state.findings.length){
+    state.findings.forEach(f=>{
+      kids.push(dH2('第 '+(f.idx||'')+' 条'+(f.severity?('（'+f.severity+'风险）'):'')))
+      if(f.clause) kids.push(dBody('【条款定位】'+f.clause))
+      kids.push(dBody('【风险分析】'+f.risk))
+      kids.push(dBody('【修改意见】'+f.suggestion))
+      if(f.revised) kids.push(dBody('【建议修改后条款】'+f.revised))
+    })
+  }else{
+    kids.push(dBody('无。'))
+  }
+  kids.push(dH1('六、免责声明'))
+  kids.push(dBody('本报告为合同审查辅助工具生成，基于通用法律规则与所选大模型的语义理解，不构成正式法律意见。涉及金额较大、标的重大或关系复杂的合同，应由执业律师结合交易背景最终审定。'))
+  return kids
+}
+function revisedChildren(){
+  const title = state.contractName ? '《'+state.contractName+'》' : '《合同》'
+  const kids = []
+  kids.push(new docx.Paragraph({ children:[ new docx.TextRun({ text:'已修改版本的成型文件', font:{ascii:'Arial',hAnsi:'Arial',eastAsia:'微软雅黑'}, size:40, bold:true, color:'8a4b08' }) ], alignment:docx.AlignmentType.CENTER, spacing:{ before:600, after:200 } }))
+  kids.push(new docx.Paragraph({ children:[ new docx.TextRun({ text:title+'（修订版）', font:{ascii:'Arial',hAnsi:'Arial',eastAsia:'微软雅黑'}, size:26, color:'8a7a62' }) ], alignment:docx.AlignmentType.CENTER, spacing:{ after:400 } }))
+  if(state.revisedContract && state.revisedContract.trim()){
+    // AI 返回完整修订版全文
+    state.revisedContract.split(/\n{1,}/).forEach(para=>{ if(para.trim()) kids.push(new docx.Paragraph({ children:[ new docx.TextRun({ text:para.trim(), font:{ascii:'Times New Roman',hAnsi:'Times New Roman',eastAsia:'宋体'}, size:24 }) ], spacing:{ line:360, lineRule:'auto', after:80 } })) })
+  }else{
+    kids.push(new docx.Paragraph({ children:[ new docx.TextRun({ text:'（以下为原合同正文，因未启用 AI 深度审查，修订建议以附录形式列于文末，请按建议手工修订）', font:{ascii:'Arial',hAnsi:'Arial',eastAsia:'微软雅黑'}, size:20, color:'8a7a62' }) ], spacing:{ after:200 } }))
+    const orig = contractText()
+    orig.split(/\n{1,}/).forEach(para=>{ if(para.trim()) kids.push(new docx.Paragraph({ children:[ new docx.TextRun({ text:para.trim(), font:{ascii:'Times New Roman',hAnsi:'Times New Roman',eastAsia:'宋体'}, size:24 }) ], spacing:{ line:360, lineRule:'auto', after:60 } })) })
+    kids.push(new docx.Paragraph({ children:[ new docx.PageBreak() ] }))
+    kids.push(dH1('附录：修订建议对照'))
+    if(state.findings.length){
+      kids.push(dTable(['#','等级','原文定位','修改意见','建议修改后条款'], state.findings.map(f=>[ String(f.idx||''), f.severity||'', (f.clause||'').slice(0,50), (f.suggestion||'').slice(0,70), (f.revised||'（请按修改意见手工拟定）').slice(0,70) ]), ['center','center','left','left','left']))
+    }else{
+      kids.push(dBody('无修订建议。'))
+    }
+  }
+  return kids
+}
+async function generateBoth(){
+  if(!state.findings.length && !contractText().trim()){ toast('暂无可生成的审查结果'); return }
+  if(!docxReady()){ alert('Word 组件（docx.umd.js）未加载，请刷新页面后重试。'); return }
+  const btn = $('genBtn'); btn.disabled = true; btn.textContent = '生成中…'
+  try{
+    const name = state.contractName ? state.contractName.replace(/[\\/:*?"<>|]/g,'') : '合同'
+    const blob1 = await genDocx(reportChildren(), 'risk')
+    await downloadBlob(blob1, '合同风险筛查与漏洞详解&修改意见书_'+name+'.docx')
+    await new Promise(r=>setTimeout(r, 400))
+    const blob2 = await genDocx(revisedChildren(), 'revised')
+    await downloadBlob(blob2, '已修改版本_'+name+'.docx')
+    toast('两份文件已生成并开始下载')
+  }catch(e){
+    console.error(e); alert('生成失败：'+e.message)
+  }finally{
+    btn.disabled = false; btn.textContent = '⬇ 重新生成两份文件'
+  }
+}
+
+/* ---------- 初始化 ---------- */
+function init(){
+  loadState()
+  // 还原 UI
+  $('pasteBox').value = state.paste || ''
+  if(state.partyCustom!==undefined && state.party==='custom'){ $('partyCustom').value = state.partyCustom; $('partyCustom').style.display='block' }
+  $('otherParty').value = state.other || ''
+  $('contractName').value = state.contractName || ''
+  $('contractType').value = state.type || ''
+  document.querySelectorAll('#partyRadios label').forEach(l=>{ l.classList.toggle('on', l.dataset.v===state.party); const inp=l.querySelector('input'); if(inp) inp.checked=(inp.value===state.party) })
+  renderFocusChips(); renderFiles(); renderPreview(); refreshEngineHint()
+  if(state.findings.length){ renderResults() }
+}
+init()
+</script>
+</body>
+</html>
