@@ -47,10 +47,12 @@ h2.sec{font-size:13px;color:var(--accent);margin:0 0 12px;letter-spacing:1px;fon
 #imgCard .d-items{width:100%;border-collapse:collapse}
 #imgCard .d-items th{background:#fdf7ec;color:#7c3f06;font-size:12.5px;padding:9px 10px;border:1px solid #f2e6d8;text-align:left;font-weight:700}
 #imgCard .d-items td{padding:9px 10px;border:1px solid #f2e6d8;font-size:13px;line-height:1.6;vertical-align:top;white-space:pre-wrap;word-break:break-word}
-#imgCard .d-items .c-name{width:16%}
-#imgCard .d-items .c-id{width:30%}
-#imgCard .d-items .c-phone{width:18%}
-#imgCard .d-items .c-email{width:36%}
+#imgCard .d-items .c-name{width:13%}
+#imgCard .d-items .c-id{width:24%}
+#imgCard .d-items .c-phone{width:13%}
+#imgCard .d-items .c-email{width:22%}
+#imgCard .d-items .c-pos{width:14%}
+#imgCard .d-items .c-ratio{width:14%}
 #imgCard .d-confirm{margin-top:18px;border:1.5px solid #b45309;border-radius:8px;padding:14px 16px;background:#fffdf8}
 #imgCard .d-confirm .ct{font-size:13.5px;font-weight:700;color:#7c3f06;margin-bottom:8px;letter-spacing:1px}
 #imgCard .d-confirm .cp{font-size:12.5px;color:#4a3c2c;line-height:1.9}
@@ -58,12 +60,13 @@ h2.sec{font-size:13px;color:var(--accent);margin:0 0 12px;letter-spacing:1px;fon
 #imgCard .d-confirm .csign .s{flex:1 1 220px}
 #imgCard .d-confirm .csign .s .ln{border-bottom:1px solid #b9a586;height:26px;margin-top:4px}
 #imgCard .d-note{margin-top:16px;font-size:12px;color:#8a7a62;line-height:1.8;border-left:3px solid #f2e6d8;padding-left:10px}
-.sh-row{display:flex;gap:6px;align-items:flex-start;margin-bottom:8px}
-.sh-row .ci{flex:1 1 0;min-width:0}
+.sh-row{display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start;margin-bottom:10px}
+.sh-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;flex:1 1 100%;width:100%}
+.sh-row .ci{min-width:0}
 .sh-row .ci .cl{font-size:11px;color:#9b8c74;margin-bottom:3px;display:block}
 .sh-row .ci input{width:100%;border:1px solid var(--border);background:#fffdf8;border-radius:7px;padding:7px 9px;font-size:13px;font-family:inherit;outline:none}
 .sh-row .ci input:focus{border-color:var(--accent-2)}
-.sh-row .rm{border:1px solid var(--border);background:#fff;color:#b45309;border-radius:6px;padding:6px 9px;font-size:12px;cursor:pointer;font-family:inherit;align-self:flex-end}
+.sh-row .rm{border:1px solid var(--border);background:#fff;color:#b45309;border-radius:6px;padding:6px 9px;font-size:12px;cursor:pointer;font-family:inherit;margin-left:auto;align-self:center}
 .sh-row .rm:hover{border-color:#dc2626;color:#dc2626}
 .add-item{border:1px dashed var(--accent-2);background:#fffdf8;color:var(--accent);border-radius:8px;padding:8px 12px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:600;width:100%}
 .add-item:hover{background:#fdf3e3}
@@ -190,22 +193,24 @@ function onField(key,val){
   safeSet(LS_FORM, form);
 }
 function renderShare(){
-  if(!form.shareholders || !form.shareholders.length) form.shareholders=[{name:'',idno:'',phone:'',email:''}];
+  if(!form.shareholders || !form.shareholders.length) form.shareholders=[{name:'',idno:'',phone:'',email:'',position:'',ratio:''}];
   var box=document.getElementById('shareBox');
   var html='';
-  var cols=[['name','姓名','例：张三'],['idno','身份证号','例：4403XXXXXXXXXXXXXX'],['phone','手机号','例：138XXXX8888'],['email','电子邮箱','例：name@xx.com']];
+  var cols=[['name','姓名','例：张三'],['idno','身份证号','例：4403XXXXXXXXXXXXXX'],['phone','手机号','例：138XXXX8888'],['email','电子邮箱','例：name@xx.com'],['position','职位','例：法定代表人/监事'],['ratio','股权比例','例：60%']];
   for(var i=0;i<form.shareholders.length;i++){
     var sh=form.shareholders[i], row='<div class="sh-row">';
+    row += '<div class="sh-grid">';
     for(var c=0;c<cols.length;c++){
       row += '<div class="ci"><span class="cl">'+cols[c][1]+'</span><input id="sh_'+i+'_'+cols[c][0]+'" value="'+esc(sh[cols[c][0]]||'')+'" placeholder="'+cols[c][2]+'" oninput="onShare('+i+',\''+cols[c][0]+'\',this.value)"></div>';
     }
+    row += '</div>';
     row += (form.shareholders.length>1?'<button class="rm" onclick="delShare('+i+')">删除</button>':'') + '</div>';
     html += row;
   }
   box.innerHTML=html;
 }
-function addShare(){ if(!form.shareholders) form.shareholders=[]; form.shareholders.push({name:'',idno:'',phone:'',email:''}); safeSet(LS_FORM,form); renderShare(); }
-function delShare(i){ if(!form.shareholders) return; form.shareholders.splice(i,1); if(!form.shareholders.length) form.shareholders=[{name:'',idno:'',phone:'',email:''}]; safeSet(LS_FORM,form); renderShare(); }
+function addShare(){ if(!form.shareholders) form.shareholders=[]; form.shareholders.push({name:'',idno:'',phone:'',email:'',position:'',ratio:''}); safeSet(LS_FORM,form); renderShare(); }
+function delShare(i){ if(!form.shareholders) return; form.shareholders.splice(i,1); if(!form.shareholders.length) form.shareholders=[{name:'',idno:'',phone:'',email:'',position:'',ratio:''}]; safeSet(LS_FORM,form); renderShare(); }
 function onShare(i,field,val){ if(!form.shareholders) form.shareholders=[]; if(!form.shareholders[i]) form.shareholders[i]={}; form.shareholders[i][field]=val; safeSet(LS_FORM,form); }
 
 /* ================= 卡片 ================= */
@@ -213,7 +218,7 @@ function readForm(){
   var d={};
   for(var i=0;i<FIELDS.length;i++){ d[FIELDS[i].key]=form[FIELDS[i].key]||''; }
   d.agency = form.agency || DEFAULT_CO;
-  d.shareholders = (form.shareholders||[]).map(function(x){ return {name:x.name||'',idno:x.idno||'',phone:x.phone||'',email:x.email||''}; });
+  d.shareholders = (form.shareholders||[]).map(function(x){ return {name:x.name||'',idno:x.idno||'',phone:x.phone||'',email:x.email||'',position:x.position||'',ratio:x.ratio||''}; });
   d.no = (lastData && lastData.no) ? lastData.no : stampNum();
   d.date = todayCN();
   return d;
@@ -226,12 +231,12 @@ function renderCard(d){
   var rows='';
   for(var i=0;i<FIELDS.length;i++){ rows += rowHtml(FIELDS[i].label, d[FIELDS[i].key]); }
   rows += rowHtml('经办方', d.agency);
-  var sh=d.shareholders.filter(function(x){ return x.name||x.idno||x.phone||x.email; });
+  var sh=d.shareholders.filter(function(x){ return x.name||x.idno||x.phone||x.email||x.position||x.ratio; });
   var shareHtml='';
   if(sh.length){
-    shareHtml = '<table class="d-items"><thead><tr><th class="c-name">姓名</th><th class="c-id">身份证号</th><th class="c-phone">手机号</th><th class="c-email">电子邮箱</th></tr></thead><tbody>';
+    shareHtml = '<table class="d-items"><thead><tr><th class="c-name">姓名</th><th class="c-id">身份证号</th><th class="c-phone">手机号</th><th class="c-email">电子邮箱</th><th class="c-pos">职位</th><th class="c-ratio">股权比例</th></tr></thead><tbody>';
     for(var j=0;j<sh.length;j++){
-      shareHtml += '<tr><td>'+(esc(sh[j].name)||'<span class="d-empty">（未填）</span>')+'</td><td>'+(esc(sh[j].idno)||'<span class="d-empty">（未填）</span>')+'</td><td>'+(esc(sh[j].phone)||'<span class="d-empty">（未填）</span>')+'</td><td>'+(esc(sh[j].email)||'<span class="d-empty">（未填）</span>')+'</td></tr>';
+      shareHtml += '<tr><td>'+(esc(sh[j].name)||'<span class="d-empty">（未填）</span>')+'</td><td>'+(esc(sh[j].idno)||'<span class="d-empty">（未填）</span>')+'</td><td>'+(esc(sh[j].phone)||'<span class="d-empty">（未填）</span>')+'</td><td>'+(esc(sh[j].email)||'<span class="d-empty">（未填）</span>')+'</td><td>'+(esc(sh[j].position)||'<span class="d-empty">（未填）</span>')+'</td><td>'+(esc(sh[j].ratio)||'<span class="d-empty">（未填）</span>')+'</td></tr>';
     }
     shareHtml += '</tbody></table>';
   } else {
@@ -319,8 +324,8 @@ function summaryText(){
   lines.push('注册资金（变更后）：'+(d.capital||'—'));
   lines.push('注册地址（变更后）：'+(d.address||'—'));
   lines.push('购买方（确认方）：'+(d.buyer||'—'));
-  var sh=d.shareholders.filter(function(x){ return x.name||x.idno||x.phone||x.email; });
-  if(sh.length){ lines.push('—— 股东信息 ——'); for(var i=0;i<sh.length;i++){ lines.push((i+1)+'. '+sh[i].name+'｜身份证 '+sh[i].idno+'｜手机 '+sh[i].phone+'｜邮箱 '+sh[i].email); } }
+  var sh=d.shareholders.filter(function(x){ return x.name||x.idno||x.phone||x.email||x.position||x.ratio; });
+  if(sh.length){ lines.push('—— 股东信息 ——'); for(var i=0;i<sh.length;i++){ lines.push((i+1)+'. '+sh[i].name+'｜身份证 '+sh[i].idno+'｜手机 '+sh[i].phone+'｜邮箱 '+sh[i].email+'｜职位 '+(sh[i].position||'—')+'｜股权比例 '+(sh[i].ratio||'—')); } }
   if(d.remark) lines.push('备注：'+d.remark);
   lines.push('经办方：'+d.agency);
   return lines.join('\n');
@@ -358,7 +363,7 @@ function renderHistory(){
   var html='';
   for(var i=0;i<records.length;i++){
     var r=records[i], d=r.data||{};
-    var cnt=(d.shareholders||[]).filter(function(x){ return x.name||x.idno||x.phone||x.email; }).length;
+    var cnt=(d.shareholders||[]).filter(function(x){ return x.name||x.idno||x.phone||x.email||x.position||x.ratio; }).length;
     var brief=[d.companyName,d.buyer].filter(function(x){return x;}).join(' · ')||'（空）';
     brief += '（'+cnt+' 名股东）';
     var dt=new Date(r.at), p=function(n){return n<10?'0'+n:''+n;};
@@ -379,7 +384,7 @@ function loadRecord(id){
   form={};
   for(var k in (r.data||{})){ if(k!=='no'&&k!=='date'&&k!=='agency'&&k!=='shareholders') form[k]=r.data[k]; }
   if(r.data && r.data.agency) form.agency=r.data.agency;
-  if(r.data && r.data.shareholders) form.shareholders=r.data.shareholders.map(function(x){ return {name:x.name||'',idno:x.idno||'',phone:x.phone||'',email:x.email||''}; });
+  if(r.data && r.data.shareholders) form.shareholders=r.data.shareholders.map(function(x){ return {name:x.name||'',idno:x.idno||'',phone:x.phone||'',email:x.email||'',position:x.position||'',ratio:x.ratio||''}; });
   safeSet(LS_FORM, form);
   renderForm(); renderShare(); renderCard(readForm());
   toast('已载入该记录，可修改后重新生成');
@@ -395,7 +400,7 @@ function delRecord(id){
 function init(){
   form = safeGet(LS_FORM, {});
   if(!form.agency) form.agency = DEFAULT_CO;
-  if(!form.shareholders) form.shareholders = [{name:'',idno:'',phone:'',email:''}];
+  if(!form.shareholders) form.shareholders = [{name:'',idno:'',phone:'',email:'',position:'',ratio:''}];
   records = safeGet(LS_REC, []);
   renderForm();
   renderShare();
