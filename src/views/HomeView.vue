@@ -245,7 +245,7 @@ function dueLabel(due) {
 onMounted(loadTodos)
 
 /* 全部数据 key 统一来自 src/data/backupKeys.js（新增工具的 key 记得登记） */
-const APP_VERSION = 'v1.16.5' /* 2026-09-23 lead-table 排序增加顺序/倒序筛选 */
+const APP_VERSION = 'v1.16.6' /* 2026-09-23 债务债权协议明确甲方/乙方身份+多股东按持股比例担责 */
 const fileInput = ref(null)
 const dataStatus = ref('')
 const dataStatusType = ref('ok')

@@ -252,7 +252,7 @@ function autoContractNo(){
   return 'HT-'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+rnd
 }
 
-function emptyParty(){ return { kind:'company', name:'', creditCode:'', legalRep:'', idNo:'', address:'', phone:'' } }
+function emptyParty(){ return { kind:'company', name:'', creditCode:'', legalRep:'', idNo:'', address:'', phone:'', ratio:'' } }
 function emptyState(){
   return {
     step: 0,
@@ -475,6 +475,10 @@ function partyBlockMulti(side, idx, roleLabel){
       <div class="fg"><label>联系电话</label><input type="text" value="${val(o.phone)}" placeholder="手机号码" oninput="upParty('${side}',${idx},'phone',this.value)"></div>
       <div class="fg"><label>联系地址</label><input type="text" value="${val(o.address)}" placeholder="通讯地址" oninput="upParty('${side}',${idx},'address',this.value)"></div>
     </div>` : ''}
+    <div class="frow">
+      <div class="fg"><label>持股比例（%）<span class="req">*</span></label><input type="text" value="${val(o.ratio)}" placeholder="如：30（旧股东合计应为100）" oninput="upParty('${side}',${idx},'ratio',this.value)"></div>
+      <div class="fg"><label>&nbsp;</label><div class="hint" style="padding-top:6px">变更前/后债务按此比例分担，旧股东合计应=100%</div></div>
+    </div>
   </div>`
 }
 function addParty(side){ state[side].push(Object.assign(emptyParty(),{kind:'person'})); saveState(); renderStep() }
@@ -1027,13 +1031,15 @@ function stepGen(){
   const roleA = t ? t.roleA : '甲方（收购方）', roleB = t ? t.roleB : '乙方（出让方）'
   /* 甲乙方信息展示（debt 类型支持多方股东） */
   const partyKv = (p, prefix) => (p.kind==='company'
-    ? kv(prefix+'主体类型', '企业法人') + kv(prefix+'公司名称', p.name) + kv(prefix+'信用代码', p.creditCode) + kv(prefix+'法定代表人', p.legalRep) + kv(prefix+'联系电话', p.phone) + kv(prefix+'地址', p.address)
-    : kv(prefix+'主体类型', '自然人') + kv(prefix+'姓名', p.name) + kv(prefix+'身份证号', p.idNo) + kv(prefix+'联系电话', p.phone) + kv(prefix+'联系地址', p.address))
+    ? kv(prefix+'主体类型', '企业法人') + kv(prefix+'公司名称', p.name) + kv(prefix+'信用代码', p.creditCode) + kv(prefix+'法定代表人', p.legalRep) + kv(prefix+'联系电话', p.phone) + kv(prefix+'地址', p.address) + (p.ratio?kv(prefix+'持股比例', p.ratio+'%'):'')
+    : kv(prefix+'主体类型', '自然人') + kv(prefix+'姓名', p.name) + kv(prefix+'身份证号', p.idNo) + kv(prefix+'联系电话', p.phone) + kv(prefix+'联系地址', p.address) + (p.ratio?kv(prefix+'持股比例', p.ratio+'%'):''))
+  const paSum = state.type==='debt' ? (state.partiesA||[]).map(p=>`${p.name||'未填'}(${String(p.ratio||'').trim()||'－'}%)`).join('、') : ''
+  const pbSum = state.type==='debt' ? (state.partiesB||[]).map(p=>`${p.name||'未填'}(${String(p.ratio||'').trim()||'－'}%)`).join('、') : ''
   const partyAHtml = state.type==='debt'
-    ? state.partiesA.map((p,i)=>partyKv(p, '旧股东'+(i+1)+' ')).join('')
+    ? `<div class="kv"><span class="k">甲方（公司旧股东）</span><span class="v">${paSum}</span></div>` + state.partiesA.map((p,i)=>partyKv(p, '旧股东'+(i+1)+' ')).join('')
     : kv('主体类型', state.partyA.kind==='person'?'自然人':'企业法人')+kv('名称/姓名', state.partyA.name)+pInfo(state.partyA)
   const partyBHtml = state.type==='debt'
-    ? state.partiesB.map((p,i)=>partyKv(p, '新股东'+(i+1)+' ')).join('')
+    ? `<div class="kv"><span class="k">乙方（公司新股东）</span><span class="v">${pbSum}</span></div>` + state.partiesB.map((p,i)=>partyKv(p, '新股东'+(i+1)+' ')).join('')
     : kv('主体类型', state.partyB.kind==='person'?'自然人':'企业法人')+kv('名称/姓名', state.partyB.name)+pInfo(state.partyB)
   let elemKv
   if(state.type==='intermediary'){
@@ -1266,16 +1272,24 @@ function contractBody(){
 
   /* ===== 债务债权协议（股权转让所涉债权债务责任转让协议）===== */
   if(state.type==='debt'){
+    const paList = (state.partiesA||[]).map(p=>`${p.name||'＿＿'}（${p.kind==='company'?'企业法人':'自然人'}，持股 ${String(p.ratio||'').trim()||'＿'}%）`)
+    const pbList = (state.partiesB||[]).map(p=>`${p.name||'＿＿'}（${p.kind==='company'?'企业法人':'自然人'}，持股 ${String(p.ratio||'').trim()||'＿'}%）`)
     const totalParties = (state.partiesA.length||0) + (state.partiesB.length||0)
     const copyCount = totalParties > 2 ? totalParties : 2
     const cnCopy = ['一','二','三','四','五','六','七','八','九','十'][copyCount-1] || String(copyCount)
     /* 注1：不写 num，由生成器按顺序自动编号（一、二、三…），增删条款无需手动重排
-       注2：责任分界点统一用「营业执照变更生效之日」这一客观事件表述，全文不出现具体日期 */
+       注2：责任分界点统一用「营业执照变更生效之日」这一客观事件表述，全文不出现具体日期
+       注3：多方股东时，甲方=公司旧股东（转让方）、乙方=公司新股东（受让方），各方按持股比例分别担责、同一阵营内部互不连带 */
     return [
+      {t:'当事人及责任比例', body:[
+        `甲方（公司旧股东，转让方）由以下各方组成：${paList.join('；')}。`,
+        `乙方（公司新股东，受让方）由以下各方组成：${pbList.join('；')}。`,
+        `各方确认：变更前债务由甲方各方按其转让前在标的公司的持股比例分别承担；变更后债务由乙方各方按其受让后在标的公司的持股比例分别承担，同一阵营内部互不承担连带清偿责任。`
+      ]},
       {t:'债权债务责任的划分', body:[
         `双方同意，以营业执照变更生效之日为界，划分标的公司的债权债务责任。`,
-        `该日之前已经产生的债务，以及虽于该日之后才被确认、但确因该日之前的经营行为或事实所引起的债务（以下统称"变更前债务"），均由甲方承担并负责清偿，与乙方及转让后的公司无关。`,
-        `该日之后新产生的债权债务，均由乙方负责并承担相应责任，与甲方无关。`
+        `该日之前已经产生的债务，以及虽于该日之后才被确认、但确因该日之前的经营行为或事实所引起的债务（以下统称"变更前债务"），由甲方各方按其转让前持股比例分别承担并负责清偿，与乙方及转让后的公司无关。`,
+        `该日之后新产生的债权债务（以下统称"变更后债务"），由乙方各方按其受让后持股比例分别负责并承担相应责任，与甲方无关。`
       ]},
       {t:'变更前债务的范围', body:[
         `前条所称"变更前债务"，包括但不限于下列情形：`,
@@ -1284,20 +1298,20 @@ function contractBody(){
         `　　（三）变更日之前已发生但尚未结案的诉讼、仲裁所确定的赔偿责任；`,
         `　　（四）变更日之前提供担保所应承担的代偿责任；`,
         `　　（五）其他因变更日之前的经营行为、事实或原因所产生的债务与责任。`,
-        `上述债务无论何时被确认，均由甲方承担；乙方或转让后的公司因此遭受损失的，甲方应予赔偿。`
+        `上述债务无论何时被确认，均由甲方各方按其转让前持股比例分别承担；乙方或转让后的公司因此遭受损失的，相关甲方各方应按其持股比例分别予以赔偿。`
       ]},
       {t:'出资实缴责任', body:[
-        `自营业执照变更生效之日起，标的公司尚未实缴的出资义务，由乙方按公司章程约定按期足额缴纳。`
+        `自营业执照变更生效之日起，标的公司尚未实缴的出资义务，由乙方各方按其受让后持股比例分别按期足额缴纳。`
       ]},
       {t:'双方确认与声明', body:[
-        `甲方确认：截至本协议签署之日，甲方已知悉的标的公司债务情况，已如实向乙方披露。`,
-        `乙方确认：已充分了解标的公司的经营及债务状况，自愿按本协议约定承接相应责任。`
+        `甲方各方分别确认：截至本协议签署之日，各自已知悉的标的公司债务情况，已如实向乙方披露。`,
+        `乙方各方确认：已充分了解标的公司的经营及债务状况，自愿按本协议约定承接相应责任。`
       ]},
       {t:'税费承担', body:[
         `因本次股权转让及本协议履行所产生的税费，由双方按照法律法规的规定各自承担；法律法规未作明确规定的，由双方协商确定。`
       ]},
       {t:'代偿与追偿', body:[
-        `若标的公司先行垫付了本应由甲方承担的债务，乙方有权代表标的公司向甲方追偿，甲方应在收到书面通知后三十日内予以清偿。`
+        `若标的公司先行垫付了本应由甲方各方承担的债务，乙方有权向相关甲方各方按其转让前持股比例追偿，相关甲方各方应在收到书面通知后三十日内分别予以清偿。`
       ]},
       {t:'违约责任', body:[
         `任何一方违反本协议约定，应赔偿由此给守约方造成的实际损失。`
@@ -1391,12 +1405,16 @@ function validateBeforeGen(){
       if(!String(p.name||'').trim()) return `请填写${roleA}（第${i+1}位）${p.kind==='company'?'公司名称':'姓名'}`
       if(p.kind==='company'){ if(!String(p.creditCode||'').trim()) return `请填写${roleA}（第${i+1}位）统一社会信用代码` }
       else if(!String(p.idNo||'').trim()) return `请填写${roleA}（第${i+1}位）身份证号`
+      const ra=String(p.ratio||'').trim(), ran=Number(ra)
+      if(!ra || isNaN(ran) || ran<=0 || ran>100) return `请填写${roleA}（第${i+1}位）有效的持股比例（0-100）`
     }
     for(let i=0;i<state.partiesB.length;i++){
       const p=state.partiesB[i]
       if(!String(p.name||'').trim()) return `请填写${roleB}（第${i+1}位）${p.kind==='company'?'公司名称':'姓名'}`
       if(p.kind==='company'){ if(!String(p.creditCode||'').trim()) return `请填写${roleB}（第${i+1}位）统一社会信用代码` }
       else if(!String(p.idNo||'').trim()) return `请填写${roleB}（第${i+1}位）身份证号`
+      const rb2=String(p.ratio||'').trim(), rbn=Number(rb2)
+      if(!rb2 || isNaN(rbn) || rbn<=0 || rbn>100) return `请填写${roleB}（第${i+1}位）有效的持股比例（0-100）`
     }
     if(!String(tm.target||'').trim()) return '请填写标的公司名称'
     return ''
@@ -1497,6 +1515,7 @@ async function doGenerate(){
         if(p.address) rows.push(new TableRow({ children:[ L('地址'), V(p.address) ] }))
       }
       if(p.phone) rows.push(new TableRow({ children:[ L('联系电话'), V(p.phone) ] }))
+      if(p.ratio) rows.push(new TableRow({ children:[ L('持股比例'), V(p.ratio+'%') ] }))
       return new Table({
         width:{ size:100, type:WidthType.PERCENTAGE },
         borders:{
@@ -1511,6 +1530,11 @@ async function doGenerate(){
       })
     }
     if(state.type==='debt'){
+      /* 债务债权：首部明确「甲方=公司旧股东 / 乙方=公司新股东」并枚举名单+比例，直接回应"没写明谁是甲方谁是乙方" */
+      const paSum = (state.partiesA||[]).map(p=>`${p.name||'＿＿'}(${String(p.ratio||'').trim()||'－'}%)`).join('、')
+      const pbSum = (state.partiesB||[]).map(p=>`${p.name||'＿＿'}(${String(p.ratio||'').trim()||'－'}%)`).join('、')
+      children.push(new Paragraph({ children:[R('甲方（公司旧股东）：'+paSum,{size:24,bold:true})], alignment:AlignmentType.JUSTIFIED, spacing:{ line:360, lineRule:'auto', after:60 } }))
+      children.push(new Paragraph({ children:[R('乙方（公司新股东）：'+pbSum,{size:24,bold:true})], alignment:AlignmentType.JUSTIFIED, spacing:{ line:360, lineRule:'auto', after:180 } }))
       /* 债务债权：多方股东，逐个输出信息表格 */
       const pa = state.partiesA.length ? state.partiesA : [A]
       const pb = state.partiesB.length ? state.partiesB : [B]
