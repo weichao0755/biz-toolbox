@@ -157,6 +157,7 @@ tr.expand td{background:#fffdf8;padding:0}
     <select id="fLevel" data-act="filter"><option value="">全部等级</option></select>
     <select id="fSource" data-act="filter"><option value="">全部来源</option></select>
     <select id="sort" data-act="filter"><option value="updated">排序：更新时间</option><option value="level">排序：意向等级</option><option value="created">排序：创建时间</option></select>
+    <select id="sortDir" data-act="filter"><option value="desc">倒序 ↓</option><option value="asc">顺序 ↑</option></select>
     <span class="sp"></span>
     <button class="btn btn-ghost" data-act="fields">字段管理</button>
     <button class="btn btn-ghost" data-act="exportExcel">导出 Excel</button>
@@ -222,6 +223,7 @@ var state = {
   filter: {type:'', status:'', level:'', source:''},
   search: '',
   sort: 'updated',
+  sortDir: 'desc',     // 排序方向：desc 倒序（新→旧 / C→A），asc 顺序（旧→新 / A→C）
   expanded: null,
   editing: null,
   draftFollow: {}
@@ -255,10 +257,14 @@ function visibleLeads(){
     return true;
   });
   var lv={'A':0,'B':1,'C':2};
+  var mul = state.sortDir==='asc' ? 1 : -1;   // asc=顺序，desc=倒序（默认，保持原行为）
   arr.sort(function(a,b){
-    if(state.sort==='level'){ var r=(lv[a.level]||9)-(lv[b.level]||9); if(r) return r; }
-    else if(state.sort==='created'){ if((b.createdAt||0)-(a.createdAt||0)) return (b.createdAt||0)-(a.createdAt||0); }
-    return (b.updatedAt||0)-(a.updatedAt||0);
+    var r;
+    if(state.sort==='level'){ var ra=lv[a.level]!=null?lv[a.level]:9, rb=lv[b.level]!=null?lv[b.level]:9; r=ra-rb; }
+    else if(state.sort==='created'){ r=(a.createdAt||0)-(b.createdAt||0); }
+    else { r=(a.updatedAt||0)-(b.updatedAt||0); }
+    if(r) return r*mul;
+    return ((a.updatedAt||0)-(b.updatedAt||0))*mul;   // 同值时按更新时间兜底
   });
   return arr;
 }
@@ -650,6 +656,7 @@ document.addEventListener('change', function(e){
     else if(id==='fLevel') state.filter.level=el.value;
     else if(id==='fSource') state.filter.source=el.value;
     else if(id==='sort') state.sort=el.value;
+    else if(id==='sortDir') state.sortDir=el.value;
     renderAll(); // 同步刷新二层切换 tab 的选中态
   }
 });
