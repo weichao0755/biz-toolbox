@@ -240,6 +240,11 @@
       </div>
     </div>
     <div class="fg">
+      <label>应用场景（选填）</label>
+      <input id="fScene" placeholder="如：微信首次触达 / 电话跟进 / 价格异议处理">
+      <div class="hint">说明这条话术在什么场合用；会显示在话术卡片上方便快速挑，也能被搜索到</div>
+    </div>
+    <div class="fg">
       <label>所属分类（最多三级）</label>
       <div class="row3">
         <select id="fCat1" onchange="onCat1Change()"><option value="">无</option></select>
@@ -396,7 +401,7 @@ function toPinyinInitial(str){
 }
 
 // ============ 状态 ============
-let scripts = [];   // {id, title, code, content, cat, tags:[], color, createdAt, updatedAt}
+let scripts = [];   // {id, title, code, content, cat, tags:[], scene:'', color, createdAt, updatedAt}
 let cats = [];      // {id, name, color, level, parentId}（展开状态存 expandedCats）
 let vars = {};      // {key: value}
 let favs = [];      // [id]
@@ -607,8 +612,9 @@ function filteredScripts(){
       const content = (s.content||'').toLowerCase();
       const code = (s.code||'').toLowerCase();
       const tags = (s.tags||[]).join(' ').toLowerCase();
+      const scene = (s.scene||'').toLowerCase();
       const titlePi = toPinyinInitial(s.title||'');
-      return title.includes(q) || content.includes(q) || code.includes(q) || tags.includes(q) || (qpi && titlePi.includes(qpi));
+      return title.includes(q) || content.includes(q) || code.includes(q) || tags.includes(q) || scene.includes(q) || (qpi && titlePi.includes(qpi));
     });
   }
   // 排序：收藏优先 → 手动 sort 升序 → 创建时间倒序（sort 可通过卡片 ↑↓ 调整）
@@ -670,6 +676,7 @@ function scriptHtml(s){
       <div class="topline">
         <span class="title">${esc(s.title)}</span>
         ${s.code?`<span class="code">${esc(s.code)}</span>`:''}
+        ${s.scene?`<span class="tag" style="background:#f0fdf4;color:#15803d" title="应用场景：${esc(s.scene)}">🎯 ${esc(s.scene)}</span>`:''}
         ${catPath&&currentCat==='all'?`<span class="tag" style="background:#eff6ff;color:${color}">${esc(catPath)}</span>`:''}
         ${tags}
       </div>
@@ -815,6 +822,7 @@ function openScriptModal(id){
     document.getElementById('fTitle').value = s.title||'';
     document.getElementById('fCode').value = s.code||'';
     document.getElementById('fTags').value = (s.tags||[]).join(',');
+    document.getElementById('fScene').value = s.scene||'';
     document.getElementById('fContent').value = s.content||'';
     editingImages = (s.images||[]).slice();
     // 反填路径
@@ -826,6 +834,7 @@ function openScriptModal(id){
     document.getElementById('fTitle').value = '';
     document.getElementById('fCode').value = '';
     document.getElementById('fTags').value = '';
+    document.getElementById('fScene').value = '';
     document.getElementById('fContent').value = '';
     editingImages = [];
     // 默认选中当前分类
@@ -888,6 +897,7 @@ function saveScript(){
     content,
     cat: getSelectedCat(),
     tags: document.getElementById('fTags').value.split(/[,，]/).map(s=>s.trim()).filter(Boolean),
+    scene: document.getElementById('fScene').value.trim(),
     images: editingImages.slice()
   };
   if(editingId){
@@ -1325,7 +1335,7 @@ function renderSharedModal(){
     return `<div class="script" style="margin-bottom:8px">
       <div class="swatch" style="background:${s.color||'#f59e0b'}"></div>
       <div class="body">
-        <div class="topline"><span class="title">${esc(s.title||'（无标题）')}</span>${cat?`<span class="tag">${esc(cat)}</span>`:''}${imgs.length?`<span class="tag">🖼 ${imgs.length} 张图</span>`:''}${has?'<span class="tag" style="color:#16a34a">✓ 已在我的话术</span>':''}</div>
+        <div class="topline"><span class="title">${esc(s.title||'（无标题）')}</span>${s.scene?`<span class="tag" style="background:#f0fdf4;color:#15803d">🎯 ${esc(s.scene)}</span>`:''}${cat?`<span class="tag">${esc(cat)}</span>`:''}${imgs.length?`<span class="tag">🖼 ${imgs.length} 张图</span>`:''}${has?'<span class="tag" style="color:#16a34a">✓ 已在我的话术</span>':''}</div>
         ${s.content?`<div class="content">${preview}</div>`:''}
       </div>
       <div class="acts">

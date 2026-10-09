@@ -180,7 +180,7 @@
     <div class="card update-note">
       <h3>内容更新说明</h3>
       <p>平台为静态站点部署，更新流程：内容/工具更新 → 重新部署 → 全员刷新即可看到最新版本（推荐 Ctrl+F5 强制刷新）。需要更新内容时，联系管理员即可。</p>
-      <p class="ver-line">当前版本 {{ APP_VERSION }} · 更新于 2026-09-23</p>
+      <p class="ver-line">当前版本 {{ APP_VERSION }} · 更新于 2026-10-08</p>
     </div>
   </div>
 </template>
@@ -245,7 +245,7 @@ function dueLabel(due) {
 onMounted(loadTodos)
 
 /* 全部数据 key 统一来自 src/data/backupKeys.js（新增工具的 key 记得登记） */
-const APP_VERSION = 'v1.16.6' /* 2026-09-23 债务债权协议明确甲方/乙方身份+多股东按持股比例担责 */
+const APP_VERSION = 'v1.16.8' /* 2026-10-08 话术快捷回复新增「应用场景」输入项(卡片展示+可搜索)；v1.16.7=合同生成工具「特殊企业收购合同」双版本 */
 const fileInput = ref(null)
 const dataStatus = ref('')
 const dataStatusType = ref('ok')

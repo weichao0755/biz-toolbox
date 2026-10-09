@@ -218,6 +218,20 @@ const TYPES = {
     hasAmount: false,
     available: true,
     multiParty: true      /* 支持多方股东签署（每个股东可为自然人或企业法人） */
+  },
+  /* 特殊企业收购合同：乙方（受托方）固定为金米启航，甲方（委托人）为收购客户，与「委托出售合同」对称（买方代理版）；
+     含 高新企业 / 大额企业 两种子版本（terms.agencyVariant），合同标题动态切换 */
+  agency: {
+    label: '特殊企业收购合同',
+    docTitle: '',
+    ico: '🚀',
+    desc: '委托人（收购方客户）委托金米启航独家代理收购特殊类型标的公司，可选「高新企业收购合同 / 大额企业收购合同」两种版本，含总包定价与四期里程碑付款，收购核心要求由使用者手动填写',
+    roleA: '委托人（收购方）', roleB: '受托人（金米启航）',
+    targetLabel: '标的公司名称',
+    targetPh: '如：深圳市XX科技有限公司',
+    hasAmount: true,
+    available: true,
+    bIsCompany: true        /* 乙方固定为企业法人（金米启航受托方） */
   }
 }
 
@@ -270,7 +284,15 @@ function emptyState(){
       payMode:'inst',                 /* 支付方式：inst=分期 full=全款（签订当日付清） */
       installments:[],                /* 分期：[{node,amount}]，金额单位元 */
       changeHandling:'no',            /* 出让方是否负责所有变更手续：yes/no */
-      changeDate:''                   /* 债务债权：营业执照变更生效日期 */
+      changeDate:'',                  /* 债务债权：营业执照变更生效日期 */
+      agencyVariant:'high',           /* 特殊企业收购：high=高新企业收购合同 big=大额企业收购合同 */
+      agencyCity:'',                  /* 特殊企业收购：注册城市（留空=合同留下划线空位） */
+      agencySoft:'',                  /* 特殊企业收购：软件著作权不少于（项） */
+      agencyPatent:'',                /* 特殊企业收购：专利不少于（项） */
+      agencyPatentInv:'',             /* 特殊企业收购：其中发明专利不少于（项） */
+      agencyTrademark:'',             /* 特殊企业收购：注册商标不少于（项） */
+      agencyFyFrom:'',                /* 特殊企业收购：经营与财务·近一年起始（如 2025年9月） */
+      agencyFyTo:''                   /* 特殊企业收购：经营与财务·近一年截止（如 2026年9月） */
     },
     extra: { clauses: [] },
     meta: { contractNo:autoContractNo(), signDate:today(), signDateManual:false, signPlace:'深圳市' }
@@ -534,15 +556,17 @@ function stepParty(){
   const lockB = t.bIsCompany ? 'company' : (t.bIsPerson ? 'person' : '')
   const hint = state.type==='intermediary'
     ? '甲方为中介服务机构（默认金米启航），乙方为公司100%股权持有者（自然人卖家，签字捺印）。'
-    : state.scenario==='client'
-      ? '面向客户：甲方为收购方（客户），乙方为出让方。'
-      : '面向同行：甲方为我方（金米启航），乙方为出让方（同行）。'
+    : state.type==='agency'
+      ? '乙方为受托方（默认金米启航，企业固定），甲方为收购委托方（客户，自然人或企业均可），乙方独家代理甲方收购特殊类型标的公司（高新企业 / 大额企业，版本在第 3 步选择）。'
+      : state.scenario==='client'
+        ? '面向客户：甲方为收购方（客户），乙方为出让方。'
+        : '面向同行：甲方为我方（金米启航），乙方为出让方（同行）。'
   return `
   <div class="card">
     <h2>② 甲乙方信息</h2>
     <div class="sub">${t.label} · ${hint}未锁定的主体可在「企业法人 / 自然人」间切换，输入框标题与合同表述随之变化；点「输入默认信息」自动填入金米启航信息</div>
-    ${partyBlock('partyA', t.roleA, {lockKind:lockA})}
-    ${partyBlock('partyB', t.roleB, {lockKind:lockB, noDefault:!!lockB})}
+    ${partyBlock('partyA', t.roleA, {lockKind:lockA, noDefault: state.type==='agency'})}
+    ${partyBlock('partyB', t.roleB, {lockKind:lockB, noDefault: state.type==='intermediary'})}
     <div class="btn-row">
       <button class="btn btn-ghost" onclick="gotoStep(0)">← 上一步</button>
       <button class="btn btn-primary" ${state.partyA.name&&state.partyB.name?'':'disabled'} onclick="gotoStep(2)">下一步：合同要素 →</button>
@@ -581,6 +605,7 @@ function instRows(){
 function stepTerms(){
   if(state.type==='intermediary') return stepTermsIntermediary()
   if(state.type==='debt') return stepTermsDebt()
+  if(state.type==='agency') return stepTermsAgency()
   const isFull = state.terms.payMode==='full'
   return `
   <div class="card">
@@ -684,6 +709,74 @@ function stepTermsDebt(){
 function upContact(k,v){
   state.terms.aContact[k]=v
   saveState()
+}
+/* 高新企业委托代理收购合同 · 合同要素（总包价 / 标的硬性要求 / 四期付款） */
+function stepTermsAgency(){
+  const tm = state.terms
+  const isFull = tm.payMode==='full'
+  return `
+  <div class="card">
+    <h2>③ 合同要素</h2>
+    <div class="sub">填写委托代理收购核心要素；总包价单位为「元」，自动附带人民币大写；「收购标的明确要求」各项留空则合同中留下划线空位，由签署时手动填写。带 * 为必填项</div>
+    <div class="sec-title top">合同版本</div>
+    <div class="radio-row">
+      <label><input type="radio" name="agencyVariant" value="high" ${tm.agencyVariant!=='big'?'checked':''} onchange="setVal('terms','agencyVariant','high')"> 高新企业收购合同</label>
+      <label><input type="radio" name="agencyVariant" value="big" ${tm.agencyVariant==='big'?'checked':''} onchange="setVal('terms','agencyVariant','big')"> 大额企业收购合同</label>
+    </div>
+    <div class="hint" style="margin:4px 0 0">高新企业：公司性质要求持有《高新技术企业证书》；大额企业：公司性质要求具备大额数电发票开票额度。合同标题随版本自动切换</div>
+    <div class="frow">
+      ${field(tm,'target','标的公司名称',{req:1,placeholder:'如：深圳市XX科技有限公司'})}
+      <div class="fg"><label>收购总包价（元）<span class="req">*</span></label><input type="text" value="${val(tm.price)}" placeholder="如：3000000" oninput="upPrice(this.value)"><div class="hint" id="priceUp">${priceHint(tm.price)}</div><div class="hint">全包干：含乙方代理服务费、股权收购价款预估及必要费用</div></div>
+    </div>
+    <div class="sec-title top">收购标的明确要求（甲方核心要求，留空 = 合同中留下划线空位手动填写）</div>
+    <div class="frow">
+      ${field(tm,'agencyCity','注册城市（范围内）',{placeholder:'如：深圳市'})}
+      ${field(tm,'agencySoft','软件著作权不少于（项）',{placeholder:'如：3'})}
+    </div>
+    <div class="frow">
+      ${field(tm,'agencyPatent','专利不少于（项）',{placeholder:'如：5'})}
+      ${field(tm,'agencyPatentInv','其中发明专利不少于（项）',{placeholder:'如：2'})}
+    </div>
+    <div class="frow">
+      ${field(tm,'agencyTrademark','注册商标不少于（项）',{placeholder:'如：2'})}
+      ${field(tm,'agencyFyFrom','经营与财务·近一年起始',{placeholder:'如：2025年9月'})}
+    </div>
+    <div class="frow">
+      ${field(tm,'agencyFyTo','经营与财务·近一年截止',{placeholder:'如：2026年9月'})}
+    </div>
+    <div class="sec-title top" style="margin-top:18px">支付方式
+      <button class="mini-btn" ${isFull?'':'style="background:#fbf5ea;border-color:#7a3e07;color:#3a2410;font-weight:600"'} onclick="setPayMode('inst')">🔄 分期支付</button>
+      <button class="mini-btn" ${isFull?'style="background:#fbf5ea;border-color:#7a3e07;color:#3a2410;font-weight:600"':''} onclick="setPayMode('full')">💰 全款支付</button>
+    </div>
+    ${isFull
+      ? '<div class="kv full-pay-tip">💡 已选择「全款支付」：合同将约定甲方于本合同签订当日一次性支付全部总包价人民币 '+(priceHint(tm.price).replace('大写：','')||'——')+'</div>'
+      : `<div class="sec-title top" style="margin-top:0">分期期数
+          <button class="mini-btn" onclick="defaultAgencyInst()">⚡ 默认四期</button>
+          <button class="mini-btn" onclick="addInst()">＋ 添加一期</button>
+          <span style="font-weight:400;color:#8a7a62;font-size:11.5px">默认四期：签署生效 / 尽调认可 / 启动变更 / 取得新执照 四个里程碑</span>
+        </div>
+        ${instRows()}`}
+    <div class="sec-title" style="margin-top:18px">签署信息</div>
+    <div class="frow3">
+      ${field(state.meta,'contractNo','合同编号',{hint:'留空则自动生成'})}
+      ${field(state.meta,'signDate','签订日期',{type:'date'})}
+      ${field(state.meta,'signPlace','签订地点',{})}
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="gotoStep(1)">← 上一步</button>
+      <button class="btn btn-primary" ${tm.target&&tm.price?'':'disabled'} onclick="gotoStep(3)">下一步：补充协议 →</button>
+    </div>
+  </div>`
+}
+/* 委托代理收购 · 默认四期里程碑付款 */
+function defaultAgencyInst(){
+  state.terms.installments = [
+    { node:'本合同签署并生效后的 5 个工作日内', amount:'' },
+    { node:'乙方提交书面尽调报告且甲方书面认可后的 5 个工作日内', amount:'' },
+    { node:'甲方与标的股权持有人签署股权收购协议并启动工商变更登记后的 5 个工作日内', amount:'' },
+    { node:'标的公司工商变更登记完成、取得新营业执照后的 5 个工作日内', amount:'' }
+  ]
+  saveState(); renderStep()
 }
 function setPayMode(m){
   state.terms.payMode = m==='full' ? 'full' : 'inst'
@@ -1052,6 +1145,24 @@ function stepGen(){
     elemKv = kv('标的公司名称', state.terms.target)
       + kv('旧股东人数', String(state.partiesA.length||0))
       + kv('新股东人数', String(state.partiesB.length||0))
+  } else if(state.type==='agency'){
+    const city=String(state.terms.agencyCity||'').trim()||'（留空待填）'
+    const asset=[]
+    if(String(state.terms.agencySoft||'').trim()) asset.push('软著≥'+state.terms.agencySoft+'项')
+    if(String(state.terms.agencyPatent||'').trim()) asset.push('专利≥'+state.terms.agencyPatent+'项'+(String(state.terms.agencyPatentInv||'').trim()?('(发明≥'+state.terms.agencyPatentInv+'项)'):''))
+    if(String(state.terms.agencyTrademark||'').trim()) asset.push('商标≥'+state.terms.agencyTrademark+'项')
+    const fy=(String(state.terms.agencyFyFrom||'').trim()&&String(state.terms.agencyFyTo||'').trim())?(state.terms.agencyFyFrom+' 至 '+state.terms.agencyFyTo):'（留空待填）'
+    const instTxt = state.terms.payMode==='full'
+      ? '全款支付：本合同签订当日支付全部总包价'
+      : (state.terms.installments.filter(x=>x.node||x.amount)
+          .map((x,i)=>'第'+(i+1)+'期：'+x.node+' / '+(x.amount||'—')+'元').join('；') || '未设置分期')
+    elemKv = kv('合同版本', state.terms.agencyVariant==='big'?'大额企业收购合同':'高新企业收购合同')
+      + kv('标的公司名称', state.terms.target)
+      + kv('收购总包价（元）', state.terms.price + (priceUpTxt?('（'+priceUpTxt+'）'):''))
+      + kv('注册城市（范围内）', city)
+      + kv('核心资产要求', asset.join('；')||'（留空待填）')
+      + kv('经营与财务·近一年', fy)
+      + kv('支付方式', instTxt)
   } else {
     const instTxt = state.terms.payMode==='full'
       ? '全款支付：本合同签订当日支付全部价款'
@@ -1094,6 +1205,11 @@ function stepGen(){
    合同正文模板（收购公司合同 · 通用标准版，待用户提供实际版本后替换）
    ============================================================ */
 function blank(v){ const s=String(v||'').trim(); return s ? s : '＿＿＿＿＿＿＿＿' }
+
+/* 特殊企业收购合同 · 动态标题（高新/大额两种子版本） */
+function agencyDocTitle(){
+  return (state.terms.agencyVariant==='big') ? '大额企业委托代理收购合同' : '高新企业委托代理收购合同'
+}
 
 /* 金额转人民币大写（100 → 壹佰元整；1234.56 → 壹仟贰佰叁拾肆元伍角陆分） */
 const CN_D = ['零','壹','贰','叁','肆','伍','陆','柒','捌','玖']
@@ -1328,6 +1444,65 @@ function contractBody(){
     ]
   }
 
+  /* ===== 特殊企业收购合同（乙方=受托方金米启航，甲方=收购委托人；高新/大额两种子版本）===== */
+  if(state.type==='agency'){
+    const isBig = tm.agencyVariant==='big'
+    const nature = isBig
+      ? '合法存续且具备大额数电发票开票额度的有限责任公司'
+      : '合法存续且有效持有《高新技术企业证书》的有限责任公司'
+    const isFull = tm.payMode==='full'
+    const inst = (tm.installments||[]).filter(x=>String(x.node||'').trim()||String(x.amount||'').trim())
+    const payParas = isFull
+      ? [`2.3 甲方应于本合同签订当日，一次性向乙方支付全部总包价款人民币 ${blank(tm.price)} 元（大写：${rmbUpper(tm.price)}）。`]
+      : [`2.3 总包价按下列里程碑分期支付：`, ...inst.map((x,i)=>`第${i+1}期：于「${blank(x.node)}」前，甲方向乙方支付人民币 ${blank(x.amount)} 元（大写：${rmbUpper(x.amount)}）${i===inst.length-1?'（尾款）':''}。`)]
+    return [
+      {num:1, t:'委托事项与收购标的', body:[
+        `1.1 甲方委托乙方作为独家代理方，全权办理收购符合本协议约定条件之标的公司（即${tName}，以下简称"标的公司"）的全部事宜，包括但不限于：对标的公司开展尽职调查、设计收购方案、与标的公司股权持有人谈判、起草与签署股权收购相关法律文件、协助办理工商变更登记及交割手续等。`,
+        `1.2 收购标的明确要求：甲方对目标公司的核心要求如下，乙方应据此寻找和筛选目标，任何不符合下述要求的公司均不应被推荐：`,
+        `　　- 公司性质：${nature}。`,
+        `　　- 注册城市要求：目标公司的注册地及主要经营场所必须位于（${blank(tm.agencyCity)}）范围内。此要求为刚性条件，乙方不得推荐位于其他城市的公司。`,
+        `　　- 核心资产：目标公司应拥有明确的知识产权，包括但不限于：`,
+        `　　　　- 软件著作权：不少于${blank(tm.agencySoft)}项；`,
+        `　　　　- 专利：不少于${blank(tm.agencyPatent)}项，其中发明专利不少于${blank(tm.agencyPatentInv)}项；`,
+        `　　　　- 注册商标：不少于${blank(tm.agencyTrademark)}项。`,
+        `　　- 经营与财务：目标公司近一年（${blank(tm.agencyFyFrom)} 至 ${blank(tm.agencyFyTo)}）经营状况稳定，能提供完整的月度开票明细及纳税明细供审计。`,
+        `乙方应保证其推荐之标的公司真实、合法地满足上述要求；如标的公司不符合上述约定，甲方有权拒绝收购且不承担任何违约责任。`
+      ]},
+      {num:2, t:'收购总包定价与支付', body:[
+        `2.1 本次收购采用全包干总包价模式，总包价包含乙方代理服务费、标的公司股权收购价款预估及乙方为完成委托事项所发生之必要费用，除本协议另有约定外，甲方无须另行支付其他费用。`,
+        `2.2 经双方确认，本次收购总包价为：人民币 ${blank(tm.price)} 元（大写：${rmbUpper(tm.price)}）。`,
+        ...payParas,
+        `2.4 各期款项均以银行转账方式支付至乙方书面指定的账户；甲方按期足额支付后，乙方应及时推进相应阶段的委托事务。`
+      ]},
+      {num:3, t:'双方权利义务', body:[
+        `3.1 甲方权利义务：`,
+        `　　（1）甲方应向乙方如实提供收购需求、预算及合规要求，并及时确认乙方提交之收购方案与文件；`,
+        `　　（2）甲方应按本协议约定按期支付各期款项；`,
+        `　　（3）甲方有权对乙方之尽职调查、方案设计与谈判进度进行监督与询问。`,
+        `3.2 乙方权利义务：`,
+        `　　（1）乙方应勤勉、尽责地履行受托义务，以专业能力推进收购事务，维护甲方合法权益；`,
+        `　　（2）乙方应对标的公司之高新技术企业资质、税务合规及知识产权状况进行核查，识别并提示相关风险；`,
+        `　　（3）在收购过程中出现僵局时，乙方应积极协调，必要时提请双方友好协商或司法调解以推进交易；`,
+        `　　（4）乙方对在受托过程中知悉的甲方商业秘密及交易信息负有保密义务，未经甲方书面同意不得向任何第三方披露。`
+      ]},
+      {num:4, t:'陈述、保证与违约责任', body:[
+        `4.1 双方确认，本协议的签署及履行均基于真实意思表示，不存在欺诈、胁迫或重大误解之情形。`,
+        `4.2 乙方保证其具备承接本协议委托事项之合法资质与专业能力。`,
+        `4.3 甲方未按约定按期支付任一期款项的，每逾期一日，应按逾期金额的万分之五向乙方支付违约金；逾期超过15日的，乙方有权暂停推进委托事务，由此产生之延误及损失由甲方承担。`,
+        `4.4 乙方根本违约或因乙方过错导致委托事项无法完成的，乙方应退还已收取的全部款项，并向甲方赔偿由此造成的实际损失。`,
+        `4.5 依据《中华人民共和国民法典》第九百二十八条之规定，委托事务不能完成的，受托人（乙方）不得请求报酬；已收取的报酬及费用，按照乙方实际已完成之工作量与支出合理结算，多退少补。`
+      ]},
+      {num:5, t:'争议解决', body:[
+        `因本协议引起的或与本协议有关的任何争议，双方应友好协商解决；协商不成的，任何一方均有权向乙方所在地有管辖权的人民法院提起诉讼。`
+      ]},
+      {num:6, t:'生效与终止', body:[
+        `6.1 本协议自双方签字（盖章）之日起生效。`,
+        `6.2 本协议一式贰份，甲乙双方各执壹份，具有同等法律效力。`,
+        `6.3 委托事项全部完成并办理完毕工商变更登记及交割手续后，本协议自动终止；各方协商一致亦可提前解除本协议，解除应签订书面协议。`
+      ]}
+    ]
+  }
+
   /* ===== 收购公司合同 ===== */
   const isFull = tm.payMode==='full'
   const inst = (tm.installments||[]).filter(x=>String(x.node||'').trim()||String(x.amount||'').trim())
@@ -1448,6 +1623,19 @@ function validateBeforeGen(){
         if(!amT || isNaN(amN) || amN<0) return '分期金额必须为有效数字（元），请补全各期金额（第 3 步）'
       }
     }
+  } else if(state.type==='agency'){
+    if(!String(tm.target||'').trim()) return '请填写标的公司名称'
+    const priceT=String(tm.price||'').trim(), priceN=Number(priceT)
+    if(!priceT || isNaN(priceN) || priceN<0) return '请填写有效的收购总包价（元）'
+    if(tm.payMode!=='full'){
+      const inst=(tm.installments||[]).filter(x=>String(x.node||'').trim()||String(x.amount||'').trim())
+      if(!inst.length) return '请设置分期期数（第 3 步），或选择「全款支付」'
+      for(const x of inst){
+        if(!String(x.node||'').trim()) return '分期支付节点不能为空，请补全各期信息（第 3 步）'
+        const amT=String(x.amount||'').trim(), amN=Number(amT)
+        if(!amT || isNaN(amN) || amN<0) return '分期金额必须为有效数字（元），请补全各期金额（第 3 步）'
+      }
+    }
   }
   return ''
 }
@@ -1465,6 +1653,8 @@ async function doGenerate(){
     const { Document, Packer, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle, Footer, PageNumber } = d
     const T = TYPES[state.type]||TYPES.acquisition
     const A = state.partyA, B = state.partyB, tm = state.terms, mt = state.meta
+    /* 特殊企业收购合同标题随子版本（高新/大额）动态切换，其余类型用配置标题 */
+    const DOC_TITLE = state.type==='agency' ? agencyDocTitle() : (T.docTitle||T.label)
 
     const FSong = { ascii:'Times New Roman', hAnsi:'Times New Roman', eastAsia:'宋体' }
     const FHei  = { ascii:'Arial', hAnsi:'Arial', eastAsia:'黑体' }
@@ -1487,7 +1677,7 @@ async function doGenerate(){
 
     /* 标题 */
     children.push(new Paragraph({
-      children:[R(T.docTitle||T.label,{font:FHei,size:44,bold:true})],
+      children:[R(DOC_TITLE,{font:FHei,size:44,bold:true})],
       alignment:AlignmentType.CENTER,
       spacing:{ before:80, after:220, line:360, lineRule:'auto' }
     }))
@@ -1558,7 +1748,9 @@ async function doGenerate(){
       ? `根据《中华人民共和国民法典》及相关法律法规，乙方就出售其持有的${tm.target||'标的公司'}100%股权事宜委托甲方提供中介服务，经双方协商达成一致，订立本协议，以资共同遵守。`
       : state.type==='debt'
         ? `经协商，${tm.target||'标的公司'}原股东的全部出资均已转让给现任新股东，股东转让出资后，原股东不再享受股东权利，也不再承担股东义务。现就公司在股权转让之前经营过程中已经产生或可能产生的债权债务、经营风险等事项，双方特别约定及声明如下：`
-        : `根据《中华人民共和国民法典》及相关法律法规，甲乙双方就${tm.target||'标的公司'}股权收购事宜，经平等协商达成一致，订立本合同，以资共同遵守。`
+        : state.type==='agency'
+          ? `根据《中华人民共和国民法典》及相关法律法规，甲方（委托人）委托乙方（受托人）独家代理收购符合约定条件之${tm.target||'标的公司'}，经双方协商达成一致，订立本协议，以资共同遵守。`
+          : `根据《中华人民共和国民法典》及相关法律法规，甲乙双方就${tm.target||'标的公司'}股权收购事宜，经平等协商达成一致，订立本合同，以资共同遵守。`
     children.push(new Paragraph({
       children:[R(introText,{size:24})],
       alignment:AlignmentType.JUSTIFIED, indent:{firstLine:480}, spacing:{ line:360, lineRule:'auto', after:120 }
@@ -1642,7 +1834,7 @@ async function doGenerate(){
     const blob = await Packer.toBlob(doc)
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
-    a.download = `${T.docTitle||T.label}-${(tm.target||'未命名').slice(0,20)}-${(mt.contractNo||'')}.docx`
+    a.download = `${DOC_TITLE}-${(tm.target||'未命名').slice(0,20)}-${(mt.contractNo||'')}.docx`
     document.body.appendChild(a); a.click(); a.remove()
     setTimeout(()=>URL.revokeObjectURL(a.href),5000)
     document.getElementById('okTip').style.display='block'
