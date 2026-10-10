@@ -1663,7 +1663,7 @@ async function doGenerate(){
       children:[R(text)],
       alignment:AlignmentType.JUSTIFIED,
       indent:{ firstLine:480 },
-      spacing:{ line:440, lineRule:'auto', after:80 }
+      spacing:{ line:240, lineRule:'auto', after:80 }
     })
 
     const children = []
@@ -1688,12 +1688,12 @@ async function doGenerate(){
       const L = (text) => new TableCell({
         width:{ size:28, type:WidthType.PERCENTAGE },
         margins:{ top:40, bottom:40, left:0, right:100 },
-        children:[ new Paragraph({ children:[R(text+'：',{size:22,bold:true})], alignment:AlignmentType.RIGHT, spacing:{ line:320, lineRule:'auto' } }) ]
+        children:[ new Paragraph({ children:[R(text+'：',{size:22,bold:true})], alignment:AlignmentType.RIGHT, spacing:{ line:240, lineRule:'auto' } }) ]
       })
       const V = (text) => new TableCell({
         width:{ size:72, type:WidthType.PERCENTAGE },
         margins:{ top:40, bottom:40, left:0, right:0 },
-        children:[ new Paragraph({ children:[R(text||'＿＿＿＿＿＿＿＿',{size:22})], spacing:{ line:320, lineRule:'auto' } }) ]
+        children:[ new Paragraph({ children:[R(text||'＿＿＿＿＿＿＿＿',{size:22})], spacing:{ line:240, lineRule:'auto' } }) ]
       })
       const rows = [ new TableRow({ children:[ L(role), V(((p&&p.name)||'＿＿＿＿＿＿＿＿') + '（' + (isPerson?'自然人':'企业法人') + '）') ] }) ]
       if(isPerson){
@@ -1723,26 +1723,26 @@ async function doGenerate(){
       /* 债务债权：首部明确「甲方=公司旧股东 / 乙方=公司新股东」并枚举名单+比例，直接回应"没写明谁是甲方谁是乙方" */
       const paSum = (state.partiesA||[]).map(p=>`${p.name||'＿＿'}(${String(p.ratio||'').trim()||'－'}%)`).join('、')
       const pbSum = (state.partiesB||[]).map(p=>`${p.name||'＿＿'}(${String(p.ratio||'').trim()||'－'}%)`).join('、')
-      children.push(new Paragraph({ children:[R('甲方（公司旧股东）：'+paSum,{size:24,bold:true})], alignment:AlignmentType.JUSTIFIED, spacing:{ line:360, lineRule:'auto', after:60 } }))
-      children.push(new Paragraph({ children:[R('乙方（公司新股东）：'+pbSum,{size:24,bold:true})], alignment:AlignmentType.JUSTIFIED, spacing:{ line:360, lineRule:'auto', after:180 } }))
+      children.push(new Paragraph({ children:[R('甲方（公司旧股东）：'+paSum,{size:24,bold:true})], alignment:AlignmentType.JUSTIFIED, spacing:{ line:240, lineRule:'auto', after:60 } }))
+      children.push(new Paragraph({ children:[R('乙方（公司新股东）：'+pbSum,{size:24,bold:true})], alignment:AlignmentType.JUSTIFIED, spacing:{ line:240, lineRule:'auto', after:180 } }))
       /* 债务债权：多方股东，逐个输出信息表格 */
       const pa = state.partiesA.length ? state.partiesA : [A]
       const pb = state.partiesB.length ? state.partiesB : [B]
       pa.forEach((p,i)=>{
         children.push(partyInfoTable((T.roleA||'甲方')+'（第'+(i+1)+'位）', p))
-        children.push(new Paragraph({ spacing:{ after:80 } }))
+        children.push(new Paragraph({ spacing:{ after:80, line:240, lineRule:'auto' } }))
       })
-      children.push(new Paragraph({ spacing:{ after:120 } }))
+      children.push(new Paragraph({ spacing:{ after:120, line:240, lineRule:'auto' } }))
       pb.forEach((p,i)=>{
         children.push(partyInfoTable((T.roleB||'乙方')+'（第'+(i+1)+'位）', p))
-        children.push(new Paragraph({ spacing:{ after:80 } }))
+        children.push(new Paragraph({ spacing:{ after:80, line:240, lineRule:'auto' } }))
       })
-      children.push(new Paragraph({ spacing:{ after:180 } }))
+      children.push(new Paragraph({ spacing:{ after:180, line:240, lineRule:'auto' } }))
     } else {
       children.push(partyInfoTable(T.roleA||'甲方（收购方）', A))
-      children.push(new Paragraph({ spacing:{ after:120 } }))
+      children.push(new Paragraph({ spacing:{ after:120, line:240, lineRule:'auto' } }))
       children.push(partyInfoTable(T.roleB||'乙方（出让方）', B))
-      children.push(new Paragraph({ spacing:{ after:180 } }))
+      children.push(new Paragraph({ spacing:{ after:180, line:240, lineRule:'auto' } }))
     }
     const introText = state.type==='intermediary'
       ? `根据《中华人民共和国民法典》及相关法律法规，乙方就出售其持有的${tm.target||'标的公司'}100%股权事宜委托甲方提供中介服务，经双方协商达成一致，订立本协议，以资共同遵守。`
@@ -1753,7 +1753,7 @@ async function doGenerate(){
           : `根据《中华人民共和国民法典》及相关法律法规，甲乙双方就${tm.target||'标的公司'}股权收购事宜，经平等协商达成一致，订立本合同，以资共同遵守。`
     children.push(new Paragraph({
       children:[R(introText,{size:24})],
-      alignment:AlignmentType.JUSTIFIED, indent:{firstLine:480}, spacing:{ line:360, lineRule:'auto', after:120 }
+      alignment:AlignmentType.JUSTIFIED, indent:{firstLine:480}, spacing:{ line:240, lineRule:'auto', after:120 }
     }))
 
     /* 正文条款 */
@@ -1771,28 +1771,34 @@ async function doGenerate(){
       }
       children.push(new Paragraph({
         children:[R((num?`第${num}条　`:'') + c.t,{font:FHei,size:24,bold:true})],
-        spacing:{ before:200, after:80, line:340, lineRule:'auto' },
+        spacing:{ before:200, after:80, line:240, lineRule:'auto' },
         keepNext:true
       }))
       c.body.forEach(t=>{ if(String(t||'').trim()) children.push(bodyP(t)) })
     })
 
     /* 签署栏 */
-    children.push(new Paragraph({ children:[R(state.type==='acquisition' ? '（以下无正文，为本合同签署页）' : '（以下无正文，为本协议签署页）',{size:21,color:'808080'})], alignment:AlignmentType.CENTER, spacing:{ before:400, after:200 } }))
+    /* 签署页：本段必须与紧随其后的签署栏保持同页（keepNext），避免只把「以下无正文」留在上一页末尾、签署栏被整块推到下一页形成「单独签署页」 */
+    children.push(new Paragraph({
+      children:[R(state.type==='acquisition' ? '（以下无正文，为本合同签署页）' : '（以下无正文，为本协议签署页）',{size:21,color:'808080'})],
+      alignment:AlignmentType.CENTER,
+      spacing:{ before:400, after:200, line:240, lineRule:'auto' },
+      keepNext:true
+    }))
     const signCell = (role,p,cellWidth,forceWord) => {
       const isPerson = p && p.kind==='person'
       const signWord = forceWord || (isPerson ? (T.bIsPerson && role===T.roleB ? '签字捺印' : '签字') : '盖章')
       const signLines = [
-        new Paragraph({ children:[R(`${role}（${signWord}）：${(p&&p.name)||'　　　　　　'}`,{size:24})], spacing:{ line:360, lineRule:'auto', after:200 } })
+        new Paragraph({ children:[R(`${role}（${signWord}）：${(p&&p.name)||'　　　　　　'}`,{size:24})], spacing:{ line:240, lineRule:'auto', after:200 } })
       ]
       if(isPerson){
-        if(p.idNo) signLines.push(new Paragraph({ children:[R('身份证号：'+p.idNo,{size:24})], spacing:{ line:360, lineRule:'auto', after:200 } }))
+        if(p.idNo) signLines.push(new Paragraph({ children:[R('身份证号：'+p.idNo,{size:24})], spacing:{ line:240, lineRule:'auto', after:200 } }))
       } else {
-        if(p.creditCode) signLines.push(new Paragraph({ children:[R('统一社会信用代码：'+p.creditCode,{size:24})], spacing:{ line:360, lineRule:'auto', after:200 } }))
-        signLines.push(new Paragraph({ children:[R('法定代表人或授权代表（签字）：',{size:24})], spacing:{ line:360, lineRule:'auto', after:200 } }))
+        if(p.creditCode) signLines.push(new Paragraph({ children:[R('统一社会信用代码：'+p.creditCode,{size:24})], spacing:{ line:240, lineRule:'auto', after:200 } }))
+        signLines.push(new Paragraph({ children:[R('法定代表人或授权代表（签字）：',{size:24})], spacing:{ line:240, lineRule:'auto', after:200 } }))
       }
-      if(p && p.address) signLines.push(new Paragraph({ children:[R('联系地址：'+p.address,{size:24})], spacing:{ line:360, lineRule:'auto', after:200 } }))
-      signLines.push(new Paragraph({ children:[R(signDateLine(),{size:24})], spacing:{ line:360, lineRule:'auto' } }))
+      if(p && p.address) signLines.push(new Paragraph({ children:[R('联系地址：'+p.address,{size:24})], spacing:{ line:240, lineRule:'auto', after:200 } }))
+      signLines.push(new Paragraph({ children:[R(signDateLine(),{size:24})], spacing:{ line:240, lineRule:'auto' } }))
       return new TableCell({
         width:{ size:cellWidth||50, type:WidthType.PERCENTAGE },
         borders:{ top:{style:BorderStyle.NONE}, bottom:{style:BorderStyle.NONE}, left:{style:BorderStyle.NONE}, right:{style:BorderStyle.NONE} },
@@ -1807,11 +1813,11 @@ async function doGenerate(){
       const pb = state.partiesB.length ? state.partiesB : [B]
       pa.forEach((p,i)=>{
         children.push(new Table({ width:{ size:100, type:WidthType.PERCENTAGE }, borders:noBorder, rows:[ new TableRow({ children:[ signCell((T.roleA||'甲方')+'（第'+(i+1)+'位）', p, 100, (p.kind==='company'?'盖章':'签字捺印')) ] }) ] }))
-        children.push(new Paragraph({ spacing:{ after:300 } }))
+        children.push(new Paragraph({ spacing:{ after:300, line:240, lineRule:'auto' } }))
       })
       pb.forEach((p,i)=>{
         children.push(new Table({ width:{ size:100, type:WidthType.PERCENTAGE }, borders:noBorder, rows:[ new TableRow({ children:[ signCell((T.roleB||'乙方')+'（第'+(i+1)+'位）', p, 100, (p.kind==='company'?'盖章':'签字捺印')) ] }) ] }))
-        children.push(new Paragraph({ spacing:{ after:300 } }))
+        children.push(new Paragraph({ spacing:{ after:300, line:240, lineRule:'auto' } }))
       })
     } else {
       children.push(new Table({
