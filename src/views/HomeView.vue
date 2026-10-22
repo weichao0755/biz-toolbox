@@ -1,7 +1,7 @@
 <template>
   <div class="page">
     <div class="hero card">
-      <h1 class="page-title">欢迎使用金米启航强袭军业务辅助平台</h1>
+      <h1 class="page-title">欢迎使用金米财税业务辅助平台</h1>
       <p class="page-sub">公司转让业务的知识沉淀与效率工具平台，新人快速上手，老手持续沉淀。</p>
       <div class="hero-actions">
         <RouterLink to="/knowledge"><button>进入知识库</button></RouterLink>
@@ -180,7 +180,7 @@
     <div class="card update-note">
       <h3>内容更新说明</h3>
       <p>平台为静态站点部署，更新流程：内容/工具更新 → 重新部署 → 全员刷新即可看到最新版本（推荐 Ctrl+F5 强制刷新）。需要更新内容时，联系管理员即可。</p>
-      <p class="ver-line">当前版本 {{ APP_VERSION }} · 更新于 2026-10-10</p>
+      <p class="ver-line">当前版本 {{ APP_VERSION }} · 更新于 2026-10-22</p>
     </div>
   </div>
 </template>
@@ -245,7 +245,7 @@ function dueLabel(due) {
 onMounted(loadTodos)
 
 /* 全部数据 key 统一来自 src/data/backupKeys.js（新增工具的 key 记得登记） */
-const APP_VERSION = 'v1.16.10' /* 2026-10-10 需求确认单「公司年限」由下拉改手动输入框(保留常用建议)；v1.16.9=合同生成 Word 版式对齐样本(单倍行距+签署区keepNext) */
+const APP_VERSION = 'v1.16.11' /* 2026-10-22 平台名统一改为「金米财税业务辅助平台」(原金米启航强袭军)；v1.16.10=需求确认单「公司年限」由下拉改手动输入框(保留常用建议)；v1.16.9=合同生成 Word 版式对齐样本(单倍行距+签署区keepNext) */
 const fileInput = ref(null)
 const dataStatus = ref('')
 const dataStatusType = ref('ok')

@@ -8,7 +8,7 @@
           <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
         </svg>
       </div>
-      <h1 class="lock-title">金米启航业务辅助平台</h1>
+      <h1 class="lock-title">金米财税业务辅助平台</h1>
       <p class="lock-sub">平台门户已加密，请输入访问密码</p>
       <input
         type="password"
@@ -27,7 +27,7 @@
   <div v-else class="layout">
     <aside class="side">
       <div class="brand">
-        <div class="brand-logo" aria-label="强袭军">
+        <div class="brand-logo" aria-label="金米财税">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M12 2L3 6v8c0 4 4 7 9 8 5-1 9-4 9-8V6l-9-4z" fill-opacity="0.18"/>
             <path d="M14.5 5.5L7.5 13.5h4l-1 5L17 10.5h-4.5L14.5 5.5z"/>
@@ -36,7 +36,7 @@
           </svg>
         </div>
         <div>
-          <div class="brand-name">金米启航强袭军<br>业务辅助平台</div>
+          <div class="brand-name">金米财税<br>业务辅助平台</div>
           <div class="brand-sub">知识沉淀 · 工具赋能</div>
         </div>
       </div>
@@ -53,7 +53,7 @@
         </RouterLink>
       </nav>
       <div class="side-foot">
-        <span class="foot-hint">v1.16.3 · 金米启航强袭军业务辅助平台</span>
+        <span class="foot-hint">v1.16.11 · 金米财税业务辅助平台</span>
       </div>
     </aside>
     <main class="main">
