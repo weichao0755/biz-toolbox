@@ -282,13 +282,98 @@
   .fold[open]>summary::before{content:"▾ "}
   .fold>div{padding:0 13px 12px}
 
-  /* ===== AI 话术（核心够用版） ===== */
-  .aibox{border:1px solid var(--border);border-radius:11px;padding:11px 12px;margin-top:10px;background:var(--surface)}
-  .aibox-h{font-size:13.5px;font-weight:600;margin-bottom:5px;display:flex;align-items:center;gap:6px}
-  .aibox-h i{width:16px;height:16px;border-radius:5px;background:var(--grad);display:inline-block}
-  .aiout{margin-top:9px;background:var(--surface-2);border:1px dashed var(--border);border-radius:9px;padding:11px 12px;font-size:12.5px;line-height:1.82;white-space:pre-wrap;max-height:420px;overflow:auto;color:var(--text)}
+  /* ===== 客户问过的问题 ===== */
+  .asklist{display:flex;flex-direction:column;gap:9px}
+  .askrow{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+  .askq{font-size:13px;font-weight:600;line-height:1.6;display:flex;gap:7px;align-items:flex-start}
+  .askn{flex:none;width:18px;height:18px;border-radius:6px;background:var(--grad);color:#fff;
+    font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;margin-top:2px}
+  .aska{font-size:12.5px;color:var(--text-2);line-height:1.82;margin-top:6px;padding-left:25px}
+  /* ===== ★ 这一单的方案（AI 五项逐条） ===== */
+  .aip-hd{font-size:13.5px;font-weight:600;padding:10px 12px;display:flex;align-items:center;gap:7px;border-bottom:1px solid var(--border)}
+  .aip-badge{width:15px;height:15px;border-radius:5px;background:var(--grad);color:#fff;font-size:10px;
+    display:flex;align-items:center;justify-content:center;flex:none}
+  .aip-tt{font-size:13.5px;font-weight:600}
+  .aip-s2{margin-left:auto;font-size:11.5px;font-weight:400;color:var(--muted)}
+  .aip{border:1px solid var(--border);border-radius:12px;background:var(--surface);margin-bottom:14px;overflow:hidden}
+  .aip-top{display:flex;align-items:center;gap:9px;padding:10px 12px;border-bottom:1px solid var(--border);background:var(--surface-2)}
+  .aip-t{font-size:12.5px;color:var(--text-2);flex:1;min-width:0;line-height:1.5}
+  .aipi{padding:11px 12px;border-bottom:1px dashed var(--border)}
+  .aipi:last-child{border-bottom:none}
+  .aipi-h{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px}
+  .aipi-n{width:17px;height:17px;border-radius:5px;background:var(--grad);color:#fff;font-size:11px;
+    display:flex;align-items:center;justify-content:center;flex:none;font-weight:500}
+  .aipi-d{font-size:13px;font-weight:600}
+  .aipi-s{font-size:10.5px;color:var(--muted);margin-left:auto}
+  .aipi-now{font-size:11.5px;color:var(--muted);line-height:1.65;margin:0 0 6px 24px}
+  .aipi-body{margin-left:24px}
+  .aipi-wait{font-size:11.5px;color:var(--muted)}
+  .aipi-iss{font-size:12.6px;line-height:1.8;color:var(--text)}
+  .aip-over{padding:11px 12px;font-size:13px;line-height:1.9;color:var(--text);
+    background:var(--accent-bg);border-bottom:1px solid var(--border)}
+  .aipr{display:flex;gap:7px;margin-top:7px;font-size:12.8px;line-height:1.85;color:var(--text)}
+  .aipk{flex:none;font-size:10.5px;color:var(--accent);background:var(--accent-bg);border-radius:5px;
+    padding:1px 6px;height:18px;line-height:16px;margin-top:2px}
+  .aipr.say{background:var(--surface-2);border-radius:8px;padding:8px 10px;margin-left:-2px}
+  .aipr.say .aipk{background:#fff;border:1px solid var(--border)}
+  .aip-err{background:var(--red-bg);border:1px solid #e8b4ae;border-radius:9px;padding:10px 12px;
+    font-size:12px;line-height:1.8;color:var(--red)}
+  .aip-diag{font-size:10.5px;color:var(--muted);word-break:break-all}
+  /* ===== AI Key：右上角入口 + 弹出卡片 ===== */
+  .aicfg-fab{position:fixed;top:12px;right:12px;z-index:60;display:flex;align-items:center;gap:6px;
+    background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:6px 12px 6px 9px;
+    font-size:12px;font-family:inherit;color:var(--text-2);cursor:pointer;box-shadow:var(--sh2)}
+  .aicfg-fab:hover{border-color:var(--accent-2);color:var(--accent)}
+  .aicfg-fab .d{width:7px;height:7px;border-radius:50%;background:#c9bba6;flex:none}
+  .aicfg-fab.on .d{background:var(--green);box-shadow:0 0 0 3px rgba(47,143,91,.16)}
+  .aicfg-mask{position:fixed;inset:0;z-index:70;background:rgba(42,33,24,.34);display:none;
+    align-items:flex-start;justify-content:center;padding:56px 14px 20px;overflow:auto}
+  .aicfg-mask.on{display:flex}
+  .aicfg-card{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--border);
+    border-radius:16px;box-shadow:var(--sh2);padding:16px 16px 14px;animation:aicfgIn .16s ease-out}
+  @keyframes aicfgIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+  .aicfg-h{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:600;margin-bottom:4px}
+  .aicfg-h::before{content:"";width:15px;height:15px;border-radius:5px;background:var(--grad);flex:none}
+  .aicfg-x{margin-left:auto;width:26px;height:26px;border:none;background:var(--surface-2);border-radius:8px;
+    font-size:15px;line-height:1;color:var(--muted);cursor:pointer;font-family:inherit}
+  .aicfg-x:hover{color:var(--text)}
+  .aicfg-foot{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+  .aicfg-tip{font-size:11px;color:var(--muted);line-height:1.6;flex:1;min-width:140px}
+  /* ===== AI 分析（DeepSeek 直连，默认收起） ===== */
+  .aibox{border:1px solid var(--border);border-radius:11px;margin-top:10px;background:var(--surface);overflow:hidden}
+  .aibox>summary{list-style:none;cursor:pointer;padding:11px 12px;font-size:13px;font-weight:600;
+    display:flex;align-items:center;gap:7px;color:var(--text)}
+  .aibox>summary::-webkit-details-marker{display:none}
+  .aibox>summary::before{content:"";width:15px;height:15px;border-radius:5px;background:var(--grad);flex:none}
+  .aibox>summary::after{content:"点开";margin-left:auto;font-size:11.5px;font-weight:400;color:var(--muted)}
+  .aibox[open]>summary::after{content:"收起"}
+  .aibox[open]>summary{border-bottom:1px solid var(--border)}
+  .aibox-b{padding:11px 12px 12px}
+  .ai-in{width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 11px;font-size:13px;
+    font-family:inherit;background:var(--surface-2);color:var(--text);margin-bottom:8px}
+  .ai-in:focus{outline:none;border-color:var(--accent-2);background:#fff}
+  .ai-row{display:flex;gap:7px;align-items:center}
+  .ai-sel{flex:1;min-width:0;border:1px solid var(--border);border-radius:9px;padding:8px 9px;font-size:12.5px;
+    font-family:inherit;background:var(--surface-2);color:var(--text)}
+  .ai-b1,.ai-b2{border:none;border-radius:9px;padding:8px 14px;font-size:12.5px;font-family:inherit;cursor:pointer;white-space:nowrap}
+  .ai-b1{background:var(--grad);color:#fff;font-weight:500}
+  .ai-b2{background:var(--surface);border:1px solid var(--border);color:var(--text-2)}
+  .ai-b2:active,.ai-b1:active{transform:scale(.98)}
+  .ai-hint{font-size:11.5px;color:var(--muted);margin-top:8px}
+  .aisec{border-top:1px solid var(--border);padding-top:10px;margin-top:10px}
+  .aisec:first-child{border-top:none;padding-top:0;margin-top:0}
+  .aisec-h{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .aisec-t{font-size:13px;font-weight:600}
+  .aisec-hint{font-size:11px;color:var(--muted);flex:1;min-width:0}
+  .ai-b3{border:1px solid var(--border);background:var(--surface-2);color:var(--accent);border-radius:8px;
+    padding:5px 11px;font-size:12px;font-family:inherit;cursor:pointer;flex:none}
+  .ai-b3:disabled{opacity:.55;cursor:default}
+  .aiout{margin-top:9px;background:var(--surface-2);border:1px dashed var(--border);border-radius:9px;
+    padding:11px 12px;font-size:12.5px;line-height:1.82;white-space:pre-wrap;max-height:420px;overflow:auto;color:var(--text)}
   .aiout.err{background:var(--red-bg);border-color:#e8b4ae;color:var(--red)}
-  .aifoot{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.6}
+  .aifoot{font-size:11px;color:var(--muted);margin-top:9px;line-height:1.6}
+  .ai-lk{color:var(--accent);text-decoration:none;border-bottom:1px dotted var(--accent-2)}
+  .ai-lk:hover{color:var(--accent-2)}
 
   /* ===== 电脑端：铺满 + 双栏 ===== */
   @media(min-width:900px){
@@ -337,8 +422,6 @@
   .cf input:focus{outline:none;border-color:var(--accent-2)}
 
   /* ===== v3.3 输入层：手填流水 / 短信季度 / 不愿说 ===== */
-  .opt.na{border-style:dashed;color:var(--muted);background:transparent;font-size:12.5px;padding:10px 12px}
-  .opt.na.sel{border-color:var(--accent-2);color:var(--accent);background:var(--accent-bg);border-style:solid}
   .finput{display:flex;align-items:center;gap:8px;margin:12px 0 8px}
   .finput input{flex:1;min-width:0;padding:14px 14px;border:1px solid var(--border);border-radius:10px;background:var(--surface);font-size:17px;font-family:inherit;color:var(--text);font-weight:600;letter-spacing:.5px}
   .finput input::placeholder{font-weight:400;color:var(--muted);font-size:13px;letter-spacing:0}
@@ -350,15 +433,6 @@
   .naflag{background:var(--amber-bg);border:1px solid #f0d8ae;border-radius:9px;padding:8px 11px;font-size:12px;line-height:1.65;color:var(--text-2);margin:8px 0}
 
   /* ===== v3.6 · 严格分步向导：一次只显示一步 ===== */
-  .step{display:none}
-  .step.on{display:block}
-  #wizbar{margin:0 0 12px;padding:8px 11px;background:var(--surface);border:1px solid var(--border);border-radius:9px;font-size:11.5px;color:var(--muted)}
-  #wizbar b{color:var(--accent);font-weight:700}
-  #wizbar .wb2{float:right}
-  .fulgrp{border:1px solid var(--border);border-radius:11px;padding:11px 12px 13px;margin-bottom:12px;background:var(--surface)}
-  .fulhead{font-size:13px;font-weight:700;color:var(--accent);margin-bottom:7px}
-  .fullead{font-size:13px;line-height:1.7;color:var(--text);background:var(--accent-bg);border-left:3px solid var(--accent-2);border-radius:0 8px 8px 0;padding:8px 10px;margin-bottom:10px}
-  .fullead b{color:var(--accent);font-weight:700}
   .ptabs{display:flex;gap:6px;margin:0 0 12px;flex-wrap:wrap}
   .ptab{padding:8px 12px;border:1px solid var(--border);border-radius:9px;background:var(--surface);font-size:12.5px;color:var(--text-2);cursor:pointer}
   .ptab.on{background:var(--accent-bg);border-color:var(--accent-2);color:var(--accent);font-weight:700}
@@ -379,14 +453,7 @@
   .lead-t{font-size:13.5px;line-height:1.78;color:var(--text)}
   .lead-t b{color:var(--accent);font-weight:700}
   .lead-tip{font-size:11.5px;color:var(--muted);margin-top:7px;padding-top:6px;border-top:1px dashed var(--accent-2)}
-  .ltabs{display:flex;gap:6px;margin:2px 0 9px}
-  .ltab{flex:1;padding:7px 3px;border:1px solid var(--accent-2);border-radius:8px;background:transparent;color:var(--accent);font-size:11px;font-family:inherit;cursor:pointer;line-height:1.4}
-  .ltab b{display:block;font-size:12.5px;font-weight:700}
-  .ltab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
   .lead-use{font-size:11.5px;color:var(--muted);margin-top:5px}
-  .insight{margin:12px 0 0;padding:10px 12px;border:1px dashed var(--accent-2);border-radius:10px;background:var(--surface);font-size:12.8px;line-height:1.78}
-  .insight-h{font-size:11px;font-weight:700;color:var(--accent);margin-bottom:5px;letter-spacing:.4px}
-  .insight .say{display:block;flex:none;gap:0;padding:0;border-bottom:0;color:var(--text);font-size:12.8px;line-height:1.78}
   .whyf{margin:-2px 0 10px;background:transparent;border:0}
   .whyf>summary{padding:4px 0;font-size:11.5px;font-weight:400;color:var(--muted);border:0}
   .whyf>summary::before{content:"▸ ";color:var(--muted)}
@@ -512,6 +579,42 @@
   .tk-row .rv{flex:1;font-size:13px;color:var(--text);line-height:1.55}
   .tk-row.todo{opacity:.5;border-style:dashed}
   .tk-row .rb{margin-left:auto;font-size:10.5px;color:var(--accent);cursor:pointer;flex:0 0 auto}
+  /* 信息表 v2：整行可点填 + 未答橙点 + 下一问高亮 + 标题三层提示 + 冲突条 */
+  .tk-rowv{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;overflow:hidden}
+  .tk-rowv.nx{border-color:var(--accent-2);box-shadow:0 0 0 1px rgba(224,144,26,.16),0 4px 14px -8px rgba(180,83,9,.3)}
+  .tk-rowv.open{border-color:var(--accent-2);background:var(--surface)}
+  .tk-rh{display:flex;align-items:center;gap:8px;padding:10px 11px;cursor:pointer}
+  .tk-dot{width:7px;height:7px;border-radius:50%;flex:0 0 7px;background:#d8cbb6}
+  .tk-rowv.todo .tk-dot{background:var(--accent-2);box-shadow:0 0 0 3px rgba(224,144,26,.15)}
+  .tk-rk{flex:0 0 86px;font-size:11.5px;color:var(--text-2);display:flex;align-items:center;gap:4px;min-width:0}
+  .tk-rowv.todo .tk-rk{color:var(--muted)}
+  .tk-rv{flex:1;font-size:13px;line-height:1.55;color:var(--text);min-width:0}
+  .tk-rowv.todo .tk-rv{color:var(--muted);font-size:12px}
+  .tk-rb{flex:0 0 auto;font-size:10.5px;color:var(--accent);padding:2px 7px;border-radius:6px;background:var(--accent-bg)}
+  .tk-qm{width:15px;height:15px;line-height:15px;text-align:center;border-radius:50%;background:var(--accent-bg);
+    color:var(--accent);font-size:10px;font-weight:700;cursor:help;flex:0 0 15px;user-select:none}
+  .tk-body{padding:0 11px 12px;border-top:1px dashed var(--border)}
+  .tk-body .tk-field:first-child{margin-top:11px}
+  .tk-body .tk-go{margin-top:4px}
+  .tk-qs{background:var(--surface-2);border-left:3px solid var(--accent-2);border-radius:0 8px 8px 0;
+    padding:9px 10px;margin:11px 0 4px}
+  .tk-qsl{display:block;font-size:10.5px;font-weight:700;color:var(--accent);letter-spacing:.4px;margin-bottom:3px}
+  .tk-qst{display:block;font-size:13px;line-height:1.7;color:var(--text)}
+  .tk-qc{display:block;width:100%;margin-top:7px;padding:6px;border:1px dashed var(--accent-2);border-radius:8px;
+    background:transparent;color:var(--accent);font-size:11.5px;font-family:inherit;cursor:pointer}
+  .tk-hintpop{position:fixed;z-index:80;max-width:300px;background:var(--surface);border:1px solid var(--accent-2);
+    border-radius:12px;padding:12px 13px;box-shadow:var(--sh2);font-size:12.5px;line-height:1.7;color:var(--text)}
+  .tk-hintpop .hh{font-size:10.5px;font-weight:700;color:var(--accent);letter-spacing:.5px;margin-bottom:3px}
+  .tk-hintpop .hb{margin-bottom:9px}
+  .tk-hintpop .hb:last-child{margin-bottom:0}
+  .tk-hintpop .hsay{background:var(--surface-2);border-left:3px solid var(--accent-2);border-radius:0 8px 8px 0;padding:7px 9px}
+  .tk-conf{background:var(--amber-bg);border:1px solid #eccf9e;border-radius:12px;padding:11px 12px;margin-bottom:10px}
+  .tk-conf .ch{font-size:12.5px;font-weight:700;color:var(--amber);margin-bottom:4px}
+  .tk-conf .ci{display:block;width:100%;text-align:left;background:transparent;border:0;border-top:1px dashed #eccf9e;
+    padding:8px 0 6px;font-size:12px;line-height:1.65;color:var(--text-2);font-family:inherit;cursor:pointer}
+  .tk-conf .ci:nth-of-type(1){border-top:0;padding-top:4px}
+  .tk-conf .ci b{color:var(--text)}
+  .tk-conf .ci i{font-style:normal;color:var(--accent);margin-left:4px;font-size:11px;white-space:nowrap}
   .tk-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
   .tk-b2{padding:12px;border:1px solid var(--accent-2);border-radius:11px;background:var(--surface);
     color:var(--accent);font-size:13.5px;font-weight:600;font-family:inherit;cursor:pointer}
@@ -547,6 +650,38 @@
   .olcnt{font-size:11.5px;color:var(--muted)}
   .ol{display:flex;flex-direction:column;gap:8px}
   .ol-row{display:flex;gap:10px;padding:10px 11px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+  /* 合规体检（四方向）：chip 常显 + 明细折叠 */
+  .ck{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:11px;overflow:hidden}
+  .ck-sum-line{display:flex;align-items:center;flex-wrap:wrap;gap:5px;padding:10px 11px;cursor:pointer;list-style:none}
+  .ck-sum-line::-webkit-details-marker{display:none}
+  .ck-h{font-size:12px;font-weight:700;color:var(--text);letter-spacing:.3px;margin-right:2px}
+  .ck-chip{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:20px;background:var(--surface-2);color:var(--text-2)}
+  .ck-chip.bad{background:var(--red-bg);color:var(--red)}
+  .ck-chip.warn{background:var(--amber-bg);color:var(--amber)}
+  .ck-chip.ok{background:var(--green-bg);color:var(--green)}
+  .ck-cnt{font-size:10.5px;color:var(--muted);margin-left:auto}
+  .ck-go{font-size:10.5px;color:var(--accent);flex:0 0 auto}
+  .ck[open] .ck-go{display:none}
+  .ck-body{padding:0 12px 10px;border-top:1px dashed var(--border)}
+  .ck-row{padding:9px 0 8px;border-top:1px dashed var(--border)}
+  .ck-row:nth-of-type(1){border-top:0;padding-top:9px}
+  .ck-top{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+  .ck-d{font-size:13px;font-weight:700;color:var(--text)}
+  .ck-v{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:20px;flex:0 0 auto}
+  .ck-v.bad{background:var(--red-bg);color:var(--red)}
+  .ck-v.warn{background:var(--amber-bg);color:var(--amber)}
+  .ck-v.ok{background:var(--green-bg);color:var(--green)}
+  .ck-now{font-size:11.5px;color:var(--muted);margin-bottom:3px}
+  .ck-issue{font-size:12.5px;line-height:1.7;color:var(--text-2)}
+  .ck-row.ckr-bad .ck-issue{color:var(--text)}
+  .ck-row.ckr-bad .ck-now{color:var(--red)}
+  .ck-fix{font-size:11px;color:var(--accent);margin-top:4px}
+  .ol-pre{font-size:11.5px;line-height:1.65;color:var(--amber);background:var(--amber-bg);border-radius:7px;
+    padding:6px 9px;margin-top:5px}
+  .ol-pre b{font-size:10.5px;letter-spacing:.4px;margin-right:5px}
+  .ol-u{font-size:11.5px;line-height:1.65;color:var(--green);margin-top:5px}
+  .ol-rk{font-size:11.5px;line-height:1.65;color:var(--red);margin-top:3px}
+  .ol-u b,.ol-rk b{font-size:10.5px;letter-spacing:.4px;margin-right:4px}
   .ol-n{flex:0 0 22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
   .ol-b{flex:1;min-width:0}
   .ol-t{font-size:13.5px;font-weight:600;line-height:1.45}
@@ -593,6 +728,12 @@
   .wtb .tagx{display:inline-block;margin-left:6px;font-size:10.5px;padding:1px 5px;border-radius:5px;background:var(--accent);color:#fff;vertical-align:1px;white-space:nowrap}
   .wsec{margin-top:12px}
   .wsec h4{font-size:12.5px;font-weight:700;color:var(--accent);margin-bottom:6px}
+  .wp{font-size:12.5px;line-height:1.8;color:var(--text-2);margin:0 0 8px}
+  .wp b{color:var(--text)}
+  .wlist{list-style:none;margin:0;padding:0}
+  .wlist li{font-size:12px;line-height:1.7;color:var(--text-2);padding:6px 0 6px 10px;
+    border-left:2px solid var(--accent-2);margin-bottom:5px;background:var(--surface-2);border-radius:0 7px 7px 0}
+  .wlist li b{color:var(--text);font-size:12.5px}
   .prem{margin:0;padding-left:18px;font-size:12.5px;line-height:1.72;color:var(--text-2)}
   .prem li{margin-bottom:5px}
   .fq-cat{margin:12px 0 4px;font-size:11.5px;font-weight:700;color:var(--accent);letter-spacing:.3px}
@@ -607,6 +748,25 @@
 </style>
 </head>
 <body>
+<button class="aicfg-fab" id="aiCfgFab" onclick="aiCfgOpen()">
+  <span class="d"></span>AI Key
+</button>
+<div class="aicfg-mask" id="aiCfgMask" onclick="aiCfgClose(event)">
+  <div class="aicfg-card" onclick="event.stopPropagation()">
+    <div class="aicfg-h">DeepSeek Key<button class="aicfg-x" onclick="aiCfgClose()">×</button></div>
+    <p class="hint" style="margin:2px 0 10px">只存在这台电脑的浏览器里，不经过我们的服务器，也不会发给别人。一台电脑填一次就够。</p>
+    <input class="ai-in" id="aiKeyIn" type="password" placeholder="sk- 开头的 Key" value="" autocomplete="off">
+    <div class="ai-row"><select class="ai-sel" id="aiModelIn">
+      <option value="deepseek-chat">deepseek-chat（快，日常够用）</option>
+      <option value="deepseek-reasoner">deepseek-reasoner（慢，分析更细）</option>
+    </select><button class="ai-b2" onclick="aiTest(this)">测试连接</button></div>
+    <div class="ai-hint" id="aiCfgHint">还没填 Key</div>
+    <div class="aicfg-foot">
+      <button class="ai-b1" onclick="aiCfgSave()">保存</button>
+      <span class="aicfg-tip">去 platform.deepseek.com 建一个，充十块钱能用很久。Key 别发群里。</span>
+    </div>
+  </div>
+</div>
 <div class="wrap">
   <span class="brand">金米财税 · 跨境业务</span>
   <h1>跨境新人训练工具</h1>
@@ -614,7 +774,6 @@
 
   <div class="tabs">
     <div class="tab on" onclick="tab('talk')">沟通台</div>
-    <div class="tab" onclick="tab('flow')">旧版向导</div>
     <div class="tab" onclick="tab('tbl')">对照表</div>
     <div class="tab" onclick="tab('kb')">名词速查</div>
   </div>
@@ -633,173 +792,6 @@
     <div id="tkDock" class="tk-dock"></div>
   </div>
 
-  <!-- ============ 旧版向导（v4.2，保留对照） ============ -->
-  <div class="pane" id="p-flow">
-    <div id="wizbar" style="display:none"></div>
-    <div id="wiz">
-    <div class="step on" id="sentry">
-      <div class="card">
-        <p class="entryt">跨境首咨 · 开始</p>
-        <p class="hint" style="margin:0 0 11px">先填一个客户编号，方便你自己认这一次记录。后面每一步都只要照着念、点一下。</p>
-        <p class="hint" style="margin:0 0 11px">同一主体做多个平台 → 在 Q1 一起选中，工具会逐个平台问发货方式；<b>不同经营主体请分单填</b>，出结果时点「再开一单」，编号自动接 -2。</p>
-        <input id="cidIn" type="text" class="cidin" placeholder="例：A001 / 张总-1024" onkeydown="if(event.key==='Enter')startConsult()">
-        <p class="hint" id="cidHint" style="margin:8px 0 0"></p>
-        <div class="nav2" style="margin-top:14px"><button class="btn primary" onclick="startConsult()">开始</button></div>
-      </div>
-    </div>
-
-    <div class="step" id="s0">
-      <div class="card">
-        <p class="q">开场白（照读）</p>
-        <p class="hint">"您好，我是金米财税的跨境合规师 XX，专门帮亚马逊/TK 卖家解决增值税免税和历史账务更正，今天先帮您把情况理清楚。"</p>
-        <p class="q" style="margin-top:10px">政策引导 5 钩子</p>
-        <p class="hint">① 所得税全面查账征收 ② 多部门数据穿透（<span class="tm" onclick="term('jinsui')">金税四期</span>+平台按季报送）③ <span class="tm" onclick="term('wupiao')">无票免税</span>升级（9610）④ <span class="tm" onclick="term('yutui')">9810 预退税</span> ⑤ 小规模双重优惠</p>
-      </div>
-      <p class="hint" style="margin:0">接下来 8 个问题，一问一答；客户不愿说的，每题都有「不愿说」，照样能出结果</p>
-      <div class="nav2" style="margin-top:12px"><button class="btn primary" onclick="go(1)">下一步</button></div>
-    </div>
-
-    <div class="step" id="s1">
-      <div id="lead1"></div>
-      <p class="q">Q1 · 客户主要做哪些平台？<span class="sm">可多选</span></p>
-      <details class="fold whyf"><summary>为什么问这个（原理）</summary><div class="whyc"><b>平台规则会直接锁死方案</b>。同样是"有海外仓"，亚马逊能走 9810 退税；Ozon 强制官方物流，就只能走 9610、退税免谈。先定平台，下一步再问怎么发货。</div></details>
-      <button class="opt" onclick="pickPlat('amazon',this)"><b>Amazon 亚马逊</b><br><span class="sm">美国 / 欧洲 / 日本，客户量最大</span></button>
-      <button class="opt" onclick="pickPlat('tiktok',this)"><b>TikTok Shop</b><br><span class="sm">美国 / 英国 / 东南亚</span></button>
-      <button class="opt" onclick="pickPlat('temu',this)"><b>Temu</b><br><span class="sm">全托管 / 半托管，方案差一倍</span></button>
-      <button class="opt" onclick="pickPlat('ozon',this)"><b>Ozon</b><br><span class="sm">俄罗斯，强制官方物流</span></button>
-      <button class="opt" onclick="pickPlat('shopee',this)"><b>Shopee 虾皮</b><br><span class="sm">新马 / 泰越菲 / 印尼</span></button>
-      <button class="opt" onclick="pickPlat('aliexpress',this)"><b>速卖通 AliExpress</b><br><span class="sm">俄东欧 / 西巴美</span></button>
-      <button class="opt" onclick="pickPlat('independent',this)"><b>独立站（Shopify 等）</b><br><span class="sm">四种报关模式都能走，最容易做规范</span></button>
-      <p class="hint" id="platCnt" style="margin:10px 0 0"></p>
-      <div class="naflag">平台和发货方式决定「报关单在谁手上」，是整套结论的地基。真拿不到，就选「不愿说」——工具会告诉你下一步怎么把话留住。</div>
-      <button class="opt na" onclick="naSet('platform',this)">客户不愿说 / 还没问到</button>
-      <div id="insight1"></div>
-      <div class="nav"><button class="btn ghost" onclick="go(0)">上一步</button><button class="btn primary" id="n1" disabled onclick="go(2)">下一步</button></div>
-    </div>
-
-    <div class="step" id="s2">
-      <div id="lead2"></div>
-      <p class="q">Q2 · 在这个平台上，货是怎么发出去的？<span class="sm">只问货怎么走，报关下一题单独问</span></p>
-      <details class="fold whyf"><summary>为什么问这个（原理）</summary><div class="whyc"><b>发货方式决定报关单上写谁的名字</b>。写客户自己公司 → 免税退税都能做；写平台或货代 → 只能免税、退税免谈。这一步选完，报关模式和结论就定了。</div></details>
-      <div id="fulbox"><p class="hint">先回上一步选平台</p></div>
-      <button class="opt na" onclick="naSet('ful',this)">客户不愿说 / 说不清</button>
-      <div id="insight2"></div>
-      <div class="nav"><button class="btn ghost" onclick="go(1)">上一步</button><button class="btn primary" id="n2" disabled onclick="go(3)">下一步</button></div>
-    </div>
-
-    <div class="step" id="s3">
-      <div id="lead3"></div>
-      <p class="q">Q3 · 这批货是谁报关的？<span class="sm">决定报关单上写谁的名字</span></p>
-      <details class="fold whyf"><summary>为什么问这个（原理）</summary><div class="whyc">「怎么发货」和「谁报关」是<b>两件事</b>，可以各走各的：FBA 海外仓说的是货怎么存、怎么发；报关说的是报关单上写谁的名字。很多客户货走 FBA 头程，报关却交给货代买单——这两种情况结论完全相反，必须分开问。</div></details>
-      <div id="declbox"></div>
-      <div class="naflag">问不出来也能往下走，先点「说不清」——工具会把「待确认」和下一步该补什么给你，不会卡死。</div>
-      <button class="opt na" onclick="declNa(this)">客户不愿说 / 说不清</button>
-      <div id="insight3"></div>
-      <div class="nav"><button class="btn ghost" onclick="go(2)">上一步</button><button class="btn primary" id="n3" disabled onclick="go(4)">下一步</button></div>
-    </div>
-
-    <div class="step" id="s4">
-      <div id="lead4"></div>
-      <p class="q">Q4 · 公司 / 店铺在哪个城市？</p>
-      <details class="fold whyf"><summary>为什么问这个（原理）</summary><div class="whyc"><b>决定 13 栏能不能直接填</b>。深圳 13 栏默认开放；外地必须先有报关单才能线下申请——这是"历史免增值税"能不能做的分水岭。</div></details>
-      <button class="opt" onclick="set('city','shenzhen',this)"><b>深圳</b><br><span class="sm">13 栏直接有，可直填免税</span></button>
-      <button class="opt" onclick="set('city','other',this)"><b>外地（非深圳）</b><br><span class="sm">必须先有报关单才能申 13 栏</span></button>
-      <button class="opt na" onclick="set('city','na',this)">客户不愿说 / 没问出来</button>
-      <div id="insight4"></div>
-      <div class="nav"><button class="btn ghost" onclick="go(3)">上一步</button><button class="btn primary" id="n4" disabled onclick="go(5)">下一步</button></div>
-    </div>
-
-    <div class="step" id="s5">
-      <div id="lead5"></div>
-      <p class="q">Q5 · 小规模还是一般纳税人？</p>
-      <details class="fold whyf"><summary>为什么问这个（原理）</summary><div class="whyc"><b>决定增值税率和套餐档位</b>。小规模 1%（季 30 万内免征），一般人 13%；年流水超 500 万会升一般人。</div></details>
-      <button class="opt" onclick="set('entity','small',this)"><b>小规模纳税人</b></button>
-      <button class="opt" onclick="set('entity','general',this)"><b>一般纳税人</b></button>
-      <button class="opt na" onclick="set('entity','na',this)">客户不愿说 / 不清楚</button>
-      <div id="insight5"></div>
-      <div class="nav"><button class="btn ghost" onclick="go(4)">上一步</button><button class="btn primary" id="n5" disabled onclick="go(6)">下一步</button></div>
-    </div>
-
-    <div class="step" id="s6">
-      <div id="lead6"></div>
-      <p class="q">Q6 · 去年全年流水大概多少？</p>
-      <details class="fold whyf"><summary>为什么问这个（原理）</summary><div class="whyc"><b>匹配套餐档位</b>（4888/6888/10888/14888），同时判断有没有升一般人的风险。填个大概数就行，不用精确到元。</div></details>
-      <div class="finput"><input id="flowIn" type="number" min="0" step="10" inputmode="numeric" placeholder="例：420" oninput="flowInput(this)"><span class="unit">万元 / 年</span></div>
-      <p class="hint" id="flowHint">客户说不清就填区间上限——"三四百万"填 400，"一千多万"填 1200。</p>
-      <button class="opt na" onclick="flowNa(this)">客户不愿说 / 说不清</button>
-      <div id="insight6"></div>
-      <div class="nav"><button class="btn ghost" onclick="go(5)">上一步</button><button class="btn primary" id="n6" disabled onclick="go(7)">下一步</button></div>
-    </div>
-
-    <div class="step" id="s7">
-      <div id="lead7"></div>
-      <p class="q">Q7 · 有没有收到税务局的短信 / 通知？</p>
-      <details class="fold whyf"><summary>为什么问这个（原理）</summary><div class="whyc"><b>收到短信 = 税局已经掌握他这几个季度的数据</b>。处理顺序和话术完全不一样——先把程序上的事处理完，再谈优化。</div></details>
-      <button class="opt" onclick="setSms('y',this)"><b>收到了</b><br><span class="sm">要求更正申报 / 补税 / 提供资料</span></button>
-      <button class="opt" onclick="setSms('n',this)"><b>没收到</b></button>
-      <button class="opt na" onclick="setSms('na',this)">客户不愿说 / 不清楚</button>
-      <div id="smsbox" style="display:none">
-        <p class="q" style="margin-top:16px">Q7.1 · 税局要求更正哪几个季度？<span class="sm">可多选</span></p>
-        <div class="smsq">
-          <button class="opt sq" onclick="pickQ('2025Q3',this)">2025 Q3</button>
-          <button class="opt sq" onclick="pickQ('2025Q4',this)">2025 Q4</button>
-          <button class="opt sq" onclick="pickQ('2026Q1',this)">2026 Q1</button>
-          <button class="opt sq" onclick="pickQ('2026Q2',this)">2026 Q2</button>
-          <button class="opt sq" onclick="pickQ('2026Q3',this)">2026 Q3</button>
-        </div>
-        <button class="opt na" id="sqNa" onclick="smsQNa(this)" style="margin-top:8px">不记得是哪几个季度 / 客户不愿说</button>
-        <p class="q" style="margin-top:16px">Q7.2 · 这几个季度合计流水多少？</p>
-        <div class="finput"><input id="smsAmtIn" type="number" min="0" step="10" inputmode="numeric" placeholder="例：180" oninput="smsAmtInput(this)"><span class="unit">万元</span></div>
-        <p class="hint">客户不愿给具体数就点下面——方案照样出，只是这段算账要改成区间讲法。</p>
-        <button class="opt na" id="amtNa" onclick="smsAmtNa(this)">流水不愿说</button>
-      </div>
-      <div id="insight7"></div>
-      <div class="nav"><button class="btn ghost" onclick="go(6)">上一步</button><button class="btn primary" id="n7" disabled onclick="go(8)">下一步</button></div>
-    </div>
-
-    <div class="step" id="s8">
-      <div id="lead8"></div>
-      <p class="q">Q8.1 · 现在这家公司是按什么口径申报的？<span class="sm">问的是「现在怎么报」，历史问题下一问单独问</span></p>
-      <details class="fold whyf"><summary>为什么问这个（原理）</summary><div class="whyc"><b>申报口径决定缺口多大</b>——按实际报基本对得上；按回款报差的是平台佣金和退款那一段；零申报差的是全额。这个差额就是往期要补的口子，也决定客户是能直接往前做，还是必须先更正。</div></details>
-      <button class="opt" onclick="setFile('real',this)"><b>按实际申报</b><br><span class="sm">平台销售额基本全额报了</span></button>
-      <button class="opt" onclick="setFile('cash',this)"><b>按回款申报</b><br><span class="sm">按平台打款额报，没算佣金 / 退款</span></button>
-      <button class="opt" onclick="setFile('zero',this)"><b>零申报</b><br><span class="sm">有收入也一直报 0</span></button>
-      <button class="opt na" onclick="setFile('na',this)">客户不愿说 / 说不清</button>
-      <div id="histbox" style="display:none">
-        <p class="q" style="margin-top:18px">Q8.2 · 历史上留下要处理的麻烦吗？<span class="sm">问的是以前，跟上面的申报口径是两件事</span></p>
-        <p class="hint">这一问决定动作顺序：有存量问题先更正、再优化；没有就直接从 0 搭。</p>
-        <button class="opt" onclick="setHist('none',this)"><b>没有，基本干净</b><br><span class="sm">往期申报和流水对得上</span></button>
-        <button class="opt" onclick="setHist('new',this)"><b>新主体 / 刚起步</b><br><span class="sm">基本没有历史数据</span></button>
-        <button class="opt" onclick="setHist('overdue',this)"><b>往期少报 / 欠申报，一直没处理</b></button>
-        <button class="opt" onclick="setHist('check',this)"><b>以前被查过 / 要求更正过</b><br><span class="sm">处理过，或还没处理完</span></button>
-        <button class="opt na" onclick="setHist('na',this)">客户不愿说 / 说不清</button>
-      </div>
-      <div id="insight8"></div>
-      <div class="nav"><button class="btn ghost" onclick="go(7)">上一步</button><button class="btn primary" id="n8" disabled onclick="go(9)">下一步</button></div>
-    </div>
-
-    <div class="step" id="s9">
-      <div id="lead9"></div>
-      <p class="q">Q9 · 供应商能开发票吗？专票还是普票？</p>
-      <details class="fold whyf"><summary>为什么问这个（原理）</summary><div class="whyc"><b>决定走免税还是引导退税</b>。走免税建议普票（省 3~4% 税点）；专票只为退税准备，而 9810 退税难且贵。</div></details>
-      <button class="opt" onclick="set('invoice','normal',this)"><b>能开普票</b></button>
-      <button class="opt" onclick="set('invoice','special',this)"><b>能开专票</b></button>
-      <button class="opt" onclick="set('invoice','none',this)"><b>基本开不了</b></button>
-      <button class="opt na" onclick="set('invoice','na',this)">客户不愿说 / 还没问</button>
-      <div id="insight9"></div>
-      <div class="nav"><button class="btn ghost" onclick="go(8)">上一步</button><button class="btn primary" onclick="finish()">生成首咨结果 + 话术</button></div>
-    </div>
-
-    <div class="step" id="s10">
-      <div class="card" style="padding:0;overflow:hidden">
-        <div style="background:var(--grad);color:#fff;padding:14px;font-size:15.5px;font-weight:600">落地方案 · 大纲 / 话术 / 解析 / FAQ</div>
-        <div id="out"></div>
-      </div>
-      <div class="nav2" style="margin-top:12px"><button class="btn ghost" onclick="splitUnit()">这个客户还有别的经营主体 → 再开一单</button><button class="btn primary" onclick="restart()">重新测算</button></div>
-    </div>
-    </div>
-  </div>
-
   <!-- ============ 名词速查 ============ -->
   <div class="pane" id="p-tbl">
     <p class="hint" style="margin:0 0 10px">这张表回答一个问题：<b>这个客户，能承诺到哪一步、绝不能承诺什么</b>。一行就是「站点 × 发货方式」的一个结论，先看免税 / 退税两列定生死，需要细节再点开那一行。</p>
@@ -816,7 +808,7 @@
     <div id="kblist"></div>
   </div>
 
-  <p class="foot">新人训练工具 · 边干边学 · 金米财税<br><span style="opacity:.55;font-size:11px">v5.6 · 2026-10-24 · 客户记录可存历史：按编号去重、生成即入库、顶部「历史」翻回去只读回看、可单条删除；记录时间与沟通人自动填；开场「来意」改为四项（了解合规 / 问报税价格 / 收到税局短信 / 其他，其他必填原话）；开场白改为开放式提问（不再罗列平台、不再讲「今天不收您钱」）；全部要念出来的话术重写为口语（顺势说一句 / 执行清单 / 挂电话五句），并加「说人话」检查防回退；对照表改为站点分组表格（44% 发货方式 / 12% 模式 / 14% 自有报关单 / 15% 免税 / 15% 退税），点行展开明细；新增「沟通台」：不再按固定题序——客户先说收到税局短信，下一问就直接问哪几个季度，平台往后排；每题一句能直接念、能复制的话术；客户问题实时记录、自动归类、给应答要点；多主体按「主体数 + 平台 + 是否含深圳 + 总流水」四项一次采集；信息够了当场出方案。旧版向导保留在第二个页签，可对照。底层判定、对照表 16 站点 × 30 行、名词 64 条全部沿用。</span></p>
+  <p class="foot">新人训练工具 · 边干边学 · 金米财税<br><span style="opacity:.55;font-size:11px">v6.7 · 2026-10-26 · 修「Failed to fetch」的误判：预览面板给页面加了 CSP，connect-src 白名单里没有 api.deepseek.com，请求在浏览器里就被拦了，原来却提示「查代理/VPN/插件」——把人往错方向带。现在监听 securitypolicyviolation，命中 deepseek 就记下来：出错时直接说明是内容安全策略拦的，给两个解法（双击用浏览器打开 / 部署到线上），诊断串也带上 csp=被拦 xxx；已知被拦过就不再空跑一次请求。v6.6 · 2026-10-26 · 方案页改成「AI 先出方案」：原来 AI 只是 hero 下面一个收起的折叠条（写着「点开·生成」），往下看到的全是大纲/话术/解析/FAQ 四段规则模板，所以看起来像模板生成。现在把「这一单的方案」提成方案页第一块、不折叠：顶上是 AI 写的「客户分析」（把这个客户说穿：生意怎么做、钱怎么走、最要命的卡点、方案思路），下面五项逐条给「他现在 / 跟他说」。点「生成方案」直接进入 AI 生成流程——有 Key 就自动开跑，边生成边填（先填分析，再逐项填），没 Key 就地提示并把 Key 卡片弹出来，不再静默给一份模板。没生成时先显示规则引擎算出来的现状和核心卡点兜底，不是空白。生成结果不跨客户：开新单自动清掉上一单的 AI 结论。同一单再进方案页不会重复请求。返回格式认不出五项会报错挂在第一项下面，不装作成功。v6.5 · 2026-10-26 · 旧版向导整块删除（第二个页签、九问分步面板、每题三问法、专业输出框）：连带只服务向导的 40 余个函数（go / startConsult / finish / pickPlat / pickFul / pickDecl / leadHTML / leadTabs / leadOf / insightOf / renderFulAll / syncCur 等）、向导专用样式（.step / #wizbar / .fulgrp / .ltab / .insight / .opt.na）和写往已删 #out 的占位语句一并清掉，文件从 487 KB 降到 452 KB；现在只剩「沟通台」一条路。回归里只跑向导的 5 套（_wiz / _num / _q8 / _spin / _multi）归档到 _retired，_decl 改成用新沟通台档案驱动（买单 vs 自己报关两种结论、多平台各带各的报关方式、多主体流水均摊）。v6.4 · 2026-10-26 · DeepSeek Key 的填写入口挪到页面右上角「AI Key」按钮，点开是一个卡片（填 Key / 选模型 / 测试连接 / 保存），读屏状态点变绿；方案页里的 AI 区块不再内嵌 Key 输入，没配 Key 时只提示去右上角填。v6.3 · 2026-10-26 · 体检从四方向改成五项（基础合规 / 出口合规 / 申报合规 / 成本合规 / 历史遗留），「基础合规」= 进出口权 + 免税备案，作为地基排第一；方案顺序按老板实际口径重排：打地基 → 报关抬头换自己 → 申报改口径 → 成本归位 → 最后谈历史（先合规，再核定）；出口合规里必须给出建议报关方式（9810 / 9610 / 0110 / 1039，按发货方式推，附理由和顺序提醒）；信息表新增「出口资质」（都有 / 只办了进出口权没做免税备案 / 都没有）和「人员成本」（有在职员工 / 只有退休返聘 / 一个人都没有）；收到税局短信就不再重复问历史遗留；供应商发票拆四档，客户说「开不了」必须再分：压根没问过供应商 / 只能开专票税点很贵；方案新增第 ④ 段「客户问过的，这样答」，把客户自己开口问的问题连同建议应答放进方案。v6.2 · 2026-10-26 · 新增「AI 分析」：填自己的 DeepSeek Key（只存本机、直连官方接口、不经我们服务器），四段实时生成（客户具体状况 / 方案怎么讲 / 他会怎么反驳 / 不能说错的话），每段可单独重新生成；AI 只能看事实卡，不许改结论、不许编事实之外的政策。方案页改为四方向体检 + 按动作优先级一项项做 + 前置关系（前置不成立，后面一步都走不了）+ 方案解析讲为什么是这个顺序。信息表改为整行可点、未答带橙点、下一问高亮、标题三层提示、冲突自动检测。v5.6 · 2026-10-24 · 客户记录可存历史：按编号去重、生成即入库、顶部「历史」翻回去只读回看、可单条删除；记录时间与沟通人自动填；开场「来意」改为四项（了解合规 / 问报税价格 / 收到税局短信 / 其他，其他必填原话）；开场白改为开放式提问（不再罗列平台、不再讲「今天不收您钱」）；全部要念出来的话术重写为口语（顺势说一句 / 执行清单 / 挂电话五句），并加「说人话」检查防回退；对照表改为站点分组表格（44% 发货方式 / 12% 模式 / 14% 自有报关单 / 15% 免税 / 15% 退税），点行展开明细；新增「沟通台」：不再按固定题序——客户先说收到税局短信，下一问就直接问哪几个季度，平台往后排；每题一句能直接念、能复制的话术；客户问题实时记录、自动归类、给应答要点；多主体按「主体数 + 平台 + 是否含深圳 + 总流水」四项一次采集；信息够了当场出方案。旧版向导保留在第二个页签，可对照。底层判定、对照表 16 站点 × 30 行、名词 64 条全部沿用。</span></p>
 </div>
 
 <div class="mask" id="mask" onclick="closeTerm()"></div>
@@ -1168,8 +1160,9 @@ function tkPName(p){
 function tkReset(){
   TK={cid:'',stage:'entry',subs:1,plats:[],city:'',flow:null,
       fuls:{},decls:{},sms:'',quarters:[],amt:null,qna:false,qDone:false,
-      entity:'',file:'',hist:'',invoice:'',
-      asks:[],log:[],boostSms:false};
+      entity:'',file:'',hist:'',invoice:'',qual:'',staff:'',
+      asks:[],log:[],boostSms:false,open:null,confAck:[]};
+  AIPLAN=null; AI_NOW={};          /* 换客户不能把上一单的 AI 结论带过来 */
   tkRender();
   window.scrollTo(0,0);
 }
@@ -1232,6 +1225,7 @@ function tkBegin(){
   if(qk.price) tkPushAsk('一上来就问多少钱','price',true);
   if(qk.sms){ TK.sms='y'; TK.boostSms=true; }
   if(qk.other) tkPushAsk(ot,tkTagAsk(ot),true);
+  TK.open=null;
   tkRender(); window.scrollTo(0,0);
 }
 function tkQuick(k,btn){
@@ -1253,22 +1247,27 @@ function tkHas(id){
   if(id==='file') return TK.file!=='';
   if(id==='hist') return TK.hist!=='';
   if(id==='invoice') return TK.invoice!=='';
+  if(id==='qual') return TK.qual!=='';
+  if(id==='staff') return TK.staff!=='';
   return false;
 }
 function tkNeed(id){
   if(id==='quarters'||id==='amt') return TK.sms==='y';
+  /* 已经收到税局短信，就等于确认「有存量要处理」，再问一遍历史遗留是多此一举 */
+  if(id==='hist') return TK.sms!=='y';
+  if(id==='qual'||id==='staff') return true;
   if(id==='ful'||id==='decl') return TK.plats.length>0;
   return true;
 }
 /* 优先级：客户主动提到短信 → 立刻插到最前（用户点名的场景） */
 function tkPri(id){
-  var base={base:100,sms:95,quarters:96,amt:94,ful:80,decl:75,entity:60,file:55,hist:50,invoice:45};
+  var base={base:100,sms:95,quarters:96,amt:94,ful:80,decl:75,qual:72,entity:60,file:55,hist:50,invoice:45,staff:38};
   if(id==='sms'&&TK.boostSms) return 120;
   if((id==='quarters'||id==='amt')&&TK.boostSms) return 118;
   return base[id]||0;
 }
 function tkNext(){
-  var ids=['base','sms','quarters','amt','ful','decl','entity','file','hist','invoice'];
+  var ids=['base','sms','quarters','amt','ful','decl','qual','entity','file','hist','invoice','staff'];
   var best=null,bp=-1;
   for(var i=0;i<ids.length;i++){
     var k=ids[i];
@@ -1277,7 +1276,7 @@ function tkNext(){
   }
   return best;
 }
-var TK_IDS=['base','sms','quarters','amt','ful','decl','entity','file','hist','invoice'];
+var TK_IDS=['base','sms','quarters','amt','ful','decl','qual','entity','file','hist','invoice','staff'];
 function tkDoneCount(){
   var n=0; for(var i=0;i<TK_IDS.length;i++){ if(tkNeed(TK_IDS[i])&&tkHas(TK_IDS[i])) n++; }
   return n;
@@ -1319,8 +1318,17 @@ function tkLeads(id){
   if(id==='hist') return [
     {k:'S',t:'以前有没有被税局查过，或者有季度少报了一直没处理？',use:'越具体客户越好回答'}
   ];
+  if(id==='qual') return [
+    {k:'S',t:'您公司有自己的进出口权吗？出口免税备案做过没有？',use:'两句必须分开问——很多客户办了进出口权，但免税备案根本没做'},
+    {k:'S',t:'您报关的时候，是用自己公司的抬头报，还是货代帮您找个抬头报？',use:'客户说不清进出口权的，用报关抬头反推：抬头是别人的，基本就是没有'}
+  ];
   if(id==='invoice') return [
-    {k:'S',t:'您供应商给开票吗？普票、专票，还是不开？',use:'客户只说“能开票”时，再追问是普票还是专票'}
+    {k:'S',t:'您供应商给开票吗？普票、专票，还是不开？',use:'客户只说“能开票”时，再追问是普票还是专票'},
+    {k:'S',t:'您这个开票的事，是供应商明确说不开，还是您还没问过他们？',use:'说「开不了」的一定要拆开：没问过 vs 只能专票税点贵，应对完全不同'},
+    {k:'S',t:'专票是不是要加 8 个点以上？',use:'客户嫌贵的时候问这句，能直接算出开票划不划算'}
+  ];
+  if(id==='staff') return [
+    {k:'S',t:'您公司现在有给员工发工资、交社保的人吗？还是就您自己，或者只有退休返聘的？',use:'问“有没有人”，别直接问“能不能做成本”，客户会防'}
   ];
   return [{k:'S',t:'',use:''}];
 }
@@ -1335,8 +1343,9 @@ function tkWhy(id){
     entity:'小规模 1%、一般人 13%（进项可抵），<b>选错一年差几十万</b>。',
     file:'申报口径决定缺口大小：零申报差全额，按回款报差佣金和退款那段。',
     hist:'有存量问题要先更正再优化，<b>顺序反了等于白做</b>。',
-    invoice:'普票抵企业所得税，专票为退税准备，<b>两条路不能既要又要</b>。'
-  };
+    invoice:'普票抵企业所得税，专票为退税准备，<b>两条路不能既要又要</b>。',
+    qual:'<b>进出口权 + 免税备案是整套合规的地基</b>，两个缺一个，报关单上就永远不是自己的名字。',
+    staff:'有没有人能发工资，<b>决定成本能做几块</b>：有人走工资，没人只能靠票。'  };
   return W[id]||'';
 }
 function tkQTxt(id){ return tkLeads(id)[0].t; }
@@ -1363,7 +1372,9 @@ function tkAnsText(id){
   if(id==='entity') return {small:'小规模纳税人',general:'一般纳税人',na:'说不清'}[TK.entity]||'';
   if(id==='file') return {real:'按实际申报',cash:'按回款申报',zero:'零申报',na:'说不清'}[TK.file]||'';
   if(id==='hist') return {none:'没有，基本干净',new:'新主体 / 刚起步',overdue:'往期少报 / 欠申报',check:'以前被查过 / 更正过',na:'说不清'}[TK.hist]||'';
-  if(id==='invoice') return {normal:'能开普票',special:'能开专票',none:'基本开不了',na:'还没问清'}[TK.invoice]||'';
+  if(id==='invoice') return {normal:'能开普票',special:'只能开专票，税点很贵',unknown:'说开不了，但没问过供应商',none:'问了明确不开',na:'还没问清'}[TK.invoice]||'';
+  if(id==='qual') return {both:'进出口权 + 免税备案都有',qualOnly:'只有进出口权，没做免税备案',none:'两个都没有',na:'说不清'}[TK.qual]||'';
+  if(id==='staff') return {yes:'有在职员工，能发工资',retired:'只有退休返聘',no:'没有人员',na:'说不清'}[TK.staff]||'';
   return '';
 }
 function tkInsight(id){
@@ -1387,7 +1398,21 @@ function tkInsight(id){
   if(id==='hist') return (TK.hist==='overdue'||TK.hist==='check')
     ? '行，那往期这块得单算，<b>不能跟今年的混在一起</b>。'
     : '历史干净就好办。<b>从第一天按规矩走</b>，比以后补便宜多了。';
-  if(id==='invoice') return TK.invoice==='special'?'专票要多花八到十个点。<b>能退税才划算</b>，退不了就是白花。':(TK.invoice==='none'?'没票影响的是<b>企业所得税</b>，增值税免税不受影响。这俩别混着讲。':'普票能抵企业所得税，大概省三四个点。<b>走免税的客户，这个搭配最划算</b>。');
+  if(id==='qual'){
+    if(TK.qual==='both') return '那地基是有的，<b>直接往后走就行</b>。';
+    if(TK.qual==='qualOnly') return '能报关、但免税备案没做——<b>等于报了关也填不了免税栏</b>。这个得补上。';
+    if(TK.qual==='none') return '那报关单上永远是别人的名字，<b>免税、退税全都不成立</b>。这个不先办，后面一步都走不了。';
+    return '';
+  }
+  if(id==='staff'){
+    if(TK.staff==='yes') return '有人就能做工资这块，<b>企业所得税能抵一部分</b>。';
+    if(TK.staff==='retired') return '返聘的也能做，<b>每人 5000 以内免个税</b>，够用。';
+    if(TK.staff==='no') return '一个人都没有的话，成本只能靠票，<b>企税这块就抵不掉</b>。这个得跟客户说清楚。';
+    return '';
+  }
+  if(id==='invoice') return TK.invoice==='unknown'
+    ? '还没问过就不能算「开不了」。<b>先让他去问一句普票</b>，一般都能开，只是加点位。'
+    : TK.invoice==='special'?'专票要多花八到十几个点。<b>这个模式退不了税，专票就白花了</b>——要普票就够了，一样抵企业所得税。':(TK.invoice==='none'?'没票影响的是<b>企业所得税</b>，增值税免税不受影响。这俩别混着讲。':'普票能抵企业所得税，大概省三四个点。<b>走免税的客户，这个搭配最划算</b>。');
   return '';
 }
 function tkCommit(id){
@@ -1395,6 +1420,7 @@ function tkCommit(id){
   var ins=tkInsight(id);
   TK.log.push({id:id,q:tkQTxt(id),a:tkAnsText(id),ins:ins});
   TK.lastIns=ins;
+  TK.open=null; // 填完自动落到下一问
   tkRender();
 }
 
@@ -1536,10 +1562,25 @@ function tkBodyHTML(id){
     return h;
   }
   if(id==='invoice'){
-    h+='<button class="tk-o" onclick="tkChoice(\'invoice\',\'normal\')"><b>能开普票</b></button>';
-    h+='<button class="tk-o" onclick="tkChoice(\'invoice\',\'special\')"><b>能开专票</b></button>';
-    h+='<button class="tk-o" onclick="tkChoice(\'invoice\',\'none\')"><b>基本开不了</b></button>';
-    h+='<button class="tk-o na" onclick="tkChoice(\'invoice\',\'na\')">客户不愿说 / 还没问</button>';
+    h+='<button class="tk-o" onclick="tkChoice(\'invoice\',\'normal\')"><b>能开普票</b><span class="s">一般加 1~3 个点，抵企税够用</span></button>';
+    h+='<button class="tk-o" onclick="tkChoice(\'invoice\',\'special\')"><b>只能开专票，税点很贵</b><span class="s">要加 8~13 个点，客户嫌贵</span></button>';
+    h+='<button class="tk-o" onclick="tkChoice(\'invoice\',\'unknown\')"><b>客户说开不了，但没问过供应商</b><span class="s">还没开口问，不是真开不了</span></button>';
+    h+='<button class="tk-o" onclick="tkChoice(\'invoice\',\'none\')"><b>问了，供应商明确不开</b><span class="s">个人 / 小作坊，没有开票资质</span></button>';
+    h+='<button class="tk-o na" onclick="tkChoice(\'invoice\',\'na\')">客户不愿说 / 说不清</button>';
+    return h;
+  }
+  if(id==='qual'){
+    h+='<button class="tk-o" onclick="tkChoice(\'qual\',\'both\')"><b>都有：进出口权 + 免税备案</b><span class="s">能自己报关，13 栏能填</span></button>';
+    h+='<button class="tk-o" onclick="tkChoice(\'qual\',\'qualOnly\')"><b>只办了进出口权，没做免税备案</b><span class="s">能报关，但免税填不进去</span></button>';
+    h+='<button class="tk-o" onclick="tkChoice(\'qual\',\'none\')"><b>两个都没有</b><span class="s">报关用的是货代的抬头</span></button>';
+    h+='<button class="tk-o na" onclick="tkChoice(\'qual\',\'na\')">客户说不清 / 还没问</button>';
+    return h;
+  }
+  if(id==='staff'){
+    h+='<button class="tk-o" onclick="tkChoice(\'staff\',\'yes\')"><b>有在职员工，能发工资、上社保</b><span class="s">可以走工资抵企业所得税</span></button>';
+    h+='<button class="tk-o" onclick="tkChoice(\'staff\',\'retired\')"><b>只有退休返聘的</b><span class="s">每人 5000 以内免个税，也能做</span></button>';
+    h+='<button class="tk-o" onclick="tkChoice(\'staff\',\'no\')"><b>一个人都没有</b><span class="s">就老板自己，成本只能靠票</span></button>';
+    h+='<button class="tk-o na" onclick="tkChoice(\'staff\',\'na\')">客户不愿说 / 说不清</button>';
     return h;
   }
   return h;
@@ -1656,26 +1697,181 @@ function tkRender(){
     '<button class="tk-go" onclick="tkPlan()">生成方案</button></div>';
 }
 
-/* —— 一屏信息表 —— */
+/* —— 答上算什么（判定标准） —— */
+var TK_STD={
+  base:'四个都在且能算出人均流水：主体数量、涉及的平台、城市里有没有深圳、合计年流水。',
+  sms:'明确答「收到了」或「没收到」。含糊说「好像有」的，按收到处理，让他把短信找出来。',
+  quarters:'能点名具体季度（可以多个），或者明确说记不清。',
+  amt:'给个数量级就够：几十万 / 一百多万。不用精确到万。',
+  ful:'每个平台都认领一种发货方式，不能有平台空着。',
+  decl:'每个平台都答清报关单写谁的名字：自己公司 / 货代买单 / 双清包税 / 平台代报。',
+  entity:'答出小规模还是一般纳税人。答不出的问开票税率：1% 是小规模，13% 是一般人。',
+  file:'认领一种申报口径：按实际 / 按回款 / 零申报。',
+  hist:'答出有没有往期少报、欠申报、被查过。收到税局短信的客户不用问这条——短信本身就说明有存量。',
+  invoice:'答出能不能开票。客户说「开不了」时必须追问两种：是根本没问过供应商，还是只能开专票、税点很贵。这两条应对完全不一样。',
+  qual:'答清两件事：有没有进出口权、有没有做免税备案。这两个不是一回事，只办了进出口权、没做免税备案的很多。',
+  staff:'答出公司现在有没有能发工资、能上社保的人：有在职员工 / 只有退休返聘的 / 一个都没有。这决定成本这块能不能做。'
+};
+/* —— 答完这一问能输出什么 —— */
+var TK_OUT={
+  base:'定身份、定报价档位、定要不要拆主体；平台和城市决定后面查对照表哪一格。',
+  sms:'定顺序：收到短信就先走更正程序，没收到就先做合规架构。',
+  quarters:'框定补税区间；越早的季度越可能过追征期。',
+  amt:'算补税金额和滞纳金，判断走不走减免路径。',
+  ful:'定报关模式：9810 / 0110 / 9610 / 1039，直接决定能不能免税。',
+  decl:'这是全部结论的根。报关单不在客户名下，免税和退税都归零。',
+  entity:'定税率、能不能抵扣、要不要强制升一般人。',
+  file:'算缺口大小：零申报差全额，按回款报只差佣金、运费和退款。',
+  hist:'定要不要先补历史。有存量问题，必须先更正再优化。',
+  invoice:'定走免税还是退税：专票为退税准备，普票抵企业所得税。说「没问过」的，方案里第一件事是让他去问一句。',
+  qual:'这是整个合规账的地基。没有进出口权和免税备案，报关单永远是别人的名字，免税、退税、13 栏全都不成立。',
+  staff:'定成本能做到哪一步：有人就能走工资抵企税；只有返聘也能做；一个人都没有，成本只能靠票，企税抵不掉。'
+};
+
+/* —— 三层提示浮层：怎么问 / 答上算数 / 能输出什么 —— */
+function tkHintHide(){
+  var p=document.getElementById('tkHintPop');
+  if(p&&p.parentNode) p.parentNode.removeChild(p);
+}
+function tkHint(id,el){
+  tkHintHide();
+  var L=tkLeads(id)[0];
+  var d=document.createElement('div');
+  d.id='tkHintPop'; d.className='tk-hintpop';
+  d.innerHTML=
+    '<div class="hb"><div class="hh">怎么问</div><div class="hsay">'+L.t+'</div></div>'+
+    '<div class="hb"><div class="hh">答上算数</div>'+TK_STD[id]+'</div>'+
+    '<div class="hb"><div class="hh">答完能输出</div>'+TK_OUT[id]+'</div>';
+  document.body.appendChild(d);
+  var r=el.getBoundingClientRect(), w=d.offsetWidth, hh=d.offsetHeight;
+  var left=Math.min(Math.max(8,r.left-6), Math.max(8,window.innerWidth-w-8));
+  var top=r.bottom+8;
+  if(top+hh>window.innerHeight-8) top=Math.max(8,r.top-hh-8);
+  d.style.left=left+'px'; d.style.top=top+'px';
+  if(!window._tkHintBind){
+    window._tkHintBind=1;
+    document.addEventListener('click',function(e){
+      var c=e.target&&e.target.className?String(e.target.className):'';
+      if(c.indexOf('tk-qm')<0) tkHintHide();
+    });
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape') tkHintHide(); });
+  }
+}
+
+/* —— 信息冲突检测：字段之间对不上，先让销售二次确认，别拿错数据出方案 —— */
+function tkDeclOf(p){ return TK.decls[p]||''; }
+function tkAnyDecl(list){
+  for(var i=0;i<TK.plats.length;i++){ if(list.indexOf(tkDeclOf(TK.plats[i]))>=0) return tkPName(TK.plats[i]); }
+  return '';
+}
+function tkConflicts(){
+  var out=[],i,p,f,per=null;
+  if(TK.flow!=null&&TK.subs>0) per=TK.flow/TK.subs;
+
+  // 1 自相矛盾：收到短信，历史却记成完全干净
+  if(TK.sms==='y'&&TK.hist==='none')
+    out.push({ids:['hist','sms'],
+      t:'收到了税局短信，历史却记成「没有，基本干净」',
+      fix:'短信说明税局已经掌握这几个季度的数，历史不可能完全干净。回去问清：短信点名的是哪几个季度？往期有没有少报？'});
+
+  // 2 自相矛盾：零申报 + 有流水，却记成历史干净
+  if(TK.file==='zero'&&TK.hist==='none'&&TK.flow>0)
+    out.push({ids:['hist','file'],
+      t:'一直零申报，平台上有 '+TK.flow+' 万流水，历史却记成「基本干净」',
+      fix:'零申报又有流水，本身就是往期少报。先确认从哪一年开始零申报的，再定补的区间。'});
+
+  // 3 平台规则冲突：硬约束发货方式，却记成自己抬头报关
+  for(i=0;i<TK.plats.length;i++){
+    p=TK.plats[i];
+    if(!PLAT[p]||!TK.fuls[p]) continue;
+    f=PLAT[p].ful[TK.fuls[p]];
+    if(!f) continue;
+    if(TK.decls[p]==='self'&&(f.c==='硬约束'||f.decl==='无'))
+      out.push({ids:['decl'],
+        t:tkPName(p)+' 走「'+f.n.replace(/\s*[（(].*$/,'')+'」，报关单不可能在客户名下',
+        fix:'这种发货方式是平台或平台物流统一报关，客户拿不到自己名下的报关单，13 栏也填不了。让客户确认报关单上到底写谁。'});
+  }
+
+  // 4 退税路径冲突：要专票想退税，但报关单不在自己名下
+  var bad=tkAnyDecl(['maidan','ddp']);
+  if(TK.invoice==='special'&&bad)
+    out.push({ids:['invoice','decl'],
+      t:'想走退税（要专票），但 '+bad+' 的报关单不在客户名下',
+      fix:'退税必须有客户自己名下的报关单。先解决报关主体，再谈专票，不然专票那几个点是白花的。'});
+
+  // 5 规模冲突：人均流水过 500 万，身份还是小规模
+  if(per!=null&&per>=500&&TK.entity==='small')
+    out.push({ids:['entity','base'],
+      t:'人均年流水约 '+Math.round(per)+' 万，身份还是小规模纳税人',
+      fix:'连续 12 个月超 500 万要强制升一般人。确认是不是已经超了、有没有收到通知，别按 1% 给他报价。'});
+
+  // 6 风险口径：说没收到短信、以前被查过、现在还在零申报
+  if(TK.sms==='n'&&TK.hist==='check'&&TK.file==='zero')
+    out.push({ids:['sms','file'],
+      t:'说没收到短信，但以前被查过，现在还是零申报',
+      fix:'被查过的户，税局系统里是有记录的。这种情况按「随时会被再查」处理，别按没风险的口径谈。'});
+
+  return out;
+}
+function tkConfBannerHTML(conf){
+  var h='<div class="tk-conf"><div class="ch">待确认 '+conf.length+' 项 · 信息之间对不上，先确认再出方案</div>';
+  for(var i=0;i<conf.length;i++){
+    h+='<button class="ci" onclick="tkConfJump(\''+conf[i].ids[0]+'\')">'+
+       '<b>'+conf[i].t+'</b>'+conf[i].fix+'<i>去确认 ›</i></button>';
+  }
+  return h+'</div>';
+}
+function tkConfJump(id){
+  TK.open=id; tkRender();
+  var el=document.getElementById('tkrow-'+id);
+  if(el&&el.scrollIntoView){ try{ el.scrollIntoView({block:'center',behavior:'smooth'}); }catch(e){ el.scrollIntoView(); } }
+}
+
+/* —— 一屏信息表：整行可点填，未答打橙点，下一问高亮 —— */
 var TK_SECS=[
   {t:'① 基本盘', ids:['base']},
   {t:'② 税局与存量', ids:['sms','quarters','amt']},
   {t:'③ 发货与报关', ids:['ful','decl']},
   {t:'④ 主体与申报', ids:['entity','file','hist','invoice']}
 ];
-var TK_LABEL={base:'基本盘',sms:'税局短信',quarters:'点名季度',amt:'季度流水',ful:'发货方式',decl:'谁报关',entity:'纳税人身份',file:'申报口径',hist:'历史遗留',invoice:'供应商发票'};
+var TK_LABEL={base:'基本盘',sms:'税局短信',quarters:'点名季度',amt:'季度流水',ful:'发货方式',decl:'谁报关',qual:'出口资质',entity:'纳税人身份',file:'申报口径',hist:'历史遗留',invoice:'供应商发票',staff:'人员成本'};
+function tkRowHTML(id,nx,openId){
+  var has=tkHas(id), isNx=(id===nx), open=(id===openId);
+  var cls='tk-rowv'+(has?' has':' todo')+(isNx?' nx':'')+(open?' open':'');
+  var h='<div class="'+cls+'" id="tkrow-'+id+'">';
+  h+='<div class="tk-rh" onclick="tkRowToggle(\''+id+'\')">';
+  h+='<span class="tk-dot"></span>';
+  h+='<span class="tk-rk">'+TK_LABEL[id]+
+     '<span class="tk-qm" onclick="event.stopPropagation();tkHint(\''+id+'\',this)" onmouseenter="tkHint(\''+id+'\',this)">?</span></span>';
+  h+='<span class="tk-rv">'+(has?tkAnsText(id):(isNx?'现在问这个':'未填'))+'</span>';
+  h+='<span class="tk-rb">'+(open?'收起':(has?'改':'填'))+'</span>';
+  h+='</div>';
+  if(open){
+    var L0=tkLeads(id)[0];
+    h+='<div class="tk-body">';
+    if(id!=='base'&&L0&&L0.t)
+      h+='<div class="tk-qs"><span class="tk-qsl">怎么问</span><span class="tk-qst">'+L0.t+'</span>'+
+         '<button class="tk-qc" onclick="event.stopPropagation();tkCopy(\''+id+'\',this)">复制这句，直接念</button></div>';
+    h+=tkBodyHTML(id);
+    h+='</div>';
+  }
+  return h+'</div>';
+}
+function tkRowToggle(id){
+  TK.open=(TK.open===id)?'':id;
+  tkRender();
+}
 function tkTableHTML(){
-  var nx=tkNext(),h='',si,i;
+  var nx=tkNext(),h='',si,i,conf=tkConflicts();
+  var openId=(TK.open==null)?nx:TK.open;
+  if(conf.length) h+=tkConfBannerHTML(conf);
   if(TK.lastIns) h+='<div class="tk-insline"><b>顺势说一句</b>'+TK.lastIns+'</div>';
   for(si=0;si<TK_SECS.length;si++){
     var sec=TK_SECS[si],inner='';
     for(i=0;i<sec.ids.length;i++){
       var id=sec.ids[i];
       if(!tkNeed(id)) continue;
-      if(id===nx){ inner+=tkCardHTML(id); }
-      else if(tkHas(id)){ inner+='<div class="tk-row"><span class="rk">'+TK_LABEL[id]+'</span><span class="rv">'+tkAnsText(id)+'</span>'
-        +(id==='quarters'?'<span class="rb" onclick="tkQEdit()">改</span>':'')+'</div>'; }
-      else { inner+='<div class="tk-row todo"><span class="rk">'+TK_LABEL[id]+'</span><span class="rv">待问</span></div>'; }
+      inner+=tkRowHTML(id,nx,openId);
     }
     if(inner) h+='<div class="tk-sec"><div class="tk-sec-h">'+sec.t+'</div>'+inner+'</div>';
   }
@@ -1926,12 +2122,36 @@ function tkToA(){
   A.file=TK.file||'na';
   A.hist=TK.hist||'na';
   A.invoice=TK.invoice||'na';
+  A.qual=TK.qual||'na';
+  A.staff=TK.staff||'na';
+  A.asks=(TK.asks||[]).slice();
 }
 function tkPlan(){
   TK.stage='plan';
   tkToA();
   tkRender();
   window.scrollTo(0,0);
+  aiStartPlan();
+}
+/* 进方案页 = 进入 AI 生成流程：有 Key 直接开跑，没 Key 就地提示并弹 Key 卡片 */
+function aiStartPlan(){
+  aiCfgLoad();
+  if(AI_CSP){
+    var b0=document.getElementById('aipOver');
+    if(b0) b0.innerHTML='<b>这个窗口连不上 DeepSeek：被内容安全策略挡住了</b><br>'
+      +'页面是被内嵌预览打开的，它只允许连白名单域名。把这个 html 文件直接双击用浏览器打开（地址栏 file:// 开头），再点生成就能跑。';
+    return;
+  }
+  if(!aiKey()){
+    var b=document.getElementById('aipOver');
+    if(b) b.innerHTML='<b>还差一步：先填 DeepSeek Key</b><br>只存本机、直连官方接口、不经我们服务器。填完回到这页，点「按这个客户生成这 5 项」。';
+    aiCfgOpen();
+    return;
+  }
+  if(AIPLAN) return;                 /* 这一单已经生成过，不重复烧 token */
+  var box=document.getElementById('aiPlanBox');
+  if(box) box.setAttribute('data-auto','1');
+  aiRun('plan',document.getElementById('aibtn-plan'));
 }
 function tkPlanHTML(){
   var h='<div class="tkb"><div class="bb sys"><div class="bh">方案</div>下面这份是草稿，先照着讲，最后一步再谈钱。</div></div>';
@@ -1992,348 +2212,13 @@ function renderKB(){
 }
 
 /* ============ 工作流 ============ */
-var A={},current=0;
+var A={};
 
-/* —— 首咨问话：每一句都要接住上一步的答案 —— */
-var ASK={
-  amazon:'是走 FBA 备货进仓，还是 FBM 自己发货？',
-  tiktok:'是走平台指定的物流，还是自己发？',
-  temu:'是全托管，还是半托管？',
-  ozon:'是走 Ozon 官方物流吗？',
-  shopee:'是走平台物流，还是自己发？',
-  aliexpress:'是走平台官方物流，还是自己找货代发？',
-  independent:'货是怎么发出去的？小包、专线，还是整柜？'
-};
 var SAY_P={amazon:'亚马逊',tiktok:'TikTok',temu:'Temu',ozon:'Ozon',shopee:'虾皮',aliexpress:'速卖通',independent:'独立站'};
-function platName(){
-  /* A.platform 还没定（Q2 未答）时，退回 Q1 选中的第一个平台 */
-  var k=A.platform||(platList()[0]||'');
-  var P=k&&PLAT[k]?PLAT[k]:null;
-  if(!P) return '';
-  return SAY_P[k]||P.n.replace(/\s*[（(].*$/,'');
-}
-function fulName(){
-  var P=A.platform&&PLAT[A.platform]?PLAT[A.platform]:null;
-  var F=(P&&A.ful&&P.ful[A.ful])?P.ful[A.ful]:null;
-  if(!F) return '';
-  return F.n.replace(/\s*[（(].*$/,'').split(/\s*\/\s*/)[0].trim();
-}
-function leadOfPlat(p){
-  var P=PLAT[p]; if(!P) return '货是怎么发出去的？';
-  var pn=SAY_P[p]||P.n.replace(/\s*[（(].*$/,'');
-  return '您这边做<b>'+pn+'</b>的对吧，没问题。那我想确认一下，'+(ASK[p]||'货是怎么发出去的？');
-}
-function leadOf(n){
-  var pn=platName(),fn=fulName();
-  if(n===1) return '您这边主要做哪个平台？亚马逊、TikTok、Temu，还是别的？';
-  if(n===2){
-    var L=platList();
-    if(L.length>1) return '这几个平台的发货方式，我一个一个跟您确认——同一个平台，发货方式不一样，报关单上写谁的名字就完全不一样。';
-    if(!L.length) return '那您这边主要做哪个平台？';
-    return leadOfPlat(L[0]);
-  }
-  if(n===3){
-    var L3=platList();
-    if(L3.length>1) return '发货方式我记下了，那报关这块——这几个平台，报关单上分别写的是谁的名字？您自己公司，还是别人公司？';
-    if(!fn) return '这批货是谁报关的？报关单上写的是您自己公司，还是别人公司？';
-    return '明白，走的是<b>'+fn+'</b>。那这批货报关的时候，报关单上写的是您自己公司，还是别人公司？';
-  }
-  if(n===4){
-    var L2=platList();
-    var t13='深圳 13 栏能直接填免税，外地要先有报关单。';
-    if(L2.length>1) return '好，发货和报关都清楚了。那再确认一下，您这几个店是同一个公司主体吗？这个公司注册在哪个城市——'+t13;
-    if(!fn) return '那再确认一下，您公司或店铺主体，注册在哪个城市？'+t13;
-    return '明白，走的是<b>'+fn+'</b>。那再确认一下，您公司或店铺主体，注册在哪个城市？'+t13;
-  }
-  if(n===5){
-    if(A.city==='shenzhen') return '在深圳是吧，那 13 栏可以直接填，这一步对您是有利的。您这边是小规模纳税人，还是一般纳税人？';
-    if(A.city==='other') return '外地的话，要先把报关单落到您自己名下，才能申 13 栏。您这边是小规模纳税人，还是一般纳税人？';
-    return '您这边是小规模纳税人，还是一般纳税人？';
-  }
-  if(n===6) return '流水这块大概什么量级？去年全年，不用精确到元——三四百万就说四百万，一千多万就说一千二。';
-  if(n===7) return '再问一个比较关键的：您这几个季度，有没有收到税务局的短信，或者要求更正申报、提供资料的通知？';
-  if(n===8){
-    var base='现在这家公司是按什么口径申报的——照实际销售额报、按平台回款报，还是零申报？';
-    if(A.sms==='y') return '税局点名的这几个季度先放一边。'+base;
-    return base;
-  }
-  if(n===9) return '最后一个：您供应商给开票吗？普票、专票，还是不开票？';
-  return '';
-}
-/* ===== 每题三种问法：S 直接问 / P 二选一 / I 铺垫式 ===== */
-function leadTabs(n){
-  var p=platList(),pn=platName(),fn=fulName(),P=A.platform&&PLAT[A.platform]?PLAT[A.platform]:null;
-  if(n===1) return [
-    {k:'S',t:'您这边主要做哪个平台？',use:'客户还没说平台，最常见的一问'},
-    {k:'P',t:'您主要是做亚马逊，还是 TikTok、Temu 也做？',use:'客户话少、只肯给一个答案，用二选一逼出准确答案'},
-    {k:'I',t:'我先跟您确认一下平台——不同平台的发货规则差得很远，这个直接决定后面能不能做免税。',use:'客户一上来就问「能省多少」，先用一句原理把话题拉回信息'}
-  ];
-  if(n===2){
-    var ask=ASK[A.platform]||'货是怎么发出去的？';
-    var multi2=p.length>1;
-    var head=multi2?(pn?('咱们一个一个平台来——先看<b>'+pn+'</b>，'):'咱们一个一个平台来——'):(pn?('您这边做<b>'+pn+'</b>的对吧，'):'');
-    return [
-      {k:'S',t:head+'货是怎么发出去的？',use:multi2?'平台多的时候别一次问完，问一个记一个':'客户配合、愿意展开讲'},
-      {k:'P',t:head+'我想确认一下，'+ask,use:'把这个平台常见的方式摆出来，让他挑，比开放问更快'},
-      {k:'I',t:'这一步挺关键的——同一个平台，发货方式不一样，报关单上写谁的名字就完全不一样，后面能不能退税就看这个。',use:'客户觉得「发货方式不重要」，先把后果摆出来'}
-    ];
-  }
-  if(n===3){
-    return [
-      {k:'S',t:(fn?('走的是 '+fn+'，那这批货报关的时候，'):'这批货报关的时候，')+'报关单上写的是您自己公司，还是别人公司？',use:'最直接，也最不容易被含糊过去；开头接一句发货方式，话就顺了'},
-      {k:'P',t:'是您自己公司抬头报关，还是货代用别人的抬头（买单、双清包税）？',use:'客户不懂「报关主体」这种说法，用两种做法让他认领'},
-      {k:'I',t:'我问这个是因为——免税和退税看的是报关单上写谁的名字，不是看货怎么发的。',use:'客户说「我货都走 FBA 了还不是一样」时，先把这句摆出来'}
-    ];
-  }
-  if(n===4){
-    var multi=p.length>1;
-    var fn3=fulName();
-    var s3=fn3?('明白，<b>'+fn3+'</b> 这种报关单是您自己公司的——那这个公司注册在哪？深圳，还是外地？'):'您公司或者店铺主体，注册在哪个城市？深圳，还是外地？';
-    return [
-      {k:'S',t:s3,use:'直接问，最快；顺口把上一步的发货方式接一句，不像查户口'},
-      {k:'P',t:multi?'您这几个店是同一个公司吗？这个公司注册在哪？':'您这个店铺后面挂的公司，是在深圳注册的吗，还是外地？',use:'客户说不清「哪个主体」，用是不是同一个公司来定位'},
-      {k:'I',t:'问城市是因为深圳的 13 栏可以直接填免税，外地得先有报关单才能申请——这一条直接决定您能不能马上开始做。',use:'客户嫌问题多，告诉他这题值钱'}
-    ];
-  }
-  if(n===5) return [
-    {k:'S',t:'您这边是小规模纳税人，还是一般纳税人？',use:'客户懂财税，直接问'},
-    {k:'P',t:'您现在开票是按 1% 开的，还是 13% 开的？',use:'客户不懂「小规模/一般人」这种说法，用开票税率反推'},
-    {k:'I',t:'这个决定税率——小规模 1%、季度 30 万内还免，一般人 13% 但是进项能抵，两条路的税负差得很远。',use:'客户说「我不知道我是什么纳税人」时，先教他怎么分辨'}
-  ];
-  if(n===6) return [
-    {k:'S',t:'去年全年流水大概多少？不用精确，给个大概数。',use:'常规问法'},
-    {k:'P',t:'是三四百万这个量级，还是已经过千万了？',use:'客户不肯给数字，用区间让他选'},
-    {k:'I',t:'问这个是因为 500 万是条硬线——过了就强制升一般人，税率从 1% 直接跳到 13%，不能等超了再想办法。',use:'客户反问「你问流水干什么」'}
-  ];
-  if(n===7) return [
-    {k:'S',t:'这几个季度，有没有收到税务局的短信或者通知？',use:'直接问，最能拿到真实答案'},
-    {k:'P',t:'是让您更正申报、补税，还是只是提示一下、没让改？',use:'客户含糊说「好像有」，用二选一逼出严重程度'},
-    {k:'I',t:'如果收到了，说明税局已经拿到您这几个季度的数据了——处理顺序得先走程序、再谈优化，反过来做没用。',use:'客户说「收到了但没管」，要立刻纠正顺序'}
-  ];
-  if(n===8) return [
-    {k:'S',t:'现在这家公司是按什么口径申报的？照实报、按回款报，还是零申报？',use:'直接问，三个口径摆出来客户基本会认领一个'},
-    {k:'P',t:'账上的收入，是照平台销售额报的，还是只按平台打给你的那笔钱报的？',use:'客户听不懂「申报口径」，用「销售额 vs 到账额」帮他区分'},
-    {k:'I',t:'我问口径是因为——零申报差的是全额，按回款报差的是佣金和退款那一段，两种差法要补的钱完全不是一个量级。',use:'客户反问「你问这么细干嘛」，先把两种差额摆出来'}
-  ];
-  if(n===9) return [
-    {k:'S',t:'供应商给开票吗？普票、专票，还是不开？',use:'常规问法'},
-    {k:'P',t:'是能开普票，还是只能开专票？',use:'客户只说「能开票」，要区分普票专票——两者用途完全不同'},
-    {k:'I',t:'普票抵的是企业所得税，专票才是为退税准备的——如果退税这条路走不通，专票多花的那些点就是白花的。',use:'客户说「我都能开到专票」，这句能立刻建立专业感'}
-  ];
-  return [{k:'S',t:leadOf(n),use:''}];
-}
-function leadPick(n){
-  if(A.lp&&typeof A.lp[n]==='number') return A.lp[n];
-  /* 多平台时 Q3 默认给「这几个店是同一个公司吗」——这时候最该问的是主体归属 */
-  if(n===4&&platList().length>1) return 1;
-  return 0;
-}
-function pickLead(n,i,el){
-  if(!A.lp) A.lp={};
-  A.lp[n]=i;
-  var T=leadTabs(n), cur=T[i]||T[0];
-  var tx=document.getElementById('leadTxt'+n); if(tx) tx.innerHTML=cur.t;
-  var us=document.getElementById('leadUse'+n); if(us) us.innerHTML=cur.use?('什么时候用：'+cur.use):'';
-  if(el&&el.parentNode){
-    var bs=el.parentNode.querySelectorAll('.ltab');
-    for(var k=0;k<bs.length;k++) bs[k].classList.remove('sel','on');
-    el.classList.add('on');
-  }
-}
-function leadHTML(n){
-  var T=leadTabs(n); if(!T.length) return '';
-  var LBL={1:'平台',2:'发货方式',3:'谁报关',4:'城市',5:'主体',6:'流水',7:'税局短信',8:'申报历史',9:'发票'};
-  var i=Math.min(leadPick(n),T.length-1), cur=T[i]||T[0];
-  var tabs='';
-  if(T.length>1){
-    tabs='<div class="ltabs">';
-    for(var k=0;k<T.length;k++){
-      var NM={S:'直接问',P:'二选一',I:'铺垫式'}[T[k].k]||'问法';
-      tabs+='<button class="ltab'+(k===i?' on':'')+'" onclick="pickLead('+n+','+k+',this)"><b>'+T[k].k+'</b>'+NM+'</button>';
-    }
-    tabs+='</div>';
-  }
-  return '<div class="lead"><div class="lead-h">第 '+n+' 题 / 9 · '+(LBL[n]||'')+' · 选一句问（SPIN）</div>'
-    +tabs
-    +'<div class="lead-t" id="leadTxt'+n+'">'+cur.t+'</div>'
-    +'<div class="lead-use" id="leadUse'+n+'">'+(cur.use?('什么时候用：'+cur.use):'')+'</div>'
-    +'<div class="lead-tip">念完就停，等他答。三种问法按客户的反应换，不要一句念到底。</div></div>';
-}
-
-/* ===== 拿到关键信息后，顺势输出一句专业内容（别全程只问） ===== */
-function insightOf(n){
-  var P=A.platform&&PLAT[A.platform]?PLAT[A.platform]:null;
-  var F=(P&&A.ful&&P.ful[A.ful])?P.ful[A.ful]:null;
-  if(n===1){
-    var L=platList();
-    if(!L.length) return '';
-    if(L.length>1) return '这几个平台里，像 <b>Temu 全托管、Ozon 官方物流</b> 这类，货是平台代报关的，退税这条路基本谈不了；<b>亚马逊 FBA</b> 这种自己报关的，才有免税加退税的空间。平台一多，方案就不能一套讲完。';
-    var p0=L[0];
-    if(p0==='temu') return 'Temu 全托管这块我先说清楚：货是平台统一走的，报关单不在您名下，所以<b>退税这条路走不通</b>，能优化的是免税和账务这一块。';
-    if(p0==='ozon') return 'Ozon 是强制官方物流，报关主体是平台那边，所以<b>退税基本免谈</b>，能做实的是免税申报和成本入账。';
-    if(p0==='amazon') return '亚马逊这条路比较宽——FBA 和大货都是您自己报关出境，报关单能落在您公司名下，所以<b>免税和退税都有基础</b>，关键看您走哪种发货方式。';
-    if(p0==='tiktok') return 'TikTok 走平台物流的话，报关主体是平台的承运商；走自发货才是您自己报关——<b>这一步直接决定有没有退税</b>。';
-    return '这个平台的关键在报关主体：货是谁报出去的，决定免税和退税能不能做。';
-  }
-  if(n===2&&F){
-    if(F.decl==='有') return '您这个是 <b>'+F.mode+'</b>，这种发货方式报关单上是您自己公司——这意味着<b>免税和退税两条路都通</b>，有进项专票还能退回来。下一步要确认的就是：谁在报。';
-    if(F.decl==='部分') return '这种情况要看具体走哪种物流：能拿到清单汇总报关单就有基础，纯邮政小包就没有。<b>先确认渠道，再谈免税</b>，别急着承诺。';
-    return '这种发货方式大多是平台或货代报关，报关单上不一定有您公司的名字——<b>免税要清单汇总报关单，退税要专票加报关单</b>，两条路都卡在这一张纸上。';
-  }
-  if(n===3&&A.decl){
-    if(A.decl==='self') return '报关单在客户自己公司名下——这一步定了，后面的免税和退税才有地基。接下来要确认的是<b>能不能拿到这张单子</b>，不是有没有。';
-    if(A.decl==='maidan') return '报关单上不是他的公司——这一条比发货方式更要紧。<b>免税、退税都挂在这张纸上</b>，不挂在货怎么发上。';
-    if(A.decl==='ddp') return '双清包税看着最省事，但出口这一端的凭证他一张都没有；低报的税还留在他名下，是历史风险源。';
-    if(A.decl==='plat') return '平台代报，他手里只有结算单。能做的动作只有一个：向平台/物流商索取<b>当月清单汇总报关单</b>，拿到才能走 9610 免税。';
-    return '';
-  }
-  if(n===4&&A.city){
-    if(A.city==='shenzhen') return '深圳的 13 栏是默认开放的，可以直接填免税；但<b>没有报关单被查到要全额补</b>——所以填得进去不等于安全。';
-    if(A.city==='other') return '外地要先有报关单才能线下申请 13 栏，所以第一步不是填表，是<b>把报关单落到您自己公司名下</b>。';
-    return '';
-  }
-  if(n===5&&A.entity){
-    if(A.entity==='small') return '小规模现在是 <b>1%</b>，季度 30 万以内还免征——但年流水过 500 万会被强制升一般人，这条线要提前规划。';
-    if(A.entity==='general') return '一般人税率 13%，但<b>进项专票能抵</b>。所以您这种情况，「买专票划不划算」得看能不能真退，不能一概而论。';
-    return '';
-  }
-  if(n===6){
-    var b=flowBand();
-    if(b==='f1'||b==='f2') return '500 万是小规模的线，过了就强制升一般人，税率从 1% 跳到 13%——<b>所以这条线要提前规划，不能等超了再拆</b>。';
-    if(b==='f3'||b==='f4'||b==='f5') return '您已经过 500 万了，税负本来就该按一般人算；现在的问题不是省不省，是<b>进项够不够</b>。';
-    return '';
-  }
-  if(n===7&&A.sms){
-    if(A.sms==='y') return '收到短信说明<b>税局已经掌握这几个季度的数据</b>了。处理顺序只能是先走程序、再谈优化，反过来做没用，也容易出问题。';
-    if(A.sms==='n') return '没收到不代表没问题——税局是按季度比对平台报送的数据，<b>滞后半年到一年很正常</b>。现在补，比被通知了再补便宜得多。';
-    return '';
-  }
-  if(n===8){
-    var t8='';
-    if(A.file==='zero') t8='零申报但平台有流水，<b>账上收入和销售额差的是全额</b>——先堵口子再谈省，顺序反了省下来的不够补。';
-    else if(A.file==='cash') t8='按回款报，少的是<b>平台佣金、物流费和退款</b>那一段；差额比零申报小，但往期照样得按销售额口径重算一遍。';
-    else if(A.file==='real') t8='按实际报，账和平台数据基本对得上，<b>历史这条线没有大包袱</b>，可以直接往前做免税。';
-    if(A.hist==='overdue'||A.hist==='check'){
-      t8+=(t8?'<br>':'')+'历史这一块<b>得单独处理</b>：先把往期数据盘出来，两方案对比（老实补 / 减免路径），别混进今年的方案一起报。';
-    }else if(A.hist==='none'){
-      t8+=(t8?'<br>':'')+'历史干净是优势——<b>从第一天就按合规走</b>，比以后补便宜得多。';
-    }else if(A.hist==='new'){
-      t8+=(t8?'<br>':'')+'新主体没有历史包袱，<b>直接按合规搭</b>，别把老主体的业务原样平移过来。';
-    }else if(A.file&&!A.hist){
-      t8+=(t8?'<br>':'')+'再问一句历史：<b>以前有没有被查过、或者少报过没处理</b>——有的话动作顺序要反过来。';
-    }
-    return t8;
-  }
-  if(n===9&&A.invoice){
-    if(A.invoice==='special') return '专票要多花 <b>8~10 个点</b>，只有能退税才值；如果退税这条路不通，这笔钱就是白花的。您这个情况我先帮您算清楚再决定。';
-    if(A.invoice==='normal') return '普票能抵企业所得税，大概省 <b>3~4 个点</b>——对走免税的客户，这是最划算的搭配。';
-    if(A.invoice==='none') return '没票只影响<b>企业所得税</b>，不影响增值税免税——这两件事很多人会混，您分开看就清楚了。';
-    return '';
-  }
-  return '';
-}
-function syncInsight(n){
-  var el=document.getElementById('insight'+n); if(!el) return;
-  var t=insightOf(n);
-  el.innerHTML=t?('<div class="insight"><div class="insight-h">顺势说一句（专业输出 · 别全程只问）</div><div class="say">'+t+'</div></div>'):'';
-}
-/* 答完题就刷新当前题的专业输出 */
-function syncCur(){
-  if(typeof current==='number'&&current>=1&&current<=8) syncInsight(current);
-}
 
 /* —— 多平台：Q1 多选，Q2 每个平台各问一次发货方式 —— */
 function platList(){ if(!A.platforms) A.platforms=[]; return A.platforms; }
 function fulMap(){ if(!A.fuls) A.fuls={}; return A.fuls; }
-function pickPlat(p,el){
-  var L=platList(), i=L.indexOf(p);
-  if(i>=0){ L.splice(i,1); el.classList.remove('sel'); }
-  else { L.push(p); el.classList.add('sel'); }
-  var b=document.getElementById('n1'); if(b) b.disabled=(L.length===0);
-  /* 退回改平台时，别让旧的 A.platform 还挂着——否则 Q2 会问错平台 */
-  if(A.platform&&A.platform!=='na'&&L.indexOf(A.platform)<0){
-    A.platform=L.length?L[0]:undefined;
-    A.ful=A.platform?fulMap()[A.platform]:undefined;
-  }else if(!A.platform&&L.length){
-    A.platform=L[0]; A.ful=fulMap()[L[0]];
-  }
-  var c=document.getElementById('platCnt');
-  if(c) c.innerHTML=L.length?('已选 <b>'+L.length+'</b> 个平台 → 下一步会逐个平台问发货方式'):'';
-  syncCur();
-}
-function set(k,v,el){
-  A[k]=v;
-  var sibs=el.parentNode.querySelectorAll('.opt');
-  for(var i=0;i<sibs.length;i++) sibs[i].classList.remove('sel');
-  el.classList.add('sel');
-  var n=document.getElementById('n'+current); if(n) n.disabled=false;
-  syncCur();
-}
-/* Q8：申报口径（file）和历史遗留（hist）是两件事，分开记、分开判 */
-function setFile(v,el){
-  A.file=v;
-  var sibs=document.querySelectorAll('#s8 > .opt');
-  for(var i=0;i<sibs.length;i++) sibs[i].classList.remove('sel');
-  el.classList.add('sel');
-  var hb=document.getElementById('histbox'); if(hb) hb.style.display='block';
-  syncHist();
-  syncCur();
-}
-function setHist(v,el){
-  A.hist=v;
-  var sibs=document.querySelectorAll('#histbox .opt');
-  for(var i=0;i<sibs.length;i++) sibs[i].classList.remove('sel');
-  el.classList.add('sel');
-  syncHist();
-  syncCur();
-}
-function syncHist(){
-  var b=document.getElementById('n8');
-  if(b) b.disabled=!(A.file&&A.hist);
-}
-/* Q2：每个平台各出一块，块内先给一句问话，再给这个平台的发货方式 */
-function pickFul(p,f,el){
-  fulMap()[p]=f;
-  var sibs=el.parentNode.querySelectorAll('.opt');
-  for(var i=0;i<sibs.length;i++) sibs[i].classList.remove('sel');
-  el.classList.add('sel');
-  syncFul();
-  if(current===2){ var lz2=document.getElementById('lead2'); if(lz2) lz2.innerHTML=leadHTML(2); }
-  syncCur();
-}
-function syncFul(){
-  var L=platList(), ok=L.length>0;
-  for(var i=0;i<L.length;i++){ if(!fulMap()[L[i]]){ ok=false; break; } }
-  var b=document.getElementById('n2'); if(b) b.disabled=!ok;
-  if(ok&&L.length){ A.platform=L[0]; A.ful=fulMap()[L[0]]; }
-  return ok;
-}
-function renderFulAll(){
-  var box=document.getElementById('fulbox'); if(!box) return;
-  var L=platList();
-  if(!L.length){ box.innerHTML='<p class="hint">先回上一步选平台</p>'; return; }
-  var h='',i,p,q,P,k,f;
-  for(i=0;i<L.length;i++){
-    p=L[i]; P=PLAT[p]; if(!P) continue;
-    h+='<div class="fulgrp" data-p="'+p+'">';
-    h+='<div class="fulhead">'+(L.length>1?('平台 '+(i+1)+' / '+L.length+' · '):'')+P.n+'</div>';
-    h+='<div class="fullead">'+leadOfPlat(p)+'</div>';
-    for(k in P.ful){
-      f=P.ful[k];
-      h+='<button class="opt" data-f="'+k+'" onclick="pickFul(\''+p+'\',\''+k+'\',this)"><b>'+f.n+'</b><br><span class="sm">'+f.note+'</span></button>';
-    }
-    h+='<button class="opt na" data-f="na" onclick="pickFul(\''+p+'\',\'na\',this)">这个平台不确定 / 客户不愿说</button>';
-    h+='</div>';
-  }
-  box.innerHTML=h;
-  var gs=box.querySelectorAll('.fulgrp');
-  for(i=0;i<gs.length;i++){
-    p=gs[i].getAttribute('data-p'); f=fulMap()[p]; if(!f) continue;
-    var os=gs[i].querySelectorAll('.opt');
-    for(q=0;q<os.length;q++) if(os[q].getAttribute('data-f')===f) os[q].classList.add('sel');
-  }
-  syncFul();
-}
 /* 平台 × 发货方式 → 报关模式 / 免税 / 退税（源自《平台履约与报关对照表》） */
 var PLAT={
  amazon:{n:'Amazon 亚马逊',ful:{
@@ -2614,40 +2499,6 @@ function painSection(d,bare){
   s+= bare ? '</div>' : '</div></div>';
   return s;
 }
-function go(n){
-  var sts=document.querySelectorAll('#p-flow .step');
-  for(var i=0;i<sts.length;i++) sts[i].classList.remove('on');
-  current=n;
-  if(n===2) renderFulAll();
-  if(n===3) renderDeclAll();
-  var lz=document.getElementById('lead'+n);
-  if(lz) lz.innerHTML=leadHTML(n);
-  var st=document.getElementById('s'+n);
-  if(st) st.classList.add('on');
-  if(n>=1&&n<=9) syncInsight(n);
-  wizBar(n);
-  window.scrollTo(0,0);
-}
-function wizBar(n){
-  var b=document.getElementById('wizbar'); if(!b) return;
-  if(n==='entry'||!A.cid){ b.style.display='none'; return; }
-  b.style.display='block';
-  var right=(typeof n==='number'&&n>=1&&n<=9)?('第 '+n+' 题 / 9'):(n===0?'开场白':(n===10?'已出结果':''));
-  b.innerHTML='<span>客户编号 <b>'+A.cid+'</b></span>'+(right?'<span class="wb2">'+right+'</span>':'');
-}
-function startConsult(){
-  var el=document.getElementById('cidIn');
-  var v=(el&&el.value)?String(el.value).trim():'';
-  var h=document.getElementById('cidHint');
-  if(!v){
-    if(h) h.innerHTML='<b style="color:var(--accent)">先填个客户编号再开始</b>，例：A001。';
-    if(el) el.focus();
-    return;
-  }
-  A.cid=v;
-  if(h) h.innerHTML='';
-  go(0);
-}
 function row(k,v,amber,note){
   return '<div class="row"><div class="k">'+k+'</div><div class="v'+(amber?' amber':'')+'">'+v+'</div>'+(note?'<div class="tip">'+note+'</div>':'')+'</div>';
 }
@@ -2668,46 +2519,6 @@ function pkgOf(e,f){
     if(f==='f4')return{name:'14888 / 年',note:'一般人，年流水≤1000万'};
     return{name:'定制',note:'超1000万/多站点，请主管核定'};
   }
-}
-var PH='<div class="row"><div class="k">等待生成</div><div class="v" style="font-weight:400;font-size:13px;color:var(--muted)">把 9 个问题全部选完，点「生成首咨结果 + 话术」，方案和客户痛点会显示在这里</div></div>';
-var QK=['city','entity','flow','sms','file','hist','invoice'];
-var QN={city:'Q4 公司/店铺城市',entity:'Q5 小规模还是一般人',flow:'Q6 去年全年流水（万元）',sms:'Q7 是否收到税务局短信',file:'Q8.1 现在按什么口径申报',hist:'Q8.2 历史遗留问题',invoice:'Q9 供应商发票'};
-var QSTEP={city:4,entity:5,flow:6,sms:7,file:8,hist:8,invoice:9};
-function finish(){
-  var _L=platList(),_i;
-  if(!_L.length&&A.platform!=='na'){
-    alert('Q1 还没选：客户主要做哪些平台？至少选一个。');
-    go(1); return;
-  }
-  for(_i=0;_i<_L.length;_i++){
-    if(!fulMap()[_L[_i]]){
-      alert('Q2 还没答完：'+(platNameOf(_L[_i]))+' 的发货方式还没选。');
-      go(2); return;
-    }
-  }
-  for(_i=0;_i<_L.length;_i++){
-    if(!declMap()[_L[_i]]){
-      alert('Q3 还没答完：'+(platNameOf(_L[_i]))+' 这批货是谁报关的还没选。');
-      go(3); return;
-    }
-  }
-  for(var qi=0;qi<QK.length;qi++){
-    var v=A[QK[qi]];
-    if(v==null||v===''||v===false){
-      alert('还有未回答的问题：'+QN[QK[qi]]);
-      go(QSTEP[QK[qi]]);
-      return;
-    }
-  }
-  if(A.sms==='y'&&(!(A.smsQ||[]).length)&&A.smsQNa!==true){
-    alert('Q7.1 还没答：税局要求更正哪几个季度？至少选一个；客户记不清就点「不记得是哪几个季度」。');
-    go(7);
-    return;
-  }
-  if(A.platform==='na'||A.ful==='na'){ lackRender(); return; }
-  syncFul(); syncDecl();
-  document.getElementById('out').innerHTML=multiHTML();
-  go(10);
 }
 /* —— 推导明细（默认收起） —— */
 /* ============ v6 · 落地方案四段结构 ============
@@ -2765,37 +2576,209 @@ function faqOf(d,n){
 }
 
 /* —— ① 方案大纲 —— */
+/* ============ 合规体检：五项 ============
+   基础合规 / 出口合规 / 申报合规 / 成本合规 / 历史遗留
+   每条给出：现状 → 判定（不合规 / 待确认 / 合规）→ 具体问题 → 对应第几步整改 */
+function planCheck(d){
+  var rows=[],f=(PLAT[A.platform]&&PLAT[A.platform].ful[A.ful])||null;
+  var declTxt={self:'客户自己公司抬头',maidan:'货代买单',ddp:'双清包税',plat:'平台代报',na:'待确认'}[A.decl]||'还没问';
+  var qs=A.smsQ||[],qN=qs.length;
+
+  /* ① 基础合规：进出口权 + 免税备案 —— 整套方案的地基 */
+  var v0='ok',i0='',q=(A.qual||'');
+  if(q==='both'){ i0='进出口权、免税备案都在，自己名下的出口凭证拿得到——整套合规的地基已经在了。'; }
+  else if(q==='qualOnly'){ v0='bad';
+    i0='有进出口权，但免税备案没做——报关能报，13 栏（出口免税栏）填不进去，等于报了关还是免不了税。补备案是这一步里最容易漏的。'; }
+  else if(q==='none'){ v0='bad';
+    i0='公司没有进出口权、也没做免税备案，货是借'+declTxt+'的抬头出去的，没有报关单、也没有报关清单。这个基础不存在，销售额在税务上就视同内销。'; }
+  else if(q==='na'){ v0='warn'; i0='出口资质客户说不清——这是所有结论的地基，不确认不能往下讲。先用报关抬头反推。'; }
+  else if(d.decl==='有'){ i0='按报关抬头看是客户自己报关，出口凭证拿得到；但进出口权和免税备案有没有，还要再确认一句。'; }
+  else if(d.decl==='部分'){ v0='warn'; i0='有一部分票是自己抬头，说明资质可能只办了一部分；按最差的那部分算，等于地基没打稳。'; }
+  else if(d.decl==='无'){ v0='bad';
+    i0='公司没有进出口权、也没做免税备案，货是借'+declTxt+'的抬头出去的，没有报关单、也没有报关清单。这个基础不存在，销售额在税务上就视同内销。'; }
+  else { v0='warn'; i0='出口资质和报关主体都还没问清——这是所有结论的地基，不确认不能往下讲。'; }
+  rows.push({dir:'基础合规',now:'出口资质：'+({both:'进出口权 + 免税备案都有',qualOnly:'只有进出口权 · 没做免税备案',none:'两个都没有',na:'待确认'}[q]
+      ||(d.decl==='有'?'按报关抬头看是自己报关':'没有进出口权 · 无免税备案')),
+    v:v0,issue:i0,fix:['s2']});
+
+  /* ② 出口合规：报关抬头在谁名下 + 履约方式对不对得上 */
+  var v1='ok',i1='';
+  if(d.decl==='有'){ i1='报关单在客户自己名下，这条路是通的。'; }
+  else if(d.decl==='部分'){ v1='warn'; i1='一部分票有客户自己抬头，一部分没有——按最差的那部分算，等于没有。'; }
+  else if(d.decl==='无'){ v1='bad';
+    i1='报关单位是'+declTxt+'，不是客户公司，客户手里没有自己名下的报关单或报关清单——出口这一环不合规。'; }
+  else { v1='warn'; i1='报关主体还没问清——这是全部结论的前提，不确认就不能往下讲。'; }
+  if(A.decl==='self'&&f&&f.decl==='无'){ v1='bad';
+    i1='按「'+d.n+'」出货，报关单通常是平台或物流商的名字，客户记成自己抬头报关——出货方式和报关主体对不上。'; }
+  else if(d.cf){ v1=(v1==='ok'?'warn':v1); i1+='　'+d.cf; }
+  else if(f&&f.c==='硬约束'&&A.decl!=='plat'){ v1=(v1==='ok'?'warn':v1);
+    i1+='　'+d.platN+' 强制指定物流，客户不能自选货代和报关行，想改自报这条路走不通。'; }
+  /* 建议报关方式：按发货方式推（FBA/海外仓→9810、直发→9610、一般贸易→0110），无票可考虑 1039 */
+  var tgt=(f&&(f.mode==='9810'||f.mode==='9610'||f.mode==='0110'||f.mode==='1039'))?f.mode:'';
+  var adv='',advWhy='';
+  if(tgt==='9810'){ adv='9810（跨境电商出口海外仓）';
+    advWhy='货是批量发到海外仓再卖的，9810 按海外仓备货报关，报关单金额能跟平台销售额对上，是最贴你这种发货方式的模式。'; }
+  else if(tgt==='9610'){ adv='9610（跨境电商零售出口）';
+    advWhy='货是零售直发、走小包或平台物流出去的，9610 就是为这种小包直发设的，凭清单汇总报关，能拿到报关单。'; }
+  else if(tgt==='0110'){ adv='0110（一般贸易出口）';
+    advWhy='这批货是整批出给境外公司的，走一般贸易 0110，单证齐套就能报关、能退税，适合大货一次出。'; }
+  else if(tgt==='1039'){ adv='1039（市场采购贸易）';
+    advWhy='上游开不了票，1039 免征不退，是没有进项票时让货合法出去的一条路。'; }
+  if(A.invoice==='none'&&tgt&&tgt!=='1039') advWhy+='　无票那部分也可以考虑 1039（免征不退）——两条路不冲突，分开走。';
+  if(adv){
+    i1+=(i1?'　':'')+'<b>建议报关方式：'+adv+'</b>。'+advWhy;
+    if(d.decl==='无') i1+='　注意顺序：先办进出口权和免税备案，再用这个模式报——地基没打就换模式，等于空转。';
+  }else if(d.modeShow&&d.modeShow!=='待确认'){
+    i1+=(i1?'　':'')+'<b>建议报关方式：'+d.modeShow+'</b>。';
+  }
+  rows.push({dir:'出口合规',now:'报关单抬头：'+declTxt+' · '+d.n+(adv?' · 建议走 '+adv.slice(0,4):''),
+    v:v1,issue:i1,fix:['s2','s3','s5','s7']});
+
+  /* ③ 申报合规：跟平台推送的数据对不对得上 */
+  var v2='ok',i2='';
+  if(A.file==='zero'){ v2='bad'; i2='平台有流水却一直零申报，缺口是销售额全额；这不是少报，是没报。'; }
+  else if(A.file==='cash'){ v2='bad'; i2='按平台打款额申报，佣金、运费、退款没算进去，差额部分要按合规补增值税。'; }
+  else if(A.file==='real'){ i2='按实际销售额申报，收入和平台对得上，申报口径站得住。'; }
+  else { v2='warn'; i2='申报口径还没问清。'; }
+  rows.push({dir:'申报合规',now:'申报口径：'+({real:'按实际申报',cash:'按回款申报',zero:'零申报'}[A.file]||'未填'),v:v2,issue:i2,fix:['s11','s3','s6','s9']});
+
+  /* ④ 成本合规：平台成本 / 采购票 / 人力工资 三块 */
+  var v3='ok',i3='',per=(A.flow!=null&&A.subs>0)?A.flow/A.subs:null;
+  if(A.file==='zero'||A.file==='cash'){
+    v3='warn';
+    i3='平台费用（佣金、配送、仓储、广告）没按明细入账，成本这块是空的。亚马逊这类平台费用通常占流水 40%~50%，回款只剩一半左右，不按明细录进去，企业所得税就抵不掉。';
+  }
+  if(A.invoice==='none'){ v3='bad';
+    i3+=(i3?'　':'')+'问了确实开不了票，成本进不来：增值税这边能免，但企业所得税利润虚高，多交 25%——这两件事别混着讲。'; }
+  else if(A.invoice==='unknown'){ v3=(v3==='ok'?'warn':v3);
+    i3+=(i3?'　':'')+'客户说开不了，但压根没问过供应商——这不是结论。方案第一件事是让他去问一句普票，一般都能开，只加 1~3 个点。'; }
+  else if(A.invoice==='special'){
+    i3+=(i3?'　':'')+'只能开专票、还要加 8~13 个点：这个模式退不了税，专票只剩抵企税的作用，为它多付的点数白花，谈普票就够。'; }
+  else if(A.invoice==='normal'){
+    i3+=(i3?'　':'')+'能开普票，采购成本能进账；普票够用，不用为专票多付税点。'; }
+  else { v3=(v3==='ok'?'warn':v3); i3+=(i3?'　':'')+'开票情况还没问清。'; }
+  if(A.staff==='yes'){ i3+=(i3?'　':'')+'人力这块有在职员工，可以按工资入账抵企业所得税，每人 5000 以内还免个税。'; }
+  else if(A.staff==='retired'){ i3+=(i3?'　':'')+'只有退休返聘的，按返聘劳务入账，每人 5000 以内免个税，成本一样能抵。'; }
+  else if(A.staff==='no'){ v3=(v3==='ok'?'bad':v3);
+    i3+=(i3?'　':'')+'公司一个员工都没有，工资这条路走不通——成本只能靠平台费用和采购票，企业所得税基本抵不掉，这个要跟客户说清楚。'; }
+  else { i3+=(i3?'　':'')+'人力成本要问一句：有没有给员工发工资入账？没录工资，这块成本也是空的。'; }
+  if(per!=null&&per>=500&&A.entity==='small'){
+    v3='bad';
+    i3+='　人均年流水约 '+Math.round(per)+' 万，身份还是小规模——超 500 万要强制升一般人，按 1% 报价会报错。';
+  }
+  rows.push({dir:'成本合规',now:'平台成本：'+(A.file==='real'?'按明细入账':'未按明细入账')
+      +' · 采购票：'+({normal:'能开普票',special:'只能开专票（税点贵）',unknown:'说开不了，没问过',none:'问了明确不开',na:'待确认'}[A.invoice]||'未填')
+      +' · 人力工资：'+({yes:'有在职员工',retired:'只有返聘',no:'没有人员',na:'待确认'}[A.staff]||'待确认'),
+    v:v3,issue:i3,fix:['s12','s6','s9','s10']});
+
+  /* ⑤ 历史遗留：税局短信点名 / 被查过 */
+  var v4='ok',i4='';
+  if(A.hist==='check'){ v4='bad';
+    i4='以前被查过、更正过——开工前先确认那个案子结案没有、补没补完。没结案就动新方案，新方案会被一起算进去。'; }
+  if(A.sms==='y'){
+    v4=(v4==='ok'?'warn':v4);
+    i4+=(i4?'　':'')+'税局短信点名 '+(qN?qN+' 个季度（'+qs.join('、')+'）':'了几个季度'+(A.smsAmt?'，合计约 '+A.smsAmt+' 万':''))
+      +'，这几个季度要按实际数据更正。口径是「先合规，再核定」——不合规，税局不给核定。';
+  }
+  if(!i4){ i4='没有存量，历史是干净的，直接从今年开始按合规走。'; }
+  rows.push({dir:'历史遗留',now:'历史遗留：'+({none:'没有，基本干净',new:'新主体刚起步',overdue:'往期少报 / 欠申报',check:'被查过 / 更正过'}[A.hist]||'待确认')
+      +(A.sms==='y'?' · 已收到税局短信'+(qN?'，点名 '+qN+' 个季度':''):''),
+    v:v4,issue:i4,fix:['s1']});
+  return rows;
+}
+/* 五个方向 → 对应整改动作：按分支优先级取第一个存在的步骤，避免跨分支指错步号 */
+var FIXMAP={
+  '基础合规':['s2'],
+  '出口合规':['s2','s3','s5','s7'],
+  '申报合规':['s11','s3','s6','s9'],
+  '成本合规':['s12','s6','s9','s10'],
+  '历史遗留':['s1']
+};
+function planCheckHTML(d){
+  var rows=planCheck(d),S=roadmap(d),idx={},i,h='';
+  for(i=0;i<S.length;i++) idx[S[i].k]=i+1;
+  var chip={bad:'不合规',warn:'待确认',ok:'合规'};
+  var nbad=0,nwarn=0;
+  for(i=0;i<rows.length;i++){ if(rows[i].v==='bad') nbad++; if(rows[i].v==='warn') nwarn++; }
+  h+='<details class="ck"><summary class="ck-sum-line">';
+  h+='<span class="ck-h">合规体检</span>';
+  for(i=0;i<rows.length;i++) h+='<span class="ck-chip '+rows[i].v+'">'+rows[i].dir+'</span>';
+  h+='<span class="ck-cnt">'+(nbad?nbad+' 不合规':'')+(nbad&&nwarn?' · ':'')+(nwarn?nwarn+' 待确认':'')+((nbad||nwarn)?'':'各项无异常')+'</span>';
+  h+='<span class="ck-go">▸</span></summary>';
+  h+='<div class="ck-body">';
+  for(i=0;i<rows.length;i++){
+    var r=rows[i],fx=[],order=FIXMAP[r.dir]||r.fix;
+    for(var j=0;j<order.length;j++){ if(idx[order[j]]) fx.push('第 '+idx[order[j]]+' 步'); if(fx.length>=2) break; }
+    h+='<div class="ck-row ckr-'+r.v+'">'+
+       '<div class="ck-top"><span class="ck-d">'+r.dir+'</span><span class="ck-v '+r.v+'">'+chip[r.v]+'</span></div>'+
+       '<div class="ck-now">'+r.now+'</div>'+
+       '<div class="ck-issue">'+r.issue+'</div>'+
+       (fx.length?'<div class="ck-fix">整改见 '+fx.join(' / ')+'</div>':'')+
+       '</div>';
+  }
+  return h+'</div></details>';
+}
+
+/* ============ 动作的前置与解锁（按依赖排，前置不成立后续就是空转） ============ */
+var PLAN_META={
+  /* preShort：大纲里显示的一行短前置；pre 是展开后的完整解释 */
+  _x:0,
+  s1:{preShort:'四项合规跑通之后才谈历史',pre:'前面四项合规跑通之后才谈（历史遗留排在最后）：口径是「先合规，再核定」——不合规，税局不给核定',unlock:'历史这块有明确结论：补多少、怎么补、结案没有',risk:'一开始就去聊核定，税局不受理；先动手补又没算清，做到一半客户跑了'},
+  s2:{preShort:'没有前置，这是全案地基',pre:'没有前置，这是全案地基：进出口权和免税备案不办下来，后面免税、退税、申报全是空谈',unlock:'基础合规成立——能用客户自己的名义报关，13 栏能填',risk:'不办，就永远拿不到自己名下的报关单，免税和退税全部归零'},
+  s3:{preShort:'拿到 IC 卡 + 免税备案',pre:'拿到 IC 卡、免税备案完成之后才成立（打地基那一步做完）；没拿到就报不了',unlock:'第一票自己抬头的报关单，后面每一票都可以复制',risk:'没有报关单，免税申报没有依据，报了也是虚假申报'},
+  s4:{pre:'没有前置',unlock:'一张缺口表：历史是补、是更正，还是用新主体承接',risk:'口径不清就动，后面全部返工'},
+  s5:{pre:'客户得先有自己名下的报关单（办进出口权那一步）。报关权没拿回来就挑模式，是空转',unlock:'对应的报关模式成立：9810 / 0110 / 9610 / 1039 里走通一条',risk:'先讲模式再补报关权，顺序反了，方案不成立'},
+  s6:{pre:'已经有一票用该模式成功报关，且报关单金额 = 平台销售额',unlock:'免税 / 退税真正落到申报表上',risk:'没报关单就申报免税，属于虚假申报，比不报更麻烦'},
+  s7:{pre:'没有前置，但它是免税这条路的命门',unlock:'免税申报唯一合法的凭证',risk:'要不到这张单，免税这条路直接断，只能退到账务线'},
+  s8:{pre:'确认要不到汇总报关单之后，才走这条线',unlock:'账务合规 + 企业所得税优化，客户还有得买',risk:'卡在免税上不动，客户到期就走'},
+  s9:{pre:'缺口表出来之后（定口径那一步）',unlock:'历史这块有明确结论，不再悬着',risk:'存量不处理，新账做得再干净，一并案还是全露'},
+  s10:{pre:'前面各步稳定运行半年以上',unlock:'多主体 / 税负长期优化',risk:'方案没稳就做架构，两头都乱'},
+  s11:{preShort:'有自己名下的报关单',pre:'申报本身随时能改，但免税那一栏要等有了自己名下的报关单才能填（报关抬头那一步）',unlock:'申报口径和平台推送数据对得上，不再被约谈',risk:'零申报 / 按回款报，差额全倍补，还会被拉异常'},
+  s12:{preShort:'申报口径已改',pre:'账按新口径建起来之后才录得进去（申报改口径那一步）；口径没改，录了也对不上',unlock:'平台成本、采购票、工资三类成本都在账上，企业所得税抵得掉',risk:'成本一笔打包录，被倒查不认，要全额补缴 + 罚款'}
+};
+
 function planOutline(d){
   var S=roadmap(d), h='';
+  h+=planCheckHTML(d);
   h+='<div class="olbar"><button class="cbtn" onclick="copyTxt(\'ol-src\',this)">复制大纲，直接发客户</button></div>'
     +'<div id="ol-src" style="display:none">'+outlineText(d).replace(/</g,'&lt;')+'</div>'
     +'<div class="ol">';
   for(var i=0;i<S.length;i++){
-    var s=S[i];
+    var s=S[i], M=PLAN_META[s.k]||{};
     h+='<div class="ol-row"><div class="ol-n">'+(i+1)+'</div><div class="ol-b">'
       +'<div class="ol-t">'+s.t+'</div>'
       +'<div class="ol-m"><span class="ol-tm">'+s.time+'</span><span class="ol-out">交付：'+s.done+'</span></div>'
+      +(M.pre?'<div class="ol-pre"><b>前置</b>'+(M.preShort||M.pre)+'</div>':'')
       +'<details class="ol-d"><summary>要做的事 · 客户给什么 · 注意什么</summary>'
       +'<div class="ol-i">'+s.acts.join('<br>')+'</div>'
       +'<div class="ol-c"><b>客户给：</b>'+s.cli.join(' · ')+'</div>'
       +'<div class="ol-w"><b>注意：</b>'+s.watch+'</div>'
+      +(M.unlock?'<div class="ol-u"><b>做完解锁：</b>'+M.unlock+'</div>':'')
+      +(M.risk?'<div class="ol-rk"><b>不做会怎样：</b>'+M.risk+'</div>':'')
       +'</details></div></div>';
   }
   return h+'</div>';
 }
 function outlineText(d){
-  var S=roadmap(d), L=[];
+  var S=roadmap(d), L=[], ck=planCheck(d), i, k;
+  var chip={bad:'不合规',warn:'待确认',ok:'合规'};
   L.push('【落地方案】'+(A.cid?'客户编号 '+A.cid:''));
   L.push('平台 / 发货：'+d.platN+' · '+d.n);
   L.push('报关模式：'+d.modeShow+'　出口免税：'+d.mian+'　出口退税：'+d.tui);
   L.push('');
-  L.push('共 '+S.length+' 步：');
-  for(var i=0;i<S.length;i++){
-    var s=S[i];
+  L.push('一、五项合规先体检');
+  for(i=0;i<ck.length;i++) L.push('　'+ck[i].dir+'：'+chip[ck[i].v]+'——'+String(ck[i].issue).replace(/<[^>]+>/g,''));
+  L.push('');
+  L.push('二、按优先级整改，共 '+S.length+' 步（前置不成立，后面一步都走不了）');
+  for(i=0;i<S.length;i++){
+    var s=S[i], M=PLAN_META[s.k]||{};
     L.push((i+1)+'. '+s.t+'（'+s.time+'）');
-    for(var k=0;k<s.acts.length;k++) L.push('   · '+s.acts[k]);
+    if(M.pre) L.push('   前置：'+M.pre);
+    for(k=0;k<s.acts.length;k++) L.push('   · '+s.acts[k]);
     L.push('   客户需提供：'+s.cli.join('、'));
     L.push('   完成标志：'+s.done);
+    if(M.unlock) L.push('   做完解锁：'+M.unlock);
+    if(M.risk) L.push('   不做会怎样：'+M.risk);
   }
   L.push('');
   L.push('说明：出口免税以报关单金额与平台销售额一致为前提，差额部分按合规要求需缴增值税；具体口径以税务机关认定为准。');
@@ -2905,6 +2888,19 @@ function premHTML(d){
   else L.push('往期申报和流水有差额，先算清缺口再谈今年——顺序反了要返工，还会让客户觉得被绕。');
   return '<ul class="prem">'+L.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>';
 }
+/* —— 为什么按这个顺序：依赖链逼出来的，不是排出来的 —— */
+function orderWhyHTML(d){
+  var S=roadmap(d), L=[], i;
+  for(i=0;i<S.length;i++){
+    var M=PLAN_META[S[i].k]||{};
+    if(M.pre&&M.pre.indexOf('没有前置')!==0) L.push('<li><b>第 '+(i+1)+' 步 '+S[i].t+'</b>　卡在：'+M.pre+'</li>');
+  }
+  return '<p class="wp">顺序不是排出来的，是逼出来的。五项里，<b>基础合规在最底下</b>：进出口权和免税备案不办下来，报关单就永远是别人的名字，免税、退税、13 栏全都不成立——所以地基必须第一步打。'
+    +'拿到报关权，才谈得上挑报关模式（9810 / 9610 / 0110 / 1039）；模式定了，免税申报才有凭据。'
+    +'申报口径和票据要一起收拾，但它们的顺序不能抢在报关权前面，否则算出来的缺口是错的，越算越乱。'
+    +'历史上少报的钱什么时候都得补，但它跟拿报关权可以并行，所以放在能开工的位置，不挡道。</p>'
+    +'<ul class="wlist">'+L.join('')+'</ul>';
+}
 function planWhyHTML(d){
   var h='', pkg=pkgOf(A.entity,A.flow);
   h+='<div class="wtb"><table><thead><tr><th>看什么</th><th>客户是什么</th><th>推出什么</th></tr></thead><tbody>'
@@ -2913,6 +2909,7 @@ function planWhyHTML(d){
     +'<tr><td>注册地</td><td>'+(A.city==='shenzhen'?'深圳':(A.city==='na'?'待确认':'外地'))+'</td><td>'+(A.city==='shenzhen'?'13 栏可直填免税':'先有报关单才能申 13 栏')+'</td></tr>'
     +'<tr><td>主体 + 流水</td><td>'+(A.entity==='small'?'小规模':'一般纳税人')+'</td><td>套餐 <b>'+pkg.name+'</b></td></tr>'
     +'</tbody></table></div>';
+  h+='<div class="wsec"><h4>为什么按这个顺序</h4>'+orderWhyHTML(d)+'</div>';
   h+='<div class="wsec"><h4>为什么不是另外两条路</h4>'+roadCmpHTML(d)+'</div>';
   h+='<div class="wsec"><h4>这个方案成立的前提</h4>'+premHTML(d)+'</div>';
   h+='<details class="fold"><summary>他会怎么反弹（'+painOf(d).length+' 种说法，附接法）</summary><div class="foldb">'+painSection(d,true)+'</div></details>';
@@ -2923,6 +2920,22 @@ function planWhyHTML(d){
 }
 
 /* —— ④ 客户可能问（话术库） —— */
+/* —— 客户问过的问题 → 建议怎么答（客户自己开口问的，一定要在方案里有回应） —— */
+function planAskHTML(d){
+  var L=(A.asks||[]),h='',i;
+  if(!L.length) return '<p class="hint" style="margin:2px 0 0">客户这次没主动提问。等他问了再补进来——问过的问题没回应，是最容易被记住的失分。</p>';
+  h+='<div class="asklist">';
+  for(i=0;i<L.length;i++){
+    var a=L[i];
+    h+='<div class="askrow">'+
+       '<div class="askq"><span class="askn">'+(i+1)+'</span>'+a.t+'</div>'+
+       '<div class="aska">'+String(a.adv||a.adv===0?a.adv:'')+
+         '</div></div>';
+  }
+  h+='</div>';
+  h+='<p class="hint" style="margin:8px 0 0">这类问题别背条文，先给结论、再给动作。答不上来的当场记下来，回头补——不要编。</p>';
+  return h;
+}
 function planFaqHTML(d){
   var L=faqOf(d,12), h='', last='', i;
   for(i=0;i<L.length;i++){
@@ -2976,13 +2989,17 @@ function detailHTML(d){
 function resultHTML(d,noCopy){
   var S=roadmap(d),P=probsOf(d),F=faqOf(d,12);
   return heroHTML(d) + (noCopy?'':copyBarHTML(d))
+    + planAIHTML(d)
     + grpHTML('① 方案大纲','照着走就行，也能直接复制发给客户')
     + secHTML('这单分 '+S.length+' 步走', S.length+' 步', planOutline(d), true)
     + grpHTML('② 落地话术','和大纲同号，念到第几步就看第几条')
     + secHTML('每一步怎么说', S.length+' 段', planTalkHTML(d), true)
     + grpHTML('③ 方案解析','为什么是这个方案，主管问起再翻')
     + secHTML('为什么是这个方案', '判定 + 对比 + 前提', planWhyHTML(d), false)
-    + grpHTML('④ 客户可能会问','话术库里挑的 '+F.length+' 条，问到就照着答')
+    + grpHTML('④ 客户问过的，这样答','他自己开口问的，方案里得有个交代')
+    + secHTML('客户问过 '+((A.asks||[]).length)+' 个问题', '按他问的顺序', planAskHTML(d), (A.asks||[]).length>0)
+    + aiPanelHTML(d)
+    + grpHTML('⑤ 客户可能会问','话术库里挑的 '+F.length+' 条，问到就照着答')
     + secHTML('FAQ（'+F.length+' 条）', '点开看答案', planFaqHTML(d), false);
 }
 function review(d){
@@ -3126,38 +3143,58 @@ function roadmap(d){
   var mN={9810:'海外仓',9610:'零售直发',0110:'一般贸易',1039:'市场采购'};
 
   if(d.mode==='转合规'){
-    S.push({k:'s1',t:'先把历史定调，两方案摆桌上让客户选',
-      time:'3~5 个工作日',
-      acts:['拉近 3 年平台后台流水，和原代账的申报表做一次差额比对，出一张"缺口表"',
-            '按"老实补"和"走免税备案"两条路，各算一遍补税 + 滞纳金，算出具体数字',
-            '当面把两个方案的代价讲透，让客户自己选，不替他选'],
-      watch:'别让客户先自己去税局问——问错口径，后面要花双倍力气圆回来',
-      cli:['平台后台近 3 年流水导出','原代账的申报表和完税凭证','营业执照、公章'],
-      talk:'"补肯定是要补的。咱就看怎么补最省。两条路我都算出来，您挑一条。"',
-      ask:'blk2',
-      up:'把近 3 年的平台流水、银行流水、申报表按年归档，一次备齐——后面每个环节都要用到',
-      done:'客户在两个方案里选定一个，并签字确认'});
-    S.push({k:'s2',t:'把报关权拿回来（办进出口权）',
+    S.push({k:'s2',t:'先打地基：进出口权 + 免税备案',
       time:'10~15 个工作日',
       acts:['经营范围加上"货物进出口、技术进出口"',
             '办对外贸易经营者备案 + 海关收发货人备案',
-            '申电子口岸 IC 卡，绑定一家报关行',
-            '跟货代说清楚：以后报关单抬头写客户公司，不是他们的'],
-      watch:'经营范围变更本身就要 5~10 个工作日，别承诺"下周就能报"',
-      cli:['营业执照正副本、法人身份证、公章','银行开户信息','货代的对接人'],
-      talk:'"这一步您不用跑，我们来办。您就给我四样东西：执照、身份证、公章、银行信息。"',
-      up:'从今天起，每一票都要求货代给报关单副本，自己建一个"报关档案"文件夹',
-      done:'拿到 IC 卡，且第一票能用自己名义报关'});
-    S.push({k:'s3',t:'首票试单 + 账务归位',
-      time:'首票后 10 个工作日',
-      acts:['第一票走小批量，全程盯报关单下来的金额',
-            '核对报关单金额 = 平台销售额，不能填成本',
-            '按 '+d.modeShow+' 建账，第一期做免税申报'],
-      watch:'报关金额填成本是最大的坑——差额部分要补增值税',
-      cli:['首票箱单、发票、合同','平台当月结算单'],
-      talk:'"第一票我跟着走。报关单下来咱对一遍数，对得上，后面就顺了。"',
-      up:'每月 5 号前把上月平台结算单、报关单、银行流水三样对上，把对账变成习惯',
-      done:'首票报关单下来，金额和销售额一致，首期免税申报完成'});
+            '做出口免税备案，把 13 栏（出口免税栏）这条路打开',
+            '申电子口岸 IC 卡，绑定一家报关行'],
+      watch:'进出口权和免税备案要一起办——只办一个，后面免税申报还是填不进去',
+      cli:['营业执照正副本、法人身份证、公章','银行开户信息、公司英文名称','操作员身份证'],
+      talk:'"您要合规，第一步就是把进出口权和免税备案做了。这个是整个合规账的基础。您现在报关用的是货代的抬头，报关单上不是您的名字，免税、退税都谈不上。这两个办下来，13 栏才能填，后面才有得谈。您就给我四样东西：执照、身份证、公章、银行信息，其余我们跑。"',
+      up:'从今天起每一票都要报关单副本，自己建一个"报关档案"文件夹',
+      done:'拿到 IC 卡，免税备案完成，13 栏能填'});
+    S.push({k:'s3',t:'报关抬头换成客户公司，首票试单',
+      time:'首票后 5~10 个工作日',
+      acts:['跟货代说清楚：以后报关单抬头写客户公司，不是他们的',
+            '第一票走小批量，全程盯报关单下来的金额',
+            '核对报关单金额 = 平台销售额，不能按成本填'],
+      watch:'报关金额按成本填是最大的坑——差额部分要补增值税',
+      cli:['首票箱单、发票、合同','货代的对接人'],
+      talk:'"您现在用的是买单报关，报关单位不是您公司的名字，所以您手里没有报关单、也没有报关清单。这种方式是坐不了报关合规的，得跟货代讲清楚，以后用您的名字来报。第一票先走小批量，报关单下来我们对一遍数，金额跟平台销售额对得上，后面每一票照着走就行。这一票顺了，后面就都能复制。"',
+      up:'每票报关后按月份命名存档报关单副本，别等要用了才回头找',
+      done:'拿到第一票自己抬头的报关单，金额和销售额对得上'});
+    S.push({k:'s11',t:'申报改口径：按汇总单明细申报',
+      time:'首个申报期内',
+      acts:['按平台汇总单的「营业额 − 退货」申报，不按回款、更不按零申报',
+            '汇总单在电商后台直接导出，我们给您获取方式',
+            '第一个月由我们把口径走一遍，确认申报表和后台数据对得上'],
+      watch:'按回款报和零申报都会被约谈——税局拿到的是平台推送的销售额，比你算的高',
+      cli:['电商后台汇总单（按站点、按季度）','原代账的申报表'],
+      talk:'"您现在零申报，跟平台数据肯定有出入。税局那边是把平台汇总单上的销售额推过去的，所以我们要按汇总单报，不按回款、更不按零。数据您在电商后台就能导，获取方式我发您。第一个月我们把口径走一遍，确认申报表跟后台对得上，后面您照着做就顺了。这一步做完，才谈得上免税申报。"',
+      up:'每月 5 号前导出上月汇总单，固定存一个文件夹',
+      done:'申报表和平台汇总单对得上，第一期按新口径报完'});
+    S.push({k:'s12',t:'成本归位：平台成本 / 采购票 / 人力工资',
+      time:'随账期同步',
+      acts:['平台费用（佣金、配送、仓储、广告）按明细一项项录，不做一笔打包',
+            '采购成本去跟供应商谈开普票，不开专票——这个模式退不了税，专票没意义',
+            '人力成本按工资录入：返聘退休人员每人 5000 免个税，年轻员工 6000~8000 也免个税'],
+      watch:'一笔打包录成本是行业通病，看着省事，被倒查就是全额补缴 + 罚款',
+      cli:['平台汇总单的费用明细页','供应商沟通结果','员工名册与社保情况'],
+      talk:'"您的成本现在很多没录。亚马逊这类平台费用通常占流水 40%~50%，回款只剩一半左右，这部分要按明细一项项录进去，不能一笔打包——打包看着省事，被税局倒查是不认的，到时候要全额补。采购票要普票，不要专票，专票对您没意义，白多付八到十几个点。人力这块之前没录工资，可以按工资录，返聘的和年轻员工都能做到免个税。"',
+      up:'把平台费用、采购票、工资三类成本固定成每月对账三件事',
+      done:'三类成本在账上都有明细，能对上汇总单'});
+    S.push({k:'s1',t:'最后定历史：先合规，再核定',
+      time:'合规跑通后 3~5 个工作日',
+      acts:['拉平台后台流水，和原代账申报表做一次差额比对，出一张"缺口表"',
+            '按"老实补"和"走免税备案"两条路，各算一遍补税 + 滞纳金，算出具体数字',
+            '合规跑通后再去谈核定——先合规、再核定，顺序倒过来税局不给办'],
+      watch:'别让客户先自己去税局问——问错口径，后面要花双倍力气圆回来',
+      cli:['平台后台近 3 年流水导出','原代账的申报表和完税凭证','营业执照、公章'],
+      talk:'"税局现在要求您合规申报。历史数据这块我们可以帮您去聊核定，但聊核定的前提是合规——现在税局的方针就是先合规、再核定，不合规他们不给做核定。这个您能理解吧？"',
+      ask:'blk2',
+      up:'把近 3 年的平台流水、银行流水、申报表按年归档，一次备齐——后面每个环节都要用到',
+      done:'客户选定补法，历史这块有明确的结案口径'});
   }
   else if(d.decl==='有'){
     S.push({k:'s4',t:'定口径：把历史缺口摸清楚',
@@ -3520,99 +3557,451 @@ function copyTxt(id,btn){
   else fb();
 }
 
-/* ============ AI 话术（核心够用版） ============
-   原则：规则引擎定结论，AI 只换说法。AI 拿不到判断权，也拿不到编造权。 */
-var AICFG={
-  endpoint:'https://cross-border-plan.app.workbuddy.host',
-  publishableKey:'wbpk_r365XIW2MqZ9jn16t0sCFm_cX8dHCXzc3rlvR2YRWwxZWB5PoEddh8P'
-};
-var AISYS='你是金米财税跨境业务的销售话术助手。任务只有一个：把已经定好的结论，翻译成客户听得懂、销售能照着念的口语话术。\n\n铁律（优先级从高到低）：\n1. 不得修改、补充、质疑【已定结论】。报关模式、能不能免税、能不能退税、承诺边界，一个字都不能变。\n2. 只能使用【事实】里给出的内容。不得引入任何事实之外的政策、税率、比例、期限、金额、平台规则、法规条文。\n3. 如果要说清某件事需要事实之外的信息，就写"这个要核实"，绝对不要编。\n4. 禁止出现这些表述：保证不查、绝对安全、保证退税、一定通过、帮你避税、我认识税局的人、包解决、零风险、100% 没问题。\n5. 不承诺结果，只讲动作和边界。\n6. 说人话：短句、口语、像面对面聊天。不用赋能、闭环、抓手、颗粒度这类词。\n7. 不用"根据资料""综上所述""首先其次最后"这类书面语，不用"我们致力于"这类空话。\n8. 每段 50~120 字，能一口气念完。\n9. 客户听不懂术语时，用他自己的动作来解释，不要用定义解释。';
-var AICLI=null,AIMODEL=null,AIBUSY=false;
+/* ============ AI 分析（DeepSeek 直连，Key 只存本机） ============
+   原则不变：规则引擎定结论，AI 只做分析、只换说法。AI 拿不到判断权，也拿不到编造权。 */
+var AIBASE='https://api.deepseek.com/chat/completions';
+/* 预览面板等环境会给页面加 CSP，白名单里没有 api.deepseek.com，直连会被浏览器拦成
+   “Failed to fetch”。CSP 允许连 http://127.0.0.1:*，所以本机起一个中转（cross-ai-relay.py），
+   直连失败时自动改走这里，照样能生成。file:// 双击打开或部署到线上时直连本身就能通，
+   中转只是兜底，不影响正常路径。 */
+var AIRELAY='http://127.0.0.1:8792';
+var AICFG={key:'',model:'deepseek-chat'};
+var AIBUSY={};
+function aiCfgLoad(){
+  try{
+    var o=JSON.parse(localStorage.getItem('cbx_ai')||'{}');
+    AICFG.key=o.key||''; AICFG.model=o.model||'deepseek-chat';
+  }catch(e){ AICFG.key=''; AICFG.model='deepseek-chat'; }
+}
+function aiFabState(){
+  var f=document.getElementById('aiCfgFab');
+  if(!f) return;
+  if(AICFG.key) f.className='aicfg-fab on'; else f.className='aicfg-fab';
+}
+function aiCfgOpen(){
+  aiCfgLoad();
+  var m=document.getElementById('aiCfgMask');
+  var k=document.getElementById('aiKeyIn');
+  var s0=document.getElementById('aiModelIn');
+  var h=document.getElementById('aiCfgHint');
+  if(k) k.value='';
+  if(s0) s0.value=AICFG.model||'deepseek-chat';
+  if(h) h.innerHTML=AICFG.key?'<b style="color:var(--green)">这台电脑已经存过 Key</b>，要换就粘新的，空着保存只换模型':'还没填 Key';
+  if(m) m.className='aicfg-mask on';
+  aiFabState();
+  if(!window._aiCfgKeyBind){
+    window._aiCfgKeyBind=1;
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape') aiCfgClose(); });
+  }
+  if(k) setTimeout(function(){ try{k.focus();}catch(e){} },80);
+}
+function aiCfgClose(e){
+  if(e&&e.target&&e.target.id!=='aiCfgMask'&&e.target.className!=='aicfg-mask') return;
+  var m=document.getElementById('aiCfgMask');
+  if(m) m.className='aicfg-mask';
+}
+function aiPanelSync(){
+  var ns=document.getElementById('aiNoKey'), sc=document.getElementById('aiSecs');
+  if(ns&&AICFG.key) ns.style.display='none';
+  if(sc&&AICFG.key) sc.style.display='block';
+  aiFabState();
+}
+function aiCfgSave(){
+  var k=document.getElementById('aiKeyIn'), m=document.getElementById('aiModelIn');
+  var nv=k?aiCleanKey(k.value):'';
+  if(nv) AICFG.key=nv;                    /* 空着就保留原来的 Key；粘进来的空白/换行一律洗掉 */
+  if(m) AICFG.model=m.value||'deepseek-chat';
+  try{ localStorage.setItem('cbx_ai',JSON.stringify({key:AICFG.key,model:AICFG.model})); }catch(e){}
+  var h=document.getElementById('aiCfgHint');
+  if(h) h.innerHTML=AICFG.key?'<b style="color:var(--green)">已存在本机</b>　换浏览器或清缓存要重填':'还没填 Key';
+  aiPanelSync();
+  var m=document.getElementById('aiCfgMask');
+  if(m&&AICFG.key) m.className='aicfg-mask';
+}
+function aiCfgEdit(){ aiCfgOpen(); }
+async function aiTest(btn){
+  var k=document.getElementById('aiKeyIn'), m=document.getElementById('aiModelIn');
+  var key=aiCleanKey(k?k.value:AICFG.key);
+  var model=m?m.value:AICFG.model;
+  var h=document.getElementById('aiCfgHint');
+  if(!key){ if(h) h.innerHTML='<b style="color:var(--red)">先填 Key</b>'; return; }
+  var t0=btn?btn.textContent:'';
+  if(btn){ btn.disabled=true; btn.textContent='测试中…'; }
+  if(h) h.innerHTML='正在连 DeepSeek…<br><span style="color:var(--muted);font-size:11px">'+aiDiag()+'</span>';
+  var saveKey=AICFG.key, saveModel=AICFG.model;
+  AICFG.key=key; AICFG.model=model;                     /* 先用输入框的值试，不落盘 */
+  try{
+    var r=await aiRequest([{role:'user',content:'回一个字：好'}],{maxTokens:8,stream:false,timeout:30000});
+    var j=await r.json();
+    var c=j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content;
+    if(h) h.innerHTML='<b style="color:var(--green)">通了</b>　模型回了：'+(c||'（空）')+'　点「保存」存到本机';
+  }catch(e){
+    if(h) h.innerHTML='<b style="color:var(--red)">连不上</b>　'+aiErrText(e)
+      +'<br><span style="color:var(--muted);font-size:11px">'+aiDiag()+'</span>';
+  }finally{
+    AICFG.key=saveKey; AICFG.model=saveModel;
+    if(btn){ btn.disabled=false; btn.textContent=t0||'测试连接'; }
+  }
+}
+/* —— Key 清洗与错误翻译：Failed to fetch 九成是头值里有空白/换行 —— */
+function aiCleanKey(v){ return String(v||'').replace(/[\s\u200b\u200c\u200d\ufeff\u00a0"']/g,''); }
+function aiKey(){
+  var k=aiCleanKey(AICFG.key);
+  return k;
+}
+var AI_LAST={ok:true,at:'',msg:'',origin:'',online:''};
+/* 页面被 CSP 挡住时，fetch 会直接报 Failed to fetch，跟网络故障分不开。
+   浏览器会抛 securitypolicyviolation，这里记下来，出错时才能说实话。 */
+var AI_CSP=null;
+try{
+  document.addEventListener('securitypolicyviolation',function(e){
+    try{ if(e&&e.blockedURI&&String(e.blockedURI).indexOf('deepseek')>=0) AI_CSP=String(e.blockedURI); }catch(x){}
+  });
+}catch(e){}
+function aiDiag(){
+  var k=aiKey();
+  return 'origin=' + (location.origin||'(本地文件)')
+    + ' · online=' + (navigator.onLine?'是':'否')
+    + ' · key=' + (k?('长度 '+k.length+'，'+k.slice(0,6)+'…'+k.slice(-4)):'空')
+    + ' · 模型=' + AICFG.model
+    + (AI_CSP?(' · csp=被拦 '+AI_CSP):' · csp=无')
+    + (AI_LAST.msg?(' · 上次错误=' + AI_LAST.msg):'');
+}
+/* 把各种失败翻译成一句人话 + 一句怎么修 */
+function aiErrText(e){
+  var m=String((e&&e.message)||e||'');
+  if(m==='NO_KEY') return '还没填 Key。点右上角「AI Key」填一次。';
+  if(e&&e.name==='AbortError') return '等太久了没反应，可能是网络卡住。再点一次试试，或者换个网络。';
+  if(/HTTP 401/.test(m)) return 'Key 不对，或者已经被删除。去 platform.deepseek.com 复制一个新的，注意复制全。';
+  if(/HTTP 402/.test(m)) return '账户余额不够了。去 platform.deepseek.com 充点钱，十块能用很久。';
+  if(/HTTP 429/.test(m)) return '请求太密，被限流了。等半分钟再试。';
+  if(/HTTP 5\d\d/.test(m)) return 'DeepSeek 服务端出问题了，不是你的错。等几分钟再试。';
+  if(/Failed to fetch|NetworkError|Load failed|Network request failed/i.test(m)){
+    if(AI_CSP) return '请求被页面的内容安全策略（CSP）挡住了，一个字节都没发出去——不是网络问题，也不是 Key 问题。'
+      +'你现在应该是在预览面板 / 内嵌浏览器里打开的，这类环境只允许页面连白名单里的域名，api.deepseek.com 不在里面。'
+      +'两个办法：①把这个 html 文件直接双击用浏览器打开（地址栏是 file:// 开头），再点生成；②或者等它部署到线上再用。';
+    return '请求根本没发出去，是浏览器这边拦住了。按顺序查三件事：①这台电脑是不是挂着代理或 VPN——这类请求经常被代理断掉，把 api.deepseek.com 设成直连；②Key 里是不是混进了空格或换行，重新粘一次；③关掉广告拦截 / 隐私类插件再试。';
+  }
+  return m||'未知错误';
+}
+/* 一次请求：带超时、带 Key 清洗、失败自动从流式降到非流式 */
+async function aiDoFetch(url,key,body,ctrl){
+  return await fetch(url,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify(body),
+    signal:ctrl?ctrl.signal:undefined
+  });
+}
+/* 直连失败（被 CSP 拦成 Failed to fetch）时，自动改走本机中转重试一次 */
+async function aiRequest(messages,opt){
+  opt=opt||{};
+  var key=aiKey();
+  if(!key) throw new Error('NO_KEY');
+  var body={model:AICFG.model,messages:messages,temperature:opt.temp==null?0.6:opt.temp};
+  if(opt.maxTokens) body.max_tokens=opt.maxTokens;
+  if(opt.stream) body.stream=true;
+  var ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
+  var timer=setTimeout(function(){ try{ctrl&&ctrl.abort();}catch(e){} },opt.timeout||75000);
+  var r, viaRelay=false, lastErr=null;
+  try{
+    r=await aiDoFetch(AIBASE,key,body,ctrl);
+  }catch(e){
+    lastErr=e;
+    /* 网络层失败：多半是 CSP 拦的，试本机中转 */
+    if(/Failed to fetch|NetworkError|Load failed|Network request failed/i.test(String((e&&e.message)||e))){
+      try{
+        r=await aiDoFetch(AIRELAY,key,body,ctrl);
+        viaRelay=true;
+      }catch(e2){
+        lastErr=e2;
+      }
+    }
+  }finally{
+    clearTimeout(timer);
+  }
+  if(!r){
+    AI_LAST={ok:false,at:new Date().toISOString(),msg:String((lastErr&&lastErr.message)||lastErr),origin:location.origin,online:navigator.onLine,relay:viaRelay};
+    throw lastErr||new Error('请求失败');
+  }
+  if(!r.ok){
+    var t=''; try{ t=await r.text(); }catch(e){}
+    var err=new Error('HTTP '+r.status+(t?('　'+t.replace(/</g,'&lt;').slice(0,180)):''));
+    AI_LAST={ok:false,at:new Date().toISOString(),msg:err.message,origin:location.origin,online:navigator.onLine,relay:viaRelay};
+    throw err;
+  }
+  AI_LAST={ok:true,at:new Date().toISOString(),msg:'',origin:location.origin,online:navigator.onLine,relay:viaRelay};
+  return r;
+}
+/* 流式拿内容；流式中途断了就退回整段请求 */
+async function aiStream(messages,onDelta){
+  var got='';
+  try{
+    var r=await aiRequest(messages,{stream:true});
+    if(!r.body||!r.body.getReader){                 /* 不支持流式 → 整段 */
+      var j=await r.json();
+      var c=j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content;
+      if(c){ onDelta(c); got+=c; }
+      return got;
+    }
+    var rd=r.body.getReader(), dec=new TextDecoder(), buf='';
+    while(true){
+      var x=await rd.read(); if(x.done) break;
+      buf+=dec.decode(x.value,{stream:true});
+      var lines=buf.split('\n'); buf=lines.pop();
+      for(var i=0;i<lines.length;i++){
+        var ln=lines[i].trim();
+        if(ln.indexOf('data:')!==0) continue;
+        var js=ln.slice(5).trim();
+        if(!js||js==='[DONE]') continue;
+        try{
+          var o=JSON.parse(js);
+          var c2=o.choices&&o.choices[0]&&o.choices[0].delta&&o.choices[0].delta.content;
+          if(c2){ got+=c2; onDelta(c2); }
+        }catch(e){}
+      }
+    }
+    return got;
+  }catch(e){
+    if(got) throw e;                                  /* 已经有内容了就别重试，避免重复 */
+    if(e&&e.name==='AbortError') throw e;
+    if(/HTTP (401|402|429)/.test(String(e&&e.message))) throw e;
+    /* 流式失败 → 非流式再来一次（有些代理不支持 SSE） */
+    var r2=await aiRequest(messages,{stream:false});
+    var j2=await r2.json();
+    var c3=j2.choices&&j2.choices[0]&&j2.choices[0].message&&j2.choices[0].message.content;
+    if(!c3) throw e;
+    onDelta(c3);
+    return c3;
+  }
+}
 
+/* —— 事实卡：AI 只能看这些，不许自己加 —— */
 function aiFacts(d){
-  var P=probsOf(d),S=roadmap(d),B=blocksOf(d),L=[];
+  var S=roadmap(d),B=blocksOf(d),ck=planCheck(d),L=[],i;
   L.push('【事实】');
   L.push('平台：'+d.platN+'；发货方式：'+d.n+'；对应报关模式：'+d.modeShow);
-  L.push('报关单归属：'+(d.decl==='有'?'客户自己公司':(d.decl==='部分'?'看物流渠道':'平台或货代，客户名下没有'))+
-         '；出口免税：'+d.mian+'；出口退税：'+d.tui);
-  L.push('城市：'+(A.city==='shenzhen'?'深圳':'外地')+'；纳税身份：'+(A.entity==='small'?'小规模纳税人':'一般纳税人'));
+  L.push('报关单归属：'+(d.decl==='有'?'客户自己公司':(d.decl==='部分'?'看物流渠道，部分有':'平台或货代，客户名下没有')));
+  L.push('出口免税：'+d.mian+'；出口退税：'+d.tui);
+  L.push('注册城市：'+(A.city==='shenzhen'?'深圳':(A.city==='na'?'待确认':'外地')));
+  L.push('纳税身份：'+(A.entity==='small'?'小规模纳税人':'一般纳税人')+'；年流水：'
+    +(A.flow==null||A.flow==='na'||A.flow===''?'未填':'约 '+A.flow+' 万（区间 '+bandLabel(flowBand())+'）')
+    +'；主体数：'+(A.subs||1)+' 个');
+  L.push('申报口径：'+({real:'按实际销售额申报',cash:'按平台回款申报',zero:'零申报'}[A.file]||'未填'));
+  L.push('供应商发票：'+({normal:'能开普票',special:'能开专票',none:'基本开不了'}[A.invoice]||'未填'));
+  L.push('历史遗留：'+({none:'没有，基本干净',new:'新主体刚起步',overdue:'往期少报 / 欠申报',check:'以前被查过 / 更正过'}[A.hist]||'未填'));
+  L.push('是否收到税局短信：'+(A.sms==='y'?'已收到'+(A.smsQ&&A.smsQ.length?('，点名 '+A.smsQ.join('、')):''):'没收到'));
   L.push('可对外承诺：'+d.ok);
   L.push('不可对外承诺：'+d.no);
   L.push('');
-  L.push('【当前问题（按严重度）】');
-  if(!P.length) L.push('暂未发现明显问题，属可从容规划型。');
-  for(var i=0;i<P.length;i++) L.push((i+1)+'. '+P[i].t+'。'+P[i].cost);
+  L.push('【五项合规的体检结果（这是唯一允许的分析框架）】');
+  for(i=0;i<ck.length;i++){
+    L.push(ck[i].dir+'：'+({bad:'不合规',warn:'待确认',ok:'合规'}[ck[i].v])+'。现状：'+ck[i].now+'。具体：'+String(ck[i].issue).replace(/<[^>]+>/g,''));
+  }
   L.push('');
-  L.push('【落地方案（顺序不能改）】');
-  for(var j=0;j<S.length;j++){
-    L.push('第'+(j+1)+'步：'+S[j].t+'（'+S[j].time+'）');
-    for(var k=0;k<S[j].acts.length;k++) L.push('  - '+S[j].acts[k]);
-    L.push('  本步注意：'+S[j].watch);
+  L.push('【整改动作（顺序不能改，标了前置的都成立在前提之上）】');
+  for(i=0;i<S.length;i++){
+    var M=PLAN_META[S[i].k]||{};
+    L.push('第'+(i+1)+'步：'+S[i].t+'（'+S[i].time+'）');
+    if(M.pre) L.push('  前置：'+M.pre);
+    for(var k=0;k<S[i].acts.length;k++) L.push('  - '+S[i].acts[k]);
+    if(M.unlock) L.push('  做完解锁：'+M.unlock);
+    if(M.risk) L.push('  不做会怎样：'+M.risk);
   }
   L.push('');
   L.push('【客户可能的卡点】');
-  for(var m=0;m<B.length&&m<3;m++){
-    L.push('· '+B[m].tag+'：客户会说'+B[m].q);
-    for(var n=0;n<B[m].br.length&&n<3;n++) L.push('  - 若他说「'+B[m].br[n].a+'」，可用的事实：'+B[m].br[n].b.replace(/<[^>]+>/g,''));
+  for(i=0;i<B.length&&i<3;i++){
+    L.push('· '+B[i].tag+'：客户会说「'+B[i].q+'」');
+    for(var n=0;n<B[i].br.length&&n<2;n++) L.push('  - 若他说「'+B[i].br[n].a+'」，可用的事实：'+String(B[i].br[n].b).replace(/<[^>]+>/g,''));
   }
   return L.join('\n');
 }
-function aiPrompt(d){
-  return aiFacts(d)+'\n\n【输出要求】\n严格输出四段，用下面的标题，不要加任何前后说明：\n\n'+
-  '【一、开场】\n30 秒。两个作用：让他愿意继续聊，同时让他感觉你懂他的生意。不要自我介绍超过一句。\n\n'+
-  '【二、方案讲解】\n按上面的步骤讲，每步一句"做什么 + 为什么"。讲成话，不要念条目。如果某一步客户要配合，顺带说清他要给什么。\n\n'+
-  '【三、异议应对】\n针对上面的卡点，每条两到三句：先接住他的顾虑，再给一个具体能做的动作。不要讲道理，给动作。\n\n'+
-  '【四、这个客户千万不能说的话】\n两句。只写这个客户场景下最容易说错的话，并各用一句说明为什么不能说。';
+var AISYS='你是金米财税跨境电商业务的销售分析助手。你只做两件事：把这个客户的状况分析清楚，把已经定好的结论翻成客户听得懂、销售能照着念的话。\n\n'
+ +'铁律（从高到低，违反任何一条这段就废了）：\n'
+ +'1. 不得修改、补充、质疑【事实】里已定的结论：报关模式、能不能免税、能不能退税、可承诺 / 不可承诺的边界、动作顺序，一个字都不能变。\n'
+ +'2. 只能用【事实】里的内容。不得引入任何事实之外的政策、税率、比例、期限、金额、平台规则、法规条文。需要额外信息就写"这个要核实"，绝不编。\n'
+ +'3. 分析必须走五项：基础合规（进出口权 + 免税备案）、出口合规（报关单在谁名下）、申报合规（申报口径）、成本合规（平台成本 / 采购票 / 人力工资）、历史遗留。哪一项不合规、具体不合规在哪，都要落到客户自己的数字上。\n'
+ +'4. 必须讲清因果关系：这几项里哪个是根（通常是报关单在谁名下），哪几项是它带出来的；前置没完成，后面的动作就不成立，不能倒着讲。\n'
+ +'5. 禁止出现：保证不查、绝对安全、保证退税、一定通过、帮你避税、我认识税局的人、包解决、零风险、100% 没问题。不承诺结果，只讲动作和边界。\n'
+ +'6. 说人话：短句、口语，像面对面聊天。不用赋能、闭环、抓手、颗粒度、底层逻辑这类词。\n'
+ +'7. 不用"根据资料""综上所述""首先其次最后"这类书面语，不用"我们致力于"这类空话。也不要加 Markdown 符号（**、#、-、序号列表），输出是纯文本，符号会原样露出来。\n'
+ +'8. 一段话里不要塞四个动作，一句只说一件事，让人能换气。';
+
+var AI_SECS=[
+  {k:'plan',t:'五项逐条（这一单的方案）',hint:'他现在什么样、卡在哪、怎么跟他说',
+   ask:'分两块写。\n'
+      +'第一块用【分析】开头：就【事实】里的数据把这个客户说穿——他生意是怎么做的、钱是怎么走的、核心卡在哪一句话（只挑最要命的那一个）、这份方案的思路是什么（先说做什么、再说什么、钱什么时候谈）。120~180 字，一段写到底，不要分点、不要小标题、不要套话。\n'
+      +'第二块再写五项，顺序固定、一项不能少：基础合规、出口合规、申报合规、成本合规、历史遗留。\n'
+      +'每项严格按下面格式输出三行，不要加别的：\n'
+      +'【1】\n状况：这个客户在这一项上具体是什么样子——用【事实】里他自己的数据说，不要重复判定词，不要讲通用道理。\n'
+      +'跟他说：一整段能直接念给客户听的话。先说他现在是怎么做的，再说这样下去会出什么事，最后说要做什么动作。口语，短句，别念条文，别罗列。\n'
+      +'【2】…依此类推，一直到【5】。\n'
+      +'每项「状况」40~70 字，「跟他说」70~120 字。不要写标题、不要 Markdown、不要项目符号。'},
+  {k:'object',t:'他会怎么反驳',hint:'一条顾虑，一个动作',
+   ask:'只写这一段。针对【客户可能的卡点】，每条约两到三句：先接住他的顾虑，再给一个具体能做的动作。不讲道理，给动作。总共 3 条以内，150~220 字。'},
+  {k:'avoid',t:'这个客户不能说错的话',hint:'3 条，各一句为什么',
+   ask:'只写这一段。3 条，每条先写那句容易说错的话（加引号），再用一句话说明为什么不能说。100 字以内。'}
+];
+/* AI 写出来的五项方案（只做缓存，不落盘） */
+var AIPLAN=null,AI_NOW={};
+function aiEsc(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+/* 五项骨架：判定/现状/对应第几步 —— 结论来自规则引擎，AI 不许改 */
+function aiPlanItems(d){
+  var ck=planCheck(d),S=roadmap(d),idx={},i,j,out=[];
+  for(i=0;i<S.length;i++) idx[S[i].k]=i+1;
+  for(i=0;i<ck.length;i++){
+    var r=ck[i],fx=[],order=FIXMAP[r.dir]||[];
+    for(j=0;j<order.length;j++){ if(idx[order[j]]){ fx.push(idx[order[j]]); } if(fx.length>=2) break; }
+    out.push({n:i+1,dir:r.dir,v:r.v,now:String(r.now).replace(/<[^>]+>/g,''),issue:String(r.issue).replace(/<[^>]+>/g,''),step:(fx[0]||'')});
+  }
+  return out;
 }
-function aiErrMsg(e){
-  var c=(e&&e.code)||'';
-  if(c==='sdk_missing'||c.indexOf('auth_')===0)
-    return 'AI 话术需要在正式网址下打开才能用。\n请用 https://cross-border-plan.app.workbuddy.host/ 访问，本地文件打开不支持。';
-  if(c.indexOf('quota_')===0)
-    return '今天的生成额度用完了。先用上面的标准话术，明天再试。';
-  if(c==='model_empty')
-    return '当前没有可用的模型，请联系主管在后台确认。';
-  if(c.indexOf('gateway_')===0||c.indexOf('model_')===0)
-    return '模型服务暂时不稳定，点"重新生成"再试一次。';
-  return '生成失败：'+(c||(e&&e.message)||'未知错误')+'\n可以点"重新生成"再试一次。';
+var AI_VC={bad:'不合规',warn:'待确认',ok:'合规'};
+function planAIHTML(d){
+  aiCfgLoad();
+  var items=aiPlanItems(d),has=!!aiKey(),h='',i;
+  /* 方案页第一块：常开、不折叠。没 AI 时给规则引擎算出来的现状与问题，有 AI 时换成 AI 写的人话 */
+  h+='<div class="aip" id="aipBox">';
+  h+='<div class="aip-hd"><span class="aip-badge">★</span><span class="aip-tt">这一单的方案</span>'
+    +'<span class="aip-s2">'+(AIPLAN?'AI 已按这个客户写':'下面按这个客户算')+'</span></div>';
+  h+='<div class="aip-top">'
+    +(has?'<button class="ai-b3" id="aibtn-plan" onclick="aiRun(\'plan\',this)">'+(AIPLAN?'重新生成这 5 项':'按这个客户生成这 5 项')+'</button>'
+         :'<button class="ai-b3" onclick="aiCfgOpen()">去配 Key</button>')
+    +'<span class="aip-t">'+(has
+        ?(AIPLAN?'AI 按这份档案写的，不对就重新生成':'点一下，AI 按这份档案写这 5 项')
+        :'下面是算出来的现状；配 Key 后 AI 改写成能说出口的话')+'</span>'
+    +'</div>'
+    +'<div class="aip-over" id="aipOver">'
+      +(AIPLAN&&AIPLAN.over? aiEsc(AIPLAN.over)
+        :'<span class="aipi-wait">'+over0+'</span>')
+    +'</div><div id="aiPlanBox">';
+  var over0='';
+  if(!(AIPLAN&&AIPLAN.over)){
+    var worst=null;
+    for(i=0;i<items.length;i++){ if(items[i].v==='bad'){ worst=items[i]; break; } }
+    var bw=worst?String(worst.issue).split('。')[0]:'';
+    if(bw&&bw.length>44) bw=bw.slice(0,44)+'…';
+    over0 = has? '点上面那个按钮：AI 先把这一单说穿，再一项项给方案。'
+               : (bw? '<b>核心卡点：</b>'+aiEsc(bw)+'。' : '配好 Key 后，AI 先把这一单说穿，再一项项给方案。');
+  }
+  for(i=0;i<items.length;i++){
+    var it=items[i];
+    AI_NOW[it.n]=it.now;
+    var body;
+    if(AIPLAN&&AIPLAN[it.n]){
+      body='<div class="aipi-now">'+aiEsc(it.now)+'</div>'+aiPlanRowHTML(AIPLAN[it.n]);
+    }else{
+      body='<div class="aipi-now">'+aiEsc(it.now)+'</div>';
+    }
+    h+='<div class="aipi" id="aipi-'+it.n+'">'
+      +'<div class="aipi-h"><span class="aipi-n">'+it.n+'</span><span class="aipi-d">'+it.dir+'</span>'
+      +'<span class="ck-v '+it.v+'">'+AI_VC[it.v]+'</span>'
+      +(it.step?'<span class="aipi-s">见第 '+it.step+' 步</span>':'')+'</div>'
+      +'<div class="aipi-body" id="aipb-'+it.n+'">'+body+'</div></div>';
+  }
+  h+='</div><div class="aiout" id="aiout-plan" style="display:none"></div></div>';
+  return h;
 }
-async function aiGen(btn){
-  if(AIBUSY) return;
-  var out=document.getElementById('aiout');
-  if(!out) return;
-  AIBUSY=true;
-  btn.disabled=true; btn.textContent='生成中…';
-  out.style.display='block'; out.className='aiout'; out.textContent='正在生成，约 10~20 秒…';
+function aiPlanRowHTML(o){
+  var h='';
+  if(o.now) h+='<div class="aipr"><span class="aipk">他现在</span><div>'+aiEsc(o.now)+'</div></div>';
+  if(o.say) h+='<div class="aipr say"><span class="aipk">跟他说</span><div>'+aiEsc(o.say)+'</div></div>';
+  return h;
+}
+/* 把 AI 的输出按【1】…【5】拆开，分别写进五项 */
+function aiPlanSplit(txt){
+  var raw=String(txt||''),out={},parts,i;
+  var mo=raw.match(/【\s*分析\s*】([\s\S]*?)(?=【\s*1\s*】|$)/);
+  if(mo&&mo[1].trim()) out.over=mo[1].trim();
+  parts=raw.split(/【\s*([1-5])\s*】/);
+  for(i=1;i<parts.length;i+=2){
+    var n=parseInt(parts[i],10),body=String(parts[i+1]||'');
+    var seg=body.split(/跟他说\s*[：:]/);
+    var now=String(seg[0]||'').replace(/^\s*状况\s*[：:]/,'').trim();
+    var say=String(seg[1]||'').replace(/\n+【\s*[1-5]\s*】[\s\S]*$/,'').trim();
+    if(now||say) out[n]={now:now,say:say};
+  }
+  return out;
+}
+function aiPlanPaint(txt,silent){
+  var o=aiPlanSplit(txt),i,hit=0;
+  var ov=document.getElementById('aipOver');
+  if(ov&&o.over) ov.innerHTML=aiEsc(o.over);
+  for(i=1;i<=5;i++){
+    var box=document.getElementById('aipb-'+i);
+    if(!box||!o[i]) continue;
+    box.innerHTML=(AI_NOW[i]?'<div class="aipi-now">'+aiEsc(AI_NOW[i])+'</div>':'')+aiPlanRowHTML(o[i]); hit++;
+  }
+  if(hit&&!silent) AIPLAN=o;
+  return hit;
+}
+function aiPanelHTML(d){
+  aiCfgLoad();
+  var has=!!AICFG.key;
+  var h='<details class="aibox" id="aibox"><summary>AI 分析 · 按你说的规则来（DeepSeek 直连）</summary><div class="aibox-b">';
+  h+='<div id="aiNoKey" style="'+(has?'display:none':'')+'">'
+    +'<p class="hint" style="margin:0 0 9px">还没填 DeepSeek Key。点右上角「AI Key」填一次，以后在这台电脑上都不用再填。</p>'
+    +'<button class="ai-b1" onclick="aiCfgOpen()">去填 Key</button></div>';
+  h+='<div id="aiSecs" style="'+(has?'':'display:none')+'">';
+  for(var i=0;i<AI_SECS.length;i++){
+    var s0=AI_SECS[i];
+    h+='<div class="aisec"><div class="aisec-h"><span class="aisec-t">'+s0.t+'</span><span class="aisec-hint">'+s0.hint+'</span>'
+      +'<button class="ai-b3" id="aibtn-'+s0.k+'" onclick="aiRun(\''+s0.k+'\',this)">生成</button></div>'
+      +'<div class="aiout" id="aiout-'+s0.k+'" style="display:none"></div></div>';
+  }
+  h+='<div class="aifoot">AI 只做分析和表达，不改结论。生成后抽检一遍再用，说错的地方点「重新生成」。　'
+    +'<a href="javascript:void 0" class="ai-lk" onclick="aiCfgOpen()">换 Key / 换模型</a></div></div>';
+  return h+'</div></details>';
+}
+async function aiRun(k,btn){
+  var sec=null,i;
+  for(i=0;i<AI_SECS.length;i++){ if(AI_SECS[i].k===k) sec=AI_SECS[i]; }
+  if(!sec||AIBUSY[k]) return;
+  if(!aiKey()){ alert('还没填 DeepSeek Key。点右上角「AI Key」填一次。'); aiCfgOpen(); return; }
+  var out=document.getElementById('aiout-'+k);
+  var isPlan=(k==='plan');
+  if(!isPlan&&!out) return;
+  AIBUSY[k]=true;
+  var t0=btn?btn.textContent:'';
+  if(btn){ btn.disabled=true; btn.textContent='生成中…'; }
+  if(out){ out.style.display='block'; out.className='aiout'; out.textContent='正在生成…'; }
+  var buf='',lastPaint=0;
   try{
-    if(!window.WorkBuddyCloud) throw {code:'sdk_missing'};
-    if(!AICLI) AICLI=WorkBuddyCloud.createWorkBuddyCloud({endpoint:AICFG.endpoint,publishableKey:AICFG.publishableKey});
-    if(!AIMODEL){
-      var ms=await AICLI.llm.models.list();
-      var pick=null;
-      for(var i=0;i<ms.length;i++){ if(ms[i].disabled!==true){ pick=ms[i]; break; } }
-      if(!pick) throw {code:'model_empty'};
-      AIMODEL=pick.id;
-    }
-    var d=derive(),buf='';
-    var stream=await AICLI.llm.chat.completions.create({
-      model:AIMODEL,
-      messages:[{role:'system',content:AISYS},{role:'user',content:aiPrompt(d)}],
-      stream:true, temperature:0.7
+    var d=derive();
+    var text=await aiStream([
+      {role:'system',content:AISYS},
+      {role:'user',content:aiFacts(d)+'\n\n【这次要写的内容】\n'+sec.ask}
+    ],function(c){
+      buf+=c;
+      if(!isPlan){ if(out){ out.textContent=buf; out.scrollTop=out.scrollHeight; } return; }
+      var now=Date.now();
+      if(now-lastPaint>90){ lastPaint=now; aiPlanPaint(buf,true); }   /* 边流边填，但先不固化 */
     });
-    for await (const ch of stream){
-      var c=ch.choices&&ch.choices[0];
-      if(c&&c.delta&&c.delta.content){
-        buf+=c.delta.content;
-        out.textContent=buf;
-        out.scrollTop=out.scrollHeight;
-      }
+    if(!buf) throw new Error('没有返回内容');
+    if(isPlan){
+      var hit=aiPlanPaint(buf,false);
+      if(!hit) throw new Error('返回的格式没认出五项，点「重新生成」再试一次');
+      if(out){ out.style.display='none'; out.textContent=''; }
+      var all=document.getElementById('aibtn-plan'); if(all) all.textContent='重新生成';
+      var s2=document.querySelector('#aipBox .aip-s2'); if(s2) s2.textContent='AI 已按这个客户写';
+      var t2=document.querySelector('#aipBox .aip-t'); if(t2) t2.textContent='AI 按上面这份档案重写的；哪项不对就点重新生成';
+      var bt=document.getElementById('aibtn-plan'); if(bt) bt.textContent='重新生成这 5 项';
     }
-    if(!buf){ out.className='aiout err'; out.textContent='没有返回内容，点"重新生成"再试一次。'; }
   }catch(e){
-    out.className='aiout err';
-    out.textContent=aiErrMsg(e);
+    var msg=aiErrText(e);
+    if(isPlan){
+      /* 挂在第一项下面，整块能看见 */
+      var b1=document.getElementById('aipb-1');
+      if(b1) b1.innerHTML='<div class="aip-err"><b>没生成出来</b><br>'+aiEsc(msg)
+        +'<br><span class="aip-diag">'+aiEsc(aiDiag())+'</span></div>';
+      if(out){ out.style.display='none'; }
+    }else if(out){
+      out.className='aiout err';
+      out.textContent='生成失败：'+msg+'\n\n诊断：'+aiDiag();
+    }
   }finally{
-    AIBUSY=false; btn.disabled=false; btn.textContent='重新生成';
+    AIBUSY[k]=false;
+    if(btn){ btn.disabled=false; btn.textContent=buf?(isPlan?'重新生成':(t0||'生成')):(t0||'生成'); }
   }
 }
 
@@ -3664,109 +4053,6 @@ function naList(){
   if(A.invoice==='na') L.push('供应商发票');
   return L;
 }
-function flowInput(el){
-  var n=parseFloat(el.value);
-  var btn=document.getElementById('n6');
-  var hint=document.getElementById('flowHint');
-  var nas=document.querySelectorAll('#p-flow .opt.na'); for(var i=0;i<nas.length;i++) nas[i].classList.remove('sel');
-  if(!isNaN(n)&&n>0){
-    A.flow=n; if(btn) btn.disabled=false;
-    if(hint){
-      var pk=pkgOf(A.entity,n);
-      hint.innerHTML='档位：<b>'+bandLabel(flowBand(n))+'</b>（填写 '+n+' 万）· 推荐套餐 <b>'+pk.name+'</b> — '+pk.note;
-    }
-  }else{
-    A.flow=null; if(btn) btn.disabled=true;
-    if(hint) hint.innerHTML='客户说不清就填区间上限——"三四百万"填 400，"一千多万"填 1200。';
-  }
-  syncCur();
-}
-function flowNa(el){
-  A.flow='na';
-  var inp=document.getElementById('flowIn'); if(inp) inp.value='';
-  var sibs=el.parentNode.querySelectorAll('.opt'); for(var i=0;i<sibs.length;i++) sibs[i].classList.remove('sel');
-  el.classList.add('sel');
-  var b=document.getElementById('n6'); if(b) b.disabled=false;
-  var h=document.getElementById('flowHint'); if(h) h.innerHTML='流水没拿到：档位和套餐按<b>「需确认」</b>输出，报价先不谈，先约时间。';
-  syncCur();
-}
-function naSet(k,el){
-  A[k]='na';
-  if(k==='platform'){
-    A.platforms=[]; A.fuls={}; A.decls={}; A.platform='na'; A.ful='na'; A.decl='na';
-    var ps=document.querySelectorAll('#s1 .opt'); for(var q=0;q<ps.length;q++) ps[q].classList.remove('sel');
-    var box=document.getElementById('fulbox');
-    if(box) box.innerHTML='<p class="hint">平台没拿到，发货方式也判不了——这两项一起按「待补」处理。</p>';
-    var b2=document.getElementById('n2'); if(b2) b2.disabled=false;
-    var cnt=document.getElementById('platCnt'); if(cnt) cnt.innerHTML='';
-  }
-  var sibs=el.parentNode.querySelectorAll('.opt'); for(var i=0;i<sibs.length;i++) sibs[i].classList.remove('sel');
-  el.classList.add('sel');
-  var n=document.getElementById('n'+current); if(n) n.disabled=false;
-  syncCur();
-}
-function setSms(v,el){
-  A.sms=v;
-  var sibs=el.parentNode.querySelectorAll('.opt'); for(var i=0;i<sibs.length;i++) sibs[i].classList.remove('sel');
-  el.classList.add('sel');
-  var box=document.getElementById('smsbox');
-  if(v==='y'){ if(box) box.style.display='block'; }
-  else{
-    if(box) box.style.display='none';
-    A.smsQ=[]; A.smsAmt=null; A.smsQNa=false;
-    var qs=document.querySelectorAll('#smsbox .opt.sq'); for(var i=0;i<qs.length;i++) qs[i].classList.remove('sel');
-    var ai=document.getElementById('smsAmtIn'); if(ai) ai.value='';
-    var nb=document.querySelectorAll('#smsbox .opt.na'); for(var i=0;i<nb.length;i++) nb[i].classList.remove('sel');
-  }
-  syncSms();
-  syncCur();
-}
-function pickQ(q,el){
-  if(!A.smsQ) A.smsQ=[];
-  var i=A.smsQ.indexOf(q);
-  if(i>=0){ A.smsQ.splice(i,1); el.classList.remove('sel'); }
-  else{ A.smsQ.push(q); el.classList.add('sel'); }
-  if(A.smsQ.length){
-    A.smsQNa=false;
-    var sn=document.getElementById('sqNa'); if(sn) sn.classList.remove('sel');
-  }
-  syncSms();
-  syncCur();
-}
-function smsQNa(el){
-  A.smsQ=[]; A.smsQNa=true;
-  var qs=document.querySelectorAll('#smsbox .opt.sq'); for(var i=0;i<qs.length;i++) qs[i].classList.remove('sel');
-  var sn=document.getElementById('sqNa'); if(sn) sn.classList.remove('sel');
-  el.classList.add('sel');
-  syncSms();
-  syncCur();
-}
-function smsAmtInput(el){
-  var n=parseFloat(el.value);
-  A.smsAmt=(!isNaN(n)&&n>0)?n:null;
-  var an=document.getElementById('amtNa'); if(an) an.classList.remove('sel');
-  syncSms();
-  syncCur();
-}
-function smsAmtNa(el){
-  A.smsAmt='na';
-  var inp=document.getElementById('smsAmtIn'); if(inp) inp.value='';
-  var an=document.getElementById('amtNa'); if(an) an.classList.remove('sel');
-  el.classList.add('sel');
-  syncSms();
-  syncCur();
-}
-function syncSms(){
-  var b=document.getElementById('n7'); if(!b) return;
-  if(A.sms==='y'){
-    var qn=(A.smsQ||[]).length, qok=(qn>0||A.smsQNa===true);
-    b.disabled=!(qok && (typeof A.smsAmt==='number'||A.smsAmt==='na'));
-  }else if(A.sms==='n'||A.sms==='na'){
-    b.disabled=false;
-  }else{
-    b.disabled=true;
-  }
-}
 
 /* ================= v3.2 · 五段推进：S 情况 / P 问题 / I 暗示 / N 回报 / C 承诺 ================= */
 
@@ -3807,22 +4093,6 @@ function spinTip(d){
   if(!T.length)
     T.push('这个客户情况比较干净，I 段从「买票这钱花得值不值」切入。');
   return T;
-}
-
-
-function lackRender(){
-  var miss=[];
-  if(A.platform==='na') miss.push('客户做哪个平台');
-  if(A.ful==='na') miss.push('货是怎么发出去的');
-  var h='<div class="card"><div class="psec" style="margin-top:0"><span class="pn">!</span><span class="pt">这两项没拿到，判定做不了</span></div>';
-  h+='<div class="naflag">缺：<b>'+miss.join(' / ')+'</b>。它们决定「报关单在谁手上」，是整套结论的地基——没有这两项，讲免税、退税、13 栏都是猜。</div>';
-  h+='<p class="hint">不要硬出方案。先用下面两句把话头留住：</p>';
-  h+='<div class="acc"><q>「理解，这个不着急说。那我换个问法——货是您自己送到货代仓，还是平台上门来收？」</q><div class="pre">问动作，比问「什么报关模式」好答得多</div></div>';
-  h+='<div class="acc"><q>「您平时后台订单是在哪几个平台出单的？我先按最常出的那个给您讲。」</q><div class="pre">问「哪几个平台出单」，比问「主做哪个平台」更容易拿到真话</div></div>';
-  h+='<p class="hint" style="margin-top:10px">拿到任意一项，回上一步重选即可。</p></div>';
-  h+=cardHTML({decl:'na',mode:'待定'});
-  document.getElementById('out').innerHTML=h;
-  document.getElementById('s9').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function spinHTML(d){
@@ -4000,10 +4270,7 @@ function copyBarHTML(d){
   return '<div class="copybar">'
     +'<button onclick="copyTxt(\'talk-src\',this)">复制全部话术</button>'
     +'<button onclick="copyTxt(\'dlv-src\',this)">复制完整方案（留档）</button>'
-    +'<button class="g2 wide" id="aibtn" onclick="aiGen(this)">AI 换一种说法（开场 / 讲解 / 异议应对）</button>'
     +'</div>'
-    +'<p class="hint" style="margin:4px 0 0">AI 只换说法，不改结论。需在正式网址下用，本地文件打开不支持。</p>'
-    +'<div id="aiout" class="aiout" style="display:none"></div>'
     +'<div id="talk-src" style="display:none">'+talkText(d).replace(/</g,'&lt;')+'</div>'
     +'<div id="dlv-src" style="display:none">'+deliverText(d).replace(/</g,'&lt;')+'</div>';
 }
@@ -4027,54 +4294,6 @@ function declName(p){
   var k=declMap()[p]||'',i;
   for(i=0;i<DECLD.length;i++) if(DECLD[i].k===k) return DECLD[i].n;
   return '待确认';
-}
-function pickDecl(p,v,el){
-  declMap()[p]=v;
-  var g=el.parentNode, os=g.querySelectorAll('.opt'), i;
-  for(i=0;i<os.length;i++) os[i].classList.remove('sel');
-  el.classList.add('sel');
-  A.decl=v;
-  syncDecl();
-  if(typeof syncCur==='function') syncCur();
-}
-function declNa(el){
-  var L=platList(),i;
-  for(i=0;i<L.length;i++) declMap()[L[i]]='na';
-  A.decl='na';
-  renderDeclAll();
-  if(typeof syncCur==='function') syncCur();
-}
-function syncDecl(){
-  var L=platList(), ok=L.length>0, i;
-  for(i=0;i<L.length;i++){ if(!declMap()[L[i]]){ ok=false; break; } }
-  var b=document.getElementById('n3'); if(b) b.disabled=!ok;
-  if(L.length) A.decl=declMap()[L[0]];
-  return ok;
-}
-function renderDeclAll(){
-  var box=document.getElementById('declbox'); if(!box) return;
-  var L=platList();
-  if(!L.length){ box.innerHTML='<p class="hint">先回 Q1 选平台，这一步才有得问。</p>'; return; }
-  var h='',i,j,p;
-  for(i=0;i<L.length;i++){
-    p=L[i];
-    h+='<div class="fulgrp" data-p="'+p+'">';
-    h+='<div class="fulhead">'+(L.length>1?('平台 '+(i+1)+' / '+L.length+' · '):'')+platNameOf(p)+'</div>';
-    h+='<div class="fullead">这批货报关的时候，报关单上写的是您自己公司，还是别人公司？</div>';
-    for(j=0;j<DECLD.length;j++){
-      h+='<button class="opt'+(DECLD[j].k==='na'?' na':'')+'" data-d="'+DECLD[j].k+'" onclick="pickDecl(\''+p+'\',\''+DECLD[j].k+'\',this)"><b>'+DECLD[j].n+'</b><br><span class="sm">'+DECLD[j].note+'</span></button>';
-    }
-    h+='</div>';
-  }
-  box.innerHTML=h;
-  var gs=box.querySelectorAll('.fulgrp');
-  for(i=0;i<gs.length;i++){
-    p=gs[i].getAttribute('data-p');
-    var cur=declMap()[p]; if(!cur) continue;
-    var os=gs[i].querySelectorAll('.opt');
-    for(j=0;j<os.length;j++) if(os[j].getAttribute('data-d')===cur) os[j].classList.add('sel');
-  }
-  syncDecl();
 }
 function platNameOf(p){ return SAY_P[p]||(PLAT[p]?PLAT[p].n.replace(/\s*[（(].*$/,''):p); }
 function ptab(k){
@@ -4135,50 +4354,18 @@ function multiHTML(){
   }
   return tabs+sum+panes;
 }
-function splitUnit(){
-  var c=String(A.cid||'').trim();
-  var m=c.match(/^(.*?)-(\d+)$/);
-  var next=m?(m[1]+'-'+(parseInt(m[2],10)+1)):(c+'-2');
-  A={cid:next};
-  var os=document.querySelectorAll('#p-flow .opt'); for(var i=0;i<os.length;i++) os[i].classList.remove('sel');
-  var cnt=document.getElementById('platCnt'); if(cnt) cnt.innerHTML='';
-  var fb=document.getElementById('fulbox'); if(fb) fb.innerHTML='<p class="hint">先回上一步选平台</p>';
-  document.getElementById('out').innerHTML=PH;
-  go(1);
-}
 
 function heroHTML(d){
-  var P=probsOf(d),red=0,yel=0;
-  for(var i=0;i<P.length;i++){ if(P[i].lv==='r')red++; else yel++; }
+  var C=planCheck(d),nbad=0,nwarn=0,i;
+  for(i=0;i<C.length;i++){ if(C[i].v==='bad')nbad++; if(C[i].v==='warn')nwarn++; }
   var head = d.mode==='转合规'?'先转合规，再谈免税'
     : d.tui==='可'?'免税 + 退税都能做，按三步走'
     : d.mian==='可'?'能做免税，退税这条路不通'
     : '免税这条路也断，先解决报关单';
   return '<div class="hero"><div class="hl">方案结论</div><div class="hm">'+head+'</div>'+
     '<div class="hs">'+(A.cid?'客户编号 <b>'+A.cid+'</b> · ':'')+d.platN+' · '+d.n+' → '+d.modeShow+'<br>'+
-    '查出 '+P.length+' 个问题（高风险 '+red+' 个 / 中风险 '+yel+' 个），分 '+roadmap(d).length+' 步落地</div></div>';
-}
-function deliverHTML(d){
-  var h='<div class="psec"><span class="pn">7</span><span class="pt">产出物（可直接复制给客户 / 自己照着讲）</span></div>';
-  h+='<div class="cpy"><button class="cbtn" onclick="copyTxt(\'dlv-a\',this)">复制落地方案</button><button class="cbtn" onclick="copyTxt(\'dlv-b\',this)">复制话术</button></div>';
-  h+='<p class="hint" style="margin:8px 0 4px">落地方案</p><div class="dlv" id="dlv-a">'+deliverText(d).replace(/</g,'&lt;')+'</div>';
-  h+='<p class="hint" style="margin:10px 0 4px">方案落地话术</p><div class="dlv" id="dlv-b">'+talkText(d).replace(/</g,'&lt;')+'</div>';
-  h+='<div class="aibox"><div class="aibox-h"><i></i>AI 生成个性化话术</div>'+
-     '<p class="hint" style="margin:0 0 8px">结论不会被 AI 改动，它只负责换一种说法。生成结果请抽检后再用。</p>'+
-     '<button class="btn primary" id="aibtn" onclick="aiGen(this)">生成三段话术（开场 / 方案讲解 / 异议应对）</button>'+
-     '<div id="aiout" class="aiout" style="display:none"></div>'+
-     '<div class="aifoot">首次生成约 10~20 秒。需在正式网址下使用，本地文件打开不支持。</div></div>';
-  return h;
-}
-
-function restart(){A={};
-  var os=document.querySelectorAll('#p-flow .opt');for(var i=0;i<os.length;i++)os[i].classList.remove('sel');
-  var fb=document.getElementById('fulbox'); if(fb) fb.innerHTML='<p class="hint">先回上一步选平台</p>';
-  document.getElementById('out').innerHTML=PH;
-  var ci=document.getElementById('cidIn'); if(ci) ci.value='';
-  var ch=document.getElementById('cidHint'); if(ch) ch.innerHTML='';
-  go('entry');
-  window.scrollTo({top:0,behavior:'smooth'});
+    '五项体检：'+(nbad?nbad+' 项不合规':'没有不合规')+(nwarn?' · '+nwarn+' 项待确认':'')+
+    '，分 '+roadmap(d).length+' 步落地</div></div>';
 }
 
 /* ============ 考核题库（板块已下线，题库保留待用） ============ */
@@ -4675,7 +4862,6 @@ function updProg(){
     document.getElementById('s-best').textContent='—';
   }
 }
-document.getElementById('out').innerHTML=PH;
 (function(){ var el=document.getElementById('qzhint'); if(el) el.innerHTML='题库共 <b>'+POOL_G.length+'</b> 道 + 红线 <b>'+POOL_R.length+'</b> 道，每次随机抽 '+(PICK_G+PICK_R)+' 题（含 '+PICK_R+' 道红线必答题），选项顺序同时打乱，并自动避开最近 '+AVOID+' 次已考过的题'; })();
 /* ============ 方案实战题库（板块已下线，题库保留待用） ============ */
 var BKEY='cbx_battle_v1';
@@ -4877,6 +5063,28 @@ function bUpdProg(){
    题库（QS / PAPERS / POOL_G / POOL_R / BSTEPS）与判分函数全部保留，
    后续要恢复只需：把 p-quiz / p-battle 面板加回来，在这里补 updProg(); startQuiz(); renderRecords(); 即可。 */
 renderKB();
+aiFabState();
+/* 方案页一渲染出来就自动生成（只跑一次，配了 Key 才跑） */
+function aiAuto(){
+  try{
+    if(!aiKey()||AIPLAN) return;
+    var box=document.getElementById('aiPlanBox');
+    if(!box||box.getAttribute('data-auto')==='1') return;
+    box.setAttribute('data-auto','1');
+    aiRun('plan',document.getElementById('aibtn-plan'));
+  }catch(e){}
+}
+(function(){
+  if(typeof MutationObserver==='undefined') return;
+  var t=null;
+  try{
+    var ob=new MutationObserver(function(){
+      if(t) clearTimeout(t);
+      t=setTimeout(aiAuto,150);
+    });
+    ob.observe(document.body,{childList:true,subtree:true});
+  }catch(e){}
+})();
 </script>
 </body>
 </html>
