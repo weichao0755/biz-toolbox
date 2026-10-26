@@ -533,6 +533,12 @@
     font-size:13px;font-family:inherit;color:var(--text)}
   .tk-in:focus{outline:none;border-color:var(--accent-2)}
   .tk-sum{font-size:11.5px;color:var(--muted);margin:2px 0 9px}
+  .tk-checkrow{display:flex;align-items:flex-start;gap:9px;padding:9px 11px;border:1px solid var(--border);border-radius:9px;
+    background:var(--surface);font-size:12.5px;color:var(--text);cursor:pointer;font-weight:500}
+  .tk-checkrow input{appearance:none;-webkit-appearance:none;width:18px;height:18px;flex:0 0 18px;margin:1px 0 0;border:1.5px solid var(--border);border-radius:5px;cursor:pointer;position:relative;transition:background .15s,border-color .15s}
+  .tk-checkrow input:checked{background:var(--accent);border-color:var(--accent)}
+  .tk-checkrow input:checked::after{content:'';position:absolute;left:5px;top:1px;width:5px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+  .tk-checkrow span{line-height:1.5}
   .tk-cp{border:1px solid var(--border);background:var(--surface);color:var(--text-2);border-radius:8px;padding:4px 10px;font-size:11.5px;font-family:inherit;cursor:pointer}
   .tk-cp:active{background:var(--accent-bg);border-color:var(--accent-2)}
   .tk-cp.dgr{color:#B45309;border-color:#E9C08A}
@@ -1158,7 +1164,7 @@ function tkPName(p){
   return SAY_P[p]||P.n.replace(/\s*[（(].*$/,'');
 }
 function tkReset(){
-  TK={cid:'',stage:'entry',subs:1,plats:[],city:'',flow:null,
+  TK={cid:'',stage:'entry',subs:1,plats:[],city:'',flow:null,impExp:null,taxFiling:null,
       fuls:{},decls:{},sms:'',quarters:[],amt:null,qna:false,qDone:false,
       entity:'',file:'',hist:'',invoice:'',qual:'',staff:'',
       asks:[],log:[],boostSms:false,open:null,confAck:[]};
@@ -1458,6 +1464,7 @@ function tkQEdit(){ TK.qDone=false; TK.qna=false; tkRender(); }
 function tkAmtIn(el){ var n=parseFloat(el.value); TK.amt=isNaN(n)?null:n; var b=document.getElementById('tkAmtGo'); if(b) b.disabled=(TK.amt==null); }
 function tkAmtNa(){ TK.amt='na'; tkCommit('amt'); }
 function tkChoice(id,v){ TK[id]=v; tkCommit(id); }
+function tkSetCheck(id,v){ TK[id]=v?true:false; tkRender(); }
 
 /* —— 追问卡片 —— */
 function tkCardHTML(id){
@@ -1493,6 +1500,10 @@ function tkBodyHTML(id){
     h+='</div></div>';
     h+='<div class="tk-field"><label>④ 这些主体合计年流水（万元）</label>'+
        '<input class="tk-in" type="number" min="0" inputmode="numeric" placeholder="例：680" value="'+(TK.flow==null?'':TK.flow)+'" oninput="tkFlowIn(this)"></div>';
+    h+='<div class="tk-field"><label style="margin-bottom:7px">⑤ 是否办理了进出口权？</label>'+
+       '<label class="tk-checkrow"><input type="checkbox" '+(TK.impExp===true?'checked':'')+' onchange="tkSetCheck(\'impExp\',this.checked)"><span>已办理进出口权（海关收发货人登记 + 跨境电商企业备案）</span></label></div>';
+    h+='<div class="tk-field"><label style="margin-bottom:7px">⑥ 是否有免/退税备案？</label>'+
+       '<label class="tk-checkrow"><input type="checkbox" '+(TK.taxFiling===true?'checked':'')+' onchange="tkSetCheck(\'taxFiling\',this.checked)"><span>已做出口免税 / 退税备案</span></label></div>';
     h+='<div class="tk-sum" id="tkBaseSum">'+(tkBaseOk()?('已记：'+TK.subs+' 个主体 · 年流水约 '+TK.flow+' 万'):'把上面四项填完就能记录')+'</div>';
     h+='<button class="tk-go" id="tkBaseGo" '+(tkBaseOk()?'':'disabled')+' onclick="tkCommit(\'base\')">记下这四项</button>';
     return h;
@@ -1924,7 +1935,9 @@ function tkRecHTML(){
     ['主体数量',TK.subs+' 个'],
     ['涉及平台',L.length?L.map(tkPName).join('、'):'未填'],
     ['注册城市',TK.city==='sz'?'含深圳':(TK.city==='out'?'全在外地':'未填')],
-    ['合计年流水',TK.flow==null?'未填':TK.flow+' 万元']
+    ['合计年流水',TK.flow==null?'未填':TK.flow+' 万元'],
+    ['进出口权',TK.impExp===true?'已办理':(TK.impExp===false?'未办理':'未填')],
+    ['免/退税备案',TK.taxFiling===true?'已备案':(TK.taxFiling===false?'未备案':'未填')]
   ]);
 
   if(ds.length){
