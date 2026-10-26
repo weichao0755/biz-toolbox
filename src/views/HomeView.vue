@@ -180,7 +180,7 @@
     <div class="card update-note">
       <h3>内容更新说明</h3>
       <p>平台为静态站点部署，更新流程：内容/工具更新 → 重新部署 → 全员刷新即可看到最新版本（推荐 Ctrl+F5 强制刷新）。需要更新内容时，联系管理员即可。</p>
-      <p class="ver-line">当前版本 {{ APP_VERSION }} · 更新于 2026-10-22</p>
+      <p class="ver-line">当前版本 {{ APP_VERSION }} · 更新于 2026-10-26</p>
     </div>
   </div>
 </template>
@@ -245,7 +245,7 @@ function dueLabel(due) {
 onMounted(loadTodos)
 
 /* 全部数据 key 统一来自 src/data/backupKeys.js（新增工具的 key 记得登记） */
-const APP_VERSION = 'v1.16.11' /* 2026-10-22 平台名统一改为「金米财税业务辅助平台」(原金米启航强袭军)；v1.16.10=需求确认单「公司年限」由下拉改手动输入框(保留常用建议)；v1.16.9=合同生成 Word 版式对齐样本(单倍行距+签署区keepNext) */
+const APP_VERSION = 'v1.17.1' /* 2026-10-26 跨境新人训练工具(cross)默认 AI Key 改为指定 sk- 值(用户本机保存值优先)；v1.17.0=新增跨境区并入跨境新人训练工具；v1.16.11=平台名统一改为「金米财税业务辅助平台」(原金米启航强袭军)；v1.16.10=需求确认单「公司年限」由下拉改手动输入框(保留常用建议)；v1.16.9=合同生成 Word 版式对齐样本(单倍行距+签署区keepNext) */
 const fileInput = ref(null)
 const dataStatus = ref('')
 const dataStatusType = ref('ok')

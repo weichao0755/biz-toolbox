@@ -3565,13 +3565,15 @@ var AIBASE='https://api.deepseek.com/chat/completions';
    直连失败时自动改走这里，照样能生成。file:// 双击打开或部署到线上时直连本身就能通，
    中转只是兜底，不影响正常路径。 */
 var AIRELAY='http://127.0.0.1:8792';
+/* 默认 AI Key（无本机保存值时自动生效；用户在本机保存过自己的 Key 则优先用保存值） */
+var DEFAULT_AI_KEY='sk-cd74056b933343cf980394b6ef296828';
 var AICFG={key:'',model:'deepseek-chat'};
 var AIBUSY={};
 function aiCfgLoad(){
   try{
     var o=JSON.parse(localStorage.getItem('cbx_ai')||'{}');
-    AICFG.key=o.key||''; AICFG.model=o.model||'deepseek-chat';
-  }catch(e){ AICFG.key=''; AICFG.model='deepseek-chat'; }
+    AICFG.key=o.key||DEFAULT_AI_KEY; AICFG.model=o.model||'deepseek-chat';
+  }catch(e){ AICFG.key=DEFAULT_AI_KEY; AICFG.model='deepseek-chat'; }
 }
 function aiFabState(){
   var f=document.getElementById('aiCfgFab');
@@ -3584,7 +3586,7 @@ function aiCfgOpen(){
   var k=document.getElementById('aiKeyIn');
   var s0=document.getElementById('aiModelIn');
   var h=document.getElementById('aiCfgHint');
-  if(k) k.value='';
+  if(k) k.value=AICFG.key||'';
   if(s0) s0.value=AICFG.model||'deepseek-chat';
   if(h) h.innerHTML=AICFG.key?'<b style="color:var(--green)">这台电脑已经存过 Key</b>，要换就粘新的，空着保存只换模型':'还没填 Key';
   if(m) m.className='aicfg-mask on';
