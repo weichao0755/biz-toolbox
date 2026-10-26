@@ -10,7 +10,8 @@ export const CATEGORIES = [
   { key: 'transfer', label: '转让类', desc: '公司转让业务的合同与尽职调查', color: '#2563eb' },
   { key: 'qual', label: '资质类', desc: '建筑工程资质办理与查询', color: '#16a34a' },
   { key: 'sales', label: '销售类', desc: '报价与收款测算', color: '#ea580c' },
-  { key: 'efficiency', label: '效率类', desc: '个人待办与效率工具', color: '#5f3dc4' }
+  { key: 'efficiency', label: '效率类', desc: '个人待办与效率工具', color: '#5f3dc4' },
+  { key: 'cross', label: '跨境类', desc: '跨境电商谈单训练与合规口径', color: '#0d9488' }
 ]
 
 // ============ 工具注册表 ============
@@ -229,5 +230,23 @@ export const TOOLS = [
     url: 'tools/huashu/index.html',
     component: EmbeddedToolView,
     newTab: true // 高频复制粘贴、需常驻配合微信，独立标签页打开体验更好、剪贴板权限完整
+  },
+  {
+    // 注意：路由不能用 /tools/cross，会和分类路由 /tools/:cat 撞车（跨境区固定占 /tools/cross）
+    path: '/tools/cross-trainer',
+    name: 'cross-trainer',
+    title: '跨境新人训练工具',
+    desc: '跨境电商谈单一条龙：客户信息填一张表，自动出四段方案（大纲/落地话术/方案解析/FAQ），附 16 站点报关模式对照表与名词速查',
+    color: '#0d9488',
+    category: 'cross',
+    iconSvg: svgWrap(`
+      <circle cx="12" cy="12" r="9"/>
+      <line x1="3" y1="12" x2="21" y2="12"/>
+      <path d="M12 3a13.5 13.5 0 0 1 0 18a13.5 13.5 0 0 1 0-18z"/>
+      <line x1="3.7" y1="8.6" x2="20.3" y2="8.6"/>
+      <line x1="3.7" y1="15.4" x2="20.3" y2="15.4"/>
+    `),
+    url: 'tools/cross/index.html',
+    component: EmbeddedToolView
   }
 ]
