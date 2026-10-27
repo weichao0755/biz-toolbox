@@ -235,7 +235,7 @@ export const TOOLS = [
     // 注意：路由不能用 /tools/cross，会和分类路由 /tools/:cat 撞车（跨境区固定占 /tools/cross）
     path: '/tools/cross-trainer',
     name: 'cross-trainer',
-    title: '跨境新人训练工具',
+    title: '跨境销售辅助使用工具',
     desc: '跨境电商谈单一条龙：客户信息填一张表，自动出四段方案（大纲/落地话术/方案解析/FAQ），附 16 站点报关模式对照表与名词速查',
     color: '#0d9488',
     category: 'cross',
