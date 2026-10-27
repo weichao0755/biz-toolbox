@@ -39,6 +39,10 @@ export const BACKUP_KEYS = [
   'change_confirm_v1',
   'change_confirm_records_v1',
   'contract_screen_v1',
-  'contract_screen_ai_cfg'
+  'contract_screen_ai_cfg',
+  'cross_quote_data_v1',
+  'cross_quote_records_v1',
+  'cross_quote_lib_v1',
+  'cross_quote_ai_config'
 ]
 export default BACKUP_KEYS

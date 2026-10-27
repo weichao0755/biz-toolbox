@@ -248,5 +248,21 @@ export const TOOLS = [
     `),
     url: 'tools/cross/index.html',
     component: EmbeddedToolView
+  },
+  {
+    path: '/tools/cross-quote',
+    name: 'cross-quote',
+    title: '跨境电商报价单生成器',
+    desc: '填三步出跨境专属报价单（图片/Word）：客户信息+跨境业务盘面（平台/站点/年流水/纳税人/报关模式）+套餐按流水自动推荐，统一跨境报价口径',
+    color: '#0d9488',
+    category: 'cross',
+    iconSvg: svgWrap(`
+      <path d="M20.6 13.4L13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/>
+      <circle cx="7" cy="7" r="1.4" fill="currentColor" stroke="none"/>
+      <path d="M13.5 15.5h5"/>
+      <path d="M16 13v5"/>
+    `),
+    url: 'tools/cross-quote/index.html',
+    component: EmbeddedToolView
   }
 ]
