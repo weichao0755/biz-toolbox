@@ -168,7 +168,7 @@ tr.expand td{background:#fffdf8;padding:0}
   <div class="table-card">
     <table>
       <thead><tr>
-        <th>客户</th><th>微信</th><th>电话</th><th>意向类型</th><th>等级</th><th>状态</th><th>最近跟进</th><th>操作</th>
+        <th>客户</th><th>微信</th><th>电话</th><th>业务类型</th><th>等级</th><th>状态</th><th>最近跟进</th><th>操作</th>
       </tr></thead>
       <tbody id="tbody"></tbody>
     </table>
@@ -188,7 +188,7 @@ tr.expand td{background:#fffdf8;padding:0}
 <script>
 /* ================= 配置 ================= */
 var LS_KEY = 'lead_table_v1';
-var TYPES = ['收购公司','资质办理','转让标的','注册公司','代账','其他'];
+var TYPES = ['星级账','基础工商','基础代账','推荐业务','其他'];
 var SOURCES = ['推广','推荐','自营','扩增'];
 var LEVELS = ['A','B','C'];
 var STATUSES = ['待联系','已联系','已报价','已成交','已流失','待维护'];
@@ -206,7 +206,7 @@ var FIELDS = [
   {key:'name',   label:'客户姓名', type:'input', req:true, ph:'客户称呼'},
   {key:'wechat', label:'微信', type:'input', ph:'微信号'},
   {key:'phone',  label:'电话', type:'input', ph:'手机号'},
-  {key:'type',   label:'意向类型', type:'select', options:TYPES},
+  {key:'type',   label:'业务类型', type:'select', options:TYPES},
   {key:'need',   label:'具体需求', type:'textarea', ph:'客户需求描述'},
   {key:'source', label:'客户来源', type:'select', options:SOURCES},
   {key:'referrer', label:'推荐人', type:'input', ph:'推荐人姓名 / 渠道'},
@@ -295,7 +295,7 @@ function renderDash(){
     +'<div class="kpi"><div class="n">'+rate+'%</div><div class="l">成交转化率</div></div>'
     +'</div>';
   html+='<div class="bars">';
-  html+=barGroup('按意向类型', TYPES, function(l){return l.type;});
+  html+=barGroup('按业务类型', TYPES, function(l){return l.type;});
   html+=barGroup('按跟进状态', STATUSES, function(l){return l.status;});
   html+=barGroup('按意向等级', LEVELS, function(l){return l.level;});
   html+=barGroup('按客户来源', SOURCES, function(l){return l.source;});
@@ -447,7 +447,10 @@ function openForm(id){
     var v = l? (l[f.key]||'') : (f.def||'');
     body+='<div class="fld"><label>'+esc(f.label)+(f.req?' *':'')+'</label>';
     if(f.type==='select'){
-      body+='<select data-fkey="'+f.key+'">'+f.options.map(function(o){ return '<option value="'+esc(o)+'"'+(o===v?' selected':'')+'>'+esc(o)+'</option>'; }).join('')+'</select>';
+      /* 历史值不在当前选项里时，保留它并排在前面，避免编辑时被静默改成第一项 */
+      var opts=f.options.slice();
+      if(v && opts.indexOf(v)<0) opts=[v].concat(opts);
+      body+='<select data-fkey="'+f.key+'">'+opts.map(function(o){ return '<option value="'+esc(o)+'"'+(o===v?' selected':'')+'>'+esc(o)+'</option>'; }).join('')+'</select>';
     } else if(f.type==='textarea'){
       body+='<textarea data-fkey="'+f.key+'" placeholder="'+esc(f.ph||'')+'">'+esc(v)+'</textarea>';
     } else {
@@ -556,7 +559,7 @@ function delCf(key){
 /* ================= 导出 ================= */
 function exportRows(){
   var leads=state.leads;
-  var header=['客户编号','商机编号','客户姓名','微信','电话','意向类型','具体需求','客户来源','推荐人','意向等级','跟进状态','备注','最近跟进时间','最近跟进内容','跟进次数'];
+  var header=['客户编号','商机编号','客户姓名','微信','电话','业务类型','具体需求','客户来源','推荐人','意向等级','跟进状态','备注','最近跟进时间','最近跟进内容','跟进次数'];
   state.custom.forEach(function(cf){ header.push(cf.label); });
   header.push('创建时间');
   var rows=[header];
