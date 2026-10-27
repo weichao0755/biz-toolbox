@@ -284,9 +284,9 @@ export const TOOLS = [
     path: '/tools/cross-paper',
     name: 'cross-paper',
     title: '跨境电商考核试卷生成器',
-    desc: '随机生成 100 分制考核卷（单选/多选/填空/方案四题型、知识点互不冲撞），预览满意后一键导出 Word 试卷与参考答案；方案题客户模型内部自洽',
-    color: '#0d9488',
-    category: 'cross',
+    desc: '随机生成 100 分制考核卷（单选/多选/填空/方案四题型、知识点互不冲撞），预览满意后一键导出 Word 试卷与参考答案；方案题客户模型内部自洽。归管理类，便于主管考核销售顾问',
+    color: '#7c3aed',
+    category: 'manage',
     iconSvg: svgWrap(`
       <path d="M7 3h7a2 2 0 0 1 2 2v1h2a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a2 2 0 0 1 2-2z"/>
       <path d="M9 12l1.5 1.5L14 10"/>
