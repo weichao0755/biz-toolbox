@@ -44,6 +44,7 @@ export const BACKUP_KEYS = [
   'cross_quote_records_v1',
   'cross_quote_lib_v1',   /* 历史键，保留以便旧数据可恢复 */
   'cross_quote_lib_v2',
-  'cross_quote_ai_config'
+  'cross_quote_ai_config',
+  'cross_quiz_v1'
 ]
 export default BACKUP_KEYS

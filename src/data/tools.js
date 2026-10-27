@@ -264,5 +264,35 @@ export const TOOLS = [
     `),
     url: 'tools/cross-quote/index.html',
     component: EmbeddedToolView
+  },
+  {
+    path: '/tools/cross-quiz',
+    name: 'cross-quiz',
+    title: '跨境电商考核题库',
+    desc: '从跨境销售辅助工具拆出的独立训练题库：学习模式按分类/关键词浏览全部 212 道（含 18 道合规红线题），考核模式随机抽卷自测、判分与薄弱点分析',
+    color: '#0d9488',
+    category: 'cross',
+    iconSvg: svgWrap(`
+      <path d="M9 3h6a1 1 0 0 1 1 1v1h2a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2V4a1 1 0 0 1 1-1z"/>
+      <path d="M9.5 12.5l1.8 1.8 3.7-3.8"/>
+      <circle cx="12" cy="9.5" r="1.1" fill="currentColor" stroke="none"/>
+    `),
+    url: 'tools/cross-quiz/index.html',
+    component: EmbeddedToolView
+  },
+  {
+    path: '/tools/cross-paper',
+    name: 'cross-paper',
+    title: '跨境电商考核试卷生成器',
+    desc: '随机生成 100 分制考核卷（单选/多选/填空/方案四题型、知识点互不冲撞），预览满意后一键导出 Word 试卷与参考答案；方案题客户模型内部自洽',
+    color: '#0d9488',
+    category: 'cross',
+    iconSvg: svgWrap(`
+      <path d="M7 3h7a2 2 0 0 1 2 2v1h2a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a2 2 0 0 1 2-2z"/>
+      <path d="M9 12l1.5 1.5L14 10"/>
+      <path d="M9 7h6"/>
+    `),
+    url: 'tools/cross-paper/index.html',
+    component: EmbeddedToolView
   }
 ]
