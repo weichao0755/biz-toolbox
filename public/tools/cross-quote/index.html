@@ -59,6 +59,7 @@
   .svc-row .del{justify-self:center;width:24px;height:24px;border:none;background:#fdecec;color:#dc2626;border-radius:6px;cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;transition:.15s}
   .svc-row .del:hover{background:#fbd5d5}
   .gift-tag{display:inline-block;background:#fdeee3;color:#e8590c;font-size:11.5px;font-weight:700;border-radius:4px;padding:1px 7px;text-align:center}
+  .inc-tag{display:inline-block;background:#fbf5ea;color:#a85509;font-size:11.5px;font-weight:700;border-radius:4px;padding:1px 7px;text-align:center}
   .svc-row.disabled{opacity:.5}
   .lib-empty{font-size:12.5px;color:#8a7a62;text-align:center;padding:24px 0}
   .add-svc-btn{display:inline-flex;align-items:center;gap:6px;border:1.5px dashed #e3d4ba;border-radius:9px;padding:10px 16px;font-size:13px;color:#a85509;background:#faf7f2;cursor:pointer;font-family:inherit;transition:.15s}
@@ -137,6 +138,8 @@
   #imgCard .qt .c.sum{color:#4a4035;justify-content:flex-end;text-align:right}
   #imgCard .qt .c.total{background:#fbf5ea;font-weight:700;color:#2a1a0a}
   #imgCard .qt .c.gift{color:#e8590c;font-weight:700}
+  /* 单价为 0 → 单价与金额两格合并，写【包含服务】 */
+  #imgCard .qt .c.inc{background:#fbf5ea;color:#a85509;font-weight:700;letter-spacing:1px;font-size:12.5px}
   #imgCard .qt-sum{display:flex;align-items:stretch;width:100%;box-sizing:border-box}
   #imgCard .qt-sum .l{flex:0 0 515px;width:515px;border:1px solid #f2e6d8;padding:9px 10px;color:#4a4035;font-size:13px;display:flex;align-items:center;justify-content:flex-end;text-align:right;box-sizing:border-box}
   #imgCard .qt-sum .v{flex:0 0 167px;width:167px;border:1px solid #f2e6d8;border-left:none;padding:9px 10px;color:#4a4035;font-size:13px;display:flex;align-items:center;justify-content:center;text-align:center;box-sizing:border-box}
@@ -697,6 +700,9 @@ function getItems(){
     }
   })
 }
+/* 单价为 0 的服务项 = 已包含在套餐里，不单独计价：
+   输出表格中「单价（元）」与「金额（元）」两栏合并为一格，写「【包含服务】」 */
+function isIncluded(it){ return !it.gift && !(Number(it.price)>0) }
 function calcSum(){
   const items = getItems()
   const normal = items.filter(x=>!x.gift)
@@ -827,7 +833,8 @@ function renderSvcList(){
       const qty = it?it.qty:1
       const price = it?it.price:l.price
       const line = Number(qty||1)*Number(price||0)
-      const lineTxt = !checked ? '<span class="z">—</span>' : (gift ? '<span class="gift-tag">赠送</span>' : fmtMoney(line))
+      const lineTxt = !checked ? '<span class="z">—</span>' : (gift ? '<span class="gift-tag">赠送</span>'
+        : (Number(price)>0 ? fmtMoney(line) : '<span class="inc-tag">【包含服务】</span>'))
       const giftDis = (!checked || !(Number(price)>0)) ? 'disabled' : ''
       h += `<div class="svc-row ${checked?'sel':''}" data-id="${l.id}">
         <div class="chk"><input type="checkbox" ${checked} onchange="toggleSvc('${l.id}',this.checked)"></div>
@@ -869,7 +876,8 @@ function updSvc(id, field, v){
   }
   saveState()
   const row = document.querySelector(`.svc-row[data-id="${id}"] .line-total`)
-  if(row) row.innerHTML = it.gift ? '<span class="gift-tag">赠送</span>' : fmtMoney(Number(it.qty||1)*Number(it.price||0))
+  if(row) row.innerHTML = it.gift ? '<span class="gift-tag">赠送</span>'
+    : (Number(it.price)>0 ? fmtMoney(Number(it.qty||1)*Number(it.price||0)) : '<span class="inc-tag">【包含服务】</span>')
   renderSum()
 }
 function toggleGift(id, on){
@@ -926,6 +934,18 @@ function renderPreview(){
     <div class="c">序号</div><div class="c left">服务项目</div><div class="c left">服务内容</div><div class="c">数量</div><div class="c">单位</div><div class="c">单价（元）</div><div class="c">金额（元）</div>
   </div>`
   items.forEach((it,i)=>{
+    /* 单价为 0：单价（元）与金额（元）两栏合并成一格，写【包含服务】 */
+    if(isIncluded(it)){
+      h += `<div class="qt">
+        <div class="c">${i+1}</div>
+        <div class="c left">${esc(it.name)}</div>
+        <div class="c left" style="font-size:12px;color:#4a4035">${esc(it.desc)||'—'}</div>
+        <div class="c">${it.qty}</div>
+        <div class="c">${esc(it.unit)}</div>
+        <div class="c inc" style="width:167px;flex-basis:167px">【包含服务】</div>
+      </div>`
+      return
+    }
     const amtTxt = it.gift ? '赠送' : (it.price>0?fmtMoneyRaw(it.line):'面议')
     h += `<div class="qt">
       <div class="c">${i+1}</div>
@@ -1055,15 +1075,30 @@ async function doGenerate(){
       children:[ new Paragraph({ children:[R(text,{size:21,color})], alignment:align||AlignmentType.CENTER, spacing:{ line:240, lineRule:'auto' } }) ]
     })
     const rowHdr = new TableRow({ tableHeader:true, children:[ TH('序号',6), TH('服务项目',18), TH('服务内容',32), TH('数量',7), TH('单位',7), TH('单价（元）',15), TH('金额（元）',15) ] })
-    const rowCells = items.map((it,i)=>new TableRow({ children:[
-      TD(String(i+1),6),
-      TD(it.name,18,AlignmentType.LEFT),
-      TD(it.desc||'—',32,AlignmentType.LEFT),
-      TD(String(it.qty),7),
-      TD(it.unit,7),
-      TD(it.price>0?fmtMoneyRaw(it.price):'面议',15),
-      it.gift ? TD('赠送',15,AlignmentType.CENTER,'E8590C') : TD(it.price>0?fmtMoneyRaw(it.line):'面议',15)
-    ] }))
+    const rowCells = items.map((it,i)=>{
+      if(isIncluded(it)){
+        /* 单价为 0：单价与金额两列合并成一格，写【包含服务】 */
+        return new TableRow({ children:[
+          TD(String(i+1),6),
+          TD(it.name,18,AlignmentType.LEFT),
+          TD(it.desc||'—',32,AlignmentType.LEFT),
+          TD(String(it.qty),7),
+          TD(it.unit,7),
+          new TableCell({ columnSpan:2, shading:{ fill:'FBF5EA' }, margins:{ top:60, bottom:60, left:60, right:60 },
+            children:[ new Paragraph({ children:[new TextRun({ text:'【包含服务】', font:FHei, size:21, bold:true, color:'A85509' })],
+              alignment:AlignmentType.CENTER, spacing:{ line:240, lineRule:'auto' } }) ] })
+        ] })
+      }
+      return new TableRow({ children:[
+        TD(String(i+1),6),
+        TD(it.name,18,AlignmentType.LEFT),
+        TD(it.desc||'—',32,AlignmentType.LEFT),
+        TD(String(it.qty),7),
+        TD(it.unit,7),
+        TD(it.price>0?fmtMoneyRaw(it.price):'面议',15),
+        it.gift ? TD('赠送',15,AlignmentType.CENTER,'E8590C') : TD(it.price>0?fmtMoneyRaw(it.line):'面议',15)
+      ] })
+    })
     const rowSubTotal = new TableRow({ children:[
       new TableCell({ columnSpan:5, margins:{ top:40, bottom:40, left:60, right:60 }, children:[ new Paragraph({ children:[R('服务项目合计',{size:20,color:'595959'})], alignment:AlignmentType.RIGHT, spacing:{ line:240, lineRule:'auto' } }) ] }),
       new TableCell({ columnSpan:2, margins:{ top:40, bottom:40, left:60, right:60 }, children:[ new Paragraph({ children:[R('¥ '+fmtMoneyRaw(raw+giftSum),{size:20,color:'595959'})], alignment:AlignmentType.CENTER, spacing:{ line:240, lineRule:'auto' } }) ] })
