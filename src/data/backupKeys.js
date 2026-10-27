@@ -42,7 +42,8 @@ export const BACKUP_KEYS = [
   'contract_screen_ai_cfg',
   'cross_quote_data_v1',
   'cross_quote_records_v1',
-  'cross_quote_lib_v1',
+  'cross_quote_lib_v1',   /* 历史键，保留以便旧数据可恢复 */
+  'cross_quote_lib_v2',
   'cross_quote_ai_config'
 ]
 export default BACKUP_KEYS
