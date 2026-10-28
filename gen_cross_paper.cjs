@@ -44,6 +44,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .brand{display:inline-block;font-size:11px;font-weight:500;padding:3px 10px;border-radius:999px;background:var(--accent-bg);color:var(--accent);margin-bottom:8px}
 h1{font-size:20px;font-weight:600;margin-bottom:6px}
 .sub{color:var(--text-2);font-size:12.5px;margin-bottom:14px}
+.tierbar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.tlabel{font-size:13px;color:var(--text-2);font-weight:500}
+.tier{border:1px solid var(--border);background:var(--surface);color:var(--text-2);border-radius:9px;padding:9px 16px;font-size:13.5px;font-weight:600;cursor:pointer;transition:.15s}
+.tier:hover{border-color:var(--accent)}
+.tier.on{background:var(--grad);color:#fff;border-color:transparent;box-shadow:0 4px 12px -4px rgba(224,144,26,.5)}
+.tier .sub{font-size:11px;font-weight:400;opacity:.85;display:block;margin-top:2px}
 .toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
 .btn{width:auto;border:none;border-radius:9px;padding:11px 16px;font-size:13.5px;font-weight:600;cursor:pointer;background:var(--grad);color:#fff;box-shadow:0 6px 16px -6px rgba(224,144,26,.4);transition:.15s}
 .btn:hover{opacity:.93;transform:translateY(-1px)}
@@ -66,11 +72,12 @@ h1{font-size:20px;font-weight:600;margin-bottom:6px}
 .ans{display:inline-block;margin-left:8px;color:var(--green);font-weight:600}
 .exp{font-size:12.5px;color:var(--text-2);margin-top:5px;line-height:1.6}
 .step{font-size:13.5px;margin:7px 0;line-height:1.6}
+.extra{margin-top:8px;font-size:12.5px;color:var(--accent);background:var(--amber-bg);border:1px solid #ecd9b0;border-radius:8px;padding:8px 10px;line-height:1.7}
 .meta{font-size:12px;color:var(--muted);margin-bottom:10px}
 .note{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.6}
 .warnbar{background:var(--amber-bg);border:1px solid #ecd9b0;color:var(--amber);font-size:12.5px;padding:10px 12px;border-radius:10px;margin-bottom:14px;line-height:1.6}
 @media print{
-  .tabs,.toolbar{display:none!important}
+  .tabs,.toolbar,.tierbar{display:none!important}
   .pane{display:block!important}
   #p-key{display:none!important}
   body{background:#fff}
@@ -92,8 +99,14 @@ const HEAD = `<!doctype html>
 <div class="wrap">
   <span class="brand">跨境 · 销售训练</span>
   <h1>跨境电商销售顾问 · 考核试卷生成器</h1>
-  <p class="sub">基于现有题库（212 道）+ 方案实战引擎 + 公司《客户标准问答库》扩展题库，随机出卷 · 总分 100 · 及格 80 · 四题型齐全且互不冲撞</p>
-  <div class="warnbar">📌 使用方式：先点「生成新试卷」预览，确认题目无误后点「导出试卷 Word / 导出参考答案 Word」下载。本工具不做线上答题，导出的 Word 才是正式卷面。</div>
+  <p class="sub">按档次出卷：新人 / 老人 / 销冠，难度递增（销冠方案题为复杂客户模型 + 附加考核点）· 总分 100 · 及格 80 · 四题型齐全且互不冲撞</p>
+  <div class="warnbar">📌 使用方式：先选「考核档次」，点「生成新试卷」预览，确认无误后点「导出试卷 Word / 导出参考答案 Word」下载。本工具不做线上答题，导出的 Word 才是正式卷面。</div>
+  <div class="tierbar">
+    <span class="tlabel">考核档次：</span>
+    <button class="tier on" data-t="new" onclick="setTier('new')">新人<span class="sub">基础合规认知</span></button>
+    <button class="tier" data-t="old" onclick="setTier('old')">老人<span class="sub">综合应用</span></button>
+    <button class="tier" data-t="champ" onclick="setTier('champ')">销冠<span class="sub">复杂客户方案</span></button>
+  </div>
   <div class="toolbar">
     <button class="btn" onclick="genPaper()">生成新试卷</button>
     <button class="btn ghost" onclick="exportPaper()">导出试卷 Word</button>
@@ -122,56 +135,74 @@ var ST={attempts:[]};
 const SCRIPT3 = `
 /* ===== 扩展题库：基于公司《跨境电商客户标准问答库（新人版）》89 条 + SOP 提炼 =====
    均为独立知识点，与下方填空题库 topic 完全不重叠（tag 用 ex_sN / ex_mN 前缀，绝不落入填空 topic 集合），
-   保证「单选题 / 多选题 / 填空题 / 方案题」四者不会出现同一道题换种问法的冲撞。 */
+   保证「单选题 / 多选题 / 填空题 / 方案题」四者不会出现同一道题换种问法的冲撞。
+   每题带 lv（难度等级：easy / medium / hard），供按档次抽题。 */
 
 var EXTRA_SINGLE=[
- {tag:'ex_s1',q:'跨境电商卖家为什么会涉及增值税？',o:['A. 平台会代扣代缴','B. 多走双清 / 买单出口，被视同内销','C. 进口关税转嫁','D. 企业所得税附征'],a:1,e:'走双清或买单出口是用别人公司抬头出货，会被税局视同内销，季度营业额超 30 万就要交增值税；走 9810 有自己报关单才可免。'},
- {tag:'ex_s2',q:'收到税务局发来的风险提醒短信，是否一定要处理？',o:['A. 是的，需按如实数据修改申报','B. 不用管，自动作废','C. 仅一般纳税人要处理','D. 等电话再说'],a:0,e:'现在平台每季度推送营业额−退货数据，税局据此发提醒；0 申报 / 回款申报都要按如实数据改，否则会被拉异常或约谈。'},
- {tag:'ex_s3',q:'电商平台会不会把卖家数据报送给税务局？',o:['A. 一定会的，每季度推送营业额−退货','B. 不会，只有查账时才要','C. 仅欧洲站推送','D. 由卖家自行决定是否报送'],a:0,e:'电商法执行后平台每季度推送“销售额−退货”的银控数据，回款口径已不可行。'},
- {tag:'ex_s4',q:'采购没有发票，平台费用（佣金 / 仓储 / 广告）怎么入账？',o:['A. 必须补开专票才能做账','B. 提供平台汇总单，右侧费用按明细账录入成本，无需发票','C. 全部计入股东借款','D. 不做任何成本'],a:1,e:'提供后台汇总单即可：左侧 income 申报收入，右侧费用按明细账直接录入抵扣，不需要额外发票。'},
- {tag:'ex_s5',q:'0110 一般贸易与 9610 零售直发的本质区别是？',o:['A. 两者都是免税','B. 0110 走免抵退（有票可退税），9610 走免税（小包难退税）','C. 0110 只能内销','D. 9610 退税更高'],a:1,e:'0110 是“免抵退”不是免税，有票有单证可退税；9610 小包货源几乎拿不到进项专票，退税一线不做。'},
- {tag:'ex_s6',q:'一般纳税人按月申报，某个月没有报关单会怎样？',o:['A. 自动顺延到下月抵扣','B. 只需交企业所得税','C. 不能抵扣当月增值税，需缴全额，不顺延','D. 免交增值税'],a:2,e:'一般人按月申报逻辑同内销，当月无报关单则无法抵扣，需缴全额，不能顺延。'},
- {tag:'ex_s7',q:'企业所得税小型微利优惠的应纳税所得额上限是？',o:['A. 100 万元','B. 200 万元','C. 300 万元','D. 500 万元'],a:2,e:'小微企业优惠上限 300 万，建议把利润控制在 260~290 万区间以避开严查。'},
- {tag:'ex_s8',q:'9810 全流程的四个动作中，以下哪项是“错误”的？',o:['A. 生成订单号','B. 无纸化签约','C. 推单给货代','D. 自行到海关柜台交税'],a:3,e:'9810 比双清只多四步：生成订单号、无纸化、推单、委托货代；均由企业操作 + 货代执行，不是去柜台交税。'},
- {tag:'ex_s9',q:'判定一个客户的报关模式，主要由哪两个维度共同决定？',o:['A. 年流水 + 品类','B. 平台 + 发货方式','C. 城市 + 主体','D. 历史 + 发票'],a:1,e:'报关模式由“平台 + 发货方式”共同决定：自己报关出境→9810/0110；平台代报关→9610；借抬头→先转合规。'},
- {tag:'ex_s10',q:'判定 13 栏可行性时，哪类客户“不能直接填、需先有报关单”？',o:['A. 深圳自有报关单','B. 平台代报、拿不到自己名下报关单','C. 海外仓 9810','D. 一般贸易 0110'],a:1,e:'三层判：借抬头→不能用；平台代报拿不到报关单→需先有报关清单；自有报关单→深圳可直填、外地需先有。'},
- {tag:'ex_s11',q:'客户走买单 / DDP 双清出口，最终结论由什么决定？',o:['A. 货怎么发','B. 报关方式（报关单写谁的名字）','C. 平台类型','D. 年流水大小'],a:1,e:'只要报关单写的是别人抬头，免税退税都不成立、会被视同内销补增值税；结论由报关方式决定，不看发货方式。'},
- {tag:'ex_s12',q:'多主体架构“赛维 2.0”通常包含哪三类主体？',o:['A. 工厂 + 物流 + 银行','B. 店铺 + 个人 + 税局','C. 贸易公司 + 香港公司 + 店铺公司','D. 母公司 + 子公司 + 分公司'],a:2,e:'通过“贸易公司 + 香港公司 + 店铺公司”三角关系，香港作中间层实现外采外销、隔离风险；三地需无关联。'},
- {tag:'ex_s13',q:'以下哪项属于公司明令禁止的“红线承诺”？',o:['A. 按报关单如实申报','B. 提供情况说明应对核查','C. 先转合规再填报','D. 保证 100% 免税、一定不被查'],a:3,e:'禁止承诺“100% 免税 / 一定不被查 / 退税必到账”等结果性结论，只能讲合规路径与风险。'},
- {tag:'ex_s15',q:'“先给再取”的探需技巧是指？',o:['A. 先要客户付款再给资料','B. 先免费给一份体检 / 测算，再谈方案','C. 先签合同再了解需求','D. 先让客户自我介绍'],a:1,e:'先给价值（体检 / 税负测算）建立信任，再自然引出方案，比直接推销转化高。'},
- {tag:'ex_s16',q:'跟进铁律：每次触达客户必须带什么？',o:['A. 一条新信息（新政策 / 新案例 / 新测算）','B. 一份合同','C. 一个优惠码','D. 一段广告'],a:0,e:'不带新信息的触达等于骚扰；每次都要有新价值点。'},
- {tag:'ex_s17',q:'客户刚收到税务短信，属于哪一类客户？',o:['A. 存量触发型','B. 新锐合规型','C. 大卖架构型','D. 零申报灰产型'],a:0,e:'刚收短信属存量触发型，外力推动、转化最快，应优先跟进。'},
- {tag:'ex_s18',q:'关于 9810 预退税（离境即退税），公司的标准口径是？',o:['A. 强烈建议所有客户都做','B. 离境可预退但不建议，目前暂无成功案例，走常规免税更稳','C. 必须做才能免税','D. 只有深圳能做'],a:1,e:'9810 确实可预退税，但流程复杂、暂无退税到账案例，公司建议走常规免税流程。'},
- {tag:'ex_s19',q:'对“出口免税”的正确理解是？',o:['A. 办完备案就永远不用交税','B. 只要出货就免，与报关单无关','C. 有报关单可先按免税，差异部分需补，不承诺一定免','D. 仅限海外仓'],a:2,e:'免税须以本公司抬头报关单（或核实的报关清单）为依据，金额与销售额一致才可免；差异部分需补，不承诺一定免。'},
- {tag:'ex_s20',q:'第三方回款到私户是否一定有风险？',o:['A. 一定会被查','B. 收入已如实申报则风险低，建议逐步把主体 / 收款 / 申报统一','C. 完全合规无风险','D. 必须全部转公户'],a:1,e:'监管重点是收入是否如实申报，而非钱收到哪；收入已申报则风险低，但仍建议主体统一。'},
- {tag:'ex_s21',q:'在香港公司架构中，香港公司的主要作用是？',o:['A. 替代报关行','B. 作为中间层实现外采外销、隔离风险','C. 直接退税给店铺','D. 代缴国内增值税'],a:1,e:'香港公司作中间层，境内采购、境外销售，形成完整证据链支持退税，并隔离历史风险。'},
- {tag:'ex_s22',q:'判定 13 栏可行性三层中，第一层“借别人抬头出货”的结论是？',o:['A. 不能用','B. 可直接填','C. 需先有报关单','D. 只能退税'],a:0,e:'借别人抬头连自己名下报关单都没有，13 栏不能用，必须先转合规报关。'},
- {tag:'ex_s23',q:'深圳主体与外地主体在 13 栏上的区别是？',o:['A. 深圳默认开通可直接填，外地须先有报关单','B. 外地更方便','C. 两者都要先转合规','D. 深圳不能填'],a:0,e:'深圳 13 栏默认开通可直接填报；外地主体必须先有报关单才能线下申请。'},
- {tag:'ex_s24',q:'多家店铺收入能否归集到一家公司统一申报纳税？',o:['A. 可以，合并申报更省事','B. 不可行，各地税所出于利益保护不会同意税收转移','C. 仅深圳允许','D. 仅需一笔手续费'],a:1,e:'合并申报涉及不同专管员业绩分配，沟通难度极大，各地明确拒绝；各主体仍需单独如实申报。'}
+ {tag:'ex_s1',lv:'hard',q:'跨境电商卖家为什么会涉及增值税？',o:['A. 平台会代扣代缴','B. 多走双清 / 买单出口，被视同内销','C. 进口关税转嫁','D. 企业所得税附征'],a:1,e:'走双清或买单出口是用别人公司抬头出货，会被税局视同内销，季度营业额超 30 万就要交增值税；走 9810 有自己报关单才可免。'},
+ {tag:'ex_s2',lv:'easy',q:'收到税务局发来的风险提醒短信，是否一定要处理？',o:['A. 是的，需按如实数据修改申报','B. 不用管，自动作废','C. 仅一般纳税人要处理','D. 等电话再说'],a:0,e:'现在平台每季度推送营业额−退货数据，税局据此发提醒；0 申报 / 回款申报都要按如实数据改，否则会被拉异常或约谈。'},
+ {tag:'ex_s3',lv:'easy',q:'电商平台会不会把卖家数据报送给税务局？',o:['A. 一定会的，每季度推送营业额−退货','B. 不会，只有查账时才要','C. 仅欧洲站推送','D. 由卖家自行决定是否报送'],a:0,e:'电商法执行后平台每季度推送“销售额−退货”的银控数据，回款口径已不可行。'},
+ {tag:'ex_s4',lv:'easy',q:'采购没有发票，平台费用（佣金 / 仓储 / 广告）怎么入账？',o:['A. 必须补开专票才能做账','B. 提供平台汇总单，右侧费用按明细账录入成本，无需发票','C. 全部计入股东借款','D. 不做任何成本'],a:1,e:'提供后台汇总单即可：左侧 income 申报收入，右侧费用按明细账直接录入抵扣，不需要额外发票。'},
+ {tag:'ex_s5',lv:'medium',q:'0110 一般贸易与 9610 零售直发的本质区别是？',o:['A. 两者都是免税','B. 0110 走免抵退（有票可退税），9610 走免税（小包难退税）','C. 0110 只能内销','D. 9610 退税更高'],a:1,e:'0110 是“免抵退”不是免税，有票有单证可退税；9610 小包货源几乎拿不到进项专票，退税一线不做。'},
+ {tag:'ex_s6',lv:'hard',q:'一般纳税人按月申报，某个月没有报关单会怎样？',o:['A. 自动顺延到下月抵扣','B. 只需交企业所得税','C. 不能抵扣当月增值税，需缴全额，不顺延','D. 免交增值税'],a:2,e:'一般人按月申报逻辑同内销，当月无报关单则无法抵扣，需缴全额，不能顺延。'},
+ {tag:'ex_s7',lv:'easy',q:'企业所得税小型微利优惠的应纳税所得额上限是？',o:['A. 100 万元','B. 200 万元','C. 300 万元','D. 500 万元'],a:2,e:'小微企业优惠上限 300 万，建议把利润控制在 260~290 万区间以避开严查。'},
+ {tag:'ex_s8',lv:'medium',q:'9810 全流程的四个动作中，以下哪项是“错误”的？',o:['A. 生成订单号','B. 无纸化签约','C. 推单给货代','D. 自行到海关柜台交税'],a:3,e:'9810 比双清只多四步：生成订单号、无纸化、推单、委托货代；均由企业操作 + 货代执行，不是去柜台交税。'},
+ {tag:'ex_s9',lv:'medium',q:'判定一个客户的报关模式，主要由哪两个维度共同决定？',o:['A. 年流水 + 品类','B. 平台 + 发货方式','C. 城市 + 主体','D. 历史 + 发票'],a:1,e:'报关模式由“平台 + 发货方式”共同决定：自己报关出境→9810/0110；平台代报关→9610；借抬头→先转合规。'},
+ {tag:'ex_s10',lv:'hard',q:'判定 13 栏可行性时，哪类客户“不能直接填、需先有报关单”？',o:['A. 深圳自有报关单','B. 平台代报、拿不到自己名下报关单','C. 海外仓 9810','D. 一般贸易 0110'],a:1,e:'三层判：借抬头→不能用；平台代报拿不到报关单→需先有报关清单；自有报关单→深圳可直填、外地需先有。'},
+ {tag:'ex_s11',lv:'hard',q:'客户走买单 / DDP 双清出口，最终结论由什么决定？',o:['A. 货怎么发','B. 报关方式（报关单写谁的名字）','C. 平台类型','D. 年流水大小'],a:1,e:'只要报关单写的是别人抬头，免税退税都不成立、会被视同内销补增值税；结论由报关方式决定，不看发货方式。'},
+ {tag:'ex_s12',lv:'hard',q:'多主体架构“赛维 2.0”通常包含哪三类主体？',o:['A. 工厂 + 物流 + 银行','B. 店铺 + 个人 + 税局','C. 贸易公司 + 香港公司 + 店铺公司','D. 母公司 + 子公司 + 分公司'],a:2,e:'通过“贸易公司 + 香港公司 + 店铺公司”三角关系，香港作中间层实现外采外销、隔离风险；三地需无关联。'},
+ {tag:'ex_s13',lv:'easy',q:'以下哪项属于公司明令禁止的“红线承诺”？',o:['A. 按报关单如实申报','B. 提供情况说明应对核查','C. 先转合规再填报','D. 保证 100% 免税、一定不被查'],a:3,e:'禁止承诺“100% 免税 / 一定不被查 / 退税必到账”等结果性结论，只能讲合规路径与风险。'},
+ {tag:'ex_s15',lv:'easy',q:'“先给再取”的探需技巧是指？',o:['A. 先要客户付款再给资料','B. 先免费给一份体检 / 测算，再谈方案','C. 先签合同再了解需求','D. 先让客户自我介绍'],a:1,e:'先给价值（体检 / 税负测算）建立信任，再自然引出方案，比直接推销转化高。'},
+ {tag:'ex_s16',lv:'easy',q:'跟进铁律：每次触达客户必须带什么？',o:['A. 一条新信息（新政策 / 新案例 / 新测算）','B. 一份合同','C. 一个优惠码','D. 一段广告'],a:0,e:'不带新信息的触达等于骚扰；每次都要有新价值点。'},
+ {tag:'ex_s17',lv:'easy',q:'客户刚收到税务短信，属于哪一类客户？',o:['A. 存量触发型','B. 新锐合规型','C. 大卖架构型','D. 零申报灰产型'],a:0,e:'刚收短信属存量触发型，外力推动、转化最快，应优先跟进。'},
+ {tag:'ex_s18',lv:'medium',q:'关于 9810 预退税（离境即退税），公司的标准口径是？',o:['A. 强烈建议所有客户都做','B. 离境可预退但不建议，目前暂无成功案例，走常规免税更稳','C. 必须做才能免税','D. 只有深圳能做'],a:1,e:'9810 确实可预退税，但流程复杂、暂无退税到账案例，公司建议走常规免税流程。'},
+ {tag:'ex_s19',lv:'hard',q:'对“出口免税”的正确理解是？',o:['A. 办完备案就永远不用交税','B. 只要出货就免，与报关单无关','C. 有报关单可先按免税，差异部分需补，不承诺一定免','D. 仅限海外仓'],a:2,e:'免税须以本公司抬头报关单（或核实的报关清单）为依据，金额与销售额一致才可免；差异部分需补，不承诺一定免。'},
+ {tag:'ex_s20',lv:'hard',q:'第三方回款到私户是否一定有风险？',o:['A. 一定会被查','B. 收入已如实申报则风险低，建议逐步把主体 / 收款 / 申报统一','C. 完全合规无风险','D. 必须全部转公户'],a:1,e:'监管重点是收入是否如实申报，而非钱收到哪；收入已申报则风险低，但仍建议主体统一。'},
+ {tag:'ex_s21',lv:'hard',q:'在香港公司架构中，香港公司的主要作用是？',o:['A. 替代报关行','B. 作为中间层实现外采外销、隔离风险','C. 直接退税给店铺','D. 代缴国内增值税'],a:1,e:'香港公司作中间层，境内采购、境外销售，形成完整证据链支持退税，并隔离历史风险。'},
+ {tag:'ex_s22',lv:'easy',q:'判定 13 栏可行性三层中，第一层“借别人抬头出货”的结论是？',o:['A. 不能用','B. 可直接填','C. 需先有报关单','D. 只能退税'],a:0,e:'借别人抬头连自己名下报关单都没有，13 栏不能用，必须先转合规报关。'},
+ {tag:'ex_s23',lv:'easy',q:'深圳主体与外地主体在 13 栏上的区别是？',o:['A. 深圳默认开通可直接填，外地须先有报关单','B. 外地更方便','C. 两者都要先转合规','D. 深圳不能填'],a:0,e:'深圳 13 栏默认开通可直接填报；外地主体必须先有报关单才能线下申请。'},
+ {tag:'ex_s24',lv:'hard',q:'多家店铺收入能否归集到一家公司统一申报纳税？',o:['A. 可以，合并申报更省事','B. 不可行，各地税所出于利益保护不会同意税收转移','C. 仅深圳允许','D. 仅需一笔手续费'],a:1,e:'合并申报涉及不同专管员业绩分配，沟通难度极大，各地明确拒绝；各主体仍需单独如实申报。'}
 ];
 
 var EXTRA_MULTI=[
- {tag:'ex_m1',type:'multi',q:'以下哪些情形会导致被视同内销、补缴增值税？',o:['A. 买单出口','B. DDP 双清','C. 9610 零售直发','D. 0110 一般贸易'],a:[0,1],e:'买单 / DDP 都是报关单写别人抬头，被视同内销补增值税；9610 / 0110 是自有报关，不属于。'},
- {tag:'ex_m2',type:'multi',q:'9810 全流程包含以下哪些动作？',o:['A. 生成订单号','B. 无纸化签约','C. 推单给货代','D. 委托货代出口'],a:[0,1,2,3],e:'四步：生成订单号、无纸化、推单、委托货代；均由企业操作 + 货代执行。'},
- {tag:'ex_m3',type:'multi',q:'以下哪些平台的官方物流 / 全托管属于“平台代报”（卖家侧无自己名下报关单）？',o:['A. TikTok Shipping','B. Ozon 官方物流','C. Shopee SLS','D. Temu 全托管','E. 菜鸟无忧物流'],a:[0,1,2,3,4],e:'这些发货方式报关主体是平台 / 物流商，卖家拿不到自己名下报关单，只能做账务 + 免税（拿到清单）。'},
- {tag:'ex_m4',type:'multi',q:'以下哪些情形 13 栏“不能直接填、需先有报关单（或不可用）”？',o:['A. 借别人公司抬头出货','B. 平台代报、拿不到自己名下报关单','C. 深圳自有 9810 报关单','D. 海外仓 9810 备货'],a:[0,1],e:'借抬头→不能用；平台代报无清单→需先有报关单；自有报关单（深圳 / 外地有单）可填 / 可申。'},
- {tag:'ex_m5',type:'multi',q:'以下可作为企业所得税成本列支的有？',o:['A. 员工工资与社保','B. 年终奖（3.6 万 / 人）','C. 平台费用明细账','D. 股东个人消费无票支出'],a:[0,1,2],e:'工资、社保、年终奖、平台费用明细、供应商发票、广告费（15% 内）均可列支；股东个人消费不可。'},
- {tag:'ex_m6',type:'multi',q:'办理进出口权需要提供以下哪些资料？',o:['A. 营业执照副本','B. 公章','C. 法人及操作员身份证','D. 公司英文名称'],a:[0,1,2,3],e:'需营业执照副本、公章、法人身份证正反面、操作员身份证正反面、公司英文名称。'},
- {tag:'ex_m7',type:'multi',q:'以下哪些属于公司明令禁止的“红线承诺”？',o:['A. 保证 100% 免税','B. 保证一定不被查','C. 保证退税必到账','D. 按报关单如实申报'],a:[0,1,2],e:'禁止任何结果性承诺；按报关单如实申报是合规动作，不在红线内。'},
- {tag:'ex_m8',type:'multi',q:'小规模纳税人年销售额超过 500 万，会发生？',o:['A. 强制登记为一般纳税人','B. 增值税率变为 13%','C. 仍可一直按 1%','D. 之前的小规模身份自动保留'],a:[0,1],e:'超 500 万强制转一般人，增值税率 13%；应在超之前做控额 / 拆月份 / 换主体规划。'},
- {tag:'ex_m9',type:'multi',q:'关于退税，以下说法正确的有？',o:['A. 0110 一般贸易走免抵退','B. 9810 可离境预退税','C. 9610 小包零售可正常退税','D. 退税需有进项专票'],a:[0,1,3],e:'0110 免抵退、9810 预退税，但都需进项专票；9610 小包几乎无专票，退税一线不做。'},
- {tag:'ex_m10',type:'multi',q:'我司与网商银行战略合作的优势包括？',o:['A. 回款免手续费','B. 1688 直采便利','C. 提高增值税率','D. 替代报关'],a:[0,1],e:'网商银行回款免手续费 + 1688 直采便利，是跨境方案的商务卖点；不涉及税率或报关。'},
- {tag:'ex_m11',type:'multi',q:'金米可协助代办的出口资质包括？',o:['A. 进出口权','B. 跨境电商企业备案','C. 电子口岸 IC 卡','D. 免税备案 13 栏'],a:[0,1,2,3],e:'全流程资质代办：进出口权→跨境电商备案→IC 卡→免税备案 13 栏。'},
- {tag:'ex_m12',type:'multi',q:'判定 13 栏可行性的三层逻辑是？',o:['A. 借别人抬头 → 不能用','B. 平台代报 → 需先有报关单','C. 自有报关单 → 深圳可直填、外地需先有','D. 平台代报 → 可直接填'],a:[0,1,2],e:'三层判：借抬头不可用；平台代报需先有报关清单；自有报关单深圳直填、外地先有单。给外地 / 平台代报判“可直接填”是硬伤。'},
- {tag:'ex_m13',type:'multi',q:'生成方案题客户模型时，必须保证哪些自洽？',o:['A. 平台与发货方式必须匹配（如亚马逊不能配平台物流）','B. 报关单归属（own / part / none）落在原型约束内','C. 客户所说与系统事实一致','D. 年流水与主体无关可随意'],a:[0,1,2],e:'客户模型由平台真实发货方式 + 原型约束共同生成，杜绝“亚马逊 + 平台物流”这类冲突组合。'},
- {tag:'ex_m14',type:'multi',q:'跟进与探需的正确做法包括？',o:['A. 每次触达带新信息','B. 先给体检 / 测算再谈方案','C. 同一句话每天群发','D. 直接报死价不探需'],a:[0,1],e:'跟进必带新信息、探需先给再取；群发骚扰与跳过探需都不可取。'},
- {tag:'ex_m15',type:'multi',q:'关于多主体 / 香港架构，正确的做法有？',o:['A. 各主体单独如实申报，不能合并','B. 香港公司需有真实员工缴强基金','C. 新主体隔离历史风险，不改动老店利润','D. 香港公司可长期空转'],a:[0,1,2],e:'各主体单独申报；香港需真实员工；新主体隔离历史；空转会有转让定价与真实性风险。'}
+ {tag:'ex_m1',lv:'medium',type:'multi',q:'以下哪些情形会导致被视同内销、补缴增值税？',o:['A. 买单出口','B. DDP 双清','C. 9610 零售直发','D. 0110 一般贸易'],a:[0,1],e:'买单 / DDP 都是报关单写别人抬头，被视同内销补增值税；9610 / 0110 是自有报关，不属于。'},
+ {tag:'ex_m2',lv:'easy',type:'multi',q:'9810 全流程包含以下哪些动作？',o:['A. 生成订单号','B. 无纸化签约','C. 推单给货代','D. 委托货代出口'],a:[0,1,2,3],e:'四步：生成订单号、无纸化、推单、委托货代；均由企业操作 + 货代执行。'},
+ {tag:'ex_m3',lv:'medium',type:'multi',q:'以下哪些平台的官方物流 / 全托管属于“平台代报”（卖家侧无自己名下报关单）？',o:['A. TikTok Shipping','B. Ozon 官方物流','C. Shopee SLS','D. Temu 全托管','E. 菜鸟无忧物流'],a:[0,1,2,3,4],e:'这些发货方式报关主体是平台 / 物流商，卖家拿不到自己名下报关单，只能做账务 + 免税（拿到清单）。'},
+ {tag:'ex_m4',lv:'hard',type:'multi',q:'以下哪些情形 13 栏“不能直接填、需先有报关单（或不可用）”？',o:['A. 借别人公司抬头出货','B. 平台代报、拿不到自己名下报关单','C. 深圳自有 9810 报关单','D. 海外仓 9810 备货'],a:[0,1],e:'借抬头→不能用；平台代报无清单→需先有报关单；自有报关单（深圳 / 外地有单）可填 / 可申。'},
+ {tag:'ex_m5',lv:'medium',type:'multi',q:'以下可作为企业所得税成本列支的有？',o:['A. 员工工资与社保','B. 年终奖（3.6 万 / 人）','C. 平台费用明细账','D. 股东个人消费无票支出'],a:[0,1,2],e:'工资、社保、年终奖、平台费用明细、供应商发票、广告费（15% 内）均可列支；股东个人消费不可。'},
+ {tag:'ex_m6',lv:'easy',type:'multi',q:'办理进出口权需要提供以下哪些资料？',o:['A. 营业执照副本','B. 公章','C. 法人及操作员身份证','D. 公司英文名称'],a:[0,1,2,3],e:'需营业执照副本、公章、法人身份证正反面、操作员身份证正反面、公司英文名称。'},
+ {tag:'ex_m7',lv:'easy',type:'multi',q:'以下哪些属于公司明令禁止的“红线承诺”？',o:['A. 保证 100% 免税','B. 保证一定不被查','C. 保证退税必到账','D. 按报关单如实申报'],a:[0,1,2],e:'禁止任何结果性承诺；按报关单如实申报是合规动作，不在红线内。'},
+ {tag:'ex_m8',lv:'medium',type:'multi',q:'小规模纳税人年销售额超过 500 万，会发生？',o:['A. 强制登记为一般纳税人','B. 增值税率变为 13%','C. 仍可一直按 1%','D. 之前的小规模身份自动保留'],a:[0,1],e:'超 500 万强制转一般人，增值税率 13%；应在超之前做控额 / 拆月份 / 换主体规划。'},
+ {tag:'ex_m9',lv:'hard',type:'multi',q:'关于退税，以下说法正确的有？',o:['A. 0110 一般贸易走免抵退','B. 9810 可离境预退税','C. 9610 小包零售可正常退税','D. 退税需有进项专票'],a:[0,1,3],e:'0110 免抵退、9810 预退税，但都需进项专票；9610 小包几乎无专票，退税一线不做。'},
+ {tag:'ex_m10',lv:'easy',type:'multi',q:'我司与网商银行战略合作的优势包括？',o:['A. 回款免手续费','B. 1688 直采便利','C. 提高增值税率','D. 替代报关'],a:[0,1],e:'网商银行回款免手续费 + 1688 直采便利，是跨境方案的商务卖点；不涉及税率或报关。'},
+ {tag:'ex_m11',lv:'medium',type:'multi',q:'金米可协助代办的出口资质包括？',o:['A. 进出口权','B. 跨境电商企业备案','C. 电子口岸 IC 卡','D. 免税备案 13 栏'],a:[0,1,2,3],e:'全流程资质代办：进出口权→跨境电商备案→IC 卡→免税备案 13 栏。'},
+ {tag:'ex_m12',lv:'hard',type:'multi',q:'判定 13 栏可行性的三层逻辑是？',o:['A. 借别人抬头 → 不能用','B. 平台代报 → 需先有报关单','C. 自有报关单 → 深圳可直填、外地需先有','D. 平台代报 → 可直接填'],a:[0,1,2],e:'三层判：借抬头不可用；平台代报需先有报关清单；自有报关单深圳直填、外地先有单。给外地 / 平台代报判“可直接填”是硬伤。'},
+ {tag:'ex_m13',lv:'medium',type:'multi',q:'生成方案题客户模型时，必须保证哪些自洽？',o:['A. 平台与发货方式必须匹配（如亚马逊不能配平台物流）','B. 报关单归属（own / part / none）落在原型约束内','C. 客户所说与系统事实一致','D. 年流水与主体无关可随意'],a:[0,1,2],e:'客户模型由平台真实发货方式 + 原型约束共同生成，杜绝“亚马逊 + 平台物流”这类冲突组合。'},
+ {tag:'ex_m14',lv:'easy',type:'multi',q:'跟进与探需的正确做法包括？',o:['A. 每次触达带新信息','B. 先给体检 / 测算再谈方案','C. 同一句话每天群发','D. 直接报死价不探需'],a:[0,1],e:'跟进必带新信息、探需先给再取；群发骚扰与跳过探需都不可取。'},
+ {tag:'ex_m15',lv:'hard',type:'multi',q:'关于多主体 / 香港架构，正确的做法有？',o:['A. 各主体单独如实申报，不能合并','B. 香港公司需有真实员工缴强基金','C. 新主体隔离历史风险，不改动老店利润','D. 香港公司可长期空转'],a:[0,1,2],e:'各主体单独申报；香港需真实员工；新主体隔离历史；空转会有转让定价与真实性风险。'}
 ];
 
-/* 把扩展题库并入 POOL_G（original 194 道 + 扩展 23 单选 + 15 多选），抽卷池更大、卷面更丰富 */
+/* 把扩展题库并入 POOL_G（original 194 道 + 扩展 38 道），抽卷池更大、卷面更丰富；
+   并为每题标注难度 lv（easy/medium/hard），供按档次抽题。 */
 POOL_G = POOL_G.concat(EXTRA_SINGLE, EXTRA_MULTI);
+var LV={
+ ex_s1:'hard',ex_s2:'easy',ex_s3:'easy',ex_s4:'easy',ex_s5:'medium',ex_s6:'hard',ex_s7:'easy',ex_s8:'medium',ex_s9:'medium',ex_s10:'hard',ex_s11:'hard',ex_s12:'hard',ex_s13:'easy',ex_s15:'easy',ex_s16:'easy',ex_s17:'easy',ex_s18:'medium',ex_s19:'hard',ex_s20:'hard',ex_s21:'hard',ex_s22:'easy',ex_s23:'easy',ex_s24:'hard',
+ ex_m1:'medium',ex_m2:'easy',ex_m3:'medium',ex_m4:'hard',ex_m5:'medium',ex_m6:'easy',ex_m7:'easy',ex_m8:'medium',ex_m9:'hard',ex_m10:'easy',ex_m11:'medium',ex_m12:'hard',ex_m13:'medium',ex_m14:'easy',ex_m15:'hard'
+};
+EXTRA_SINGLE.forEach(function(q){ q.lv=LV[q.tag]||'medium'; });
+EXTRA_MULTI.forEach(function(q){ q.lv=LV[q.tag]||'medium'; });
+POOL_G.forEach(function(q){ if(!q.lv) q.lv='medium'; });
 
-/* ===== 填空题库（48 条，每条 topic 唯一，且与单选/多选 tag 完全不重叠，杜绝四题型冲撞） ===== */
+/* 当前档次：new 新人 / old 老人 / champ 销冠 */
+var TIER='new';
+var TIERNAME={new:'新人',old:'老人',champ:'销冠'};
+/* 销冠方案题附加考核点：面向复杂客户的方案创建能力 */
+var CHAMP_EXTRA='附加考核点（销冠加试）：① 向客户量化历史缺口——滞纳金按日万分之五滚动、罚款为欠税额 0.5~5 倍，用数字放大被查损失；② 说明新主体 / 多主体搭建动作链（贸易公司 + 香港公司 + 店铺公司，三地无关联、香港作中间层外采外销）；③ 解释为何不能承诺“100% 免税 / 一定不被查”，只能讲合规路径与风险。';
+/* 新增销冠专属客户原型，使 bHardClient 与 bValidate 自洽：
+   复杂全托管 / 平台代报（9610 无票→none 或 9810 有票→own）+ 刚收短信的历史缺口 + 一般纳税人 + 外地 */
+BARCH.push({t:'销冠复杂型', entity:'general', flow:['f3','f4'], history:'sms', ft:['own','none','part']});
+
+/* ===== 填空题库（47 条，每条 topic 唯一，且与单选/多选 tag 完全不重叠，杜绝四题型冲撞） ===== */
 var FILL_BANK=[
  {topic:'zhina1', q:'税务滞纳金按每日 ____ 计算，会一直滚动、越拖越贵。', a:'万分之五'},
  {topic:'zhina2', q:'被认定违规后，罚款通常为欠税额的 ____ 倍。', a:'0.5~5'},
@@ -235,10 +266,28 @@ function pickFills(n){
   return out;
 }
 
-/* ===== 方案客户模型自洽校验 =====
-   规则：① 发货方式 ful 必须属于该 platform 的真实 ful 集合（结构上杜绝“亚马逊+平台物流”）；
-        ② 报关单归属 bType(ful) 必须落在原型 BARCH.ft 约束内；
-        ③ 平台/城市/主体/历史等维度各自合法。不通过则重抽。 */
+/* 按档次抽客观题：easy 优先(新人) / medium 为主(老人) / hard 优先(销冠)，并排除填空 topic */
+function pickByTier(kind,n,ex,tier){
+  var all=POOL_G.filter(function(q){
+    if(kind==='single' && q.type) return false;
+    if(kind==='multi' && q.type!=='multi') return false;
+    if(q.tag==='红线') return false;
+    if(ex.indexOf(q.tag)>=0) return false;
+    return true;
+  });
+  var easy=shuffle(all.filter(function(q){return q.lv==='easy';}));
+  var med =shuffle(all.filter(function(q){return q.lv==='medium'||!q.lv;}));
+  var hard=shuffle(all.filter(function(q){return q.lv==='hard';}));
+  var out=[];
+  if(tier==='new'){ out=out.concat(easy); if(out.length<n) out=out.concat(med); }
+  else if(tier==='old'){ out=out.concat(med.slice(0,Math.ceil(n*0.6))); out=out.concat(easy.slice(0,Math.floor(n*0.25))); if(out.length<n) out=out.concat(hard); }
+  else { out=out.concat(hard.slice(0,Math.ceil(n*0.7))); if(out.length<n) out=out.concat(med); }
+  var seen={}, uniq=[];
+  for(var i=0;i<out.length && uniq.length<n;i++){ if(!seen[out[i].q]){ seen[out[i].q]=1; uniq.push(out[i]); } }
+  return uniq.slice(0,n);
+}
+
+/* ===== 方案客户模型自洽校验 + 按档次生成不同复杂度 ===== */
 function bArchOf(t){ for(var i=0;i<BARCH.length;i++){ if(BARCH[i].t===t) return BARCH[i]; } return null; }
 function bValidate(c){
   var P=PLAT[c.platform]; if(!P) return false;
@@ -251,11 +300,13 @@ function bValidate(c){
   }
   return true;
 }
-/* 覆盖原 bGenClient，加入 _arch 标记与自洽校验 + 平台↔发货方式强绑定 */
+/* 覆盖原 bGenClient，加入 _arch 标记与自洽校验 + 平台↔发货方式强绑定（老人档用，中等复杂度）。
+   排除销冠专属原型，避免老人档误抽到销冠级客户。 */
 function bGenClient(){
   var tries=0,c;
+  var bpool=BARCH.filter(function(x){return x.t!=='销冠复杂型';});
   do{
-    var a=BARCH[Math.floor(Math.random()*BARCH.length)];
+    var a=bpool[Math.floor(Math.random()*bpool.length)];
     var p=bPickPlat();
     var F=PLAT[p].ful, pool=[];
     for(var k in F){ if(a.ft.indexOf(bType(F[k]))>=0) pool.push(k); }
@@ -266,6 +317,31 @@ function bGenClient(){
     tries++;
   } while(!bValidate(c) && tries<40);
   return c;
+}
+/* 新人档：简单客户——新主体、深圳、小规模、海外仓9810/一般贸易0110，无历史遗留 */
+function bEasyClient(){
+  var plats=['amazon','independent'];
+  var p=plats[Math.floor(Math.random()*plats.length)];
+  var F=PLAT[p].ful, keys=Object.keys(F);
+  var clean=keys.filter(function(k){ return F[k].mode==='9810'||F[k].mode==='0110'; });
+  var ful=clean[Math.floor(Math.random()*clean.length)];
+  return { _arch:'新锐合规型', platform:p, ful:ful, city:'shenzhen', entity:'small',
+           flow:'f1', history:'new', invoice:'all', category:bPickOne('category') };
+}
+/* 销冠档：复杂客户——平台代报/全托管(9610 无票→none) 或 9810 有票(→own)、外地、一般纳税人、刚收短信，
+   需转合规 + 多主体搭建，并带附加考核点。客户模型严格落在新增「销冠复杂型」原型约束内，保证自洽。 */
+function bHardClient(){
+  var plats=['temu','ozon','shopee','tiktok'];
+  var p=plats[Math.floor(Math.random()*plats.length)];
+  var F=PLAT[p].ful, keys=Object.keys(F);
+  var ful=keys[Math.floor(Math.random()*keys.length)];
+  return { _arch:'销冠复杂型', platform:p, ful:ful, city:'other', entity:'general',
+           flow:['f3','f4'][Math.floor(Math.random()*2)], history:'sms', invoice:'none', category:bPickOne('category'), extra:true };
+}
+function bGenClientTiered(tier){
+  if(tier==='new') return bEasyClient();
+  if(tier==='champ') return bHardClient();
+  return bGenClient();
 }
 
 /* 客户模型文案 + 标准方案 + 标准话术（复用 cross 方案引擎） */
@@ -299,25 +375,27 @@ function scenarioStd(c){
 }
 
 var PAPER=null;
+function setTier(t){
+  TIER=t;
+  var bs=document.querySelectorAll('.tier');
+  for(var i=0;i<bs.length;i++) bs[i].classList.toggle('on', bs[i].getAttribute('data-t')===t);
+  genPaper();
+}
 function genPaper(){
   var fills=pickFills(5);
   var ex=fills.map(function(f){return f.topic;});
-  var singles=POOL_G.filter(function(q){return !q.type && q.tag!=='红线' && ex.indexOf(q.tag)<0;});
-  shuffle(singles);
-  /* 去重：同一道题文本只保留一个，避免罕见重复 */
-  var seenQ={}, uniq=[];
-  for(var s=0;s<singles.length;s++){ if(!seenQ[singles[s].q]){ seenQ[singles[s].q]=1; uniq.push(singles[s]); } }
-  singles=uniq.slice(0,10);
-  var multis=POOL_G.filter(function(q){return q.type==='multi' && ex.indexOf(q.tag)<0;});
-  shuffle(multis); multis=multis.slice(0,5);
-  var scen=[]; for(var i=0;i<2;i++){ scen.push(bGenClient()); }
-  PAPER={single:singles, multi:multis, fill:fills, scen:scen};
+  var singles=pickByTier('single',10,ex,TIER);
+  var multis =pickByTier('multi',5,ex,TIER);
+  var scen=[]; for(var i=0;i<2;i++){ scen.push(bGenClientTiered(TIER)); }
+  PAPER={tier:TIER, single:singles, multi:multis, fill:fills, scen:scen};
   renderPaper(PAPER); renderKey(PAPER);
-  document.getElementById('pmeta').textContent='编号 '+Math.floor(Math.random()*9000+1000)+' · 生成于 '+new Date().toLocaleDateString('zh-CN');
+  document.getElementById('pmeta').textContent='档次：'+TIERNAME[TIER]+' · 编号 '+Math.floor(Math.random()*9000+1000)+' · 生成于 '+new Date().toLocaleDateString('zh-CN');
 }
 
 function renderPaper(p){
-  var h='';
+  var h='<div class="note">考核档次：<b>'+TIERNAME[p.tier]+'</b>（难度递增：新人 &lt; 老人 &lt; 销冠）。'+(
+    p.tier==='champ'?'　销冠方案题为<b>复杂客户模型</b>，含附加考核点。':
+    p.tier==='new'?'　新人档以基础合规认知为主。':'　老人档为综合应用型。')+'</div>';
   h+='<div class="sechead">一、单选题（每题 2 分，共 '+p.single.length+' 题，合计 '+(p.single.length*2)+' 分）</div>';
   for(var i=0;i<p.single.length;i++){ var q=p.single[i];
     h+='<div class="qcard"><div class="qno">'+(i+1)+'. '+esc(q.q)+'</div>'+optList(q.o)+'<div class="ansline">答：（　　）</div></div>';
@@ -330,7 +408,7 @@ function renderPaper(p){
   for(var k=0;k<p.fill.length;k++){ var f=p.fill[k];
     h+='<div class="qcard"><div class="qno">'+(k+1)+'. '+esc(f.q)+'</div><div class="ansline fillline">答：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿</div></div>';
   }
-  h+='<div class="sechead">四、方案题（每题 20 分，共 '+p.scen.length+' 题，合计 '+(p.scen.length*20)+' 分，手写）</div>';
+  h+='<div class="sechead">四、方案题（每题 20 分，共 '+p.scen.length+' 题，合计 '+(p.scen.length*20)+' 分，手写）'+(p.tier==='champ'?'　· 销冠档含复杂客户模型与附加考核点':'')+'</div>';
   for(var sc=0;sc<p.scen.length;sc++){ var c=p.scen[sc];
     h+='<div class="scard"><div class="qno">方案 '+(sc+1)+'（20 分）　客户模型</div>'+
        '<div class="cmodel">'+clientLabel(c)+'</div>'+
@@ -339,13 +417,14 @@ function renderPaper(p){
        '<div class="ansline">② 13 栏可行性：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿</div>'+
        '<div class="ansline">③ 套餐档位：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿</div>'+
        '<div class="ansline">④ 账务落地路径：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿</div>'+
-       '<div class="ansline">话术要点：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿</div></div>';
+       '<div class="ansline">话术要点：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿</div>'+
+       (c.extra?'<div class="extra">'+CHAMP_EXTRA+'</div>':'')+'</div>';
   }
   document.getElementById('paper').innerHTML=h;
 }
 
 function renderKey(p){
-  var h='<div class="note">及格线 <b>'+PASS+'</b> 分 · 满分 '+TOTAL+' 分。方案题每步 5 分，四步合计 20 分；话术为参考不计分。</div>';
+  var h='<div class="note">及格线 <b>'+PASS+'</b> 分 · 满分 '+TOTAL+' 分 · 档次：<b>'+TIERNAME[p.tier]+'</b>。方案题每步 5 分，四步合计 20 分；话术为参考不计分。</div>';
   h+='<div class="sechead">一、单选题 答案</div>';
   for(var i=0;i<p.single.length;i++){ var q=p.single[i];
     h+='<div class="akey"><span class="qn">'+(i+1)+'.</span> '+esc(q.q)+'<span class="ans">'+LETTERS[q.a]+'. '+esc(q.o[q.a])+'</span>'+(q.e?'<div class="exp">解析：'+esc(q.e)+'</div>':'')+'</div>';
@@ -365,7 +444,9 @@ function renderKey(p){
     for(var x=0;x<std.steps.length;x++){ var st=std.steps[x];
       h+='<div class="step"><b>'+st[0]+'（5 分）：</b>'+esc(st[1])+'<div class="exp">'+esc(st[2])+'</div></div>';
     }
-    h+='<div class="step"><b>标准话术参考（不计分）：</b><div class="exp">'+esc(std.talk)+'</div></div></div>';
+    h+='<div class="step"><b>标准话术参考（不计分）：</b><div class="exp">'+esc(std.talk)+'</div></div>';
+    if(c.extra) h+='<div class="step"><b>附加考核点（销冠加试，参考）：</b><div class="exp">'+esc(CHAMP_EXTRA)+'</div></div>';
+    h+='</div>';
   }
   document.getElementById('key').innerHTML=h;
 }
@@ -381,8 +462,8 @@ async function exportPaper(){
     var R=function(t,o){ return new TextRun({text:String(t==null?'':t),font:(o&&o.font)||FSong,size:(o&&o.size)||24,bold:!!(o&&o.bold),color:(o&&o.color)}); };
     var P=function(runs,o){ o=o||{}; return new Paragraph({children:(typeof runs==='string'?[R(runs,o)]:runs),alignment:o.align||AlignmentType.LEFT,spacing:{line:o.line||280,lineRule:'auto',after:(o.after!=null?o.after:60)},indent:(o.indent!=null?{firstLine:o.indent}:undefined)}); };
     var ch=[];
-    ch.push(P([R('跨境电商销售顾问 · 考核试卷',{font:FHei,size:40,bold:true,color:'0C2D5D'})],{align:AlignmentType.CENTER,after:80,line:360}));
-    ch.push(P([R('满分 100 分 · 80 分及格 · 四题型：单选 / 多选 / 填空 / 方案',{size:22,color:'595959'})],{align:AlignmentType.CENTER,after:200}));
+    ch.push(P([R('跨境电商销售顾问 · 考核试卷（'+TIERNAME[PAPER.tier]+'档）',{font:FHei,size:38,bold:true,color:'0C2D5D'})],{align:AlignmentType.CENTER,after:80,line:360}));
+    ch.push(P([R('满分 100 分 · 80 分及格 · 四题型：单选 / 多选 / 填空 / 方案'+(PAPER.tier==='champ'?'（销冠档含复杂客户模型与附加考核点）':''),{size:22,color:'595959'})],{align:AlignmentType.CENTER,after:200}));
     ch.push(P([R('一、单选题（每题 2 分，共 '+PAPER.single.length+' 题，合计 '+(PAPER.single.length*2)+' 分）',{font:FHei,size:26,bold:true,color:'0C2D5D'})],{after:100}));
     PAPER.single.forEach(function(q,i){
       ch.push(P([R((i+1)+'. '+q.q,{bold:true,size:24})],{after:40}));
@@ -400,17 +481,18 @@ async function exportPaper(){
       ch.push(P([R((k+1)+'. '+f.q,{size:24})],{after:40}));
       ch.push(P([R('答：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿',{size:22,color:'888888'})],{indent:400,after:140}));
     });
-    ch.push(P([R('四、方案题（每题 20 分，共 '+PAPER.scen.length+' 题，合计 '+(PAPER.scen.length*20)+' 分，手写）',{font:FHei,size:26,bold:true,color:'0C2D5D'})],{after:100}));
+    ch.push(P([R('四、方案题（每题 20 分，共 '+PAPER.scen.length+' 题，合计 '+(PAPER.scen.length*20)+' 分，手写）'+(PAPER.tier==='champ'?'（销冠档含复杂客户模型与附加考核点）':''),{font:FHei,size:26,bold:true,color:'0C2D5D'})],{after:100}));
     var blanks=['① 报关模式：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿','② 13 栏可行性：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿','③ 套餐档位：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿','④ 账务落地路径：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿','话术要点：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿'];
     PAPER.scen.forEach(function(c,s){
       ch.push(P([R('方案 '+(s+1)+'（20 分）　客户模型',{bold:true,size:24})],{after:40}));
       ch.push(P([R(clientLabel(c),{size:22,color:'444444'})],{indent:400,after:40}));
       ch.push(P([R('请为该客户制定合规方案（每步 5 分）：',{bold:true,size:22})],{after:20}));
       blanks.forEach(function(t){ ch.push(P([R(t,{size:22})],{indent:400,after:80})); });
+      if(c.extra) ch.push(P([R(CHAMP_EXTRA,{size:21,color:'A85509'})],{indent:400,after:140}));
     });
     var doc=new Document({sections:[{children:ch}]});
     var blob=await Packer.toBlob(doc);
-    var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='跨境电商考核试卷.docx'; document.body.appendChild(a); a.click(); a.remove();
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='跨境电商考核试卷-'+TIERNAME[PAPER.tier]+'档.docx'; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function(){URL.revokeObjectURL(a.href);},5000);
   }catch(e){ console.error(e); alert('导出试卷失败：'+(e&&e.message||e)); }
 }
@@ -423,7 +505,7 @@ async function exportKey(){
     var R=function(t,o){ return new TextRun({text:String(t==null?'':t),font:(o&&o.font)||FSong,size:(o&&o.size)||24,bold:!!(o&&o.bold),color:(o&&o.color)}); };
     var P=function(runs,o){ o=o||{}; return new Paragraph({children:(typeof runs==='string'?[R(runs,o)]:runs),alignment:o.align||AlignmentType.LEFT,spacing:{line:o.line||280,lineRule:'auto',after:(o.after!=null?o.after:60)},indent:(o.indent!=null?{firstLine:o.indent}:undefined)}); };
     var ch=[];
-    ch.push(P([R('跨境电商销售顾问 · 考核试卷 · 参考答案',{font:FHei,size:38,bold:true,color:'0C2D5D'})],{align:AlignmentType.CENTER,after:80,line:360}));
+    ch.push(P([R('跨境电商销售顾问 · 考核试卷 · 参考答案（'+TIERNAME[PAPER.tier]+'档）',{font:FHei,size:34,bold:true,color:'0C2D5D'})],{align:AlignmentType.CENTER,after:80,line:360}));
     ch.push(P([R('及格线 80 分 · 满分 100 分 · 方案题每步 5 分，话术参考不计分',{size:22,color:'595959'})],{align:AlignmentType.CENTER,after:200}));
     ch.push(P([R('一、单选题 答案',{font:FHei,size:26,bold:true,color:'0C2D5D'})],{after:100}));
     PAPER.single.forEach(function(q,i){
@@ -452,11 +534,12 @@ async function exportKey(){
         ch.push(P([R(st[0]+'（5 分）：'+st[1],{size:24,color:'2f8f5b',bold:true})],{indent:400,after:20}));
         ch.push(P([R(st[2],{size:22,color:'666666'})],{indent:400,after:80}));
       });
-      ch.push(P([R('标准话术参考（不计分）：'+std.talk,{size:22,color:'666666'})],{indent:400,after:140}));
+      ch.push(P([R('标准话术参考（不计分）：'+std.talk,{size:22,color:'666666'})],{indent:400,after:100}));
+      if(c.extra) ch.push(P([R('附加考核点（销冠加试，参考）：'+CHAMP_EXTRA,{size:21,color:'A85509'})],{indent:400,after:140}));
     });
     var doc=new Document({sections:[{children:ch}]});
     var blob=await Packer.toBlob(doc);
-    var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='跨境电商考核试卷-参考答案.docx'; document.body.appendChild(a); a.click(); a.remove();
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='跨境电商考核试卷-'+TIERNAME[PAPER.tier]+'档-参考答案.docx'; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function(){URL.revokeObjectURL(a.href);},5000);
   }catch(e){ console.error(e); alert('导出参考答案失败：'+(e&&e.message||e)); }
 }
