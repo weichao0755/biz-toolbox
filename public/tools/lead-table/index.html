@@ -170,7 +170,7 @@ tr.expand td{background:#fffdf8;padding:0}
   <div class="table-card">
     <table>
       <thead><tr>
-        <th>客户</th><th>微信</th><th>电话</th><th>业务类型</th><th>等级</th><th>状态</th><th>最近跟进</th><th>操作</th>
+        <th>客户</th><th>微信</th><th>电话</th><th>业务类型</th><th>等级</th><th>状态</th><th>最近跟进</th><th>创建日期</th><th>操作</th>
       </tr></thead>
       <tbody id="tbody"></tbody>
     </table>
@@ -386,7 +386,7 @@ function quickSel(l, field, opts){
 function renderTable(){
   var rows=visibleLeads();
   var tb=$('tbody');
-  if(!rows.length){ tb.innerHTML='<tr><td colspan="8"><div class="empty">暂无客户，点右上角「+ 新建客户」开始登记</div></td></tr>'; return; }
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="9"><div class="empty">暂无客户，点右上角「+ 新建客户」开始登记</div></td></tr>'; return; }
   var html='';
   rows.forEach(function(l){
     var lf=lastFollow(l); var si=staleInfo(l);
@@ -398,10 +398,11 @@ function renderTable(){
       +'<td>'+quickSel(l,'level',LEVELS)+'</td>'
       +'<td>'+quickSel(l,'status',STATUSES)+'</td>'
       +'<td class="rec '+si.state+'">'+(lf?('<span title="'+esc(lf.content)+'">'+esc(fmtDateTime(lf.t).slice(5))+'</span>'):'<span style="color:#bbb">未跟进</span>')+(si.state?'<span class="gap">'+si.days+'天</span>':'')+'</td>'
+      +'<td class="created">'+(l.createdAt?fmtDateTime(l.createdAt).slice(0,10):'<span style="color:#bbb">—</span>')+'</td>'
       +'<td class="ops"><button class="mini" data-act="edit" data-id="'+l.id+'">编辑</button> <button class="mini del" data-act="del" data-id="'+l.id+'">删除</button></td>'
       +'</tr>';
     if(state.expanded===l.id){
-      html+='<tr class="expand"><td colspan="8"><div class="expand-inner">'
+      html+='<tr class="expand"><td colspan="9"><div class="expand-inner">'
         +renderDetail(l)
         +renderTimeline(l)
         +'</div></td></tr>';
@@ -420,6 +421,7 @@ function renderDetail(l){
       rows+='<div><b>'+f.label+'：</b>'+esc(v)+'</div>';
     }
   });
+  rows += '<div><b>创建日期：</b>'+(l.createdAt? fmtDateTime(l.createdAt) : '—')+'</div>';
   state.custom.forEach(function(cf){
     var v=l.custom? l.custom[cf.key]:'';
     if(v) rows+='<div><b>'+esc(cf.label)+'：</b>'+esc(v)+'</div>';
