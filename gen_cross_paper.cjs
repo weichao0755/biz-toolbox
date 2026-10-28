@@ -27,6 +27,18 @@ function extractBalanced(text, marker){
 }
 const platJs = extractBalanced(full, 'var PLAT=');
 
+/* 从 cross 抽取税负测算引擎（taxCalc / histTaxCalc），用于销冠/老人方案题按真实数据测算 */
+function extractFn(text, name){
+  const i = text.indexOf('function '+name);
+  if(i<0) return '';
+  const j = text.indexOf('{', i);
+  let depth=0,k=j;
+  for(;k<text.length;k++){ if(text[k]==='{')depth++; else if(text[k]==='}'){depth--; if(depth===0){k++;break;}} }
+  return text.slice(i,k)+';\n';
+}
+const calcJs = extractFn(full,'taxCalc') + extractFn(full,'histTaxCalc') +
+  'function pct(s,d){var v=parseFloat(s); if(isNaN(v))return d; return v;}\n';
+
 const CSS = `
 :root{
   --bg:#faf7f2; --surface:#fffefb; --surface-2:#fdf6ec; --border:#ece3d6;
@@ -182,9 +194,25 @@ var EXTRA_MULTI=[
  {tag:'ex_m15',lv:'hard',type:'multi',q:'关于多主体 / 香港架构，正确的做法有？',o:['A. 各主体单独如实申报，不能合并','B. 香港公司需有真实员工缴强基金','C. 新主体隔离历史风险，不改动老店利润','D. 香港公司可长期空转'],a:[0,1,2],e:'各主体单独申报；香港需真实员工；新主体隔离历史；空转会有转让定价与真实性风险。'}
 ];
 
-/* 把扩展题库并入 POOL_G（original 194 道 + 扩展 38 道），抽卷池更大、卷面更丰富；
+/* ===== 销冠档专用硬题（lv:'hard'）：确保销冠卷能全抽 hard（原 hard 池仅 9 单选 / 4 多选，不够铺满） ===== */
+var CHAMP_HARD_SINGLE=[
+ {tag:'chd_s1',lv:'hard',q:'某一般纳税人跨境电商年销售额 800 万元，已办进出口权并走出口免税（13 栏），企业所得税应纳税所得额约 300 万元。若给 5 名员工各发 3.6 万元年终奖做工资抵扣，企业所得税税率会如何变化？',o:['A. 仍按 25%，无变化','B. 利润降至 300 万内，可享 5% 小型微利优惠，税负下降','C. 年终奖并入后税率升到 35%','D. 出口免税企业不能发年终奖'],a:1,e:'发年终奖 18 万(5×3.6)后利润<300万，可享 5% 小微优惠，企税由 25% 降到 5%。'},
+ {tag:'chd_s2',lv:'hard',q:'客户由平台代报（9610，无本公司抬头报关单）且被税局短信通知补申报，年销售额 1200 万元从未申报。按一般纳税人 13% 测算，仅增值税一项就需补多少（万元）？',o:['A. 0（平台已代扣）','B. 120','C. 156','D. 138'],a:2,e:'无本公司抬头报关单=无出口凭证，视同内销，增值税=1200×13%=156 万。'},
+ {tag:'chd_s3',lv:'hard',q:'关于 9810（海外仓）与 0110（一般贸易）的退税，下列正确的是？',o:['A. 两者都只能免税不能退税','B. 9810 是“免抵退”、0110 是“免征不退”','C. 0110 有票有单证可退税；9810 可预退税但当前成功案例少、流程复杂，通常建议走常规免税更稳','D. 9810 退税比 0110 更高'],a:2,e:'0110 一般贸易“免抵退”（有票有单证退税）；9810 可预退税但落地难，多建议常规免税。'},
+ {tag:'chd_s4',lv:'hard',q:'香港公司作中间层外采外销（贸易公司+香港公司+店铺公司三地架构），最需防范的反避税风险是？',o:['A. 增值税','B. 受控外国企业(CFC)与转让定价','C. 个人所得税','D. 印花税'],a:1,e:'三地无关联但实质受控，易被认定 CFC / 转让定价不合独立交易原则，需合理商业目的与定价文档。'},
+ {tag:'chd_s5',lv:'hard',q:'跨境电商综试区“无票免税”政策下，增值税免了，企业所得税通常采用（ ）征收，要求账证健全。',o:['A. 核定征收（应税所得率）','B. 查账征收','C. 免税','D. 先征后返'],a:1,e:'无票免税仅免增值税；企税趋势为全面查账征收，要求据实申报、账证健全。'},
+ {tag:'chd_s6',lv:'hard',q:'小规模纳税人年销售额 520 万元、已办进出口权并报关出口免税。若其将 20 万元内销（无报关单）混入，被稽查后如何处理？',o:['A. 全部按 1%','B. 仅内销部分按 1%、出口部分仍免税','C. 内销部分视同内销按 13% 补、出口部分仍免','D. 不处理'],a:1,e:'出口已报关免税不受影响；内销 20 万无报关单视同内销，小规模按 1% 补 0.2 万（未超500万）。但若因此超500万则转一般人13%。'},
+ {tag:'chd_s7',lv:'hard',q:'客户历史少报增值税 52 万元，已逾期 12 个月被稽查。按日万分之五，滞纳金约多少（万元）？',o:['A. 约 9.5','B. 约 19','C. 约 4.7','D. 约 52'],a:0,e:'滞纳金=52万×365天×0.0005=9.49 万≈9.5 万。'}
+];
+var CHAMP_HARD_MULTI=[
+ {tag:'chd_m1',lv:'hard',type:'multi',q:'下列哪些情形会触发 / 要求按一般纳税人 13% 征税？（ ）',o:['A. 年应税销售额超过 500 万元','B. 主动申请登记为一般纳税人','C. 连续 12 个月累计超 500 万','D. 办了进出口权'],a:[0,1,2],e:'超500万（含连续12个月累计）强制登记；也可主动申请。办进出口权不决定纳税人身份。'},
+ {tag:'chd_m2',lv:'hard',type:'multi',q:'合规后“出口免税”（13 栏）必须满足（ ）',o:['A. 有本公司抬头报关单','B. 收汇','C. 已是增值税一般纳税人','D. 按平台汇总单 income 申报'],a:[0,1,3],e:'免税核心=本公司抬头报关单+收汇+按平台汇总单 income 申报；小规模纳税人也能办免税，不限于一般人。'},
+ {tag:'chd_m3',lv:'hard',type:'multi',q:'历史未申报被稽查，可能的后果包括（ ）',o:['A. 补增值税（视同内销）','B. 每日万分之五滞纳金','C. 欠税额 0.5~5 倍罚款','D. 一律刑事拘留'],a:[0,1,2],e:'补税+滞纳金+0.5~5倍罚款；刑事仅在特定偷税数额巨大且占比达标等情形。'}
+];
+
+/* 把扩展题库并入 POOL_G（original 194 道 + 扩展 38 道 + 销冠硬题 10 道），抽卷池更大、卷面更丰富；
    并为每题标注难度 lv（easy/medium/hard），供按档次抽题。 */
-POOL_G = POOL_G.concat(EXTRA_SINGLE, EXTRA_MULTI);
+POOL_G = POOL_G.concat(EXTRA_SINGLE, EXTRA_MULTI, CHAMP_HARD_SINGLE, CHAMP_HARD_MULTI);
 var LV={
  ex_s1:'hard',ex_s2:'easy',ex_s3:'easy',ex_s4:'easy',ex_s5:'medium',ex_s6:'hard',ex_s7:'easy',ex_s8:'medium',ex_s9:'medium',ex_s10:'hard',ex_s11:'hard',ex_s12:'hard',ex_s13:'easy',ex_s15:'easy',ex_s16:'easy',ex_s17:'easy',ex_s18:'medium',ex_s19:'hard',ex_s20:'hard',ex_s21:'hard',ex_s22:'easy',ex_s23:'easy',ex_s24:'hard',
  ex_m1:'medium',ex_m2:'easy',ex_m3:'medium',ex_m4:'hard',ex_m5:'medium',ex_m6:'easy',ex_m7:'easy',ex_m8:'medium',ex_m9:'hard',ex_m10:'easy',ex_m11:'medium',ex_m12:'hard',ex_m13:'medium',ex_m14:'easy',ex_m15:'hard'
@@ -281,7 +309,8 @@ function pickByTier(kind,n,ex,tier){
   var out=[];
   if(tier==='new'){ out=out.concat(easy); if(out.length<n) out=out.concat(med); }
   else if(tier==='old'){ out=out.concat(med.slice(0,Math.ceil(n*0.6))); out=out.concat(easy.slice(0,Math.floor(n*0.25))); if(out.length<n) out=out.concat(hard); }
-  else { out=out.concat(hard.slice(0,Math.ceil(n*0.7))); if(out.length<n) out=out.concat(med); }
+  else { /* 销冠：尽可能全抽 hard，仅在 hard 不足时回退 medium，保证“最难” */
+    out=out.concat(hard); if(out.length<n) out=out.concat(med); }
   var seen={}, uniq=[];
   for(var i=0;i<out.length && uniq.length<n;i++){ if(!seen[out[i].q]){ seen[out[i].q]=1; uniq.push(out[i]); } }
   return uniq.slice(0,n);
@@ -313,7 +342,9 @@ function bGenClient(){
     var ful= pool.length ? pool[Math.floor(Math.random()*pool.length)] : Object.keys(F)[0];
     c={ _arch:a.t, platform:p, ful:ful, city:bPickCityB(),
         entity:a.entity, flow:a.flow[Math.floor(Math.random()*a.flow.length)],
-        history:a.history, invoice:bPickOne('invoice'), category:bPickOne('category') };
+        history:a.history, invoice:bPickOne('invoice'), category:bPickOne('category'),
+        calc:'light', sales:[300,400,500,600,800][Math.floor(Math.random()*5)],
+        head:[1,2,3,5][Math.floor(Math.random()*4)], noInv:50, platFee:50 };
     tries++;
   } while(!bValidate(c) && tries<40);
   return c;
@@ -329,14 +360,18 @@ function bEasyClient(){
            flow:'f1', history:'new', invoice:'all', category:bPickOne('category') };
 }
 /* 销冠档：复杂客户——平台代报/全托管(9610 无票→none) 或 9810 有票(→own)、外地、一般纳税人、刚收短信，
-   需转合规 + 多主体搭建，并带附加考核点。客户模型严格落在新增「销冠复杂型」原型约束内，保证自洽。 */
+   需转合规 + 多主体搭建，并带附加考核点。客户模型严格落在新增「销冠复杂型」原型约束内，保证自洽。
+   额外注入真实经营数据（销售额/人数/无票比例/历史少报/逾期），供方案题按数据测算。 */
 function bHardClient(){
   var plats=['temu','ozon','shopee','tiktok'];
   var p=plats[Math.floor(Math.random()*plats.length)];
   var F=PLAT[p].ful, keys=Object.keys(F);
   var ful=keys[Math.floor(Math.random()*keys.length)];
+  var rnd=function(a){ return a[Math.floor(Math.random()*a.length)]; };
   return { _arch:'销冠复杂型', platform:p, ful:ful, city:'other', entity:'general',
-           flow:['f3','f4'][Math.floor(Math.random()*2)], history:'sms', invoice:'none', category:bPickOne('category'), extra:true };
+           flow:['f3','f4'][Math.floor(Math.random()*2)], history:'sms', invoice:'none', category:bPickOne('category'), extra:true, calc:'full',
+           sales:rnd([600,800,1200,1500,2000]), noInv:60, platFee:50,
+           head:rnd([2,3,5,8]), gap:rnd([200,400,600]), mon:rnd([6,12,18]) };
 }
 function bGenClientTiered(tier){
   if(tier==='new') return bEasyClient();
@@ -374,6 +409,108 @@ function scenarioStd(c){
   return {steps:steps, talk:scenarioTalk(c)};
 }
 
+/* ===== 方案题数据测算（复用 cross 的 taxCalc / histTaxCalc） ===== */
+/* 销冠：现状(无报关单) vs 合规后(出口免税) 双口径 + 历史缺口滞纳金罚款区间 */
+function champCalc(c){
+  var pre = taxCalc({sales:c.sales, ent:c.entity, decl:'no',  purch:10, plat:c.platFee, head:c.head});
+  var post= taxCalc({sales:c.sales, ent:c.entity, decl:'yes', purch:10, plat:c.platFee, head:c.head});
+  var hist= histTaxCalc({gap:c.gap, ent:c.entity, way:'', head:c.head, mon:c.mon});
+  return {pre:pre, post:post, hist:hist};
+}
+/* 老人：仅算合规后综合税负率（轻量测算） */
+function lightCalc(c){
+  return taxCalc({sales:c.sales, ent:c.entity, decl:'yes', purch:10, plat:(c.platFee||50), head:(c.head||0)});
+}
+/* —— 试卷端（题干） —— */
+function champPaperHtml(c, idx){
+  var d='客户经营数据：年销售额 <b>'+c.sales+'</b> 万元；一般纳税人（年销售额已超 500 万）；平台费及物流约占 <b>'+c.platFee+'%</b>；采购无票约 <b>'+c.noInv+'%</b>（有票采购约 '+(100-c.noInv)+'%），工资 '+(c.head*6)+' 万/年（'+c.head+' 人×6 万）；历史少报销售额约 <b>'+c.gap+'</b> 万元，已逾期约 <b>'+c.mon+'</b> 个月。当前由平台代报（9610，无本公司抬头报关单）。';
+  return '<div class="scard"><div class="qno">方案 '+(idx+1)+'（20 分）　客户模型</div>'+
+    '<div class="cmodel">'+clientLabel(c)+'</div>'+
+    '<div class="sub2">'+d+'</div>'+
+    '<div class="sub2">请完成（写出计算过程与结果，数值取整到万元）：</div>'+
+    '<div class="ansline">① 四步合规方案（报关模式 / 13 栏可行性 / 套餐档位 / 账务落地路径）：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿</div>'+
+    '<div class="ansline">② 测算「维持现状（无报关单）」的增值税、企税、综合税负率：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿</div>'+
+    '<div class="ansline">③ 测算「合规后（办进出口权+免税备案、取得本公司抬头报关单走出口免税）」的增值税、企税、综合税负率，及较现状节省：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿</div>'+
+    '<div class="ansline">④ 测算「历史少报若被稽查」的滞纳金（日万分之五）+ 罚款（0.5~5 倍）合计区间：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿</div>'+
+    '<div class="extra">'+CHAMP_EXTRA+'</div></div>';
+}
+function lightPaperHtml(c, idx){
+  var d='客户经营数据：年销售额 <b>'+c.sales+'</b> 万元；团队 <b>'+c.head+'</b> 人。';
+  return '<div class="scard"><div class="qno">方案 '+(idx+1)+'（20 分）　客户模型</div>'+
+    '<div class="cmodel">'+clientLabel(c)+'</div>'+
+    '<div class="sub2">'+d+'</div>'+
+    '<div class="sub2">请制定四步合规方案，并测算：若办理进出口权+免税备案、取得本公司抬头报关单走出口免税后，该客户的综合税负率约多少？（写出过程）</div>'+
+    '<div class="ansline">① 报关模式：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿</div>'+
+    '<div class="ansline">② 13 栏可行性：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿</div>'+
+    '<div class="ansline">③ 套餐档位：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿</div>'+
+    '<div class="ansline">④ 账务落地路径：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿</div>'+
+    '<div class="ansline">⑤ 测算综合税负率：＿＿＿＿＿＿＿＿＿＿＿＿＿＿</div></div>';
+}
+/* —— 答案端（参考答案） —— */
+function champKeyHtml(c, idx){
+  var r=champCalc(c);
+  var s1='① 四步合规方案：报关模式=9610 零售直发（平台代报→转自有报关）；13 栏=当前无本公司抬头报关单，须先办进出口权+免税备案取得报关单后填报；套餐=一般人星级账（年流水 '+(c.sales>=1000?'超 1000 万走定制':'≤1000 万对应 14888/16888 档')+'）；账务=按平台汇总单 income 申报+平台费明细账+工资/年终奖列支。';
+  var s2='② 现状（无报关单、视同内销）：增值税='+c.sales+'×13%='+r.pre.vat+' 万；企税=利润×25%（利润='+c.sales+'−'+(c.sales*c.platFee/100)+'−'+(c.sales*0.1)+'−'+(c.head*6)+'='+(c.sales*0.4-c.head*6).toFixed(1)+' 万）→ '+r.pre.cit+' 万；综合税负率=('+r.pre.vat+'+'+r.pre.cit+')/'+c.sales+'≈'+r.pre.baseRate+'%。';
+  var s3='③ 合规后（出口免税）：增值税=0；企税='+r.post.cit+' 万；综合税负率='+r.post.cit+'/'+c.sales+'≈'+r.post.baseRate+'%；较现状节省增值税约 '+r.pre.vat+' 万。（发年终奖 3.6 万/人做工资抵扣，利润降至 300 万内可享 5% 小微优惠，企税进一步下降。）';
+  var s4='④ 历史少报 '+c.gap+' 万若被查：增值税='+c.gap+'×13%='+r.hist.vat+' 万；企税≈'+r.hist.cit+' 万；税款合计≈'+r.hist.tax+' 万；滞纳金='+r.hist.tax+'×(逾期 '+c.mon+' 个月≈'+(Math.round(c.mon/12*365))+' 天)×0.05%≈'+r.hist.late+' 万；罚款='+r.hist.tax+'×0.5~×5='+r.hist.fineLow+'~'+r.hist.fineHigh+' 万；合计区间≈'+r.hist.low+'~'+r.hist.high+' 万。';
+  return '<div class="akey"><div class="qn" style="display:block">方案 '+(idx+1)+'　客户模型</div><div class="cmodel" style="margin:4px 0 8px">'+clientLabel(c)+'</div>'+
+    '<div class="step"><b>客户数据：</b>年销售额 '+c.sales+' 万元；一般纳税人；平台费 '+c.platFee+'%、有票采购 10%、工资 '+(c.head*6)+' 万；历史少报 '+c.gap+' 万、逾期 '+c.mon+' 个月。</div>'+
+    '<div class="step"><b>① 四步合规方案（5 分）：</b>'+s1+'</div>'+
+    '<div class="step"><b>② 现状税负测算（5 分）：</b>'+s2+'</div>'+
+    '<div class="step"><b>③ 合规后税负测算（5 分）：</b>'+s3+'</div>'+
+    '<div class="step"><b>④ 历史缺口量化（5 分）：</b>'+s4+'</div>'+
+    '<div class="step"><b>附加考核点（销冠加试，参考）：</b>'+CHAMP_EXTRA+'</div></div>';
+}
+function lightKeyHtml(c, idx){
+  var r=lightCalc(c);
+  var plan='报关模式='+PLAT[c.platform].ful[c.ful].mode+'（'+PLAT[c.platform].ful[c.ful].n+'）；13 栏='+(c.city==='shenzhen'?'深圳默认开通可直接填报（仍须有报关单）':'外地须先有本公司抬头报关单')+'；套餐='+bPkg(c.entity,c.flow)+'；账务=按平台汇总单 income 申报+平台费明细账+工资/年终奖列支。';
+  var calc='合规后出口免税，增值税=0；企税=利润×'+(r.citRate*100)+'%，利润='+c.sales+'−平台费'+(c.sales*0.5)+'−有票采购'+(c.sales*0.1)+'−工资'+(c.head*6)+'='+r.profit+' 万 → 企税='+r.cit+' 万；综合税负率='+r.cit+'/'+c.sales+'≈'+r.baseRate+'%。';
+  return '<div class="akey"><div class="qn" style="display:block">方案 '+(idx+1)+'　客户模型</div><div class="cmodel" style="margin:4px 0 8px">'+clientLabel(c)+'</div>'+
+    '<div class="step"><b>四步合规方案：</b>'+plan+'</div>'+
+    '<div class="step"><b>综合税负率测算：</b>'+calc+'</div></div>';
+}
+/* —— Word 端纯文本行 —— */
+function champPaperLines(c, idx){
+  return [
+    '方案 '+(idx+1)+'（20 分）　客户模型',
+    clientLabel(c),
+    '客户经营数据：年销售额 '+c.sales+' 万元；一般纳税人（年销售额已超 500 万）；平台费及物流约占 '+c.platFee+'%；采购无票约 '+c.noInv+'%（有票采购约 '+(100-c.noInv)+'%），工资 '+(c.head*6)+' 万/年；历史少报销售额约 '+c.gap+' 万元，已逾期约 '+c.mon+' 个月。当前由平台代报（9610，无本公司抬头报关单）。',
+    '请完成（写出计算过程与结果，数值取整到万元）：',
+    '① 四步合规方案（报关模式 / 13 栏可行性 / 套餐档位 / 账务落地路径）：',
+    '② 测算「维持现状（无报关单）」的增值税、企税、综合税负率：',
+    '③ 测算「合规后（办进出口权+免税备案、取得本公司抬头报关单走出口免税）」的增值税、企税、综合税负率，及较现状节省：',
+    '④ 测算「历史少报若被稽查」的滞纳金（日万分之五）+ 罚款（0.5~5 倍）合计区间：'
+  ];
+}
+function lightPaperLines(c, idx){
+  return [
+    '方案 '+(idx+1)+'（20 分）　客户模型',
+    clientLabel(c),
+    '客户经营数据：年销售额 '+c.sales+' 万元；团队 '+c.head+' 人。',
+    '请制定四步合规方案，并测算：若办理进出口权+免税备案、取得本公司抬头报关单走出口免税后，该客户的综合税负率约多少？（写出过程）',
+    '① 报关模式：', '② 13 栏可行性：', '③ 套餐档位：', '④ 账务落地路径：', '⑤ 测算综合税负率：'
+  ];
+}
+function champKeyLines(c, idx){
+  var r=champCalc(c);
+  return [
+    '方案 '+(idx+1)+'　客户模型', clientLabel(c),
+    '客户数据：年销售额 '+c.sales+' 万元；一般纳税人；平台费 '+c.platFee+'%、有票采购 10%、工资 '+(c.head*6)+' 万；历史少报 '+c.gap+' 万、逾期 '+c.mon+' 个月。',
+    '① 四步合规方案：报关模式=9610 零售直发（平台代报→转自有报关）；13 栏=当前无本公司抬头报关单，须先办进出口权+免税备案取得报关单后填报；套餐=一般人星级账（年流水 '+(c.sales>=1000?'超 1000 万走定制':'≤1000 万对应 14888/16888 档')+'）；账务=按平台汇总单 income 申报+平台费明细账+工资/年终奖列支。',
+    '② 现状（无报关单、视同内销）：增值税='+c.sales+'×13%='+r.pre.vat+' 万；企税=利润×25%（利润='+c.sales+'−'+(c.sales*c.platFee/100)+'−'+(c.sales*0.1)+'−'+(c.head*6)+'='+(c.sales*0.4-c.head*6).toFixed(1)+' 万）→ '+r.pre.cit+' 万；综合税负率=('+r.pre.vat+'+'+r.pre.cit+')/'+c.sales+'≈'+r.pre.baseRate+'%。',
+    '③ 合规后（出口免税）：增值税=0；企税='+r.post.cit+' 万；综合税负率='+r.post.cit+'/'+c.sales+'≈'+r.post.baseRate+'%；较现状节省增值税约 '+r.pre.vat+' 万。（发年终奖 3.6 万/人做工资抵扣，利润降至 300 万内可享 5% 小微优惠，企税进一步下降。）',
+    '④ 历史少报 '+c.gap+' 万若被查：增值税='+c.gap+'×13%='+r.hist.vat+' 万；企税≈'+r.hist.cit+' 万；税款合计≈'+r.hist.tax+' 万；滞纳金='+r.hist.tax+'×(逾期 '+c.mon+' 个月≈'+(Math.round(c.mon/12*365))+' 天)×0.05%≈'+r.hist.late+' 万；罚款='+r.hist.tax+'×0.5~×5='+r.hist.fineLow+'~'+r.hist.fineHigh+' 万；合计区间≈'+r.hist.low+'~'+r.hist.high+' 万。'
+  ];
+}
+function lightKeyLines(c, idx){
+  var r=lightCalc(c);
+  return [
+    '方案 '+(idx+1)+'　客户模型', clientLabel(c),
+    '四步合规方案：报关模式='+PLAT[c.platform].ful[c.ful].mode+'（'+PLAT[c.platform].ful[c.ful].n+'）；13 栏='+(c.city==='shenzhen'?'深圳默认开通可直接填报（仍须有报关单）':'外地须先有本公司抬头报关单')+'；套餐='+bPkg(c.entity,c.flow)+'；账务=按平台汇总单 income 申报+平台费明细账+工资/年终奖列支。',
+    '综合税负率测算：合规后出口免税，增值税=0；企税=利润×'+(r.citRate*100)+'%，利润='+c.sales+'−平台费'+(c.sales*0.5)+'−有票采购'+(c.sales*0.1)+'−工资'+(c.head*6)+'='+r.profit+' 万 → 企税='+r.cit+' 万；综合税负率='+r.cit+'/'+c.sales+'≈'+r.baseRate+'%。'
+  ];
+}
+
 var PAPER=null;
 function setTier(t){
   TIER=t;
@@ -408,8 +545,10 @@ function renderPaper(p){
   for(var k=0;k<p.fill.length;k++){ var f=p.fill[k];
     h+='<div class="qcard"><div class="qno">'+(k+1)+'. '+esc(f.q)+'</div><div class="ansline fillline">答：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿</div></div>';
   }
-  h+='<div class="sechead">四、方案题（每题 20 分，共 '+p.scen.length+' 题，合计 '+(p.scen.length*20)+' 分，手写）'+(p.tier==='champ'?'　· 销冠档含复杂客户模型与附加考核点':'')+'</div>';
+  h+='<div class="sechead">四、方案题（每题 20 分，共 '+p.scen.length+' 题，合计 '+(p.scen.length*20)+' 分，手写）'+(p.tier==='champ'?'　· 销冠档含复杂客户模型、经营数据与附加考核点，要求按数据测算':'')+'</div>';
   for(var sc=0;sc<p.scen.length;sc++){ var c=p.scen[sc];
+    if(c.calc==='full'){ h+=champPaperHtml(c,sc); continue; }
+    if(c.calc==='light'){ h+=lightPaperHtml(c,sc); continue; }
     h+='<div class="scard"><div class="qno">方案 '+(sc+1)+'（20 分）　客户模型</div>'+
        '<div class="cmodel">'+clientLabel(c)+'</div>'+
        '<div class="sub2">请为该客户制定合规方案（每步 5 分）：</div>'+
@@ -438,8 +577,11 @@ function renderKey(p){
   for(var k=0;k<p.fill.length;k++){ var f=p.fill[k];
     h+='<div class="akey"><span class="qn">'+(k+1)+'.</span> '+esc(f.q)+'<span class="ans">'+esc(f.a)+'</span></div>';
   }
-  h+='<div class="sechead">四、方案题 标准答案（每题 20 分，四步各 5 分）</div>';
-  for(var s2=0;s2<p.scen.length;s2++){ var c=p.scen[s2]; var std=scenarioStd(c);
+  h+='<div class="sechead">四、方案题 标准答案（每题 20 分；销冠含数据测算，四步各 5 分）</div>';
+  for(var s2=0;s2<p.scen.length;s2++){ var c=p.scen[s2];
+    if(c.calc==='full'){ h+=champKeyHtml(c,s2); continue; }
+    if(c.calc==='light'){ h+=lightKeyHtml(c,s2); continue; }
+    var std=scenarioStd(c);
     h+='<div class="akey"><div class="qn" style="display:block">方案 '+(s2+1)+'　客户模型</div><div class="cmodel" style="margin:4px 0 8px">'+clientLabel(c)+'</div>';
     for(var x=0;x<std.steps.length;x++){ var st=std.steps[x];
       h+='<div class="step"><b>'+st[0]+'（5 分）：</b>'+esc(st[1])+'<div class="exp">'+esc(st[2])+'</div></div>';
@@ -484,6 +626,8 @@ async function exportPaper(){
     ch.push(P([R('四、方案题（每题 20 分，共 '+PAPER.scen.length+' 题，合计 '+(PAPER.scen.length*20)+' 分，手写）'+(PAPER.tier==='champ'?'（销冠档含复杂客户模型与附加考核点）':''),{font:FHei,size:26,bold:true,color:'0C2D5D'})],{after:100}));
     var blanks=['① 报关模式：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿','② 13 栏可行性：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿','③ 套餐档位：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿','④ 账务落地路径：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿','话术要点：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿'];
     PAPER.scen.forEach(function(c,s){
+      if(c.calc==='full'){ champPaperLines(c,s).forEach(function(t){ ch.push(P([R(t,{size:22})],{indent:400,after:80})); }); return; }
+      if(c.calc==='light'){ lightPaperLines(c,s).forEach(function(t){ ch.push(P([R(t,{size:22})],{indent:400,after:80})); }); return; }
       ch.push(P([R('方案 '+(s+1)+'（20 分）　客户模型',{bold:true,size:24})],{after:40}));
       ch.push(P([R(clientLabel(c),{size:22,color:'444444'})],{indent:400,after:40}));
       ch.push(P([R('请为该客户制定合规方案（每步 5 分）：',{bold:true,size:22})],{after:20}));
@@ -527,6 +671,8 @@ async function exportKey(){
     });
     ch.push(P([R('四、方案题 标准答案（每题 20 分，四步各 5 分）',{font:FHei,size:26,bold:true,color:'0C2D5D'})],{after:100}));
     PAPER.scen.forEach(function(c,s){
+      if(c.calc==='full'){ champKeyLines(c,s).forEach(function(t){ ch.push(P([R(t,{size:22,color:'333333'})],{indent:400,after:80})); }); return; }
+      if(c.calc==='light'){ lightKeyLines(c,s).forEach(function(t){ ch.push(P([R(t,{size:22,color:'333333'})],{indent:400,after:80})); }); return; }
       var std=scenarioStd(c);
       ch.push(P([R('方案 '+(s+1)+'　客户模型',{bold:true,size:24})],{after:20}));
       ch.push(P([R(clientLabel(c),{size:22,color:'444444'})],{indent:400,after:40}));
@@ -556,7 +702,7 @@ function updProg(){}
 genPaper();
 `;
 
-const HTML = HEAD + '<script>' + SCRIPT1 + '<\/script>' + '<script>' + platJs + '<\/script>' + '<script>' + bankJs + '<\/script>' + '<script>' + scenarioJs + '<\/script>' + '<script>' + SCRIPT3 + '<\/script>' + '</body></html>';
+const HTML = HEAD + '<script>' + SCRIPT1 + '<\/script>' + '<script>' + platJs + '<\/script>' + '<script>' + bankJs + '<\/script>' + '<script>' + scenarioJs + '<\/script>' + '<script>' + calcJs + '<\/script>' + '<script>' + SCRIPT3 + '<\/script>' + '</body></html>';
 
 fs.mkdirSync(outDir, { recursive: true });
 fs.writeFileSync(outPath, HTML, 'utf8');
