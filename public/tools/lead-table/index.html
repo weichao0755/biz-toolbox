@@ -94,6 +94,8 @@ td.rec.danger .gap{background:#fbdcdc;color:#c0392b}
 .st-已成交{background:#e9e2f8;color:#5f3dc4}
 .st-已流失{background:#f1f1f1;color:#777}
 .st-待维护{background:#e0f2f1;color:#0f766e}
+.st-待促进{background:#fef3c7;color:#92400e}
+.st-预约单{background:#e0f2fe;color:#0369a1}
 .ops button{margin-right:4px}
 .empty{text-align:center;color:var(--muted);padding:34px;font-size:13.5px}
 
@@ -191,10 +193,10 @@ var LS_KEY = 'lead_table_v1';
 var TYPES = ['星级账','基础工商','基础代账','推荐业务','其他'];
 var SOURCES = ['推广','推荐','自营','扩增','激活'];
 var LEVELS = ['A','B','C'];
-var STATUSES = ['待联系','已联系','已报价','已成交','已流失','待维护'];
+var STATUSES = ['待联系','已联系','已报价','待促进','预约单','已成交','已流失','待维护'];
 // 视图：把明细状态归入四个视图分桶（默认进入「跟进中」）
 var VIEWS = [
-  {key:'跟进中', statuses:['待联系','已联系','已报价']},
+  {key:'跟进中', statuses:['待联系','已联系','已报价','待促进','预约单']},
   {key:'已成交', statuses:['已成交']},
   {key:'已流失', statuses:['已流失']},
   {key:'待维护', statuses:['待维护']}
@@ -271,7 +273,7 @@ function visibleLeads(){
 function lastFollow(l){ if(l.timeline&&l.timeline.length){ var x=l.timeline[l.timeline.length-1]; return x; } return null; }
 // 最近跟进距今：>=2天 高亮提醒(warn)，>3天 深红警告(danger)；未跟进则以创建时间计；已成交/已流失 不再提醒
 function staleInfo(l){
-  if(l.status==='已成交'||l.status==='已流失') return {state:'',days:0};
+  if(l.status==='已成交'||l.status==='已流失'||l.status==='待维护') return {state:'',days:0};
   var base = (l.timeline&&l.timeline.length)? l.timeline[l.timeline.length-1].t : l.createdAt;
   if(!base) return {state:'',days:0};
   var ms = Date.now() - base;
