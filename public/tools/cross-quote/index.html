@@ -113,39 +113,39 @@
   #imgCard .q-co{font-size:12px;color:#8a7a62;letter-spacing:2px}
   #imgCard .q-title{font-size:26px;color:#2a1a0a;font-weight:700;letter-spacing:10px;padding-left:10px;margin-top:6px}
   #imgCard .q-no{font-size:12.5px;color:#4a4035;margin-top:8px}
-  #imgCard .q-meta{font-size:0;white-space:nowrap;width:100%;box-sizing:border-box;margin:14px 0 4px;padding-bottom:8px;border-bottom:1.5px solid #2a1a0a}
-  #imgCard .q-meta>span{display:inline-block;vertical-align:top;width:50%;font-size:12.5px;line-height:1.6;color:#6b5d4a;word-break:break-word;box-sizing:border-box}
+  #imgCard .q-meta{display:flex;justify-content:space-between;font-size:12.5px;color:#6b5d4a;margin:14px 0 4px;padding-bottom:8px;border-bottom:1.5px solid #2a1a0a;gap:10px;box-sizing:border-box}
+  #imgCard .q-meta>span{font-size:12.5px;line-height:1.6;color:#6b5d4a;word-break:break-word}
   #imgCard .q-meta>span:last-child{text-align:right}
   /* 业务信息条：跨境专属，让客户一眼看到我们懂他的生意 */
-  #imgCard .q-biz{font-size:0;white-space:nowrap;width:100%;box-sizing:border-box;margin-top:10px;border:1px solid #f2e6d8}
-  #imgCard .q-biz .qb-row{font-size:0;white-space:nowrap;width:100%;box-sizing:border-box}
-  #imgCard .q-biz .bi{display:inline-block;vertical-align:top;width:33.333%;border-right:1px solid #f2e6d8;border-bottom:1px solid #f2e6d8;padding:7px 10px;font-size:12px;line-height:1.6;color:#4a4035;word-break:break-word;box-sizing:border-box}
+  #imgCard .q-biz{display:flex;flex-direction:column;width:100%;box-sizing:border-box;margin-top:10px;border:1px solid #f2e6d8}
+  #imgCard .q-biz .qb-row{display:flex;width:100%;box-sizing:border-box}
+  #imgCard .q-biz .bi{flex:0 0 33.333%;width:33.333%;border-right:1px solid #f2e6d8;border-bottom:1px solid #f2e6d8;padding:7px 10px;font-size:12px;line-height:1.6;color:#4a4035;word-break:break-word;box-sizing:border-box}
   #imgCard .q-biz .qb-row .bi:last-child{border-right:none}
   #imgCard .q-biz .bi .bk{color:#8a7a62;margin-right:6px}
   #imgCard .q-biz .bi .bv{color:#2a2118;font-weight:600;word-break:break-all}
   #imgCard .q-sign{margin-top:22px;text-align:right;font-size:13px;color:#2a2118;line-height:2}
   #imgCard .q-sign .co{color:#2a1a0a;font-weight:700;font-size:13.5px}
-  /* 图片卡片明细表：inline-block 定宽 —— html2canvas 1.4.1 对 flex（裁切/空白条）与 display:table（忽略定宽→列宽错乱）支持均差，inline-block 最稳 */
-  #imgCard .qt{font-size:0;white-space:nowrap;width:100%;box-sizing:border-box}
-  #imgCard .qt .c{display:inline-block;vertical-align:top;border:1px solid #f2e6d8;padding:9px 10px;font-size:13px;line-height:1.6;color:#2a2118;background:#fff;text-align:center;word-break:break-word;box-sizing:border-box}
-  #imgCard .qt .c:nth-child(1){width:50px}
-  #imgCard .qt .c:nth-child(2){width:120px}
-  #imgCard .qt .c:nth-child(3){width:245px}
-  #imgCard .qt .c:nth-child(4){width:50px}
-  #imgCard .qt .c:nth-child(5){width:50px}
-  #imgCard .qt .c:nth-child(6){width:82px}
-  #imgCard .qt .c:nth-child(7){width:85px}
-  #imgCard .qt .c.left{text-align:left;padding-left:12px}
-  #imgCard .qt.head{margin-top:10px}
+  /* 图片卡片明细表：复用快速报价单(quote)已验证的 flex 定宽写法 —— html2canvas 1.4.1 对 flex 支持良好，关键：flex:0 0 auto + flex-basis 固定宽 + overflow:hidden 防溢出 + 单元格内文字正常换行（绝不写 white-space:nowrap） */
+  #imgCard .qt{display:flex;align-items:stretch;width:100%;box-sizing:border-box}
+  #imgCard .qt .c{border:1px solid #f2e6d8;padding:9px 10px;font-size:13px;line-height:1.6;color:#2a2118;background:#fff;display:flex;align-items:center;justify-content:center;text-align:center;word-break:break-word;overflow:hidden;flex:0 0 auto;box-sizing:border-box}
+  #imgCard .qt .c:nth-child(1){width:50px;flex-basis:50px}
+  #imgCard .qt .c:nth-child(2){width:120px;flex-basis:120px}
+  #imgCard .qt .c:nth-child(3){width:245px;flex-basis:245px}
+  #imgCard .qt .c:nth-child(4){width:50px;flex-basis:50px}
+  #imgCard .qt .c:nth-child(5){width:50px;flex-basis:50px}
+  #imgCard .qt .c:nth-child(6){width:82px;flex-basis:82px}
+  #imgCard .qt .c:nth-child(7){width:85px;flex-basis:85px}
+  #imgCard .qt .c.left{justify-content:flex-start;text-align:left;padding-left:12px}
+  #imgCard .qt.head{background:#faf4ea;margin-top:10px}
   #imgCard .qt.head .c{background:#faf4ea;color:#2a2118;font-weight:600;border-color:#f2e6d8;font-size:12.5px}
-  #imgCard .qt .c.sum{color:#4a4035;text-align:right}
+  #imgCard .qt .c.sum{color:#4a4035;justify-content:flex-end;text-align:right}
   #imgCard .qt .c.total{background:#fbf5ea;font-weight:700;color:#2a1a0a}
   #imgCard .qt .c.gift{color:#e8590c;font-weight:700}
   /* 单价为 0 → 单价与金额两格合并，写【包含服务】 */
-  #imgCard .qt .c.inc{width:167px;background:#fbf5ea;color:#a85509;font-weight:700;letter-spacing:1px;font-size:12.5px}
-  #imgCard .qt-sum{font-size:0;white-space:nowrap;width:100%;box-sizing:border-box}
-  #imgCard .qt-sum .l{display:inline-block;vertical-align:top;width:515px;border:1px solid #f2e6d8;padding:9px 10px;color:#4a4035;font-size:13px;line-height:1.6;text-align:right;box-sizing:border-box}
-  #imgCard .qt-sum .v{display:inline-block;vertical-align:top;width:167px;border:1px solid #f2e6d8;padding:9px 10px;color:#4a4035;font-size:13px;line-height:1.6;text-align:center;box-sizing:border-box}
+  #imgCard .qt .c.inc{width:167px;flex-basis:167px;background:#fbf5ea;color:#a85509;font-weight:700;letter-spacing:1px;font-size:12.5px}
+  #imgCard .qt-sum{display:flex;align-items:stretch;width:100%;box-sizing:border-box}
+  #imgCard .qt-sum .l{flex:0 0 515px;width:515px;border:1px solid #f2e6d8;padding:9px 10px;color:#4a4035;font-size:13px;line-height:1.6;display:flex;align-items:center;justify-content:flex-end;text-align:right;box-sizing:border-box}
+  #imgCard .qt-sum .v{flex:0 0 167px;width:167px;border:1px solid #f2e6d8;border-left:none;padding:9px 10px;color:#4a4035;font-size:13px;line-height:1.6;display:flex;align-items:center;justify-content:center;text-align:center;box-sizing:border-box}
   #imgCard .qt-sum.total .l,#imgCard .qt-sum.total .v{background:#fbf5ea;font-weight:700;color:#2a1a0a}
   .foot-tip{font-size:11.5px;color:#9a8a72;text-align:center;margin-top:24px;line-height:1.7}
   .ai-modal-bg{position:fixed;inset:0;background:rgba(42,26,10,.45);z-index:90;display:none}
@@ -933,21 +933,6 @@ function bizGridHTML(){
   html += '</div>'
   return html
 }
-/* 拉平每行单元格高度：inline-block 行内短单元格边框塌缩到不了行底，按同行最高单元格统一设高，保证表格网格对齐 */
-function fixRowHeights(){
-  const card = document.getElementById('imgCard')
-  if(!card) return
-  const groups = ['.q-meta', '.q-biz .qb-row', '.qt', '.qt-sum']
-  groups.forEach(sel=>{
-    card.querySelectorAll(sel).forEach(row=>{
-      const cells = Array.from(row.children)
-      if(!cells.length) return
-      let max = 0
-      cells.forEach(c=>{ const hgt = c.offsetHeight || 0; if(hgt>max) max = hgt })
-      if(max>0) cells.forEach(c=>{ c.style.height = max+'px' })
-    })
-  })
-}
 function renderPreview(){
   const c = state.customer, q = state.quote
   const { items, raw, giftSum, disc, discAmt, total } = calcSum()
@@ -993,7 +978,6 @@ function renderPreview(){
   if(q.notes) h += `<div style="margin-top:10px;font-size:12px;color:#4a4035;background:#faf7f2;border-left:3px solid #e0901a;padding:8px 12px;line-height:1.7"><b>报价说明：</b><br>${esc(q.notes).replace(/\n/g,'<br>')}</div>`
   h += `<div class="q-sign"><div class="co">${esc(agencyName())}</div><div>销售顾问：${esc(c.agent)}</div><div>${esc(q.date)}</div></div>`
   document.getElementById('imgCard').innerHTML = h
-  fixRowHeights()
 }
 
 /* ============ Word 生成 ============ */
