@@ -158,7 +158,7 @@ tr.expand td{background:#fffdf8;padding:0}
     <select id="fStatus" data-act="filter"><option value="">全部状态</option></select>
     <select id="fLevel" data-act="filter"><option value="">全部等级</option></select>
     <select id="fSource" data-act="filter"><option value="">全部来源</option></select>
-    <select id="sort" data-act="filter"><option value="updated">排序：更新时间</option><option value="level">排序：意向等级</option><option value="created">排序：创建时间</option></select>
+    <select id="sort" data-act="filter"><option value="updated">排序：更新时间</option><option value="level">排序：意向等级</option><option value="created">排序：创建时间</option><option value="status">排序：客户状态</option></select>
     <select id="sortDir" data-act="filter"><option value="desc">倒序 ↓</option><option value="asc">顺序 ↑</option></select>
     <span class="sp"></span>
     <button class="btn btn-ghost" data-act="fields">字段管理</button>
@@ -170,7 +170,7 @@ tr.expand td{background:#fffdf8;padding:0}
   <div class="table-card">
     <table>
       <thead><tr>
-        <th>客户</th><th>微信</th><th>电话</th><th>业务类型</th><th>等级</th><th>状态</th><th>最近跟进</th><th>创建日期</th><th>操作</th>
+        <th>客户</th><th>电话</th><th>业务类型</th><th>等级</th><th>状态</th><th>最近跟进</th><th>创建日期</th><th>操作</th>
       </tr></thead>
       <tbody id="tbody"></tbody>
     </table>
@@ -199,7 +199,8 @@ var VIEWS = [
   {key:'跟进中', statuses:['待联系','已联系','已报价','待促进','预约单']},
   {key:'已成交', statuses:['已成交']},
   {key:'已流失', statuses:['已流失']},
-  {key:'待维护', statuses:['待维护']}
+  {key:'待维护', statuses:['待维护']},
+  {key:'今日未跟进', statuses:[]}   // 时间维度视图（非状态分桶）：显示今天还没跟进/更新过的活跃客户
 ];
 
 var FIELDS = [
@@ -210,6 +211,7 @@ var FIELDS = [
   {key:'phone',  label:'电话', type:'input', ph:'手机号'},
   {key:'type',   label:'业务类型', type:'select', options:TYPES},
   {key:'need',   label:'具体需求', type:'textarea', ph:'客户需求描述'},
+  {key:'pain',   label:'核心痛点', type:'textarea', ph:'客户的核心痛点 / 最关心的顾虑'},
   {key:'source', label:'客户来源', type:'select', options:SOURCES},
   {key:'referrer', label:'推荐人', type:'input', ph:'推荐人姓名 / 渠道'},
   {key:'level',  label:'意向等级', type:'select', options:LEVELS, def:'B'},
@@ -249,8 +251,15 @@ function visibleLeads(){
   var arr = state.leads.slice();
   var f = state.filter, s = (state.search||'').trim().toLowerCase();
   var vst = viewStatuses(state.view);
+  var isTodayView = (state.view==='今日未跟进');
   arr = arr.filter(function(l){
-    if(vst.length && vst.indexOf(l.status)<0) return false;
+    if(isTodayView){
+      // 时间维度视图：仅看未关闭的活跃客户，且今天尚未更新/跟进
+      if(l.status==='已成交'||l.status==='已流失') return false;
+      if(isTodayUpdated(l)) return false;
+    } else {
+      if(vst.length && vst.indexOf(l.status)<0) return false;
+    }
     if(f.type && l.type!==f.type) return false;
     if(f.status && l.status!==f.status) return false;
     if(f.level && l.level!==f.level) return false;
@@ -264,6 +273,7 @@ function visibleLeads(){
     var r;
     if(state.sort==='level'){ var ra=lv[a.level]!=null?lv[a.level]:9, rb=lv[b.level]!=null?lv[b.level]:9; r=ra-rb; }
     else if(state.sort==='created'){ r=(a.createdAt||0)-(b.createdAt||0); }
+    else if(state.sort==='status'){ var sa=STATUSES.indexOf(a.status), sb=STATUSES.indexOf(b.status); if(sa<0)sa=99; if(sb<0)sb=99; r=sa-sb; }
     else { r=(a.updatedAt||0)-(b.updatedAt||0); }
     if(r) return r*mul;
     return ((a.updatedAt||0)-(b.updatedAt||0))*mul;   // 同值时按更新时间兜底
@@ -271,6 +281,14 @@ function visibleLeads(){
   return arr;
 }
 function lastFollow(l){ if(l.timeline&&l.timeline.length){ var x=l.timeline[l.timeline.length-1]; return x; } return null; }
+// 判定某个时间戳是否落在「今天」（本地日期，与系统时钟一致）
+function isTodayTs(ts){
+  if(!ts) return false;
+  var d=new Date(ts), n=new Date();
+  return d.getFullYear()===n.getFullYear() && d.getMonth()===n.getMonth() && d.getDate()===n.getDate();
+}
+// 客户今天是否更新/跟进过：编辑与添加跟进均会刷新 updatedAt
+function isTodayUpdated(l){ return isTodayTs(l.updatedAt); }
 // 最近跟进距今：>=2天 高亮提醒(warn)，>3天 深红警告(danger)；未跟进则以创建时间计；已成交/已流失 不再提醒
 function staleInfo(l){
   if(l.status==='已成交'||l.status==='已流失'||l.status==='待维护') return {state:'',days:0};
@@ -320,7 +338,13 @@ function barGroup(title, keys, get){
 function renderViews(){
   var counts={}; VIEWS.forEach(function(v){ counts[v.key]=0; });
   state.leads.forEach(function(l){
-    VIEWS.forEach(function(v){ if(v.statuses.indexOf(l.status)>=0) counts[v.key]++; });
+    VIEWS.forEach(function(v){
+      if(v.key==='今日未跟进'){
+        if(l.status!=='已成交'&&l.status!=='已流失'&&!isTodayUpdated(l)) counts[v.key]++;
+      } else if(v.statuses.indexOf(l.status)>=0){
+        counts[v.key]++;
+      }
+    });
   });
   var h='';
   VIEWS.forEach(function(v){
@@ -334,7 +358,12 @@ function renderViews(){
 function tabCounts(getKey){
   var vst=viewStatuses(state.view); var counts={};
   state.leads.forEach(function(l){
-    if(vst.indexOf(l.status)<0) return;
+    if(state.view==='今日未跟进'){
+      if(l.status==='已成交'||l.status==='已流失') return;
+      if(isTodayUpdated(l)) return;
+    } else if(vst.indexOf(l.status)<0){
+      return;
+    }
     var k=getKey(l)||''; counts[k]=(counts[k]||0)+1;
   });
   return counts;
@@ -386,13 +415,12 @@ function quickSel(l, field, opts){
 function renderTable(){
   var rows=visibleLeads();
   var tb=$('tbody');
-  if(!rows.length){ tb.innerHTML='<tr><td colspan="9"><div class="empty">暂无客户，点右上角「+ 新建客户」开始登记</div></td></tr>'; return; }
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="8"><div class="empty">暂无客户，点右上角「+ 新建客户」开始登记</div></td></tr>'; return; }
   var html='';
   rows.forEach(function(l){
     var lf=lastFollow(l); var si=staleInfo(l);
     html+='<tr class="row'+(si.state?' stale-'+si.state:'')+'" data-act="toggle" data-id="'+l.id+'">'
       +'<td><b>'+esc(l.name||'(未命名)')+'</b>'+codeLine(l)+'</td>'
-      +'<td>'+esc(l.wechat||'')+'</td>'
       +'<td>'+esc(l.phone||'')+'</td>'
       +'<td><span class="tag t-type">'+esc(l.type||'')+'</span></td>'
       +'<td>'+quickSel(l,'level',LEVELS)+'</td>'
@@ -402,7 +430,7 @@ function renderTable(){
       +'<td class="ops"><button class="mini" data-act="edit" data-id="'+l.id+'">编辑</button> <button class="mini del" data-act="del" data-id="'+l.id+'">删除</button></td>'
       +'</tr>';
     if(state.expanded===l.id){
-      html+='<tr class="expand"><td colspan="9"><div class="expand-inner">'
+      html+='<tr class="expand"><td colspan="8"><div class="expand-inner">'
         +renderDetail(l)
         +renderTimeline(l)
         +'</div></td></tr>';
@@ -563,13 +591,13 @@ function delCf(key){
 /* ================= 导出 ================= */
 function exportRows(){
   var leads=state.leads;
-  var header=['客户编号','商机编号','客户姓名','微信','电话','业务类型','具体需求','客户来源','推荐人','意向等级','跟进状态','备注','最近跟进时间','最近跟进内容','跟进次数'];
+  var header=['客户编号','商机编号','客户姓名','微信','电话','业务类型','具体需求','核心痛点','客户来源','推荐人','意向等级','跟进状态','备注','最近跟进时间','最近跟进内容','跟进次数'];
   state.custom.forEach(function(cf){ header.push(cf.label); });
   header.push('创建时间');
   var rows=[header];
   leads.forEach(function(l){
     var lf=lastFollow(l);
-    var r=[l.custNo||'', l.oppNo||'', l.name||'', l.wechat||'', l.phone||'', l.type||'', l.need||'', l.source||'', l.referrer||'', l.level||'', l.status||'', l.note||'',
+    var r=[l.custNo||'', l.oppNo||'', l.name||'', l.wechat||'', l.phone||'', l.type||'', l.need||'', l.pain||'', l.source||'', l.referrer||'', l.level||'', l.status||'', l.note||'',
       lf?fmtDateTime(lf.t):'', lf?lf.content:'', (l.timeline?l.timeline.length:0)];
     state.custom.forEach(function(cf){ r.push(l.custom? (l.custom[cf.key]||''):''); });
     r.push(l.createdAt?fmtDateTime(l.createdAt):'');
