@@ -3198,6 +3198,40 @@ async function loadImg(url, maxW){
     return { data:d, width:cw, height:ch };
   }catch(e){ return null; }
 }
+async function buildCover(){
+  /* 参照公司简章封面：B&W 城市图 + 白字（顶部公司名 / 中部大标题 / 副标题 / 底部信息）；best-effort，取不到则调用方回退金色条 */
+  try{
+    if(typeof fetch!=='function'||typeof Image==='undefined'||typeof document==='undefined'||typeof document.createElement!=='function') return null;
+    var r=await fetch('brand/cover-bg.jpg'); if(!r||!r.ok) return null;
+    var buf=await r.arrayBuffer();
+    var blob=new Blob([buf]); var u=URL.createObjectURL(blob);
+    var img=new Image();
+    await new Promise(function(res,rej){ img.onload=res; img.onerror=function(){rej(new Error('bg'));}; img.src=u; });
+    URL.revokeObjectURL(u);
+    var W=672,H=912;
+    var c=document.createElement('canvas'); c.width=W; c.height=H;
+    var x=c.getContext('2d'); if(!x||!x.drawImage||!c.toDataURL) return null;
+    var iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height;
+    var s=Math.max(W/iw,H/ih), dw=iw*s, dh=ih*s;
+    x.drawImage(img,(W-dw)/2,(H-dh)/2,dw,dh);
+    x.fillStyle='rgba(18,22,28,0.42)'; x.fillRect(0,0,W,H);
+    x.fillStyle='#B45309'; x.fillRect(0,0,W,6); x.fillRect(0,H-6,W,6);
+    x.textAlign='center'; x.fillStyle='#FFFFFF';
+    x.font='600 22px SimHei, sans-serif'; x.fillText('金米财税', W/2, 92);
+    x.font='400 12px Arial, sans-serif'; x.fillText('JINMI FINANCE & TAX', W/2, 116);
+    x.strokeStyle='rgba(255,255,255,0.55)'; x.lineWidth=1.2; x.beginPath(); x.moveTo(W/2-72,138); x.lineTo(W/2+72,138); x.stroke();
+    x.fillStyle='#FFFFFF'; x.font='700 60px SimHei, sans-serif';
+    x.fillText('跨境出口合规', W/2, 430); x.fillText('落地方案', W/2, 502);
+    x.font='400 15px Arial, sans-serif'; x.fillText('CROSS-BORDER EXPORT COMPLIANCE SOLUTION', W/2, 556);
+    x.strokeStyle='rgba(255,255,255,0.55)'; x.beginPath(); x.moveTo(W/2-120,586); x.lineTo(W/2+120,586); x.stroke();
+    x.fillStyle='#FFFFFF'; x.font='400 17px SimHei, sans-serif'; x.fillText('致贵司 · 跨境电商出口合规一站式落地建议', W/2, 760);
+    var dt=new Date();
+    x.font='400 13px SimHei, sans-serif';
+    x.fillText('生成日期：'+dt.getFullYear()+'-'+tkP2(dt.getMonth()+1)+'-'+tkP2(dt.getDate()), W/2, 796);
+    x.fillText('咨询热线：400-0123-860', W/2, 826);
+    return c.toDataURL('image/png');
+  }catch(e){ return null; }
+}
 async function genPlanDoc(text, d){
   if(typeof docx==='undefined') throw new Error('docx 库未加载，请刷新页面重试');
   var FSong={ascii:'Times New Roman',hAnsi:'Times New Roman',eastAsia:'宋体'};
@@ -3210,25 +3244,29 @@ async function genPlanDoc(text, d){
     spacing:{ before:280, after:160, line:320, lineRule:'auto' },
     border:{ bottom:{ style:BS.SINGLE, size:10, color:'E0D5C0', space:6 } } }; if(br) hp.pageBreakBefore=true; return new P(hp); }
   var paras=[];
-  /* 封面：金色主视觉条（满宽表格，金底白字） */
-  paras.push(new T({ width:{ size:100, type:WT.PERCENTAGE },
-    borders:{ top:{style:BS.NONE}, bottom:{style:BS.NONE}, left:{style:BS.NONE}, right:{style:BS.NONE}, insideHorizontal:{style:BS.NONE}, insideVertical:{style:BS.NONE} },
-    rows:[ new TR({ children:[ new TC({ width:{ size:100, type:WT.PERCENTAGE }, shading:{ fill:'B45309' }, margins:{ top:260, bottom:260, left:200, right:200 },
-      children:[ new P({ alignment:AT.CENTER, spacing:{ before:160, after:60, line:400, lineRule:'auto' }, children:[ R('跨境出口合规落地方案',{ font:FHei, size:36, bold:true, color:'FFFFFF' }) ] }),
-                 new P({ alignment:AT.CENTER, spacing:{ after:160, line:240, lineRule:'auto' }, children:[ R('CROSS-BORDER EXPORT COMPLIANCE SOLUTION',{ font:FSong, size:18, color:'FBF3E4' }) ] }) ] }) ] }) ] }));
-  var dt=new Date();
-  /* 副标题 + 日期（中下留白） */
-  paras.push(new P({ alignment:AT.CENTER, spacing:{ before:560, after:80, line:320, lineRule:'auto' },
-    children:[ R('—— 致贵司跨境电商出口合规的一站式落地建议 ——',{ font:FSong, size:22, color:'7A5A12' }) ] }));
-  paras.push(new P({ alignment:AT.CENTER, spacing:{ after:200, line:240, lineRule:'auto' },
-    children:[ R('生成日期：'+dt.getFullYear()+'-'+tkP2(dt.getMonth()+1)+'-'+tkP2(dt.getDate()),{ font:FSong, size:20, color:'808080' }) ] }));
-  /* 底部品牌块 */
-  paras.push(new P({ alignment:AT.CENTER, spacing:{ before:720, after:60, line:320, lineRule:'auto' },
-    children:[ R('金米财税',{ font:FHei, size:26, bold:true, color:'B45309' }) ] }));
-  paras.push(new P({ alignment:AT.CENTER, spacing:{ after:40, line:300, lineRule:'auto' },
-    children:[ R('让企业经营无难事',{ font:FSong, size:20, color:'808080' }) ] }));
-  paras.push(new P({ alignment:AT.CENTER, spacing:{ after:60, line:300, lineRule:'auto' },
-    children:[ R('咨询热线：400-0123-860',{ font:FSong, size:20, color:'808080' }) ] }));
+  /* 封面：参照公司简章——B&W 城市图 + 白字大标题（best-effort，取不到则回退金色主视觉条） */
+  var coverPng=await buildCover();
+  if(coverPng){
+    paras.push(new P({ alignment:AT.CENTER, spacing:{ before:0, after:0 },
+      children:[ new docx.ImageRun({ data:coverPng, transformation:{ width:660, height:896 } }) ] }));
+  } else {
+    paras.push(new T({ width:{ size:100, type:WT.PERCENTAGE },
+      borders:{ top:{style:BS.NONE}, bottom:{style:BS.NONE}, left:{style:BS.NONE}, right:{style:BS.NONE}, insideHorizontal:{style:BS.NONE}, insideVertical:{style:BS.NONE} },
+      rows:[ new TR({ children:[ new TC({ width:{ size:100, type:WT.PERCENTAGE }, shading:{ fill:'B45309' }, margins:{ top:260, bottom:260, left:200, right:200 },
+        children:[ new P({ alignment:AT.CENTER, spacing:{ before:160, after:60, line:400, lineRule:'auto' }, children:[ R('跨境出口合规落地方案',{ font:FHei, size:36, bold:true, color:'FFFFFF' }) ] }),
+                   new P({ alignment:AT.CENTER, spacing:{ after:160, line:240, lineRule:'auto' }, children:[ R('CROSS-BORDER EXPORT COMPLIANCE SOLUTION',{ font:FSong, size:18, color:'FBF3E4' }) ] }) ] }) ] }) ] }));
+    var dt=new Date();
+    paras.push(new P({ alignment:AT.CENTER, spacing:{ before:560, after:80, line:320, lineRule:'auto' },
+      children:[ R('—— 致贵司跨境电商出口合规的一站式落地建议 ——',{ font:FSong, size:22, color:'7A5A12' }) ] }));
+    paras.push(new P({ alignment:AT.CENTER, spacing:{ after:200, line:240, lineRule:'auto' },
+      children:[ R('生成日期：'+dt.getFullYear()+'-'+tkP2(dt.getMonth()+1)+'-'+tkP2(dt.getDate()),{ font:FSong, size:20, color:'808080' }) ] }));
+    paras.push(new P({ alignment:AT.CENTER, spacing:{ before:720, after:60, line:320, lineRule:'auto' },
+      children:[ R('金米财税',{ font:FHei, size:26, bold:true, color:'B45309' }) ] }));
+    paras.push(new P({ alignment:AT.CENTER, spacing:{ after:40, line:300, lineRule:'auto' },
+      children:[ R('让企业经营无难事',{ font:FSong, size:20, color:'808080' }) ] }));
+    paras.push(new P({ alignment:AT.CENTER, spacing:{ after:60, line:300, lineRule:'auto' },
+      children:[ R('咨询热线：400-0123-860',{ font:FSong, size:20, color:'808080' }) ] }));
+  }
 
   /* 一、客户情况（表格，对客视角，完整呈现登记信息） */
   paras.push(hdg('一、客户情况', true));
