@@ -3170,25 +3170,35 @@ function tkPlanSave(btn){
 var FSONG='宋体', FHEI='黑体';
 var PLAN_DOC_BRAND={
   name:'金米财税',
-  lines:[],     /* 品牌介绍待补充：用户后续提供后在此填入，方案书「四、关于我们」即带出；当前留空显示占位 */
-  contact:''   /* 填真实电话 / 微信后重新生成即带出；留空则不显示 */
+  lines:[
+    '金米财税成立于 2015 年，是一家深耕工商财税领域 10 余年的综合性企业服务平台，现有服务团队 1000 余人，累计服务企业客户超 50 万家。',
+    '以「让企业经营无难事」为品牌理念，我们专注为企业提供覆盖全生命周期的一站式服务：公司注册与变更、代理记账与财税外包、资质许可代办（含进出口备案）、商标注册与知识产权、高新认定与项目申报、企业融资与法律服务。',
+    '总部位于深圳，在北京、广州、上海、海南、佛山、东莞、珠海、苏州、西安、长沙、重庆、郑州等全国多地设有分公司，并在杭州、成都、武汉、昆明等城市拥有优质服务渠道，业务覆盖全国。',
+    '针对跨境电商客户，我们提供从进出口权与出口免税备案办理、报关抬头切换与 13 栏免税填报、跨境账务合规与税负测算，到历史遗留问题梳理与更正申报的一站式落地服务。方案中的每一步都由我们协助推进，贵司只需配合提供基础资料，即可把出口合规这块稳妥落地。'
+  ],
+  contact:'咨询热线：400-0123-860'   /* 填真实电话 / 微信后重新生成即带出；留空则不显示 */
 };
 async function genPlanDoc(text, d){
   if(typeof docx==='undefined') throw new Error('docx 库未加载，请刷新页面重试');
-  var R=function(t,o){ return new docx.TextRun(Object.assign({text:String(t==null?'':t)}, o||{})); };
+  var FSong={ascii:'Times New Roman',hAnsi:'Times New Roman',eastAsia:'宋体'};
+  var FHei ={ascii:'Arial',hAnsi:'Arial',eastAsia:'黑体'};
+  var R=function(t,o){ o=o||{}; if(!o.font) o.font=FSong; return new docx.TextRun(Object.assign({text:String(t==null?'':t)}, o)); };
   var AT=docx.AlignmentType, P=docx.Paragraph, Doc=docx.Document, PK=docx.Packer;
   var T=docx.Table, TR=docx.TableRow, TC=docx.TableCell, WT=docx.WidthType, BS=docx.BorderStyle;
   function safeAns(id){ try{ return tkAnsText(id); }catch(e){ return ''; } }
+  function hdg(t){ return new P({ children:[ R(t,{ font:FHei, size:26, bold:true, color:'B45309' }) ],
+    spacing:{ before:280, after:160, line:320, lineRule:'auto' },
+    border:{ bottom:{ style:BS.SINGLE, size:10, color:'E0D5C0', space:6 } } }); }
   var paras=[];
   /* 标题 + 日期 */
-  paras.push(new P({ alignment:AT.CENTER, spacing:{ after:60 },
-    children:[ R('跨境出口合规落地方案',{ font:FHEI, size:32, bold:true, color:'B45309' }) ] }));
+  paras.push(new P({ alignment:AT.CENTER, spacing:{ before:60, after:40, line:380, lineRule:'auto' },
+    children:[ R('跨境出口合规落地方案',{ font:FHei, size:34, bold:true, color:'B45309' }) ] }));
   var dt=new Date();
-  paras.push(new P({ alignment:AT.CENTER, spacing:{ after:200 },
-    children:[ R('生成日期：'+dt.getFullYear()+'-'+tkP2(dt.getMonth()+1)+'-'+tkP2(dt.getDate()),{ font:FSONG, size:20, color:'808080' }) ] }));
+  paras.push(new P({ alignment:AT.CENTER, spacing:{ after:240, line:240, lineRule:'auto' },
+    children:[ R('生成日期：'+dt.getFullYear()+'-'+tkP2(dt.getMonth()+1)+'-'+tkP2(dt.getDate()),{ font:FSong, size:20, color:'808080' }) ] }));
 
   /* 一、客户情况（表格，对客视角，完整呈现登记信息） */
-  paras.push(new P({ spacing:{ before:120, after:80 }, children:[ R('一、客户情况',{ font:FHEI, size:26, bold:true, color:'B45309' }) ] }));
+  paras.push(hdg('一、客户情况'));
   var rows=[];
   function addRow(label,val){ if(val==null) val=''; val=String(val).trim(); if(val==='') val='—'; rows.push([label,val]); }
   addRow('贵司编号', (TK&&TK.cid)?TK.cid:'');
@@ -3207,23 +3217,32 @@ async function genPlanDoc(text, d){
   addRow('人员情况', safeAns('staff'));
   if(TK&&TK.sms==='y'&&TK.amt!=null) addRow('历史少报金额', safeAns('amt'));
   if(TK&&TK.quarters&&TK.quarters.length) addRow('涉及季度', safeAns('quarters'));
+  var cellMar={ top:90, bottom:90, left:160, right:120 };
+  var hdrRow=new TR({ tableHeader:true, children:[
+    new TC({ width:{ size:28, type:WT.PERCENTAGE }, shading:{ fill:'B45309' }, margins:cellMar,
+      children:[ new P({ alignment:AT.LEFT, spacing:{ line:300, lineRule:'auto' }, children:[ R('项目',{ font:FHei, size:21, bold:true, color:'FFFFFF' }) ] }) ] }),
+    new TC({ width:{ size:72, type:WT.PERCENTAGE }, shading:{ fill:'B45309' }, margins:cellMar,
+      children:[ new P({ alignment:AT.LEFT, spacing:{ line:300, lineRule:'auto' }, children:[ R('内容',{ font:FHei, size:21, bold:true, color:'FFFFFF' }) ] }) ] })
+  ] });
+  var dataRows=rows.map(function(rw,idx){
+    var shade=(idx%2===1)?'FBF3E4':'FFFFFF';
+    return new TR({ children:[
+      new TC({ width:{ size:28, type:WT.PERCENTAGE }, shading:{ fill:shade }, margins:cellMar,
+        children:[ new P({ spacing:{ line:300, lineRule:'auto' }, children:[ R(rw[0],{ font:FHei, size:21, bold:true, color:'7A5A12' }) ] }) ] }),
+      new TC({ width:{ size:72, type:WT.PERCENTAGE }, margins:cellMar,
+        children:[ new P({ spacing:{ line:300, lineRule:'auto' }, children:[ R(rw[1],{ font:FSong, size:21 }) ] }) ] })
+    ] });
+  });
   paras.push(new T({ width:{ size:100, type:WT.PERCENTAGE },
     borders:{ top:{style:BS.SINGLE,size:4,color:'E0D5C0'}, bottom:{style:BS.SINGLE,size:4,color:'E0D5C0'},
       left:{style:BS.SINGLE,size:4,color:'E0D5C0'}, right:{style:BS.SINGLE,size:4,color:'E0D5C0'},
       insideHorizontal:{style:BS.SINGLE,size:2,color:'ECE3D6'}, insideVertical:{style:BS.SINGLE,size:2,color:'ECE3D6'} },
-    rows:rows.map(function(rw){
-      return new TR({ children:[
-        new TC({ width:{ size:28, type:WT.PERCENTAGE }, shading:{ fill:'FBF3E4' }, margins:{ top:50, bottom:50, left:90, right:60 },
-          children:[ new P({ spacing:{ line:260, lineRule:'auto' }, children:[ R(rw[0],{ font:FHEI, size:21, bold:true, color:'7A5A12' }) ] }) ] }),
-        new TC({ width:{ size:72, type:WT.PERCENTAGE }, margins:{ top:50, bottom:50, left:90, right:60 },
-          children:[ new P({ spacing:{ line:260, lineRule:'auto' }, children:[ R(rw[1],{ font:FSONG, size:21 }) ] }) ] })
-      ] });
-    }) }));
+    rows:[hdrRow].concat(dataRows) }));
 
   /* 二、合规诊断（不合规 / 待确认项 + 可能带来的危害，对客视角） */
-  paras.push(new P({ spacing:{ before:200, after:80 }, children:[ R('二、合规诊断',{ font:FHEI, size:26, bold:true, color:'B45309' }) ] }));
-  paras.push(new P({ spacing:{ after:80 }, alignment:AT.JUSTIFIED,
-    children:[ R('根据贵司目前的情况，以下是不合规或仍需落实的地方，以及可能带来的后果：',{ font:FSONG, size:22 }) ] }));
+  paras.push(hdg('二、合规诊断'));
+  paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED,
+    children:[ R('根据贵司目前的情况，以下是不合规或仍需落实的地方，以及可能带来的后果：',{ font:FSong, size:21 }) ] }));
   var ck=ckClient(d), di=0;
   for(var i=0;i<ck.length;i++){
     var it=ck[i], lab, col;
@@ -3231,41 +3250,41 @@ async function genPlanDoc(text, d){
     else if(it.tag==='warn'){ lab='待确认'; col='B45309'; }
     else { continue; } /* 合规项不单列，仅呈现问题项 */
     di++;
-    paras.push(new P({ spacing:{ before:80, after:20 }, children:[
-      R('【'+lab+'】 ',{ font:FHEI, size:22, bold:true, color:col }),
-      R(it.t.replace(/\s+/g,' '),{ font:FHEI, size:22, bold:true, color:'2A2118' })
+    paras.push(new P({ spacing:{ before:160, after:30, line:320, lineRule:'auto' }, children:[
+      R('【'+lab+'】 ',{ font:FHei, size:22, bold:true, color:col }),
+      R(it.t.replace(/\s+/g,' '),{ font:FHei, size:22, bold:true, color:'2A2118' })
     ] }));
-    paras.push(new P({ spacing:{ after:60 }, alignment:AT.JUSTIFIED, children:[ R(it.line,{ font:FSONG, size:22 }) ] }));
+    paras.push(new P({ spacing:{ after:140, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[ R(it.line,{ font:FSong, size:21 }) ] }));
   }
-  if(di===0) paras.push(new P({ spacing:{ after:60 }, alignment:AT.JUSTIFIED, children:[ R('经核查，贵司目前各项均合规，可按以下方案把流程固化下来。',{ font:FSONG, size:22 }) ] }));
+  if(di===0) paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[ R('经核查，贵司目前各项均合规，可按以下方案把流程固化下来。',{ font:FSong, size:21 }) ] }));
 
   /* 三、落地方案（具体怎么执行，对客视角） */
-  paras.push(new P({ spacing:{ before:200, after:80 }, children:[ R('三、落地方案',{ font:FHEI, size:26, bold:true, color:'B45309' }) ] }));
+  paras.push(hdg('三、落地方案'));
   var S=roadmap(d);
   for(var j=0;j<S.length;j++){
     var s=S[j];
-    paras.push(new P({ spacing:{ before:100, after:40 }, children:[ R('第 '+(j+1)+' 步｜'+clClean(s.t)+'（'+clTimeout(s.time)+'）',{ font:FHEI, size:22, bold:true, color:'B45309' }) ] }));
-    for(var k=0;k<s.acts.length;k++) paras.push(new P({ spacing:{ after:30 }, indent:{ left:360, hanging:240 }, children:[ R('· '+clClean(s.acts[k]),{ font:FSONG, size:22 }) ] }));
-    paras.push(new P({ spacing:{ after:30 }, indent:{ left:360 }, children:[ R('您这边需要提供：',{ font:FSONG, size:22, bold:true, color:'7C3AED' }), R(clCli(s.cli).join('、'),{ font:FSONG, size:22 }) ] }));
-    paras.push(new P({ spacing:{ after:60 }, indent:{ left:360 }, children:[ R('这一步做完：',{ font:FSONG, size:22, bold:true, color:'7C3AED' }), R(clClean(s.done),{ font:FSONG, size:22 }) ] }));
+    paras.push(new P({ spacing:{ before:160, after:50, line:320, lineRule:'auto' }, children:[ R('第 '+(j+1)+' 步｜'+clClean(s.t)+'（'+clTimeout(s.time)+'）',{ font:FHei, size:22, bold:true, color:'B45309' }) ] }));
+    for(var k=0;k<s.acts.length;k++) paras.push(new P({ spacing:{ after:30, line:320, lineRule:'auto' }, indent:{ left:380, hanging:240 }, children:[ R('· '+clClean(s.acts[k]),{ font:FSong, size:21 }) ] }));
+    paras.push(new P({ spacing:{ after:30, line:320, lineRule:'auto' }, indent:{ left:380 }, children:[ R('您这边需要提供：',{ font:FSong, size:21, bold:true, color:'7C3AED' }), R(clCli(s.cli).join('、'),{ font:FSong, size:21 }) ] }));
+    paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, indent:{ left:380 }, children:[ R('这一步做完：',{ font:FSong, size:21, bold:true, color:'7C3AED' }), R(clClean(s.done),{ font:FSong, size:21 }) ] }));
   }
 
-  /* 四、关于我们（品牌内容待补充，用户后续提供） */
-  paras.push(new P({ spacing:{ before:200, after:80 }, children:[ R('四、关于我们',{ font:FHEI, size:26, bold:true, color:'B45309' }) ] }));
+  /* 四、关于我们（品牌内容来自公司企业简章） */
+  paras.push(hdg('四、关于我们'));
   if(PLAN_DOC_BRAND.lines && PLAN_DOC_BRAND.lines.length){
     for(var b=0;b<PLAN_DOC_BRAND.lines.length;b++){
-      paras.push(new P({ spacing:{ after:60 }, alignment:AT.JUSTIFIED, children:[ R(PLAN_DOC_BRAND.lines[b],{ font:FSONG, size:22 }) ] }));
+      paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[ R(PLAN_DOC_BRAND.lines[b],{ font:FSong, size:21 }) ] }));
     }
   } else {
-    paras.push(new P({ spacing:{ after:60 }, alignment:AT.JUSTIFIED, children:[ R('（品牌介绍待补充）',{ font:FSONG, size:22, color:'9C886F' }) ] }));
+    paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[ R('（品牌介绍待补充）',{ font:FSong, size:21, color:'9C886F' }) ] }));
   }
   if(PLAN_DOC_BRAND.contact){
-    paras.push(new P({ spacing:{ before:40, after:40 }, children:[ R(PLAN_DOC_BRAND.contact,{ font:FSONG, size:22, color:'808080' }) ] }));
+    paras.push(new P({ spacing:{ before:40, after:60, line:320, lineRule:'auto' }, children:[ R(PLAN_DOC_BRAND.contact,{ font:FSong, size:21, color:'808080' }) ] }));
   }
-  paras.push(new P({ spacing:{ before:80 }, alignment:AT.RIGHT, children:[ R(PLAN_DOC_BRAND.name,{ font:FHEI, size:24, bold:true, color:'B45309' }) ] }));
+  paras.push(new P({ spacing:{ before:120, after:40, line:320, lineRule:'auto' }, alignment:AT.RIGHT, children:[ R(PLAN_DOC_BRAND.name,{ font:FHei, size:24, bold:true, color:'B45309' }) ] }));
 
-  var doc=new Doc({ styles:{ default:{ document:{ run:{ font:FSONG, size:22 } } } },
-    sections:[{ properties:{},
+  var doc=new Doc({ styles:{ default:{ document:{ run:{ font:FSong, size:22 } } } },
+    sections:[{ properties:{ page:{ margin:{ top:1080, bottom:1080, left:1080, right:1080 } } },
       footers:{ default:new docx.Footer({ children:[ new P({ alignment:AT.CENTER,
         children:[ R('第 ',{ size:18, color:'808080' }), new docx.TextRun({ children:[docx.PageNumber.CURRENT], size:18, color:'808080' }), R(' 页',{ size:18, color:'808080' }) ] }) ] }) },
       children:paras }] });
