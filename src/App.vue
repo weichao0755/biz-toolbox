@@ -53,7 +53,7 @@
         </RouterLink>
       </nav>
       <div class="side-foot">
-        <span class="foot-hint">v1.19.15 · 金米财税业务辅助平台</span>
+        <span class="foot-hint">v1.19.16 · 金米财税业务辅助平台</span>
       </div>
     </aside>
     <main class="main">
