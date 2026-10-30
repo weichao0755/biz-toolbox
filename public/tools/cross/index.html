@@ -3199,7 +3199,7 @@ async function loadImg(url, maxW){
   }catch(e){ return null; }
 }
 async function buildCover(){
-  /* 参照公司简章封面：B&W 城市图 + 白字（顶部公司名 / 中部大标题 / 副标题 / 底部信息）；best-effort，取不到则调用方回退金色条 */
+  /* 参照公司简章封面：B&W 城市图 + 白字；满版 794×1123（A4 全页），floating 贴页边无白边。best-effort，取不到则调用方回退金色条 */
   try{
     if(typeof fetch!=='function'||typeof Image==='undefined'||typeof document==='undefined'||typeof document.createElement!=='function') return null;
     var r=await fetch('brand/cover-bg.jpg'); if(!r||!r.ok) return null;
@@ -3208,27 +3208,23 @@ async function buildCover(){
     var img=new Image();
     await new Promise(function(res,rej){ img.onload=res; img.onerror=function(){rej(new Error('bg'));}; img.src=u; });
     URL.revokeObjectURL(u);
-    var W=672,H=912;
+    var W=794,H=1123;
     var c=document.createElement('canvas'); c.width=W; c.height=H;
     var x=c.getContext('2d'); if(!x||!x.drawImage||!c.toDataURL) return null;
     var iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height;
     var s=Math.max(W/iw,H/ih), dw=iw*s, dh=ih*s;
     x.drawImage(img,(W-dw)/2,(H-dh)/2,dw,dh);
     x.fillStyle='rgba(18,22,28,0.42)'; x.fillRect(0,0,W,H);
-    x.fillStyle='#B45309'; x.fillRect(0,0,W,6); x.fillRect(0,H-6,W,6);
+    x.fillStyle='#B45309'; x.fillRect(0,0,W,8); x.fillRect(0,H-8,W,8);
     x.textAlign='center'; x.fillStyle='#FFFFFF';
-    x.font='600 22px SimHei, sans-serif'; x.fillText('金米财税', W/2, 92);
-    x.font='400 12px Arial, sans-serif'; x.fillText('JINMI FINANCE & TAX', W/2, 116);
-    x.strokeStyle='rgba(255,255,255,0.55)'; x.lineWidth=1.2; x.beginPath(); x.moveTo(W/2-72,138); x.lineTo(W/2+72,138); x.stroke();
-    x.fillStyle='#FFFFFF'; x.font='700 60px SimHei, sans-serif';
-    x.fillText('跨境出口合规', W/2, 430); x.fillText('落地方案', W/2, 502);
-    x.font='400 15px Arial, sans-serif'; x.fillText('CROSS-BORDER EXPORT COMPLIANCE SOLUTION', W/2, 556);
-    x.strokeStyle='rgba(255,255,255,0.55)'; x.beginPath(); x.moveTo(W/2-120,586); x.lineTo(W/2+120,586); x.stroke();
-    x.fillStyle='#FFFFFF'; x.font='400 17px SimHei, sans-serif'; x.fillText('致贵司 · 跨境电商出口合规一站式落地建议', W/2, 760);
-    var dt=new Date();
-    x.font='400 13px SimHei, sans-serif';
-    x.fillText('生成日期：'+dt.getFullYear()+'-'+tkP2(dt.getMonth()+1)+'-'+tkP2(dt.getDate()), W/2, 796);
-    x.fillText('咨询热线：400-0123-860', W/2, 826);
+    x.font='600 26px SimHei, sans-serif'; x.fillText('金米财税', W/2, 112);
+    x.font='400 14px Arial, sans-serif'; x.fillText('JINMI FINANCE & TAX', W/2, 142);
+    x.strokeStyle='rgba(255,255,255,0.55)'; x.lineWidth=1.2; x.beginPath(); x.moveTo(W/2-86,168); x.lineTo(W/2+86,168); x.stroke();
+    x.fillStyle='#FFFFFF'; x.font='700 70px SimHei, sans-serif';
+    x.fillText('跨境出口合规', W/2, 530); x.fillText('落地方案', W/2, 618);
+    x.font='400 17px Arial, sans-serif'; x.fillText('CROSS-BORDER EXPORT COMPLIANCE SOLUTION', W/2, 684);
+    x.strokeStyle='rgba(255,255,255,0.55)'; x.beginPath(); x.moveTo(W/2-142,722); x.lineTo(W/2+142,722); x.stroke();
+    x.fillStyle='#FFFFFF'; x.font='400 19px SimHei, sans-serif'; x.fillText('致贵司 · 跨境电商出口合规一站式落地建议', W/2, 936);
     return c.toDataURL('image/png');
   }catch(e){ return null; }
 }
@@ -3242,7 +3238,7 @@ function histPlan(d){
   var vat=[], cit=[];
   if(ent==='general'){
     vat.push('一般纳税人可直接填报出口免税（申报表 13 栏），历史数据可优先尝试按免税口径更正申报。');
-    vat.push('若历史期间已按内销申报，建议与主管税务机关（税管员）沟通将历史数据调整为免税口径，最终以当地税务机关认定为准。');
+    vat.push('若历史期间已按内销申报，建议与主管税务机关（税管员）沟通将历史数据调整为免税口径，最终以实际核对数据为准。');
   } else if(ent==='small'){
     if(ie&&ie.tf){
       if(city==='shenzhen'){
@@ -3265,6 +3261,39 @@ function histPlan(d){
   cit.push('人力成本：另作专项规划（如返聘退休人员、工资列支等），合理降低企业所得税税负。');
   return { vat:vat, cit:cit, entName:entName, cityName:cityName };
 }
+/* 历史遗留税费测算：路径一「如实补缴（视同内销口径）」 vs 路径二「合规处理（出口免税 + 核定征收）」 */
+function histTaxCompare(){
+  var sales=(A&&A.flow!=null&&A.flow!=='na')?Number(A.flow):null;
+  if(!(sales>0)) return {ok:false};
+  var isGen=(A.entity==='general');
+  var vatRate=isGen?0.13:0.01;
+  var head=(A.staffN!=null&&A.staffN!=='')?Number(A.staffN):((A.staff==='yes'||A.staff==='retired')?1:0);
+  /* 成本估算（行业常见结构）：平台成本约 50%、采购成本约 20%、人力 head×6 万/年 */
+  var plat=Math.round(sales*0.5*10)/10;
+  var purch=Math.round(sales*0.2*10)/10;
+  var labor=Math.round(head*6*10)/10;
+  /* 路径一：如实补缴（视同内销）——增值税按内销补，企税走明细账口径 */
+  var vat1=Math.round(sales*vatRate*10)/10;
+  var profit=Math.max(0,Math.round((sales-plat-purch-labor)*10)/10);
+  var citRate=profit<300?0.05:0.25;
+  var cit1=Math.round(profit*citRate*10)/10;
+  var tax1=Math.round((vat1+cit1)*10)/10;
+  var late=Math.round(tax1*0.1825*10)/10;      /* 滞纳金按日万分之五、约 12 个月估算 */
+  var fineLow=Math.round(tax1*0.5*10)/10;
+  var fineHigh=Math.round(tax1*5*10)/10;
+  var low1=Math.round((tax1+late+fineLow)*10)/10;
+  var high1=Math.round((tax1+late+fineHigh)*10)/10;
+  /* 路径二：合规处理——增值税免（出口免税），企税按核定 2%~4% 沟通 */
+  var cit2Low=Math.round(sales*0.02*10)/10;
+  var cit2High=Math.round(sales*0.04*10)/10;
+  var saveLow=Math.round((low1-cit2High)*10)/10;
+  var saveHigh=Math.round((high1-cit2Low)*10)/10;
+  return {ok:true, sales:sales, isGen:isGen, vatRate:vatRate, head:head,
+    plat:plat, purch:purch, labor:labor,
+    vat1:vat1, cit1:cit1, citRate:citRate, tax1:tax1, late:late,
+    fineLow:fineLow, fineHigh:fineHigh, low1:low1, high1:high1,
+    cit2Low:cit2Low, cit2High:cit2High, saveLow:saveLow, saveHigh:saveHigh};
+}
 async function genPlanDoc(text, d){
   if(typeof docx==='undefined') throw new Error('docx 库未加载，请刷新页面重试');
   var FSong={ascii:'Times New Roman',hAnsi:'Times New Roman',eastAsia:'宋体'};
@@ -3277,28 +3306,26 @@ async function genPlanDoc(text, d){
     spacing:{ before:280, after:160, line:320, lineRule:'auto' },
     border:{ bottom:{ style:BS.SINGLE, size:10, color:'E0D5C0', space:6 } } }; if(br) hp.pageBreakBefore=true; return new P(hp); }
   var paras=[];
-  /* 封面：参照公司简章——B&W 城市图 + 白字大标题（best-effort，取不到则回退金色主视觉条） */
+  /* 封面：参照公司简章——B&W 城市图 + 白字大标题，满版无白边（floating 贴页边 0,0，794×1123=A4 全页）；best-effort 取不到回退金色条 */
   var coverPng=await buildCover();
   if(coverPng){
-    paras.push(new P({ alignment:AT.CENTER, spacing:{ before:0, after:0 },
-      children:[ new docx.ImageRun({ data:coverPng, transformation:{ width:660, height:896 } }) ] }));
+    paras.push(new P({ spacing:{ before:0, after:0, line:240, lineRule:'auto' },
+      children:[ new docx.ImageRun({ data:coverPng,
+        transformation:{ width:794, height:1123 },
+        floating:{ horizontalPosition:{ relative:'page', offset:0 }, verticalPosition:{ relative:'page', offset:0 }, behindDocument:false, allowOverlap:true }
+      }) ] }));
   } else {
     paras.push(new T({ width:{ size:100, type:WT.PERCENTAGE },
       borders:{ top:{style:BS.NONE}, bottom:{style:BS.NONE}, left:{style:BS.NONE}, right:{style:BS.NONE}, insideHorizontal:{style:BS.NONE}, insideVertical:{style:BS.NONE} },
       rows:[ new TR({ children:[ new TC({ width:{ size:100, type:WT.PERCENTAGE }, shading:{ fill:'B45309' }, margins:{ top:260, bottom:260, left:200, right:200 },
         children:[ new P({ alignment:AT.CENTER, spacing:{ before:160, after:60, line:400, lineRule:'auto' }, children:[ R('跨境出口合规落地方案',{ font:FHei, size:36, bold:true, color:'FFFFFF' }) ] }),
                    new P({ alignment:AT.CENTER, spacing:{ after:160, line:240, lineRule:'auto' }, children:[ R('CROSS-BORDER EXPORT COMPLIANCE SOLUTION',{ font:FSong, size:18, color:'FBF3E4' }) ] }) ] }) ] }) ] }));
-    var dt=new Date();
     paras.push(new P({ alignment:AT.CENTER, spacing:{ before:560, after:80, line:320, lineRule:'auto' },
       children:[ R('—— 致贵司跨境电商出口合规的一站式落地建议 ——',{ font:FSong, size:22, color:'7A5A12' }) ] }));
-    paras.push(new P({ alignment:AT.CENTER, spacing:{ after:200, line:240, lineRule:'auto' },
-      children:[ R('生成日期：'+dt.getFullYear()+'-'+tkP2(dt.getMonth()+1)+'-'+tkP2(dt.getDate()),{ font:FSong, size:20, color:'808080' }) ] }));
     paras.push(new P({ alignment:AT.CENTER, spacing:{ before:720, after:60, line:320, lineRule:'auto' },
       children:[ R('金米财税',{ font:FHei, size:26, bold:true, color:'B45309' }) ] }));
     paras.push(new P({ alignment:AT.CENTER, spacing:{ after:40, line:300, lineRule:'auto' },
       children:[ R('让企业经营无难事',{ font:FSong, size:20, color:'808080' }) ] }));
-    paras.push(new P({ alignment:AT.CENTER, spacing:{ after:60, line:300, lineRule:'auto' },
-      children:[ R('咨询热线：400-0123-860',{ font:FSong, size:20, color:'808080' }) ] }));
   }
 
   /* 一、客户情况（表格，对客视角，完整呈现登记信息） */
@@ -3341,6 +3368,15 @@ async function genPlanDoc(text, d){
       left:{style:BS.SINGLE,size:4,color:'E0D5C0'}, right:{style:BS.SINGLE,size:4,color:'E0D5C0'},
       insideHorizontal:{style:BS.SINGLE,size:2,color:'ECE3D6'}, insideVertical:{style:BS.SINGLE,size:2,color:'ECE3D6'} },
     rows:[hdrRow].concat(dataRows) }));
+  /* 业务概况综述（把表格信息整合成一段可读的画像） */
+  var bp='业务概况：贵司主营 '+(TK&&TK.plats&&TK.plats.length?TK.plats.map(tkPName).join('、'):'跨境电商业务');
+  if(TK&&TK.subs!=null) bp+='，'+(TK.subs>1?('共 '+TK.subs+' 个站点 / 主体'):'单站点经营');
+  if(TK&&TK.flow!=null) bp+='，年销售额约 '+TK.flow+' 万元';
+  bp+='，注册于'+((TK&&TK.city==='sz')?'深圳':((TK&&TK.city==='out')?'外地':'待确认城市'))+'，纳税人性质为'+(safeAns('entity')||'待确认')+'。';
+  bp+='当前申报方式为'+(safeAns('file')||'待确认')+'，报关抬头为'+(safeAns('decl')||'待确认')+'，'+(safeAns('qual')||'出口资质待确认')+'。';
+  if(TK&&TK.sms==='y') bp+='需特别说明：贵司已收到税务机关的提醒短信，历史申报数据存在需要更正的情形，本方案已将历史遗留数据处理单列并给出落地步骤。';
+  paras.push(new P({ spacing:{ before:160, after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED,
+    children:[ R(bp,{ font:FSong, size:21 }) ] }));
 
   /* 二、合规诊断（不合规 / 待确认项 + 可能带来的危害，对客视角） */
   paras.push(hdg('二、合规诊断', true));
@@ -3360,9 +3396,17 @@ async function genPlanDoc(text, d){
     paras.push(new P({ spacing:{ after:140, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[ R(it.line,{ font:FSong, size:21 }) ] }));
   }
   if(di===0) paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[ R('经核查，贵司目前各项均合规，可按以下方案把流程固化下来。',{ font:FSong, size:21 }) ] }));
+  else paras.push(new P({ spacing:{ before:160, after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[
+    R('诊断小结：',{ font:FHei, size:21, bold:true, color:'7A5A12' }),
+    R('本次共识别出 '+di+' 项需要处理的事项。上述问题的共同影响是：出口业务在税务上缺乏完整依据，销售额可能被要求按视同内销补缴增值税及滞纳金，并存在 0.5~5 倍罚款风险；零申报或按回款申报的口径与税务机关掌握的平台推送数据不一致，易触发预警、约谈乃至税务异常。建议按下方「落地方案」的顺序逐项落实，并同步处理历史遗留数据。',{ font:FSong, size:21 })
+  ] }));
 
   /* 三、落地方案（具体怎么执行，对客视角） */
   paras.push(hdg('三、落地方案', true));
+  paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[
+    R('推进原则：',{ font:FHei, size:21, bold:true, color:'7A5A12' }),
+    R('整体按「先合规、再核定」推进——先把出口资质、免税备案、按汇总单如实申报这三项跑通，形成稳定的合规申报口径，再处理历史遗留数据并对接核定征收。顺序不可颠倒：未合规先行申请核定，税务机关不予受理；先动手补税而未算清缺口，又容易多缴。以下为具体执行步骤：',{ font:FSong, size:21 })
+  ] }));
   var S=roadmap(d);
   for(var j=0;j<S.length;j++){
     var s=S[j];
@@ -3371,23 +3415,101 @@ async function genPlanDoc(text, d){
     paras.push(new P({ spacing:{ after:30, line:320, lineRule:'auto' }, indent:{ left:380 }, children:[ R('需贵司提供：',{ font:FSong, size:21, bold:true, color:'7C3AED' }), R(clCli(s.cli).join('、'),{ font:FSong, size:21 }) ] }));
     paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, indent:{ left:380 }, children:[ R('完成标志：',{ font:FSong, size:21, bold:true, color:'7C3AED' }), R(clClean(s.done),{ font:FSong, size:21 }) ] }));
   }
+  paras.push(new P({ spacing:{ before:160, after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[
+    R('预期效果：',{ font:FHei, size:21, bold:true, color:'B45309' }),
+    R('以上步骤完成后，贵司将具备自属报关单与出口免税依据，增值税可按出口免税口径降至 0；申报口径与平台汇总单一致，平台佣金、FBA 配送、仓储、广告等支出可据实录入成本，企业所得税通过核定征收与人力成本专项规划进一步优化。日常只需按月导出汇总单，即可稳定维持合规状态。',{ font:FSong, size:21 })
+  ] }));
 
-  /* 历史遗留数据处理方案（按客户实际情况定制，最重要的部分） */
-  var hp=histPlan(d);
+  /* 历史遗留数据处理方案（按客户实际情况定制，最重要的部分）：落地步骤 + 税费测算对比 + 处理方案 */
+  var hp=histPlan(d), htc=histTaxCompare();
   paras.push(new P({ spacing:{ before:280, after:120, line:320, lineRule:'auto' },
     border:{ bottom:{ style:BS.SINGLE, size:10, color:'E0D5C0', space:6 } },
     children:[ R('历史遗留数据处理方案',{ font:FHei, size:26, bold:true, color:'B45309' }) ] }));
   var hpCtx='结合贵司实际情况（'+hp.entName+' · '+hp.cityName;
   if(A.flow!=null&&A.flow!=='na'&&Number(A.flow)>0) hpCtx+=' · 年销售额约 '+Math.round(Number(A.flow))+' 万';
-  hpCtx+='），历史遗留数据建议按以下方案处理：';
+  hpCtx+='），历史遗留数据按「先合规、再核定」的顺序处理，具体落地步骤如下：';
   paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[ R(hpCtx,{ font:FSong, size:21 }) ] }));
-  paras.push(new P({ spacing:{ before:160, after:80, line:320, lineRule:'auto' }, children:[ R('（一）增值税处理',{ font:FHei, size:22, bold:true, color:'2A2118' }) ] }));
+
+  /* （一）落地步骤 */
+  paras.push(new P({ spacing:{ before:160, after:80, line:320, lineRule:'auto' }, children:[ R('（一）落地步骤',{ font:FHei, size:22, bold:true, color:'2A2118' }) ] }));
+  var hpSteps=[
+    '第一步｜调取平台后台对应季度的汇总单流水，与原代账的申报表进行差额比对，形成「历史数据缺口表」，逐季列示销售额差异。',
+    '第二步｜分别按「如实补缴」与「走免税备案」两条路径测算补缴税款及滞纳金，向贵司列示具体金额，供贵司比选确定补法。',
+    '第三步｜待出口资质、免税备案等合规流程跑通后，再对接主管税务机关沟通核定征收——顺序不可颠倒，未合规先行申请核定，税务机关不予受理。'
+  ];
+  for(var hs=0;hs<hpSteps.length;hs++) paras.push(new P({ spacing:{ after:30, line:320, lineRule:'auto' }, indent:{ left:380, hanging:240 }, children:[ R('· '+hpSteps[hs],{ font:FSong, size:21 }) ] }));
+
+  /* （二）需贵司提供的资料（按季度汇总单口径，不按整年流水） */
+  paras.push(new P({ spacing:{ before:160, after:80, line:320, lineRule:'auto' }, children:[ R('（二）需贵司提供的资料',{ font:FHei, size:22, bold:true, color:'2A2118' }) ] }));
+  var hpMats=[
+    '平台后台对应季度的汇总单流水（按需梳理的季度逐季提供即可；贵司经营不足三年的，按实际经营期间的季度汇总单提供，无须提供近三年全量流水）。',
+    '原代账的申报表和完税凭证（用于与汇总单差额比对）。',
+    '营业执照、公章。'
+  ];
+  for(var hm=0;hm<hpMats.length;hm++) paras.push(new P({ spacing:{ after:30, line:320, lineRule:'auto' }, indent:{ left:380, hanging:240 }, children:[ R('· '+hpMats[hm],{ font:FSong, size:21 }) ] }));
+  paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED,
+    children:[ R('注：汇总单可由平台后台直接导出（income 一侧为销售额−退货，expenses 一侧为佣金 / 配送 / 仓储 / 广告等平台支出），是差额比对与成本录入的核心依据。',{ font:FSong, size:20, color:'7A5A12' }) ] }));
+
+  /* （三）税费测算与两条路径对比 */
+  paras.push(new P({ spacing:{ before:160, after:80, line:320, lineRule:'auto' }, children:[ R('（三）税费测算与路径对比',{ font:FHei, size:22, bold:true, color:'2A2118' }) ] }));
+  if(htc.ok){
+    var cm={ top:90, bottom:90, left:140, right:110 };
+    function hRow(a,b,c,shade,bold){
+      return new TR({ children:[
+        new TC({ width:{ size:30, type:WT.PERCENTAGE }, shading:{ fill:shade }, margins:cm,
+          children:[ new P({ spacing:{ line:300, lineRule:'auto' }, children:[ R(a,{ font:FHei, size:20, bold:!!bold, color:bold?'B45309':'7A5A12' }) ] }) ] }),
+        new TC({ width:{ size:35, type:WT.PERCENTAGE }, shading:{ fill:shade }, margins:cm,
+          children:[ new P({ spacing:{ line:300, lineRule:'auto' }, children:[ R(b,{ font:FSong, size:20, bold:!!bold }) ] }) ] }),
+        new TC({ width:{ size:35, type:WT.PERCENTAGE }, shading:{ fill:shade }, margins:cm,
+          children:[ new P({ spacing:{ line:300, lineRule:'auto' }, children:[ R(c,{ font:FSong, size:20, bold:!!bold }) ] }) ] })
+      ] });
+    }
+    paras.push(new T({ width:{ size:100, type:WT.PERCENTAGE },
+      borders:{ top:{style:BS.SINGLE,size:4,color:'E0D5C0'}, bottom:{style:BS.SINGLE,size:4,color:'E0D5C0'},
+        left:{style:BS.SINGLE,size:4,color:'E0D5C0'}, right:{style:BS.SINGLE,size:4,color:'E0D5C0'},
+        insideHorizontal:{style:BS.SINGLE,size:2,color:'ECE3D6'}, insideVertical:{style:BS.SINGLE,size:2,color:'ECE3D6'} },
+      rows:[
+        hRow('测算项目','路径一：如实补缴','路径二：合规处理（免税 + 核定）','B45309',true),
+        hRow('年销售额（测算基数）', htc.sales+' 万元', htc.sales+' 万元','FFFFFF',false),
+        hRow('增值税', htc.vat1+' 万元（按内销 '+Math.round(htc.vatRate*100)+'% 补缴）', '0 元（出口免税）','FBF3E4',false),
+        hRow('企业所得税', htc.cit1+' 万元（明细账口径 '+Math.round(htc.citRate*100)+'%）', htc.cit2Low+' ~ '+htc.cit2High+' 万元（核定约 2%~4%）','FFFFFF',false),
+        hRow('滞纳金（日万分之五）', htc.late+' 万元（按约 12 个月估算）', '无（合规后不产生）','FBF3E4',false),
+        hRow('罚款风险（0.5~5 倍）', htc.fineLow+' ~ '+htc.fineHigh+' 万元', '无（合规后不产生）','FFFFFF',false),
+        hRow('合计', htc.low1+' ~ '+htc.high1+' 万元', htc.cit2Low+' ~ '+htc.cit2High+' 万元','FBF3E4',true)
+      ] }));
+    paras.push(new P({ spacing:{ before:120, after:60, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[
+      R('测算说明：',{ font:FHei, size:21, bold:true, color:'7A5A12' }),
+      R('按贵司年销售额约 '+htc.sales+' 万测算（成本估算：平台成本约 '+htc.plat+' 万、采购成本约 '+htc.purch+' 万、人力约 '+htc.labor+' 万'+(htc.head>0?('（'+htc.head+' 人 × 6 万/年）'):'')+'）。路径一为被核查倒查或主动补缴的代价，除税款外还需承担滞纳金与罚款风险；路径二为合规后的正常税负。',{ font:FSong, size:21 })
+    ] }));
+    paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[
+      R('对比结论：',{ font:FHei, size:21, bold:true, color:'B45309' }),
+      R('按上述测算，合规处理相比如实补缴预计可节省税费支出约 '+htc.saveLow+' ~ '+htc.saveHigh+' 万元，并同时消除滞纳金与罚款风险。金额随实际缺口表数据浮动，最终以逐季汇总单核对结果为准。',{ font:FSong, size:21 })
+    ] }));
+  } else {
+    paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED,
+      children:[ R('待贵司提供对应季度的汇总单流水、形成缺口表后，我方将按「如实补缴」与「走免税备案」两条路径分别测算补缴税款及滞纳金，向贵司列示具体金额。',{ font:FSong, size:21 }) ] }));
+  }
+
+  /* （四）增值税处理方案 */
+  paras.push(new P({ spacing:{ before:160, after:80, line:320, lineRule:'auto' }, children:[ R('（四）增值税处理方案',{ font:FHei, size:22, bold:true, color:'2A2118' }) ] }));
   for(var vi=0;vi<hp.vat.length;vi++) paras.push(new P({ spacing:{ after:30, line:320, lineRule:'auto' }, indent:{ left:380, hanging:240 }, children:[ R('· '+hp.vat[vi],{ font:FSong, size:21 }) ] }));
-  paras.push(new P({ spacing:{ before:160, after:80, line:320, lineRule:'auto' }, children:[ R('（二）企业所得税处理',{ font:FHei, size:22, bold:true, color:'2A2118' }) ] }));
+  /* （五）企业所得税处理方案 */
+  paras.push(new P({ spacing:{ before:160, after:80, line:320, lineRule:'auto' }, children:[ R('（五）企业所得税处理方案',{ font:FHei, size:22, bold:true, color:'2A2118' }) ] }));
   for(var ci=0;ci<hp.cit.length;ci++) paras.push(new P({ spacing:{ after:30, line:320, lineRule:'auto' }, indent:{ left:380, hanging:240 }, children:[ R('· '+hp.cit[ci],{ font:FSong, size:21 }) ] }));
 
   /* 四、关于我们（品牌内容来自公司企业简章） */
   paras.push(hdg('四、关于我们', true));
+  paras.push(new P({ spacing:{ after:80, line:320, lineRule:'auto' }, children:[ R('（一）服务保障',{ font:FHei, size:22, bold:true, color:'2A2118' }) ] }));
+  var guar=[
+    '专属跨境会计交付：跨境账目由专职会计按明细账核算，平台成本按汇总单逐站点、逐月录入，不做一笔打包入账。',
+    '月度账税报告：每月申报前出具报告，列明利润、报关数额、免税额度及账目问题，并有财税老师电话或群内专项讲解。',
+    '合同服务承诺：跨境服务合同内约定季度服务不满意可按约申请退费，以合同条款为准。',
+    '数字化查账：贵司可通过微信小程序随时查看每月整体账税情况及三大报表数据。',
+    '资金链路优化：可协助搭建网商银行收款方案，实现回款免手续费并提供较优汇率，降低资金成本。',
+    '全程陪跑：从尽调、方案设计到落地执行的全周期服务，协助应对税务机关沟通与核查情况说明。'
+  ];
+  for(var gi=0;gi<guar.length;gi++) paras.push(new P({ spacing:{ after:30, line:320, lineRule:'auto' }, indent:{ left:380, hanging:240 }, children:[ R('· '+guar[gi],{ font:FSong, size:21 }) ] }));
+  paras.push(new P({ spacing:{ before:160, after:80, line:320, lineRule:'auto' }, children:[ R('（二）品牌介绍',{ font:FHei, size:22, bold:true, color:'2A2118' }) ] }));
   if(PLAN_DOC_BRAND.lines && PLAN_DOC_BRAND.lines.length){
     for(var b=0;b<PLAN_DOC_BRAND.lines.length;b++){
       paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[ R(PLAN_DOC_BRAND.lines[b],{ font:FSong, size:21 }) ] }));
@@ -4148,10 +4270,10 @@ function roadmap(d){
             '分别按"如实补缴"与"走免税备案"两条路径测算补税及滞纳金，给出具体金额',
             '待合规跑通后再行对接核定征收——顺序颠倒税局不予受理'],
       watch:'别让客户先自己去税局问——问错口径，后面要花双倍力气圆回来',
-      cli:['平台后台近 3 年流水导出','原代账的申报表和完税凭证','营业执照、公章'],
+      cli:['平台后台对应季度的汇总单流水（按需梳理的季度逐季导出，无须近三年全量）','原代账的申报表和完税凭证','营业执照、公章'],
       talk:'"税局现在要求您合规申报。历史数据这块我们可以帮您去聊核定，但聊核定的前提是合规——现在税局的方针就是先合规、再核定，不合规他们不给做核定。这个您能理解吧？"',
       ask:'blk2',
-      up:'把近 3 年的平台流水、银行流水、申报表按年归档，一次备齐——后面每个环节都要用到',
+      up:'把需处理季度的汇总单、银行流水、申报表按季归档，一次备齐——后面每个环节都要用到',
       done:'您选定补法，历史这块有明确的结案口径'});
   }
   else if(d.decl==='有'){
@@ -4363,7 +4485,7 @@ function blocksOf(d){
    原则：不写要点、不写标签、不用破折号分句。新人拿起来照着念就是一段完整的话。 */
 
 var FULL_TALK={
-s1:'补肯定是要补的，现在不用纠结补不补，就看怎么补最省。您先把近三年的平台后台流水导出来发我，我拿它跟原来代账报的税比一遍，差多少，一笔一笔列出来，做成一张缺口表。然后我按两条路各算一遍：一条是老实补，1% 的增值税加滞纳金，滞纳金一天万分之五，越晚越多；另一条是把进出口权办下来走免税备案，企业所得税那边按核定去谈。两个数摆您面前，您自己挑，我不替您选。有三样东西您得给我：三年流水、原代账的申报表和完税凭证、营业执照和公章。还有一句我得先说在前面，这个阶段您先别自己去税务局问，问的口径不一样，后面要花双倍的时间往回解释。',
+s1:'补肯定是要补的，现在不用纠结补不补，就看怎么补最省。您先把需要处理的那几个季度的平台汇总单导出来发我，一个季度一张，有多少给多少，不满三年没关系，做多久给多久的。我拿它跟原来代账报的税比一遍，差多少，一笔一笔列出来，做成一张缺口表。然后我按两条路各算一遍：一条是老实补，1% 的增值税加滞纳金，滞纳金一天万分之五，越晚越多；另一条是把进出口权办下来走免税备案，企业所得税那边按核定去谈。两个数摆您面前，您自己挑，我不替您选。有三样东西您得给我：对应季度的汇总单、原代账的申报表和完税凭证、营业执照和公章。还有一句我得先说在前面，这个阶段您先别自己去税务局问，问的口径不一样，后面要花双倍的时间往回解释。',
 
 s2:'这一步您不用自己跑，全部由我们代办。您给我四样东西：营业执照正副本、法人身份证、公章，再加一个银行开户信息。我这边先把经营范围加上货物进出口，然后去办理对外贸易经营者备案和海关收发货人备案，再申领电子口岸 IC 卡，最后帮您绑定一家报关行。有一点我提前说清楚，经营范围变更、备案、IC 卡是分步办的，出件时间以主管部门实际办理为准，所以我没法跟您承诺下周就能报关。办理过程中您跟货代打个招呼，以后报关单抬头写您自己公司，别再用他们的。',
 
