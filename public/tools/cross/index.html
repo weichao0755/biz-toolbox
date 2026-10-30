@@ -483,6 +483,22 @@
   .copybar button.g2{border-color:var(--border);background:var(--surface);color:var(--text-2)}
   .copybar button.wide{grid-column:1/-1}
 
+  /* —— 方案编辑 / 图片生成 —— */
+  .plan-imgbar{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 2px}
+  .plan-imgbar button{padding:9px 13px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;cursor:pointer;flex:0 0 auto}
+  .plan-imgbar button:hover{background:var(--accent-bg)}
+  .plan-imgbar button.cbtn{flex:0 1 auto;color:var(--accent);border-color:var(--accent-2)}
+  .plan-imgbar button.pri{border-color:var(--accent-2);background:var(--accent-bg);color:var(--accent)}
+  .plan-imgbar button.wide{flex:1 1 auto}
+  .plan-edit{outline:2px dashed var(--accent-2);border-radius:10px;padding:8px 10px;background:var(--accent-bg);margin:6px 0}
+  .plan-edit:focus{outline-color:var(--accent)}
+  .plan-img-modal{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;flex-direction:column;align-items:center;overflow:auto;z-index:9999;padding:18px;gap:14px}
+  .plan-img-modal img{max-width:92vw;height:auto;background:#fff;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.4);display:block;margin:0 auto}
+  .pim-head{position:sticky;top:0;background:rgba(20,14,6,.72);color:#fff;font-size:12.5px;padding:7px 14px;border-radius:999px;margin-bottom:2px;z-index:2}
+  .pim-page{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .pim-page .btn, .pim-foot .btn{width:auto;padding:9px 18px;font-size:13px;font-weight:600;font-family:inherit}
+  .pim-foot{position:sticky;bottom:0;display:flex;gap:10px;background:rgba(20,14,6,.72);padding:9px 14px;border-radius:12px;margin-top:4px;z-index:2}
+
   /* ===== v5.0 · 沟通台 ===== */
   .tk-top{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);
     padding:8px 2px 9px;border-bottom:1px solid var(--border);margin-bottom:12px}
@@ -551,6 +567,8 @@
   .his-h span{font-size:11px;color:var(--muted);white-space:nowrap}
   .his-m{font-size:11.8px;color:var(--text-2);margin-top:4px;line-height:1.6}
   .his-b{display:flex;gap:6px;margin-top:8px}
+  .his-aitag{font-size:10.5px;line-height:1;color:var(--accent);background:#fbf3e4;border:1px solid #ecdcc2;
+    padding:3px 7px;border-radius:20px;align-self:center;white-space:nowrap;font-weight:600}
   .tk-go{width:100%;padding:12px;border:0;border-radius:11px;background:var(--grad);color:#fff;
     font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;box-shadow:0 6px 16px -8px rgba(180,83,9,.6)}
   .tk-go[disabled]{background:var(--border);color:var(--muted);box-shadow:none;cursor:default}
@@ -1764,6 +1782,7 @@ function tkRender(){
     dock.innerHTML=tkAskRowHTML()+
       '<div class="tk-chips">'+tkChipsHTML()+'</div>'+
       '<div class="tk-btns"><button class="tk-b2" onclick="tkRec()">生成客户记录</button>'+
+      (TK._from==='his'?'<button class="tk-b2" onclick="tkHis()">返回历史</button>':'')+
       '<button class="tk-go" onclick="tkReset()">再开一单</button></div>';
     return;
   }
@@ -2032,6 +2051,7 @@ function tkRecHTML(){
 
   var h='<div class="tk-rec"><div class="rec-h">客户沟通记录</div><div class="rec-sub">金米财税 · 跨境合规首咨</div>';
   h+='<div class="rec-meta">客户编号 <b>'+(TK.cid||'未填')+'</b>　｜　记录时间 '+at+'　｜　沟通人 '+(TK_ME?('<b>'+TK_ME+'</b>'):'________')+'</div>';
+  if(TK._recId) h+='<div style="margin:10px 0 2px"><button class="tk-cp" onclick="tkHisPlan(\''+TK._recId+'\')">查看对应方案</button></div>';
 
   h+=recSec('一、客户基本盘',[
     ['主体数量',TK.subs+' 个'],
@@ -2163,6 +2183,13 @@ function tkHisSave(){
   for(i=0;i<a.length;i++){ if(a[i].cid===cid){ hit=i; break; } }
   TK._savedAt=Date.now();
   var rec={id:(hit>=0?a[hit].id:'r'+Date.now()+'_'+Math.floor(Math.random()*900+100)),cid:cid,at:TK._savedAt,data:TK};
+  /* 这条记录在「实时方案」阶段生成的 AI 结论落在 live_<cid> 下；存成历史记录后要把它迁到 rec.id，
+     否则从历史再点开方案时 aiRestore 按 rec.id 读不到，会重新打接口烧 token */
+  try{
+    var fk=planRecId();
+    if(fk!==rec.id){ var prev=aiOutGet(fk); if(prev) aiOutSet(rec.id,prev); }
+  }catch(e){}
+  TK._recId=rec.id;
   if(hit>=0) a[hit]=rec; else a.unshift(rec);
   var ok=tkHisWrite(a);
   return {ok:ok,n:a.length,updated:hit>=0};
@@ -2188,10 +2215,30 @@ function tkHisView(id){
   for(i=0;i<a.length;i++){
     if(a[i].id===id){
       var snap=JSON.parse(JSON.stringify(a[i].data));
-      snap.stage='rec'; snap._ro=true; snap._from='his'; snap._hisNote=''; snap._savedAt=a[i].at;
+      snap.stage='rec'; snap._ro=true; snap._from='his'; snap._hisNote=''; snap._savedAt=a[i].at; snap._recId=a[i].id;
       TK=snap; tkRender(); window.scrollTo(0,0); return;
     }
   }
+}
+/* 历史记录 → 直接查看「对应生成的方案」（复用当前记录数据重算方案，可编辑/保存/出图） */
+function tkHisPlan(id){
+  var a=tkHisAll(),i;
+  for(i=0;i<a.length;i++){
+    if(a[i].id===id){
+      var snap=JSON.parse(JSON.stringify(a[i].data));
+      snap.stage='plan'; snap._ro=true; snap._from='his'; snap._hisNote=''; snap._savedAt=a[i].at; snap._recId=a[i].id;
+      if(snap._editing) snap._editing=false;
+      TK=snap; tkToA(); tkRender(); window.scrollTo(0,0); return;
+    }
+  }
+}
+/* 历史列表里的小标记：这条记录是否已存有 AI 方案（让销售一眼看出「查看方案」是复用还是新跑） */
+function tkAiTag(recId){
+  try{
+    var s=aiOutGet(recId);
+    if(s&&(s.plan||s.pain)) return '<span class="his-aitag">AI 方案已存</span>';
+  }catch(e){}
+  return '';
 }
 function tkHisHTML(){
   var a=tkHisAll(),h='',i;
@@ -2211,6 +2258,8 @@ function tkHisHTML(){
     h+='<div class="his"><div class="his-h"><b>'+esc2(r.cid)+'</b><span>'+tstr+'</span></div>'+
        '<div class="his-m">'+meta.join(' · ')+'</div>'+
        '<div class="his-b"><button class="tk-cp" onclick="tkHisView(\''+r.id+'\')">查看</button>'+
+       tkAiTag(r.id)+
+       '<button class="tk-cp" onclick="tkHisPlan(\''+r.id+'\')">查看方案</button>'+
        '<button class="tk-cp dgr" onclick="tkHisDel(\''+r.id+'\')">删除</button></div></div>';
   }
   h+='</div>';
@@ -2258,6 +2307,10 @@ function tkToA(){
   A.staff=TK.staff||'na';
   A.staffN=(TK.staffN==null||TK.staffN==='')?null:Number(TK.staffN);
   A.asks=(TK.asks||[]).slice();
+  /* 切换记录时先把上一单的 AI 结论清空，避免串到这一单；再按本记录 id 读回已存结论 */
+  AIPLAN=null; AI_NOW={}; AIPAIN=null;
+  /* 这条记录以前跑过 AI 就原样读回：刷新或从历史再点开都不必重新请求，省 token */
+  aiRestore();
 }
 function tkPlan(){
   TK.stage='plan';
@@ -2616,12 +2669,12 @@ function derive(){
   if(!f) return {plat:A.platform,platN:P.n,n:'待确认',mode:'待确认',decl:'待确认',mian:'待确认',tui:'待确认',why:'发货方式没拿到，判定做不了',c:'待确认',ok:'—',no:'—',modeShow:'待确认'};
   var d={plat:A.platform, platN:P.n, n:f.n, fulN:f.n, mode:f.mode, decl:f.decl, mian:f.mian,
           tui:f.tui, why:f.why, c:f.c, ok:f.ok, no:f.no, declK:(A.decl||''), declN:declName(A.platform),
-          cf:'', modeShow:f.mode==='转合规'?'转合规报关（先办进出口权）':f.mode+' '+MODEN[f.mode]};
+          cf:'', modeShow:f.mode==='转合规'?(ieState().ie?'转合规报关（改用自有抬头）':'转合规报关（先办进出口权）'):f.mode+' '+MODEN[f.mode]};
   /* —— 第二维：报关方式。报关单写谁的名字，比货怎么发更要紧 —— */
   var dc=A.decl||'';
   if(dc==='maidan'||dc==='ddp'){
     d.mode='转合规'; d.decl='无'; d.mian='不可'; d.tui='不可'; d.c='硬约束';
-    d.modeShow='转合规报关（先办进出口权）';
+    d.modeShow=ieState().ie?'转合规报关（改用自有抬头）':'转合规报关（先办进出口权）';
     d.why=(dc==='maidan'
       ?'货是按「'+f.n+'」出去的，但报关单写的是卖单公司的抬头——客户手里没有自己名下报关单，免税、退税都不成立，还会被视同内销补增值税。'
       :'DDP 双清由货代包办出口和进口清关，报关单在货代名下——货怎么发都不改变这个结论，客户拿不到自己的出口凭证。');
@@ -2709,7 +2762,7 @@ function faqScore(it,W){
    基础合规 / 出口合规 / 申报合规 / 成本合规 / 历史遗留
    每条给出：现状 → 判定（不合规 / 待确认 / 合规）→ 具体问题 → 对应第几步整改 */
 /* 资质办理的标准动作链：写成具体办理事项全名，不用抽象代称（参照首资话术口径） */
-var QUALCHAIN='办理链条：经营范围增项（货物进出口、技术进出口）→ 办理进出口权 → 进出口权备案（收发货人备案、跨境电商企业备案）→ 申领电子口岸 IC 卡（报关用 U 盾）→ 办理免税备案 → 出口免税栏（13 栏）填报。';
+function qualChain(){ if(A.impExp) return '办理链条：申领电子口岸 IC 卡（报关用 U 盾）→ 办理免税备案 → 出口免税栏（13 栏）填报。'; return '办理链条：经营范围增项（货物进出口、技术进出口）→ 办理进出口权 → 进出口权备案（收发货人备案、跨境电商企业备案）→ 申领电子口岸 IC 卡（报关用 U 盾）→ 办理免税备案 → 出口免税栏（13 栏）填报。'; }
 function planCheck(d){
   var rows=[],f=(PLAT[A.platform]&&PLAT[A.platform].ful[A.ful])||null;
   var declTxt={self:'客户自己公司抬头',maidan:'货代买单',ddp:'双清包税',plat:'平台代报',na:'待确认'}[A.decl]||'还没问';
@@ -2719,10 +2772,10 @@ function planCheck(d){
   var v0='ok',i0='',q=(A.qual||'');
   if(q==='both'){ i0='进出口权、免税备案均已办理，客户可取得自己名下的出口报关凭证，该项合规基础已具备。'; }
   else if(q==='qualOnly'){ v0='bad';
-    i0='有进出口权，但免税备案没做——报关能报，13 栏（出口免税栏）填不进去，等于报了关还是免不了税。需先办理免税备案，出口免税栏（13 栏）才能填报，这是这一步里最容易漏的。'+QUALCHAIN; }
+    i0='有进出口权，但免税备案没做——报关能报，13 栏（出口免税栏）填不进去，等于报了关还是免不了税。需先办理免税备案，出口免税栏（13 栏）才能填报，这是这一步里最容易漏的。'+qualChain(); }
   else if(q==='none'){ v0='bad';
     i0='公司没有进出口权、也没做免税备案，货是借'+declTxt+'的抬头出去的，没有报关单、也没有报关清单。这个基础不存在，销售额在税务上就视同内销。'
-      +'需先办理进出口权，再办理免税备案，之后出口免税栏（13 栏）才能填报。'+QUALCHAIN
+      +'需先办理进出口权，再办理免税备案，之后出口免税栏（13 栏）才能填报。'+qualChain()
       +(A.qualFromBase?'<b>基本盘那两个勾没打，按「未办理」计</b>——这是默认口径，不是客户确认过的答案，见到老板时还要再核实一句。':''); }
   else if(q==='na'){ v0='warn'; i0='出口资质客户无法说明——该项为其余各项结论的前置条件，未核实前不宜继续推进。可先依据报关抬头反推。'; }
   else if(d.decl==='有'){ i0='按报关抬头看是客户自己报关，出口凭证拿得到；但进出口权和免税备案有没有，还要再确认一句。'; }
@@ -2762,7 +2815,7 @@ function planCheck(d){
   if(A.invoice==='none'&&tgt&&tgt!=='1039') advWhy+='　无票那部分也可以考虑 1039（免征不退）——两条路不冲突，分开走。';
   if(adv){
     i1+=(i1?'　':'')+'<b>建议报关方式：'+adv+'</b>。'+advWhy;
-    if(d.decl==='无') i1+='　注意执行顺序：需先办理进出口权与免税备案，再按该报关模式申报；前置资质未完成即调整报关模式，不具备实际效果。';
+    if(d.decl==='无') i1+='　注意执行顺序：'+(A.impExp?'需先办理免税备案':'需先办理进出口权与免税备案')+'，再按该报关模式申报；前置资质未完成即调整报关模式，不具备实际效果。';
   }else if(d.modeShow&&d.modeShow!=='待确认'){
     i1+=(i1?'　':'')+'<b>建议报关方式：'+d.modeShow+'</b>。';
   }
@@ -2891,11 +2944,22 @@ var PLAN_META={
 };
 
 function planOutline(d){
+  var single = (typeof platList==='function'? platList().length : 1)<=1;
+  var ed = (!!TK._editing) && single;
+  var recId = planRecId();
+  var saved = (single)? planEditGet(recId) : null;
+  var ckHTML = saved? saved.ck : planCheckHTML(d);
+  var olInner = saved? saved.ol : planOutlineBody(d);
+  var olSrc = saved? (saved.olText||'') : outlineTextClient(d);
+  var h='';
+  h+='<div id="ckEdit"'+(ed?' contenteditable="true" class="plan-edit"':'')+'>'+ckHTML+'</div>';
+  h+= planOlbar(ed,single);
+  h+='<div id="ol-src" style="display:none">'+String(olSrc).replace(/</g,'&lt;')+'</div>';
+  h+='<div id="olEdit" class="ol'+(ed?' plan-edit" contenteditable="true':'')+'">'+olInner+'</div>';
+  return h;
+}
+function planOutlineBody(d){
   var S=roadmap(d), h='';
-  h+=planCheckHTML(d);
-  h+='<div class="olbar"><button class="cbtn" onclick="copyTxt(\'ol-src\',this)">复制大纲，直接发客户</button></div>'
-    +'<div id="ol-src" style="display:none">'+outlineText(d).replace(/</g,'&lt;')+'</div>'
-    +'<div class="ol">';
   for(var i=0;i<S.length;i++){
     var s=S[i], M=PLAN_META[s.k]||{};
     h+='<div class="ol-row"><div class="ol-n">'+(i+1)+'</div><div class="ol-b">'
@@ -2910,7 +2974,7 @@ function planOutline(d){
       +(M.risk?'<div class="ol-rk"><b>不做会怎样：</b>'+M.risk+'</div>':'')
       +'</details></div></div>';
   }
-  return h+'</div>';
+  return h;
 }
 function outlineText(d){
   var S=roadmap(d), L=[], ck=planCheck(d), i, k;
@@ -2924,18 +2988,432 @@ function outlineText(d){
   L.push('');
   L.push('二、按优先级整改，共 '+S.length+' 步（前置不成立，后面一步都走不了）');
   for(i=0;i<S.length;i++){
-    var s=S[i], M=PLAN_META[s.k]||{};
+    var s=S[i];
     L.push((i+1)+'. '+s.t+'（'+s.time+'）');
-    if(M.pre) L.push('   前置：'+M.pre);
     for(k=0;k<s.acts.length;k++) L.push('   · '+s.acts[k]);
-    L.push('   客户需提供：'+s.cli.join('、'));
+    L.push('   您这边需要提供：'+s.cli.join('、'));
     L.push('   完成标志：'+s.done);
-    if(M.unlock) L.push('   做完解锁：'+M.unlock);
-    if(M.risk) L.push('   不做会怎样：'+M.risk);
   }
   L.push('');
   L.push('说明：出口免税以报关单金额与平台销售额一致为前提，差额部分按合规要求需缴增值税；具体口径以税务机关认定为准。');
   return L.join('\n');
+}
+
+/* ================= 对客版渲染层（2026-10-30 新增，给客户看的一切只从这里出） =================
+   铁律：① 称「您 / 贵司」，全文不得出现「客户」自称 ② 不得出现内部动作与未核实状态
+        （还没问清 / 要去问一句 / 见到老板 / 别混着讲 / 不得承诺 / 默认口径）③ 不得出现内部编号、
+        字段名直拼、内部黑话（第一性原则 / 建议报关方式 / 默认口径）④ 不复述「还没核实」这类内部
+        流程，改写成自然的确认表达 ⑤ 不复述「按较不利情形评估 / 不宜继续推进」这类机器分析腔套话。
+   内部版本（planCheck / outlineText / 留档）原样保留，仅供销售自己看，两者互不影响。 */
+var CL_MAP=[['客户公司','贵司'],['客户自己','贵司自己'],['客户手里','贵司'],['客户认可','您认可'],['客户','贵司']];
+function clClean(s){
+  s=String(s==null?'':s);
+  s=s.replace(/（第一性原则）|\(第一性原则\)/g,'').replace(/（因[^）]{0,20}）|\(因[^)]{0,20}\)/g,'');
+  for(var i=0;i<CL_MAP.length;i++) s=s.split(CL_MAP[i][0]).join(CL_MAP[i][1]);
+  return s.replace(/\s{2,}/g,' ').trim();
+}
+/* 字段名的自然话替换：必须整项精确匹配，避免把「操作员身份证」误改成「纳税身份」 */
+var CL_F={'身份':'纳税身份（小规模 / 一般纳税人）','人数':'员工人数','申报口径':'目前的申报方式','年流水':'年销售额','城市':'所在城市'};
+function clCli(list){
+  var out=[],i;
+  for(i=0;i<(list||[]).length;i++){
+    var x=String(list[i]);
+    if(CL_F[x]!=null){ out.push(CL_F[x]); continue; }
+    out.push(clClean(x));
+  }
+  return out;
+}
+/* 五项现状的客户视角结论句（每条 1~3 句，只讲现状和影响，不写内部动作，不讲未核实状态） */
+function ckClient(d){
+  var _ie=ieState(), R=[], q=A.qual||'', i;
+  /* ① 出口资质 */
+  if(q==='both'||(_ie.ie&&_ie.tf)){
+    R.push({t:'出口资质　已经没问题',tag:'ok',line:'贵司的进出口权和出口免税备案都已经办好，出海这块的资质是齐的。后面只要把报关抬头换回贵司自己的名字，就有自己的出口凭证了。'});
+  } else if(q==='qualOnly'||(_ie.ie&&!_ie.tf)){
+    R.push({t:'出口资质　免税备案还没补上',tag:'bad',line:'贵司已经办了进出口权，但出口免税备案还没做。这一项不补上，申报表上的 13 栏（出口免税栏）填不进去，出口免税和退税暂时都还谈不上。'});
+  } else if(q==='none'||d.decl==='无'){
+    R.push({t:'出口资质　还没办下来',tag:'bad',line:'贵司目前还没有办理进出口权，也没有做出口免税备案，货是借别的抬头出去的，所以手里没有自己名下的报关单。这一项不成立，销售额在税务上只能视同内销处理，出口免税和退税也就没有依据。'});
+  } else {
+    R.push({t:'出口资质　还需要再确认一次',tag:'warn',line:'出口资质这块我们再跟您对一遍落实情况。确认之后，后面的安排就能一次到位，不用返工。'});
+  }
+  /* ② 报关单抬头 */
+  var dn={self:'贵司自己公司抬头',maidan:'货代买单',ddp:'双清包税',plat:'平台代报',na:'待定'}[A.decl]||'待定';
+  if(d.decl==='有'){
+    R.push({t:'报关单　已经是贵司抬头',tag:'ok',line:'报关单已经在贵司自己名下，出口这一环是通的，有自己的凭证。'});
+  } else if(d.decl==='部分'){
+    R.push({t:'报关单　只有一部分是贵司抬头',tag:'warn',line:'现在有一部分报关单是贵司抬头、有一部分不是。按还没有的那部分算，出口凭证这一环还不算完整。'});
+  } else if(d.decl==='无'){
+    R.push({t:'报关单　拿不到贵司抬头的',tag:'bad',line:'报关现在是走「'+dn+'」出去的，不是贵司的名字，所以贵司手里拿不到自己名下的报关单或报关清单。出口这一环没有自己的凭证，免税和退税就没有依据。'});
+  } else {
+    R.push({t:'报关单　还需要再确认一次',tag:'warn',line:'报关这块我们再跟您对一遍抬头的情况。确认清楚之后，后面的报关方式就能一次定下来。'});
+  }
+  /* ③ 申报口径 */
+  if(A.file==='real'){
+    R.push({t:'申报　口径站得住',tag:'ok',line:'贵司是按实际销售额申报的，收入和平台能对得上，这一项没有问题。'});
+  } else if(A.file==='cash'){
+    R.push({t:'申报　按回款在报，差额要补',tag:'bad',line:'目前是按平台打款额在申报，佣金、运费、退款没有算进去。差额这部分需要按合规口径补缴增值税。'});
+  } else if(A.file==='zero'){
+    R.push({t:'申报　一直是零申报',tag:'bad',line:'平台有流水，但一直是零申报，缺的是销售额全额。这不是少报，是没报，这部分敞口要先算清楚。'});
+  } else {
+    R.push({t:'申报　还需要再确认一次',tag:'warn',line:'申报这块我们再跟您对一遍口径。口径一定，后面每一期怎么报就清楚了。'});
+  }
+  /* ④ 成本 */
+  var c=[], costBad=false;
+  if(A.file==='zero'||A.file==='cash'){
+    c.push('平台费用（佣金、仓储、配送、广告）还没有按明细入账，这块成本暂时是空的。补齐之后，贵司的成本结构和账面利润才会回到合理水平。');
+    costBad=true;
+  }
+  if(A.invoice==='none'){ c.push('上游供应商明确开不了票，采购成本进不来账：增值税这边可以免，但企业所得税的利润会虚高，多交 25%。'); costBad=true; }
+  else if(A.invoice==='unknown'){ c.push('上游开票的情况还需要再落实一句，多数情况下普票开得出来，只加 1~3 个点。'); costBad=true; }
+  else if(A.invoice==='special'){ c.push('供应商只能开专票、还要加 8~10 个点。这个模式退不了税，专票的意义不大，谈普票就够了。'); }
+  else if(A.invoice==='normal'){ c.push('采购能开普票，成本可以正常进账，不用为专票多付税点。'); }
+  if(A.staff==='yes'){ c.push('贵司有在职员工，工资可以按年入账抵企业所得税，月薪 5000 以内不产生个税。'); }
+  else if(A.staff==='retired'){ c.push('返聘人员的报酬按劳务入账，成本一样能抵，月薪 5000 以内不产生个税。'); }
+  else if(A.staff==='no'){ c.push('公司目前没有员工工资这一项，成本只能靠平台费用和采购票来抵，企业所得税基本抵不掉。'); costBad=true; }
+  if(!c.length) c.push('成本这一块目前没有特别要处理的地方。');
+  R.push({t:'成本　'+(costBad?'还没回到合理水平':'没有明显缺口'),tag:(costBad?'bad':'ok'),line:c.join('')});
+  /* ⑤ 历史遗留 */
+  var hz=[], hb=false;
+  if(A.hist==='check'){ hz.push('以前被查过或者更正过。开工前要先确认那个案子有没有结案、补没补完，没有结案就动新方案，两件事会被算到一起。'); hb=true; }
+  if(A.sms==='y'){
+    var qz=(A.smsQ&&A.smsQ.length)?A.smsQ.join('、'):'';
+    hz.push('税局已经就'+(qz?qz:'前几个季度')+'发过短信。'+(qz?'这几个季度':'这部分')+'要按实际销售额的口径更正，金额以实际数据为准；顺序上是先合规，再谈核定——不合规，核定申请不会被受理。');
+    hb=true;
+  }
+  if(histOf()==='zero'){ hz.push('一直零申报或者按回款申报，做跨境已经超过半年。平台按季报送之后，数据迟早会对不上，先把缺口算清楚再动手会更稳。'); hb=true; }
+  if(A.szExempt){ hz.push('深圳主体的 13 栏免税是默认开通的，过往的数据可以先尝试按免税填报，能免则免，免不了的差额再更正补税。'); }
+  if(!hz.length) hz.push('历史上没有存量问题，从今年开始按合规走就可以。');
+  R.push({t:'历史　'+(hb?'有存量要先处理':'没有问题'),tag:(hb?'bad':'ok'),line:hz.join('')});
+  return R;
+}
+function clTimeout(t){ return String(t==null?'':t).replace(/[（(]/g,'，').replace(/[）)]/g,'').replace(/^，/,'')||'以实际办理为准'; }
+/* 客户版全文： structuring 成"人写的方案"，不复述体检 Analysis，不与步骤重复 */
+function outlineTextClient(d){
+  var L=[], ck=ckClient(d), S=roadmap(d), i, k, need=0;
+  for(i=0;i<ck.length;i++){ if(ck[i].tag==='bad') need++; }
+  L.push('出口合规落地方案');
+  L.push('');
+  var head='您好，按贵司现在的情况（'+d.platN+' · '+d.n;
+  if(A.flow!=null&&A.flow!=='na'&&Number(A.flow)>0) head+='，年销售额约 '+Math.round(Number(A.flow))+' 万';
+  head+='），我们把出口这块整理了一遍。';
+  head+=(need>0? ('五件事里有 '+need+' 项需要处理，下面先说现状，再说怎么走。')
+               : ('五件事综合看下来没有明显的缺口，下面按这个思路把流程固化下来。'));
+  L.push(head);
+  L.push('');
+  L.push('一、现在的实际情况');
+  for(i=0;i<ck.length;i++){
+    L.push('');
+    L.push((i+1)+'）'+ck[i].t);
+    L.push('　'+ck[i].line);
+  }
+  L.push('');
+  L.push('二、接下来怎么走（共 '+S.length+' 步）');
+  for(i=0;i<S.length;i++){
+    var s=S[i];
+    L.push('');
+    L.push('第 '+(i+1)+' 步｜'+clClean(s.t)+'（'+clTimeout(s.time)+'）');
+    for(k=0;k<s.acts.length;k++) L.push('　· '+clClean(s.acts[k]));
+    L.push('　您这边需要提供：'+clCli(s.cli).join('、'));
+    L.push('　这一步做完：'+clClean(s.done));
+  }
+  L.push('');
+  L.push('三、说明两点');
+  L.push('· 上面每一步都会落到贵司自己的数字上，先把账算清楚，再动手办理。');
+  L.push('· 材料和外部对接由我们来跑，贵司把上面那几样准备好给我们就行。');
+  return L.join('\n');
+}
+/* —— 方案编辑 / 保存 / 图片生成（沟通台历史记录对应的方案可改文案，不影响原客户记录） —— */
+var PLAN_EDIT_KEY='cbx_plan_edit_v1';
+function planRecId(){ return (TK&&TK._recId)? TK._recId : ('live_'+(TK&&TK.cid?TK.cid:'na')); }
+function planEditGet(recId){
+  try{ var o=JSON.parse(localStorage.getItem(PLAN_EDIT_KEY)||'{}'); return o[recId]||null; }catch(e){ return null; }
+}
+function planEditSet(recId,ck,ckText,ol,olText){
+  try{ var o=JSON.parse(localStorage.getItem(PLAN_EDIT_KEY)||'{}'); o[recId]={ck:ck,ckText:ckText,ol:ol,olText:olText,at:Date.now()}; localStorage.setItem(PLAN_EDIT_KEY,JSON.stringify(o)); return true; }catch(e){ return false; }
+}
+/* 合规体检的纯文本版（用于图片生成，保证「一字不差」） */
+function checkText(d){
+  var C=planCheck(d), chip={bad:'不合规',warn:'待确认',ok:'合规'}, L=[];
+  L.push('【合规体检】');
+  for(var i=0;i<C.length;i++){
+    L.push('· '+C[i].dir+'：'+chip[C[i].v]+'——'+C[i].now+'；'+String(C[i].issue).replace(/<[^>]+>/g,''));
+  }
+  return L.join('\n');
+}
+function plainHTML(html){ var dv=document.createElement('div'); dv.innerHTML=html||''; return (dv.textContent||'').replace(/\s+/g,' '); }
+function planOlbar(ed,single){
+  if(!single) return '<div class="olbar"><button class="cbtn" onclick="copyTxt(\'ol-src\',this)">复制大纲，直接发客户</button></div>';
+  if(ed) return '<div class="plan-imgbar"><button class="pri wide" onclick="tkPlanSave(this)">保存方案</button><button class="wide" onclick="tkPlanCancel()">取消</button></div>';
+  return '<div class="plan-imgbar">'
+    +'<button class="cbtn" onclick="copyTxt(\'ol-src\',this)">复制大纲，直接发客户</button>'
+    +'<button onclick="tkPlanEdit()">编辑方案</button>'
+    +'<button class="pri" onclick="tkPlanImg(this)">图片生成</button></div>';
+}
+function tkPlanEdit(){ TK._editing=true; tkRender(); window.scrollTo(0,0); }
+function tkPlanCancel(){ TK._editing=false; tkRender(); window.scrollTo(0,0); }
+function tkPlanSave(btn){
+  var ckEl=document.getElementById('ckEdit'), olEl=document.getElementById('olEdit');
+  if(!ckEl||!olEl){ tkToast('没有可保存的内容'); return; }
+  var recId=planRecId();
+  var ck=ckEl.innerHTML, ckText=plainHTML(ck);
+  var ol=olEl.innerHTML, olText=plainHTML(ol);
+  var ok=planEditSet(recId,ck,ckText,ol,olText);
+  TK._editing=false;
+  tkRender(); window.scrollTo(0,0);
+  tkToast(ok? '方案已保存（仅改文案，原客户记录不动）' : '保存失败：本地存储被禁用或已满');
+  if(btn){ var o=btn.textContent; btn.textContent='已保存 ✓'; setTimeout(function(){ if(btn) btn.textContent=o; },1400); }
+}
+function tkPlanImg(btn){
+  var d=derive();
+  var recId=planRecId();
+  var saved=planEditGet(recId);
+  /* 给客户看的一律走对客版；不再拼接内部体检（避免同一段结论出现两遍） */
+  var full = saved? (saved.olText||plainHTML(saved.ol)) : outlineTextClient(d);
+  try{ var n=planDrawImage(full); tkToast('方案图片已生成（'+n+' 张）'); }
+  catch(e){ alert('生成图片失败：'+(e&&e.message?e.message:e)); }
+}
+/* 轻量 toast（cross 工具未内置） */
+function tkToast(msg){
+  var t=document.getElementById('tkToast');
+  if(!t){ t=document.createElement('div'); t.id='tkToast';
+    t.style.cssText='position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:rgba(42,33,24,.92);color:#fff;padding:9px 16px;border-radius:10px;font-size:13px;z-index:99999;opacity:0;transition:opacity .2s;pointer-events:none';
+    document.body.appendChild(t); }
+  t.textContent=msg; t.style.opacity='1';
+  clearTimeout(tkToast._t); tkToast._t=setTimeout(function(){ t.style.opacity='0'; },1900);
+}
+/* —— 方案图片排版绘制：纯 canvas 零依赖，图片文字 = 当前方案文案一字不差 —— */
+var PT={bg:'#f5efe4',card:'#fffefb',border:'#ece3d6',acc:'#b45309',acc2:'#e0901a',
+        soft:'#fbf3e4',tx:'#2a2118',tx2:'#3d3226',mut:'#6b5b4a',mut2:'#9c886f',head:'#fdf7ea'};
+var PFONT='"PingFang SC","Hiragino Sans GB","Source Han Sans SC","Noto Sans SC","Microsoft YaHei",sans-serif';
+var PSTY={
+  TITLE :{fs:22,lh:34,mt:18,mb:12,b:'bold'},
+  SEC   :{fs:19,lh:31,mt:18,mb:8, b:'bold'},
+  STEP  :{fs:17,lh:29,mt:14,mb:6, b:'bold'},
+  BULLET:{fs:16,lh:27,mt:3, mb:3, b:''},
+  NOTE  :{fs:15,lh:26,mt:12,mb:10,b:''},
+  EMPTY :{fs:14,lh:10,mt:0, mb:0, b:''},
+  TEXT  :{fs:16,lh:27,mt:3, mb:3, b:''}
+};
+function planFont(sz,b){ return (b==='bold'?'bold ':'')+sz+'px '+PFONT; }
+function planRR(ctx,x,y,w,h,r){
+  r=Math.max(0,Math.min(r,w/2,h/2));
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+function planKind(s){
+  var t=s.replace(/^[\s　]+/,'');
+  if(!t) return 'EMPTY';
+  if(/^【/.test(t)) return 'TITLE';
+  if(/^[一二三四五六七八九十]+、/.test(t)) return 'SEC';
+  if(/^第\s*\d+\s*步/.test(t)) return 'STEP';
+  if(/^\d+[\.、）)]/.test(t)) return 'STEP';
+  if(/^\d+[\.、]\s*\S/.test(t)) return 'STEP';
+  if(/^[·•＊*]/.test(t)) return 'BULLET';
+  if(/^说明[：:]/.test(t)) return 'NOTE';
+  return 'TEXT';
+}
+function planInd(k){ return k==='SEC'?14:(k==='STEP'?10:(k==='BULLET'?12:(k==='NOTE'?14:0))); }
+function planToday(){
+  var d=new Date(), p=function(n){ return (n<10?'0':'')+n; };
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
+}
+function planWrap(text,cw,cpad){
+  var avail=cw-cpad*2;
+  var m=document.createElement('canvas').getContext('2d');
+  var out=[];
+  String(text||'').split('\n').forEach(function(raw){
+    if(raw===''){ out.push({t:'',k:'EMPTY',ind:0,first:1}); return; }
+    var k=planKind(raw);
+    var lead=(raw.match(/^[\s　]*/)||[''])[0];
+    var hadLead=lead.length>0;
+    var body=raw.slice(lead.length)||raw;
+    var st=PSTY[k]||PSTY.TEXT;
+    var ind=planInd(k)+(hadLead?14:0);
+    m.font=planFont(st.fs,st.b);
+    var lines=[], cur='', i, j;
+    /* 续行会额外缩进 16px，必须按「每一行自己的缩进」算宽度预算，否则续行会溢出右边界 */
+    function bud(n){ return avail-(n===0?ind:ind+16); }
+    for(i=0;i<body.length;i++){
+      var t=cur+body.charAt(i);
+      if(cur!=='' && m.measureText(t).width>bud(lines.length)){ lines.push(cur); cur=body.charAt(i); }
+      else cur=t;
+    }
+    if(cur!=='') lines.push(cur);
+    if(!lines.length) lines.push('');
+    for(j=0;j<lines.length;j++){
+      out.push({t:lines[j],k:(j===0?k:(k==='NOTE'?'NOTE':'TEXT')),ind:(j===0?ind:ind+16),first:(j===0?1:0)});
+    }
+  });
+  return out;
+}
+function planMetrics(rows){
+  var top=[],hd=[],cur=0,i;
+  for(i=0;i<rows.length;i++){
+    var st=PSTY[rows[i].k]||PSTY.TEXT, mt=st.mt, mb=st.mb;
+    if(rows[i].k==='NOTE'){
+      var pv=rows[i-1], nx=rows[i+1];
+      if(pv&&pv.k==='NOTE') mt=0;
+      if(nx&&nx.k==='NOTE') mb=0;
+    }
+    cur+=mt; top.push(cur); cur+=st.lh+mb; hd.push({mt:mt,lh:st.lh,mb:mb});
+  }
+  return {top:top,hd:hd,total:cur};
+}
+function planDrawPage(rows,pno,total,W,padOut,cpad){
+  var TOPBAR=6, HDR=74, FTR=54, RAD=14, i;
+  var cw=W-padOut*2, cx=padOut, cy=padOut;
+  var met=planMetrics(rows);
+  var bodyH=met.total+cpad*2;
+  var cardH=TOPBAR+HDR+bodyH+FTR;
+  var H=padOut*2+cardH;
+  var cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  var ctx=cv.getContext('2d');
+  ctx.fillStyle=PT.bg; ctx.fillRect(0,0,W,H);
+  ctx.save();
+  ctx.shadowColor='rgba(42,33,24,.10)'; ctx.shadowBlur=14; ctx.shadowOffsetY=4;
+  planRR(ctx,cx,cy,cw,cardH,RAD); ctx.fillStyle=PT.card; ctx.fill();
+  ctx.restore();
+  ctx.save();
+  planRR(ctx,cx,cy,cw,cardH,RAD); ctx.clip();
+  ctx.fillStyle=PT.card; ctx.fillRect(cx,cy,cw,cardH);
+  var g=ctx.createLinearGradient(cx,cy,cx+cw,cy);
+  g.addColorStop(0,PT.acc2); g.addColorStop(1,PT.acc);
+  ctx.fillStyle=g; ctx.fillRect(cx,cy,cw,TOPBAR);
+  ctx.fillStyle=PT.head; ctx.fillRect(cx,cy+TOPBAR,cw,HDR);
+  ctx.fillStyle=PT.border; ctx.fillRect(cx,cy+TOPBAR+HDR,cw,1);
+  ctx.restore();
+  /* 页眉：方案标题 + 生成日期 + 页码徽章 */
+  var hy=cy+TOPBAR, bx=cx+cpad, bw=cw-cpad*2;
+  ctx.textBaseline='top';
+  ctx.font=planFont(20,'bold'); ctx.fillStyle=PT.acc;
+  ctx.fillText('跨境出口合规落地方案',bx,hy+16);
+  ctx.font=planFont(12,''); ctx.fillStyle=PT.mut2;
+  ctx.fillText(planToday(),bx,hy+44);
+  var pgtxt=pno+' / '+total;
+  ctx.font=planFont(13,'bold');
+  var pw=ctx.measureText(pgtxt).width+26;
+  planRR(ctx,cx+cw-cpad-pw,hy+20,pw,28,14); ctx.fillStyle=PT.acc; ctx.fill();
+  ctx.fillStyle='#ffffff'; ctx.textAlign='center';
+  ctx.fillText(pgtxt,cx+cw-cpad-pw/2,hy+27);
+  ctx.textAlign='left';
+  /* 说明段：先铺整块浅金底，保证折行也连成一张卡片 */
+  var y0=cy+TOPBAR+HDR+cpad, j;
+  for(i=0;i<rows.length;i++){
+    if(rows[i].k!=='NOTE') continue;
+    if(rows[i-1]&&rows[i-1].k==='NOTE') continue;
+    j=i; while(rows[j+1]&&rows[j+1].k==='NOTE') j++;
+    var by=y0+met.top[i]-12, bh=(met.top[j]+met.hd[j].lh)-met.top[i]+24;
+    planRR(ctx,bx-12,by,bw+24,bh,8); ctx.fillStyle=PT.soft; ctx.fill();
+    ctx.fillStyle=PT.acc2; planRR(ctx,bx-12,by+6,4,bh-12,2); ctx.fill();
+  }
+  /* 逐行按类型绘制（只做排版与着色，不改动任何一个字） */
+  for(i=0;i<rows.length;i++){
+    var r=rows[i], st=PSTY[r.k]||PSTY.TEXT;
+    if(r.k==='EMPTY') continue;
+    var yy=y0+met.top[i], tx=bx+r.ind;
+    if(r.k==='TITLE'){
+      ctx.font=planFont(st.fs,'bold'); ctx.fillStyle=PT.acc;
+      ctx.fillText(r.t,tx,yy+2);
+      var lw=Math.min(ctx.measureText(r.t).width+10,140);
+      var g2=ctx.createLinearGradient(tx,0,tx+lw,0);
+      g2.addColorStop(0,PT.acc2); g2.addColorStop(1,'rgba(224,144,26,0)');
+      ctx.fillStyle=g2; planRR(ctx,tx,yy+st.lh-7,lw,3,2); ctx.fill();
+    } else if(r.k==='SEC'){
+      ctx.fillStyle=PT.acc2; planRR(ctx,bx-2,yy+4,4,st.lh-10,2); ctx.fill();
+      ctx.font=planFont(st.fs,'bold'); ctx.fillStyle=PT.tx;
+      ctx.fillText(r.t,tx,yy+2);
+    } else if(r.k==='STEP'){
+      planRR(ctx,bx-8,yy+1,bw+16,st.lh-2,6); ctx.fillStyle=PT.soft; ctx.fill();
+      ctx.font=planFont(st.fs,'bold'); ctx.fillStyle=PT.tx;
+      ctx.fillText(r.t,tx,yy+4);
+    } else if(r.k==='BULLET'){
+      ctx.font=planFont(st.fs,'');
+      var mk=r.t.charAt(0);
+      if(/[·•＊*]/.test(mk)){
+        ctx.fillStyle=PT.acc2; ctx.fillText(mk,tx,yy+4);
+        var mw=ctx.measureText(mk).width;
+        ctx.fillStyle=PT.tx2; ctx.fillText(r.t.slice(1),tx+mw,yy+4);
+      } else { ctx.fillStyle=PT.tx2; ctx.fillText(r.t,tx,yy+4); }
+    } else if(r.k==='NOTE'){
+      ctx.font=planFont(st.fs,''); ctx.fillStyle=PT.mut;
+      ctx.fillText(r.t,tx,yy+4);
+    } else {
+      ctx.font=planFont(st.fs,'');
+      var ci=r.t.indexOf('：');
+      if(ci>0&&ci<=16){
+        var lb=r.t.slice(0,ci+1), vl=r.t.slice(ci+1);
+        ctx.fillStyle=PT.tx; ctx.font=planFont(st.fs,'bold'); ctx.fillText(lb,tx,yy+4);
+        var blw=ctx.measureText(lb).width;
+        ctx.fillStyle=PT.tx2; ctx.font=planFont(st.fs,''); ctx.fillText(vl,tx+blw,yy+4);
+      } else { ctx.fillStyle=PT.tx2; ctx.fillText(r.t,tx,yy+4); }
+    }
+  }
+  /* 页脚：只放页码，不放任何提示 / 免责语 */
+  var fy=cy+TOPBAR+HDR+bodyH;
+  ctx.fillStyle=PT.border; ctx.fillRect(bx,fy,bw,1);
+  ctx.textAlign='right';
+  ctx.font=planFont(11,''); ctx.fillStyle=PT.mut2;
+  ctx.fillText('第 '+pno+' / '+total+' 页',bx+bw,fy+18);
+  ctx.textAlign='left';
+  return cv.toDataURL('image/png');
+}
+/* 多张输出：按可用像素高度分页，每页一张图，方便客户一屏一屏查看 */
+function planDrawImage(text){
+  var W=790, padOut=16, cpad=30, MAXBODY=1180;
+  var cw=W-padOut*2, i;
+  var rows=planWrap(text,cw,cpad);
+  var met=planMetrics(rows);
+  var pages=[], start=0;
+  function trim(p){
+    var a=0,b=p.length-1;
+    while(a<p.length&&p[a].k==='EMPTY') a++;
+    while(b>=a&&p[b].k==='EMPTY') b--;
+    return p.slice(a,b+1);
+  }
+  for(i=0;i<rows.length;i++){
+    var h=met.hd[i];
+    if((met.top[i]+h.lh+h.mb)-met.top[start]>MAXBODY && i>start){
+      pages.push(trim(rows.slice(start,i)));
+      start=i;
+    }
+  }
+  if(start<rows.length) pages.push(trim(rows.slice(start)));
+  var clean=[];
+  for(i=0;i<pages.length;i++){ if(pages[i]&&pages[i].length) clean.push(pages[i]); }
+  if(!clean.length) clean.push([{t:'（空）',k:'TEXT',ind:0,first:1}]);
+  var urls=[], n=clean.length;
+  for(i=0;i<n;i++) urls.push(planDrawPage(clean[i],i+1,n,W,padOut,cpad));
+  planShowImgs(urls);
+  return n;
+}
+function planShowImgs(urls){
+  var m=document.getElementById('planImgModal');
+  if(!m){ m=document.createElement('div'); m.id='planImgModal'; m.className='plan-img-modal';
+    m.onclick=function(e){ if(e.target===m) m.style.display='none'; };
+    document.body.appendChild(m); }
+  var inner='<div class="pim-head">共 '+urls.length+' 张 · 可逐张保存，也可一键保存全部</div>';
+  for(var i=0;i<urls.length;i++){
+    inner+='<div class="pim-page"><img src="'+urls[i]+'" alt="方案图片'+(i+1)+'">'
+      +'<a href="'+urls[i]+'" download="跨境方案_'+(i+1)+'.png" class="btn">保存第 '+(i+1)+' 张</a></div>';
+  }
+  inner+='<div class="pim-foot"><button class="btn" onclick="planSaveAll()">保存全部</button>'
+    +'<button class="btn ghost" onclick="document.getElementById(\'planImgModal\').style.display=\'none\'">关闭</button></div>';
+  m.innerHTML=inner;
+  m.style.display='flex';
+}
+function planSaveAll(){
+  var m=document.getElementById('planImgModal'); if(!m) return;
+  var imgs=m.querySelectorAll('img'), n=0;
+  for(var i=0;i<imgs.length;i++){
+    var a=document.createElement('a'); a.href=imgs[i].src; a.download='跨境方案_'+(i+1)+'.png';
+    document.body.appendChild(a); try{ a.click(); }catch(e){} document.body.removeChild(a); n++;
+  }
+  tkToast('已开始保存 '+n+' 张图片');
 }
 
 /* —— ② 落地话术：与大纲同号 —— */
@@ -3007,8 +3485,8 @@ var ALT_ROAD={
 };
 function roadCmpHTML(d){
   var h='<div class="wtb"><table><thead><tr><th>路线</th><th>增值税</th><th>退税</th><th>启动周期</th><th>代价 / 前提</th></tr></thead><tbody>';
-  var st=safeStepper(d);
-  h+='<tr class="cur"><td><span class="tagx">推荐</span><b>本方案：'+d.modeShow+'</b></td><td>'+d.mian+'</td><td>'+d.tui+'</td><td>'+st+'</td><td>'+(d.mode==='转合规'?'先办理进出口权，再办理免税备案，才能申请免税':(d.decl==='有'?'客户已取得本公司抬头的报关单，可直接申报':'需先取得本公司抬头的报关单'))+'</td></tr>';
+  var st=safeStepper(d), _ie=ieState();
+  h+='<tr class="cur"><td><span class="tagx">推荐</span><b>本方案：'+d.modeShow+'</b></td><td>'+d.mian+'</td><td>'+d.tui+'</td><td>'+st+'</td><td>'+(d.mode==='转合规'?(_ie.ie&&_ie.tf?'出口资质已齐备，把报关抬头切回自有公司即可申请免税':(_ie.ie?'进出口权已办，补做免税备案后即可申请免税':'先办理进出口权，再办理免税备案，才能申请免税')):(d.decl==='有'?'客户已取得本公司抬头的报关单，可直接申报':'需先取得本公司抬头的报关单'))+'</td></tr>';
   if(d.mode!=='转合规'){
     var a=ALT_ROAD[d.mode];
     if(a) h+='<tr><td>'+a.n+'</td><td>'+a.mian+'</td><td>'+a.tui+'</td><td>'+a.per+'</td><td>'+a.c+'</td></tr>';
@@ -3025,7 +3503,12 @@ function safeStepper(d){
 }
 function premHTML(d){
   var L=[];
-  if(d.mode==='转合规') L.push('客户需办理进出口权并办理免税备案；两项未办理，出口免税与出口退税均不成立。');
+  if(d.mode==='转合规'){
+    var _ie2=ieState();
+    if(_ie2.ie&&_ie2.tf) L.push('客户出口资质已齐备（进出口权 + 免税备案均有），需将报关抬头从借名切换为客户自有抬头；切换后出口免税与出口退税方可成立。');
+    else if(_ie2.ie) L.push('客户已有进出口权，需补做免税备案；免税备案完成后出口免税与出口退税方可成立。');
+    else L.push('客户需办理进出口权并办理免税备案；两项未办理，出口免税与出口退税均不成立。');
+  }
   else if(d.decl==='有') L.push('客户需持续取得本公司抬头的报关单；某一批次报关单缺失，该批次对应的免税申报即不成立。');
   else L.push('需取得本公司抬头的报关单（自行报关，或向平台 / 物流商取得报关清单）；无法取得时只能按账务合规处理，不得向客户承诺免税。');
   if(A.city==='shenzhen') L.push('深圳主体可直接填报 13 栏免税；但若没有报关单而被核查，需全额补缴税款，这是客户实际承担的风险上限，签约前须向客户说明。');
@@ -3153,7 +3636,7 @@ function aiPainPaint(buf,silent){
   if(p){ p.className='aip-pbox'; p.textContent=o.play||''; }
   if(r){ r.className='aip-derbody'; r.textContent=o.derive||''; }
   if(!silent){
-    AIPAIN=o;
+    AIPAIN=o; aiOutMerge(planRecId(),{pain:o});
     if(s2) s2.textContent='AI 已按这个客户推';
     if(tip) tip.textContent='AI 按客户信息 + 提问 + 补充信息推的；不对就点重新生成';
     var bt=document.getElementById('aibtn-pain'); if(bt) bt.textContent='重新生成';
@@ -3217,7 +3700,14 @@ function buildLogic(d){
 }
 function talkOf(d){
   var t='';
-  if(d.mode==='转合规')t+='先把买单 / 双清改为合规报关：经营范围加进出口 → 办进出口权（收发货人+跨境电商备案）→ 申 IC 卡 → 走报关，全程我们代办。';
+  if(d.mode==='转合规'){
+    var _ie3=ieState();
+    if(_ie3.ie){
+      t+='你已有进出口权，不用再办资质；现在要把买单 / 双清改成自己公司抬头报关'+( _ie3.tf?'，资质都齐了，直接切抬头、确认 13 栏开通就行':'，把免税备案补上、13 栏打开')+'，全程我们代办。';
+    } else {
+      t+='先把买单 / 双清改为合规报关：经营范围加进出口 → 办进出口权（收发货人+跨境电商备案）→ 申 IC 卡 → 走报关，全程我们代办。';
+    }
+  }
   else if(d.mode==='9810')t+='您走的是海外仓备货，可以让货从中国报关出境、走 9810：货物离境就有报关单，可以免增值税。9810 确实可以做预退税（离境即退税），但我们不建议——流程复杂，而且目前暂时还没有退税下来的成功案例，走常规免税流程会更好、也更稳。按平台汇总单的 income 申报。报关这块我们主推小麦云，一票才 8 块钱，比市场货代 80 到 200 一票便宜一大截，这笔是货代额外收的，能给您省下来。';
   else if(d.mode==='9610')t+='您走的是零售直发，对应 9610：清单录入跨境平台推送海关，再填免税栏'+(d.decl==='无'?'。但报关单是平台出的，得先向平台/物流商要当月报关清单，拿到才能免税':'')+'。';
   else if(d.mode==='0110')t+='您是大货出口，走一般贸易 0110，是"免抵退"不是免税：有票有单证就能退税，退税额通常比零售更高。';
@@ -3295,28 +3785,66 @@ function probsOf(d){
 }
 
 /* —— 2. 三步方案：按路径生成可执行步骤 —— */
+/* 进出口权 / 免税备案 已办状态：A.qual 为显式答案时优先，否则看基本盘勾选。
+   用于方案大纲 / 解析 / 话术，避免「客户已办进出口权，大纲还让办」的打架 */
+function ieState(){
+  var ie, tf;
+  if(A.qual==='both'){ ie=true; tf=true; }
+  else if(A.qual==='qualOnly'){ ie=true; tf=(A.taxFiling===true); }
+  else if(A.qual==='none'){ ie=false; tf=false; }
+  else { ie=(A.impExp===true); tf=(A.taxFiling===true); }
+  return {ie:!!ie, tf:!!tf};
+}
 function roadmap(d){
   var S=[],big=(flowBand()==='f3'||flowBand()==='f4'||flowBand()==='f5'||histOf()==='upgrade');
   var mN={9810:'海外仓',9610:'零售直发',0110:'一般贸易',1039:'市场采购'};
 
   if(d.mode==='转合规'){
-    S.push({k:'s2',t:'办理进出口权 + 免税备案',
-      time:'分步办理，以主管部门出件为准',
-      acts:['经营范围加上"货物进出口、技术进出口"',
-            '办对外贸易经营者备案 + 海关收发货人备案',
-            '做出口免税备案，把 13 栏（出口免税栏）这条路打开',
-            '申电子口岸 IC 卡，绑定一家报关行'],
-      watch:'进出口权和免税备案要一起办——只办一个，后面免税申报还是填不进去',
-      cli:['营业执照正副本、法人身份证、公章','银行开户信息、公司英文名称','操作员身份证'],
-      talk:'"先问您一句：公司现在进出口权办了没有？没有的话，接下来这一步就是从买单报关改成 9810 报关。第一步，经营范围要加上货物进出口和技术进出口；第二步，办理进出口权，进出口权备案的时候要备案上收发货人和跨境电商企业备案；备好之后去申请 IC 卡，IC 卡就是报关出口用的 U 盾；这几样做完，就可以走报关了。第三步，做出口免税备案，把申报表上的 13 栏（出口免税栏）这条路打开。这两个是一起办的——只办进出口权不做免税备案，报关单上还是没有您的名字，免税、退税都谈不上。您就给我这几样：执照正副本、法人身份证、公章、银行开户信息、操作员身份证，剩下的我们去跑。"',
-      up:'从今天起每一票都要报关单副本，自己建一个"报关档案"文件夹',
-      done:'拿到 IC 卡，免税备案完成，13 栏能填'});
+    var _ie=ieState();
+    if(_ie.ie && _ie.tf){
+      /* 进出口权 + 免税备案都已有：只需把买单/双清改成自有抬头报关 */
+      S.push({k:'s2',t:'出口资质已齐备：把报关抬头切回自有公司',
+        time:'以货代 / 报关行配合为准',
+        acts:['把原来的买单 / 双清，改成用您自己公司抬头报关',
+              '跟您的货代确认：报关单抬头写您公司，而不是别人的',
+              '确认 13 栏（出口免税栏）已开通、可正常填报'],
+        watch:'资质有了不代表免税自动成立——报关单抬头必须是客户公司，否则还是没有自己的出口凭证',
+        cli:['现有货代 / 报关行对接人','营业执照副本'],
+        talk:'"您进出口权和免税备案都办好了，这一步就不用再办资质了。现在要做的是把报关抬头从借别人名字，换回您自己公司——跟货代讲清楚，以后报关单写您公司的名字。抬头一换，您自己的出口凭证就到手了，13 栏免税也能正常填。剩下的我们来对接。"',
+        up:'每票报关后按月份命名存档报关单副本',
+        done:'拿到自有抬头的报关单，13 栏能填'});
+    } else if(_ie.ie){
+      /* 有进出口权，但免税备案没做 */
+      S.push({k:'s2',t:'办理免税备案（进出口权已具备）',
+        time:'分步办理，以主管部门出件为准',
+        acts:['我们帮您做出口免税备案，把 13 栏（出口免税栏）这条路打开',
+              '申领电子口岸 IC 卡（若尚未申领）并绑定一家报关行',
+              '跟您的货代确认：今后报关单抬头写您公司，而不是别人的'],
+        watch:'进出口权有了还不够——免税备案不做，13 栏还是填不进去，免税、退税都谈不上',
+        cli:['营业执照正副本、法人身份证、公章','银行开户信息、公司英文名称','操作员身份证'],
+        talk:'"您进出口权已经办了，这一步不用再办资质。现在缺的是出口免税备案——把申报表上的 13 栏（出口免税栏）这条路打开。同时申一下电子口岸 IC 卡，跟货代讲清楚今后报关单写您公司名字。这两样做完，就能走自己的报关了。您给我：执照正副本、法人身份证、公章、银行开户信息、操作员身份证，剩下的我们去跑。"',
+        up:'从今天起每一票都要报关单副本，自己建一个"报关档案"文件夹',
+        done:'免税备案完成，拿到 IC 卡，13 栏能填'});
+    } else {
+      /* 都没办：原逻辑不变 */
+      S.push({k:'s2',t:'办理进出口权 + 免税备案',
+        time:'分步办理，以主管部门出件为准',
+        acts:['我们帮您把经营范围加上"货物进出口、技术进出口"',
+              '办理进出口权（对外贸易经营者备案 + 海关收发货人备案）',
+              '做出口免税备案，把 13 栏（出口免税栏）这条路打开',
+              '申领电子口岸 IC 卡并绑定一家报关行'],
+        watch:'进出口权和免税备案要一起办——只办一个，后面免税申报还是填不进去',
+        cli:['营业执照正副本、法人身份证、公章','银行开户信息、公司英文名称','操作员身份证'],
+        talk:'"先问您一句：公司现在进出口权办了没有？没有的话，接下来这一步就是从买单报关改成 9810 报关。第一步，经营范围要加上货物进出口和技术进出口；第二步，办理进出口权，进出口权备案的时候要备案上收发货人和跨境电商企业备案；备好之后去申请 IC 卡，IC 卡就是报关出口用的 U 盾；这几样做完，就可以走报关了。第三步，做出口免税备案，把申报表上的 13 栏（出口免税栏）这条路打开。这两个是一起办的——只办进出口权不做免税备案，报关单上还是没有您的名字，免税、退税都谈不上。您就给我这几样：执照正副本、法人身份证、公章、银行开户信息、操作员身份证，剩下的我们去跑。"',
+        up:'从今天起每一票都要报关单副本，自己建一个"报关档案"文件夹',
+        done:'拿到 IC 卡，免税备案完成，13 栏能填'});
+    }
     S.push({k:'s3',t:'报关抬头换成客户公司，核对报关单金额',
       time:'按货代实际出单时间',
-      acts:['跟货代说清楚：以后报关单抬头写客户公司，不是他们的',
-            '比一次报关费：市场价 80~300 元/票，小麦云一票 5~8 元，这笔是货代额外收的，可以省',
-            '走通 9810 的四个动作：生成订单号（填 SKU、重量、单价）、无纸化流程（首次操作一次即可）、推单（把店铺买家订单数据同步给货代仓库报关系统）、授权报关代理机构',
-            '报关单下来后逐票核对：报关单金额 = 平台销售额，不能按成本填'],
+      acts:['我们跟您的货代确认：以后报关单抬头写您公司，而不是他们的',
+            '帮您比对一次报关费：市场价 80~300 元/票，小麦云一票 5~8 元，这笔是货代额外收的，能帮您省下',
+            '带您走通 9810 的四个动作：生成订单号（填 SKU、重量、单价）、无纸化流程（首次操作一次即可）、推单（把店铺买家订单数据同步给货代仓库报关系统）、授权报关代理机构',
+            '报关单下来后，我们逐票帮您核对：报关单金额 = 平台销售额，不能按成本填'],
       watch:'报关金额按成本填是最大的坑——差额部分要补增值税',
       cli:['箱单、发票、合同','货代的对接人'],
       talk:'"您现在用的是买单报关，报关单位不是您公司的名字，所以您手里没有报关单、也没有报关清单，这种方式是坐不了报关合规的。得跟货代讲清楚，以后用您的名字来报。这里顺带说一个钱的事：货代收的报关费，市场上一般是 80 到 200 一票，现在也有小麦云一票才 8 块，这笔是货代额外收的，能省——您回头问一下现在的货代报多少，我这边也能给您推荐便宜的。走起来比您之前走双清多四个动作：第一，生成订单号，就是报关单上要填的货物单号，把您产品的 SKU、重量、单价填进去，单价一般填平台货物的平均销售额或者回款销售额，看您选哪个；第二，操作无纸化，这个第一次弄一次就行；第三，推单，把店铺买家订单数据同步给货代仓库的报关系统，完成发货、报关、出库，您要是出口美国站的，一般货代都包含了，可以问一下；第四，货物授权代理机构。这四个动作我们都是全流程给您指导的，包含给您走通 9810 全流程。报关单下来我们对一遍数，金额跟平台销售额对得上，后面每一票照着走就行。"',
@@ -3325,8 +3853,8 @@ function roadmap(d){
     S.push({k:'s11',t:'申报改口径：按汇总单明细申报',
       time:'首个申报期内',
       acts:['按平台汇总单的「营业额 − 退货」申报，不按回款、更不按零申报',
-            '汇总单在电商后台直接导出，我们给您获取方式',
-            '第一个月由我们把口径走一遍，确认申报表和后台数据对得上'],
+            '汇总单在电商后台直接导出，我们会把获取方式交给您',
+            '第一个月由我们帮您把口径走一遍，确认申报表和后台数据对得上'],
       watch:'按回款报和零申报都会被约谈——税局拿到的是平台推送的销售额，比你算的高',
       cli:['电商后台汇总单（按站点、按季度）','原代账的申报表'],
       talk:'"您现在零申报，跟平台数据肯定有出入。税局那边是把平台汇总单上的销售额推过去的，所以我们要按汇总单报，不按回款、更不按零。数据您在电商后台就能导，获取方式我发您。第一个月我们把口径走一遍，确认申报表跟后台对得上，后面您照着做就顺了。这一步做完，才谈得上免税申报。"',
@@ -3334,8 +3862,8 @@ function roadmap(d){
       done:'申报表和平台汇总单对得上，第一期按新口径报完'});
     S.push({k:'s12',t:'成本归位：平台成本 / 采购票 / 人力工资',
       time:'随账期同步',
-      acts:['平台费用（佣金、配送、仓储、广告）按明细一项项录，不做一笔打包',
-            '采购成本去跟供应商谈开普票，不开专票——这个模式退不了税，专票没意义',
+      acts:['平台费用（佣金、配送、仓储、广告）我们按明细一项项入您的账，不做一笔打包',
+            '采购成本我们帮您跟供应商谈开普票，不开专票——您这个模式退不了税，专票没意义',
             '人力成本按工资录入：返聘退休人员月薪 5000 以内不产生个税，年轻员工月薪 6000~8000 也同样不产生个税'],
       watch:'一笔打包录成本是行业通病，看着省事，被倒查就是全额补缴 + 罚款',
       cli:['平台汇总单的费用明细页','供应商沟通结果','员工名册与社保情况'],
@@ -3344,21 +3872,21 @@ function roadmap(d){
       done:'三类成本在账上都有明细，能对上汇总单'});
     S.push({k:'s1',t:'历史遗留处理：先合规，再核定',
       time:'合规跑通后启动',
-      acts:['拉平台后台流水，和原代账申报表做一次差额比对，出一张"缺口表"',
-            '按"老实补"和"走免税备案"两条路，各算一遍补税 + 滞纳金，算出具体数字',
-            '合规跑通后再去谈核定——先合规、再核定，顺序倒过来税局不给办'],
+      acts:['我们拉取平台后台流水，和您原代账申报表做一次差额比对，出一张"缺口表"',
+            '按"老实补"和"走免税备案"两条路，各帮您算一遍补税 + 滞纳金，算出具体数字',
+            '等合规跑通后，再去帮您谈核定——先合规、再核定，顺序倒过来税局不给办'],
       watch:'别让客户先自己去税局问——问错口径，后面要花双倍力气圆回来',
       cli:['平台后台近 3 年流水导出','原代账的申报表和完税凭证','营业执照、公章'],
       talk:'"税局现在要求您合规申报。历史数据这块我们可以帮您去聊核定，但聊核定的前提是合规——现在税局的方针就是先合规、再核定，不合规他们不给做核定。这个您能理解吧？"',
       ask:'blk2',
       up:'把近 3 年的平台流水、银行流水、申报表按年归档，一次备齐——后面每个环节都要用到',
-      done:'客户选定补法，历史这块有明确的结案口径'});
+      done:'您选定补法，历史这块有明确的结案口径'});
   }
   else if(d.decl==='有'){
     S.push({k:'s4',t:'定口径：核实历史缺口金额',
       time:'约一周（以资料齐全为准）',
-      acts:['比对平台流水和已申报收入，列出差额',
-            '确认客户是"按到账的钱报"还是"按销售额报"',
+      acts:['我们帮您比对平台流水和已申报收入，列出差额',
+            '跟您确认之前是"按到账的钱报"还是"按销售额报"',
             '判断历史是补、是更正，还是用新主体承接'],
       watch:'客户说"都报了"不要直接信，一定要看申报表——九成是按到账口径报的',
       cli:['平台后台流水','历史申报表','银行流水'],
@@ -3368,15 +3896,15 @@ function roadmap(d){
       done:'拿到一张"缺口表"，历史这块有明确结论'});
     S.push({k:'s5',t:'报关模式落地：'+d.modeShow,
       time:'以备案 / 报关实际办理为准',
-      acts:(d.mode==='9810'?['做海外仓备案（自建仓或租赁仓的备案材料）',
-              '头程走 9810 报关，报关单抬头写客户公司',
+      acts:(d.mode==='9810'?['帮您做海外仓备案（自建仓或租赁仓的备案材料）',
+              '头程走 9810 报关，报关单抬头写您公司',
               '把平台结算单和报关单按月对上，作为免税依据']
            :d.mode==='0110'?['单证齐套：合同、发票、箱单、提单一样不能少',
               '按免抵退申报（注意：这不叫免税，是另一套算法）',
               '退税额按进项专票算，提前把票备齐']
            :d.mode==='1039'?['在市场采购贸易试点地备案经营主体',
               '走 1039 通道报关，免征不退',
-              '提前告知客户：选了免征，就没有退税了']
+              '提前跟您说明：选了免征，就没有退税了']
            :['把每一票的报关单存好，作为免税凭证',
               '核对报关金额与销售额，不能按成本填',
               '按月归集，避免年底一次性补']),
@@ -3391,8 +3919,8 @@ function roadmap(d){
     S.push({k:'s6',t:'免税 / 退税申报 + 建账',
       time:'首期申报期内',
       acts:['按报关单金额做免税申报，'+(A.city==='shenzhen'?'深圳可直接填 13 栏':'外地凭报关单申请后申报'),
-            '把平台佣金、配送、仓储、广告全部入成本',
-            '无票部分单独处理，不要混进有票的成本里'],
+            '平台佣金、配送、仓储、广告全部入您的成本',
+            '无票部分单独处理，不混进有票的成本里'],
       watch:'免税免的是增值税，企业所得税照交，别让客户以为全免了',
       cli:['报关单','平台月度结算单','进项发票'],
       talk:'"免税免的是增值税，企业所得税该交还得交。这两项别混，混了账就对不上。"',
@@ -3402,9 +3930,9 @@ function roadmap(d){
   else{
     S.push({k:'s7',t:'取得报关清单（免税申报关键凭证）',
       time:'以平台 / 物流商回复为准',
-      acts:['向平台 / 物流商正式申请"报关清单"或"出口清单"',
+      acts:['我们代您向平台 / 物流商正式申请"报关清单"或"出口清单"',
             '走对入口：商家后台的合规 / 税务入口，不是普通客服',
-            '要不到也要留存申请记录，后面能作为说明材料'],
+            '要不到也帮您留存申请记录，后面能作为说明材料'],
       watch:'要不到这张单，免税就无从谈起——这是整个方案的前提，不能跳',
       cli:['店铺后台账号权限','近 3 个月发货记录'],
       talk:'"您去商家后台提个工单，就写这句：我需要本店铺当月出口的报关清单，用于免税申报。"',
@@ -3413,19 +3941,19 @@ function roadmap(d){
       done:'拿到，或者明确拿不到（两种情况都要有书面结论）'});
     S.push({k:'s8',t:'无法取得时转为账务合规 + 企税优化方案',
       time:'约一周（以流水与申报资料齐全为准）',
-      acts:['按平台结算单建账，佣金 / 配送 / 广告全部入成本',
-            d.c==='硬约束'?'这条路先排除：'+d.platN+' 强制指定物流，客户不能自选货代和报关行，改自报走不通'
-              :'评估能不能改成自发货或海外仓（这个平台的规则允许，值得试）',
+      acts:['按平台结算单帮您建账，佣金 / 配送 / 广告全部入成本',
+            d.c==='硬约束'?'这条路先排除：'+d.platN+' 强制指定物流，您不能自选货代和报关行，改自报走不通'
+              :'评估您能不能改成自发货或海外仓（这个平台的规则允许，值得试）',
             '不能改就固定做账务 + 企业所得税优化，不再谈免税'],
       watch:(d.c==='硬约束'?'别为了签单承诺"我去帮你要"——平台规则改不了，要不到就是退单'
             :'这张单有一半概率要不到，先跟客户把"要不到怎么办"说在前面'),
       cli:['平台结算单','成本凭证（有多少给多少）'],
       talk:'"这张单要是不下来，我们就换个走法：把账做干净，把企业所得税降下来。这个我能给您保证。"',
       up:'平台结算单每月导出，佣金、配送、广告分项列出来，不要只有一个总数',
-      done:'客户接受"账务线"方案，或确认可以改自报'});
+      done:'您接受"账务线"方案，或确认可以改自报'});
     S.push({k:'s9',t:'历史缺口处理',
       time:'约一周（以流水与申报资料齐全为准）',
-      acts:['比对平台流水和已申报收入，列出差额',
+      acts:['我们帮您比对平台流水和已申报收入，列出差额',
             '判断是往期更正、还是用新主体承接',
             '把处理顺序排出来：先止损，再规范'],
       watch:(histOf()==='sms'?'有提示的客户，顺序不能反——先处理程序上的事，再谈优化'
@@ -3442,7 +3970,7 @@ function roadmap(d){
     S.push({k:'s10',t:'架构与长期优化（方案稳定后再做）',
       time:'第二期启动',
       acts:['按业务真实性拆分主体，人、货、钱、票各自独立',
-            '评估香港公司 / 多主体架构解决收汇与结汇',
+            '评估香港公司 / 多主体架构解决您的收汇与结汇',
             '新旧主体做好衔接：老主体留历史，新主体跑增量'],
       watch:'拆主体必须业务真实分离，只把账分开是虚开风险',
       cli:['各主体流水与业务对应关系','股东与法人安排'],
@@ -3454,10 +3982,10 @@ function roadmap(d){
   if(A.szExempt||A.file==='cash'||taxModel().ok){
     var s13a=[];
     if(A.szExempt) s13a.push('深圳主体：13 栏免税默认开通，本期及历史数据优先按免税填报，把增值税压到 0');
-    if(A.file==='cash') s13a.push('回款申报客户：提醒收汇走网商银行，免跨境 / 跨行提现手续费，回款流水更清晰');
+    if(A.file==='cash') s13a.push('您是回款申报：建议收汇走网商银行，免跨境 / 跨行提现手续费，回款流水更清晰');
     var tmr=taxModel();
     if(tmr.ok&&tmr.plans.length) for(var zi=0;zi<tmr.plans.length;zi++) s13a.push(tmr.plans[zi].desc);
-    s13a.push('每一项筹划都落到客户自己的数字上，先算账再谈方案');
+    s13a.push('每一项筹划都落到您自己的数字上，先算账再谈方案');
     S.push({k:'s13',t:'节税筹划（第一性原则）',
       time:'与合规同步做',
       acts:s13a,
@@ -4096,6 +4624,40 @@ function aiPlanItems(d){
   }
   return out;
 }
+/* —— AI 结论按记录落盘（2026-10-30 新增）——
+   背景：五项方案 / 痛点推导以前只在内存里缓存，刷新或从历史点开就会重新调一次接口烧 token。
+   现在按 recId 存本机 localStorage；已生成过的记录，下次打开直接读回来，不再请求接口。 */
+var AI_OUT_KEY='cbx_ai_out_v1';
+function aiOutAll(){ try{ return JSON.parse(localStorage.getItem(AI_OUT_KEY)||'{}')||{}; }catch(e){ return {}; } }
+function aiOutGet(recId){ try{ return aiOutAll()[recId]||null; }catch(e){ return null; } }
+function aiOutSet(recId,obj){
+  try{ var a=aiOutAll(); a[recId]=obj; localStorage.setItem(AI_OUT_KEY,JSON.stringify(a)); return true; }
+  catch(e){
+    /* 配额满：丢掉最老的一半再试一次；仍失败就放弃落盘，不影响正常使用 */
+    try{
+      var a2=aiOutAll(), ks=Object.keys(a2);
+      ks.sort(function(x,y){ return (a2[x].at||0)-(a2[y].at||0); });
+      for(var i=0;i<Math.ceil(ks.length/2);i++) delete a2[ks[i]];
+      a2[recId]=obj; localStorage.setItem(AI_OUT_KEY,JSON.stringify(a2)); return true;
+    }catch(e2){ return false; }
+  }
+}
+function aiOutMerge(recId,patch){
+  var cur=aiOutGet(recId)||{},k;
+  for(k in patch){ if(Object.prototype.hasOwnProperty.call(patch,k)) cur[k]=patch[k]; }
+  cur.at=Date.now();
+  return aiOutSet(recId,cur);
+}
+/* 打开某条记录时，把它以前生成过的 AI 结论读回内存（有就读，没有就保持空） */
+function aiRestore(){
+  try{
+    var s=aiOutGet(planRecId());
+    if(!s) return false;
+    if(s.plan&&!AIPLAN) AIPLAN=s.plan;
+    if(s.pain&&!AIPAIN) AIPAIN=s.pain;
+    return !!(s.plan||s.pain);
+  }catch(e){ return false; }
+}
 var AI_VC={bad:'不合规',warn:'待确认',ok:'合规'};
 function planAIHTML(d){
   aiCfgLoad();
@@ -4172,7 +4734,7 @@ function aiPlanPaint(txt,silent){
     if(!box||!o[i]) continue;
     box.innerHTML=(AI_NOW[i]?'<div class="aipi-now">'+aiEsc(AI_NOW[i])+'</div>':'')+aiPlanRowHTML(o[i]); hit++;
   }
-  if(hit&&!silent) AIPLAN=o;
+  if(hit&&!silent){ AIPLAN=o; aiOutMerge(planRecId(),{plan:o}); }
   return hit;
 }
 async function aiRun(k,btn){
@@ -5251,13 +5813,16 @@ renderFAQ();
 renderTax();
 renderHistTax();
 aiFabState();
-/* 方案页一渲染出来就自动生成（只跑一次，配了 Key 才跑） */
+/* 方案页一渲染出来就自动生成（配了 Key 才跑，且本页只尝试一次，失败不反复重试） */
+var AI_AUTO_REC=null;   /* 本页已经为哪条记录自动生成过，避免切记录或重绘反复烧 token */
 function aiAuto(){
   try{
-    if(!aiKey()||AIPLAN) return;
+    if(!aiKey()||AIPLAN) return;           /* 没 Key 不跑；已恢复/已生成的不再重复烧 token */
+    var recId=planRecId();
+    if(AI_AUTO_REC===recId) return;        /* 这条记录本页已自动跑过一次 */
     var box=document.getElementById('aiPlanBox');
-    if(!box||box.getAttribute('data-auto')==='1') return;
-    box.setAttribute('data-auto','1');
+    if(!box) return;
+    AI_AUTO_REC=recId;
     aiRun('plan',document.getElementById('aibtn-plan'));
   }catch(e){}
 }

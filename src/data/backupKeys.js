@@ -45,6 +45,14 @@ export const BACKUP_KEYS = [
   'cross_quote_lib_v1',   /* 历史键，保留以便旧数据可恢复 */
   'cross_quote_lib_v2',
   'cross_quote_ai_config',
-  'cross_quiz_v1'
+  'cross_quiz_v1',
+  /* —— 跨境销售辅助工具（cross） —— */
+  'cbx_train_v1',
+  'cbx_recs',          /* 沟通台历史客户记录 */
+  'cbx_plan_edit_v1',  /* 方案编辑稿（按记录存） */
+  'cbx_ai',            /* DeepSeek Key / model */
+  'cbx_ai_out_v1',     /* AI 五项方案 + 痛点推导结论（按记录存，避免重复烧 token） */
+  'cbx_me',
+  'cbx_battle_v1'
 ]
 export default BACKUP_KEYS
