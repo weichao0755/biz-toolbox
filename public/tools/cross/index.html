@@ -3186,9 +3186,9 @@ async function genPlanDoc(text, d){
   var AT=docx.AlignmentType, P=docx.Paragraph, Doc=docx.Document, PK=docx.Packer;
   var T=docx.Table, TR=docx.TableRow, TC=docx.TableCell, WT=docx.WidthType, BS=docx.BorderStyle;
   function safeAns(id){ try{ return tkAnsText(id); }catch(e){ return ''; } }
-  function hdg(t){ return new P({ children:[ R(t,{ font:FHei, size:26, bold:true, color:'B45309' }) ],
+  function hdg(t, br){ var hp={ children:[ R(t,{ font:FHei, size:26, bold:true, color:'B45309' }) ],
     spacing:{ before:280, after:160, line:320, lineRule:'auto' },
-    border:{ bottom:{ style:BS.SINGLE, size:10, color:'E0D5C0', space:6 } } }); }
+    border:{ bottom:{ style:BS.SINGLE, size:10, color:'E0D5C0', space:6 } } }; if(br) hp.pageBreakBefore=true; return new P(hp); }
   var paras=[];
   /* 标题 + 日期 */
   paras.push(new P({ alignment:AT.CENTER, spacing:{ before:60, after:40, line:380, lineRule:'auto' },
@@ -3198,7 +3198,7 @@ async function genPlanDoc(text, d){
     children:[ R('生成日期：'+dt.getFullYear()+'-'+tkP2(dt.getMonth()+1)+'-'+tkP2(dt.getDate()),{ font:FSong, size:20, color:'808080' }) ] }));
 
   /* 一、客户情况（表格，对客视角，完整呈现登记信息） */
-  paras.push(hdg('一、客户情况'));
+  paras.push(hdg('一、客户情况', true));
   var rows=[];
   function addRow(label,val){ if(val==null) val=''; val=String(val).trim(); if(val==='') val='—'; rows.push([label,val]); }
   addRow('贵司编号', (TK&&TK.cid)?TK.cid:'');
@@ -3240,7 +3240,7 @@ async function genPlanDoc(text, d){
     rows:[hdrRow].concat(dataRows) }));
 
   /* 二、合规诊断（不合规 / 待确认项 + 可能带来的危害，对客视角） */
-  paras.push(hdg('二、合规诊断'));
+  paras.push(hdg('二、合规诊断', true));
   paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED,
     children:[ R('根据贵司目前的情况，以下是不合规或仍需落实的地方，以及可能带来的后果：',{ font:FSong, size:21 }) ] }));
   var ck=ckClient(d), di=0;
@@ -3259,7 +3259,7 @@ async function genPlanDoc(text, d){
   if(di===0) paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[ R('经核查，贵司目前各项均合规，可按以下方案把流程固化下来。',{ font:FSong, size:21 }) ] }));
 
   /* 三、落地方案（具体怎么执行，对客视角） */
-  paras.push(hdg('三、落地方案'));
+  paras.push(hdg('三、落地方案', true));
   var S=roadmap(d);
   for(var j=0;j<S.length;j++){
     var s=S[j];
@@ -3270,7 +3270,7 @@ async function genPlanDoc(text, d){
   }
 
   /* 四、关于我们（品牌内容来自公司企业简章） */
-  paras.push(hdg('四、关于我们'));
+  paras.push(hdg('四、关于我们', true));
   if(PLAN_DOC_BRAND.lines && PLAN_DOC_BRAND.lines.length){
     for(var b=0;b<PLAN_DOC_BRAND.lines.length;b++){
       paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[ R(PLAN_DOC_BRAND.lines[b],{ font:FSong, size:21 }) ] }));
