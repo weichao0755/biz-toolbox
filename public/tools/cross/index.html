@@ -3232,6 +3232,39 @@ async function buildCover(){
     return c.toDataURL('image/png');
   }catch(e){ return null; }
 }
+function histPlan(d){
+  /* 历史遗留数据处理逻辑（按客户实际情况生成，非模板）：
+     增值税——一般纳税人可直填免税；小规模+免税备案后 深圳直填 / 外地需报关单；可与税管员沟通历史数据填免税（各城市具体沟通）。
+     企业所得税——可沟通核定（2025 Q3 约 2% / Q4 约 4%，部分城市如广州约 8%，其他视沟通）；平台成本与人力成本按平台汇总单正常录入；采购成本依收票录入；人力成本另作规划。 */
+  var ent=A.entity, city=A.city, ie=ieState(), decl=(d&&d.decl);
+  var entName=(ent==='general')?'一般纳税人':(ent==='small'?'小规模纳税人':'纳税人类型待确认');
+  var cityName=(city==='shenzhen')?'深圳':(city==='other'?'外地':'注册地待确认');
+  var vat=[], cit=[];
+  if(ent==='general'){
+    vat.push('一般纳税人可直接填报出口免税（申报表 13 栏），历史数据可优先尝试按免税口径更正申报。');
+    vat.push('若历史期间已按内销申报，建议与主管税务机关（税管员）沟通将历史数据调整为免税口径，最终以当地税务机关认定为准。');
+  } else if(ent==='small'){
+    if(ie&&ie.tf){
+      if(city==='shenzhen'){
+        vat.push('小规模纳税人已完成出口免税备案，深圳主体可直接填报免税（13 栏），历史数据可优先按免税口径处理，将增值税降至 0。');
+      } else {
+        vat.push('小规模纳税人已完成出口免税备案，外地主体须先取得报关单，方可就历史数据填报免税。');
+        vat.push((decl==='无'||decl==='部分')?'贵司历史期间报关单不齐，无报关单部分暂按内销补缴增值税，或与税管员沟通争取免税口径。':'贵司已取得报关单，可凭报关单就历史数据申报免税。');
+      }
+    } else {
+      vat.push('小规模纳税人须先完成出口免税备案。备案完成后，深圳主体可直接填报免税，外地主体须凭报关单填报免税。');
+      vat.push('历史数据建议与主管税务机关（税管员）沟通按免税口径处理；各地口径不一，须按具体城市具体沟通。');
+    }
+  } else {
+    vat.push('纳税人类型待确认：一般纳税人可直接填报免税；小规模纳税人须完成免税备案后，深圳可直接填报、外地须凭报关单填报免税。');
+  }
+  vat.push('【沟通要点】可与税管员沟通将之前数据填报免税，但须按具体城市、具体沟通确定，无统一口径。');
+  cit.push('企业所得税建议与主管税务机关沟通核定征收，参考口径：2025 年第三季度约 2%、第四季度约 4%；部分城市有特殊情况（如广州约 8%），其他城市视沟通结果确定。');
+  cit.push('平台成本与人力成本：可根据平台汇总单正常录入，据实作为成本抵扣。');
+  cit.push('采购成本：根据贵司收票情况录入，可取得发票的据实入账，无票部分单列处理。');
+  cit.push('人力成本：另作专项规划（如返聘退休人员、工资列支等），合理降低企业所得税税负。');
+  return { vat:vat, cit:cit, entName:entName, cityName:cityName };
+}
 async function genPlanDoc(text, d){
   if(typeof docx==='undefined') throw new Error('docx 库未加载，请刷新页面重试');
   var FSong={ascii:'Times New Roman',hAnsi:'Times New Roman',eastAsia:'宋体'};
@@ -3338,6 +3371,20 @@ async function genPlanDoc(text, d){
     paras.push(new P({ spacing:{ after:30, line:320, lineRule:'auto' }, indent:{ left:380 }, children:[ R('需贵司提供：',{ font:FSong, size:21, bold:true, color:'7C3AED' }), R(clCli(s.cli).join('、'),{ font:FSong, size:21 }) ] }));
     paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, indent:{ left:380 }, children:[ R('完成标志：',{ font:FSong, size:21, bold:true, color:'7C3AED' }), R(clClean(s.done),{ font:FSong, size:21 }) ] }));
   }
+
+  /* 历史遗留数据处理方案（按客户实际情况定制，最重要的部分） */
+  var hp=histPlan(d);
+  paras.push(new P({ spacing:{ before:280, after:120, line:320, lineRule:'auto' },
+    border:{ bottom:{ style:BS.SINGLE, size:10, color:'E0D5C0', space:6 } },
+    children:[ R('历史遗留数据处理方案',{ font:FHei, size:26, bold:true, color:'B45309' }) ] }));
+  var hpCtx='结合贵司实际情况（'+hp.entName+' · '+hp.cityName;
+  if(A.flow!=null&&A.flow!=='na'&&Number(A.flow)>0) hpCtx+=' · 年销售额约 '+Math.round(Number(A.flow))+' 万';
+  hpCtx+='），历史遗留数据建议按以下方案处理：';
+  paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[ R(hpCtx,{ font:FSong, size:21 }) ] }));
+  paras.push(new P({ spacing:{ before:160, after:80, line:320, lineRule:'auto' }, children:[ R('（一）增值税处理',{ font:FHei, size:22, bold:true, color:'2A2118' }) ] }));
+  for(var vi=0;vi<hp.vat.length;vi++) paras.push(new P({ spacing:{ after:30, line:320, lineRule:'auto' }, indent:{ left:380, hanging:240 }, children:[ R('· '+hp.vat[vi],{ font:FSong, size:21 }) ] }));
+  paras.push(new P({ spacing:{ before:160, after:80, line:320, lineRule:'auto' }, children:[ R('（二）企业所得税处理',{ font:FHei, size:22, bold:true, color:'2A2118' }) ] }));
+  for(var ci=0;ci<hp.cit.length;ci++) paras.push(new P({ spacing:{ after:30, line:320, lineRule:'auto' }, indent:{ left:380, hanging:240 }, children:[ R('· '+hp.cit[ci],{ font:FSong, size:21 }) ] }));
 
   /* 四、关于我们（品牌内容来自公司企业简章） */
   paras.push(hdg('四、关于我们', true));
