@@ -927,6 +927,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+<script src="docx.umd.js"></script>
 <script>
 /* ============ v4.0 · 对照表（源：《平台履约与报关对照表》平台×报关模式 / 平台履约规则 / 报关模式说明） ============ */
 var MODE5=[
@@ -3142,12 +3143,13 @@ function checkText(d){
 }
 function plainHTML(html){ var dv=document.createElement('div'); dv.innerHTML=html||''; return (dv.textContent||'').replace(/\s+/g,' '); }
 function planOlbar(ed,single){
-  if(!single) return '<div class="olbar"><button class="cbtn" onclick="copyTxt(\'ol-src\',this)">复制大纲，直接发客户</button></div>';
+  if(!single) return '<div class="olbar"><button class="cbtn" onclick="copyTxt(\'ol-src\',this)">复制大纲，直接发客户</button><button class="cbtn" onclick="tkPlanDoc(this)">生成方案书</button></div>';
   if(ed) return '<div class="plan-imgbar"><button class="pri wide" onclick="tkPlanSave(this)">保存方案</button><button class="wide" onclick="tkPlanCancel()">取消</button></div>';
   return '<div class="plan-imgbar">'
     +'<button class="cbtn" onclick="copyTxt(\'ol-src\',this)">复制大纲，直接发客户</button>'
     +'<button onclick="tkPlanEdit()">编辑方案</button>'
-    +'<button class="pri" onclick="tkPlanImg(this)">图片生成</button></div>';
+    +'<button class="pri" onclick="tkPlanImg(this)">图片生成</button>'
+    +'<button class="pri" onclick="tkPlanDoc(this)">生成方案书</button></div>';
 }
 function tkPlanEdit(){ TK._editing=true; tkRender(); window.scrollTo(0,0); }
 function tkPlanCancel(){ TK._editing=false; tkRender(); window.scrollTo(0,0); }
@@ -3163,6 +3165,93 @@ function tkPlanSave(btn){
   tkToast(ok? '方案已保存（仅改文案，原客户记录不动）' : '保存失败：本地存储被禁用或已满');
   if(btn){ var o=btn.textContent; btn.textContent='已保存 ✓'; setTimeout(function(){ if(btn) btn.textContent=o; },1400); }
 }
+/* —— 生成方案书（Word .docx）：复用「对客版」全文，末尾加公司背书段，沿用暖金主题 ——
+   依赖 docx.umd.js（已在 <head> 引入）。品牌背书内容在 PLAN_DOC_BRAND 常量，按实际填写即可。 */
+var FSONG='宋体', FHEI='黑体';
+var PLAN_DOC_BRAND={
+  name:'金米财税',
+  lines:[
+    '我们专注跨境电商财税合规，提供从资质办理、报关合规到账务梳理的一站式落地服务。',
+    '服务范围包括：进出口权与出口免税备案办理、报关抬头切换与 13 栏免税填报、跨境账务合规与税负测算、历史遗留问题梳理与更正申报。',
+    '方案中的每一步都由我们协助推进，贵司只需配合提供基础资料，即可把出口合规这块稳妥落地。'
+  ],
+  contact:''   /* 填真实电话 / 微信后重新生成即带出；留空则不显示 */
+};
+async function genPlanDoc(text, d){
+  if(typeof docx==='undefined') throw new Error('docx 库未加载，请刷新页面重试');
+  var R=function(t,o){ return new docx.TextRun(Object.assign({text:String(t==null?'':t)}, o||{})); };
+  var AT=docx.AlignmentType, P=docx.Paragraph, Doc=docx.Document, PK=docx.Packer;
+  var paras=[];
+  paras.push(new P({ alignment:AT.CENTER, spacing:{ after:60 },
+    children:[ R('跨境出口合规落地方案',{ font:FHEI, size:32, bold:true, color:'B45309' }) ] }));
+  var dt=new Date();
+  paras.push(new P({ alignment:AT.CENTER, spacing:{ after:160 },
+    children:[ R('生成日期：'+dt.getFullYear()+'-'+tkP2(dt.getMonth()+1)+'-'+tkP2(dt.getDate()),{ font:FSONG, size:20, color:'808080' }) ] }));
+  var lines=String(text||'').split('\n');
+  for(var i=0;i<lines.length;i++){
+    var t=lines[i];
+    if(t===''){ paras.push(new P({ spacing:{ after:40 } })); continue; }
+    if(t==='出口合规落地方案'){ continue; }
+    if(/^[一二三四五六七八九十]+、/.test(t)){
+      paras.push(new P({ spacing:{ before:160, after:80 }, children:[ R(t,{ font:FHEI, size:26, bold:true, color:'B45309' }) ] }));
+    } else if(/^\d+）/.test(t)){
+      paras.push(new P({ spacing:{ before:80, after:40 }, children:[ R(t,{ font:FHEI, size:22, bold:true, color:'2A2118' }) ] }));
+    } else if(/^第\s*\d+\s*步｜/.test(t)){
+      paras.push(new P({ spacing:{ before:100, after:40 }, children:[ R(t,{ font:FHEI, size:22, bold:true, color:'B45309' }) ] }));
+    } else if(/^　· /.test(t)){
+      paras.push(new P({ spacing:{ after:30 }, indent:{ left:360, hanging:240 },
+        children:[ R(t.replace(/^　/,''),{ font:FSONG, size:22 }) ] }));
+    } else if(/^　您这边需要提供：/.test(t) || /^　这一步做完：/.test(t)){
+      var ix=t.indexOf('：'); var lab=t.slice(0,ix+1), rest=t.slice(ix+1);
+      paras.push(new P({ spacing:{ after:30 }, indent:{ left:360 },
+        children:[ R(lab,{ font:FSONG, size:22, bold:true, color:'7C3AED' }), R(rest,{ font:FSONG, size:22 }) ] }));
+    } else if(/^　/.test(t)){
+      paras.push(new P({ spacing:{ after:30 }, indent:{ left:360 },
+        children:[ R(t.replace(/^　/,''),{ font:FSONG, size:22 }) ] }));
+    } else {
+      paras.push(new P({ spacing:{ after:60 }, alignment:AT.JUSTIFIED,
+        children:[ R(t,{ font:FSONG, size:22 }) ] }));
+    }
+  }
+  /* 公司背书 */
+  paras.push(new P({ spacing:{ before:220, after:80 }, children:[ R('关于我们',{ font:FHEI, size:26, bold:true, color:'B45309' }) ] }));
+  for(var b=0;b<PLAN_DOC_BRAND.lines.length;b++){
+    paras.push(new P({ spacing:{ after:60 }, alignment:AT.JUSTIFIED, children:[ R(PLAN_DOC_BRAND.lines[b],{ font:FSONG, size:22 }) ] }));
+  }
+  if(PLAN_DOC_BRAND.contact){
+    paras.push(new P({ spacing:{ before:60, after:40 }, children:[ R(PLAN_DOC_BRAND.contact,{ font:FSONG, size:22, color:'808080' }) ] }));
+  }
+  paras.push(new P({ spacing:{ before:80 }, alignment:AT.RIGHT, children:[ R(PLAN_DOC_BRAND.name,{ font:FHEI, size:24, bold:true, color:'B45309' }) ] }));
+
+  var doc=new Doc({ styles:{ default:{ document:{ run:{ font:FSONG, size:22 } } } },
+    sections:[{ properties:{},
+      footers:{ default:new docx.Footer({ children:[ new P({ alignment:AT.CENTER,
+        children:[ R('第 ',{ size:18, color:'808080' }), new docx.TextRun({ children:[docx.PageNumber.CURRENT], size:18, color:'808080' }), R(' 页',{ size:18, color:'808080' }) ] }) ] }) },
+      children:paras }] });
+  return await PK.toBlob(doc);
+}
+async function tkPlanDoc(btn){
+  if(btn){ btn.disabled=true; var ot=btn.textContent; btn.textContent='生成中…'; }
+  try{
+    var d=derive();
+    var recId=planRecId();
+    var saved=planEditGet(recId);
+    /* 给客户看的方案书一律走对客版；已编辑过的用编辑稿 */
+    var full = saved? (saved.olText||plainHTML(saved.ol)) : outlineTextClient(d);
+    var blob=await genPlanDoc(full, d);
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    var nm=(TK&&TK.cid?String(TK.cid):'客户').slice(0,20);
+    var dt=new Date();
+    var ds=dt.getFullYear()+'-'+tkP2(dt.getMonth()+1)+'-'+tkP2(dt.getDate());
+    a.download='跨境合规方案书-'+nm+'-'+ds+'.docx';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ try{ URL.revokeObjectURL(a.href); }catch(e){} },5000);
+    tkToast('方案书（Word）已生成并开始下载');
+  }catch(e){ console.error(e); alert('生成失败：'+(e&&e.message?e.message:e)); }
+  finally{ if(btn){ btn.disabled=false; btn.textContent=ot; } }
+}
+
 function tkPlanImg(btn){
   var d=derive();
   var recId=planRecId();
