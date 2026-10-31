@@ -1257,7 +1257,23 @@ function tkMeSave(v){ TK_ME=v||''; try{ localStorage.setItem('cbx_me',TK_ME); }c
 function tkOpenLine(){
   return '你好，我是金米财税的跨境合规师'+(TK_ME?TK_ME:'')+'，您这边是想咨询关于跨境电商哪方面的内容呢？';
 }
-var TK_Q=['2025Q3','2025Q4','2026Q1','2026Q2','2026Q3'];
+/* 可更正申报的季度选项：从 2025 Q3 起（此前税局基本不管），到「当前日期之前已结束的最后一个季度」止。
+   Q4 未结束前不出现（平台推送数据要季度结束后才有）。例：2026-10 → 2025Q3/Q4、2026Q1/Q2/Q3；2027-01 → 加 2026Q4。 */
+function tkQOptions(){
+  var now=new Date();
+  var yr=now.getFullYear(), mo=now.getMonth()+1;       // mo: 1-12
+  var curQ=Math.ceil(mo/3);                             // 当前所处季度 1-4
+  var endYr, endQ;
+  if(curQ===1){ endYr=yr-1; endQ=4; } else { endYr=yr; endQ=curQ-1; }
+  var list=[], y=2025, q=3;
+  while(true){
+    if((y>endYr)||(y===endYr&&q>endQ)) break;           // 超过已结束季度即停
+    list.push(y+'Q'+q);
+    q++; if(q>4){ q=1; y++; }
+  }
+  return list;
+}
+var TK_Q=tkQOptions();
 var TK_PLAT_ORD=['amazon','tiktok','temu','ozon','shopee','aliexpress','independent'];
 
 function tkPName(p){
@@ -3228,6 +3244,16 @@ async function buildCover(){
     return c.toDataURL('image/png');
   }catch(e){ return null; }
 }
+/* 核定适用性判定：核定仅适用于 2025 年 Q3/Q4 季度；2026 年起各季度均不可核定。
+   以客户「开始经营网店」的时间（A.startMonth / TK.startMonth，格式 YYYY-MM）判定：
+   2026 年及以后开始 → 不可核定(false)；2025 年及以前 → 可核定(true)；未填/不记得 → 无法判定(null)。 */
+function heDingEligible(){
+  var sm=(A&&A.startMonth&&A.startMonth!=='na')?A.startMonth:(TK&&TK.startMonth&&TK.startMonth!=='na'?TK.startMonth:'');
+  if(!sm||sm==='na') return null;
+  var yr=parseInt(String(sm).split('-')[0],10);
+  return yr<=2025;
+}
+
 function histPlan(d){
   /* 历史遗留数据处理逻辑（按客户实际情况生成，非模板）：
      增值税——一般纳税人可直填免税；小规模+免税备案后 深圳直填 / 外地需报关单；可与税管员沟通历史数据填免税（各城市具体沟通）。
@@ -3255,44 +3281,61 @@ function histPlan(d){
     vat.push('纳税人类型待确认：一般纳税人可直接填报免税；小规模纳税人须完成免税备案后，深圳可直接填报、外地须凭报关单填报免税。');
   }
   vat.push('【沟通要点】可与税管员沟通将之前数据填报免税，但须按具体城市、具体沟通确定，无统一口径。');
-  cit.push('企业所得税建议与主管税务机关沟通核定征收，参考口径：2025 年第三季度约 2%、第四季度约 4%；部分城市有特殊情况（如广州约 8%），其他城市视沟通结果确定。');
+  var hed=heDingEligible();
+  if(hed===false){
+    cit.push('企业所得税：因贵司 2026 年方开展网店经营，2026 年起各季度均不可沟通核定，按查账征收以真实利润为计税依据（跨境电商真实利润率行业常见约 15%，即 真实利润 × 5%）。');
+  } else if(hed===true){
+    cit.push('企业所得税：2025 年第三季度、第四季度可尝试与主管税务机关沟通核定征收，核定口径为「销售额 × 核定利润率（约 2%~4%，部分城市如广州约 8%）× 企业所得税税率 5%」，并非直接按销售额的 2%~4% 计征；其余季度及 2026 年起各季度不可核定，按真实利润（约销售额 15%）× 5% 计。');
+  } else {
+    cit.push('企业所得税：核定仅适用于 2025 年 Q3/Q4 季度（口径为「销售额 × 核定利润率 2%~4% × 5%」），2026 年起各季度不可核定；若贵司于 2026 年方开展网店经营，则按查账征收、以真实利润（约销售额 15%）× 5% 计。具体需结合贵司开始经营网店的时间确定。');
+  }
   cit.push('平台成本与人力成本：可根据平台汇总单正常录入，据实作为成本抵扣。');
   cit.push('采购成本：根据贵司收票情况录入，可取得发票的据实入账，无票部分单列处理。');
   cit.push('人力成本：另作专项规划（如返聘退休人员、工资列支等），合理降低企业所得税税负。');
   return { vat:vat, cit:cit, entName:entName, cityName:cityName };
 }
-/* 历史遗留税费测算：路径一「如实补缴（视同内销口径）」 vs 路径二「合规处理（出口免税 + 核定征收）」 */
+/* 历史遗留税费测算：路径一「如实补缴（视同内销口径）」 vs 路径二「合规处理（出口免税）」
+   计算口径（按用户给定规则）：
+   · 真实利润：跨境电商（亚马逊为主）行业常见约销售额 15%，企业所得税（查账/非核定口径）= 真实利润 × 5%（利润<300万）或 25%。
+   · 核定（仅 2025 Q3/Q4 可申请，2026 起各季度不可核定，以开始经营网店时间判定）：
+     企税 = 销售额 × 核定利润率(2%~4%) × 企业所得税税率 5%，并非直接按销售额 × 2%~4% 计征。 */
 function histTaxCompare(){
   var sales=(A&&A.flow!=null&&A.flow!=='na')?Number(A.flow):null;
   if(!(sales>0)) return {ok:false};
   var isGen=(A.entity==='general');
   var vatRate=isGen?0.13:0.01;
-  var head=(A.staffN!=null&&A.staffN!=='')?Number(A.staffN):((A.staff==='yes'||A.staff==='retired')?1:0);
-  /* 成本估算（行业常见结构）：平台成本约 50%、采购成本约 20%、人力 head×6 万/年 */
-  var plat=Math.round(sales*0.5*10)/10;
-  var purch=Math.round(sales*0.2*10)/10;
-  var labor=Math.round(head*6*10)/10;
-  /* 路径一：如实补缴（视同内销）——增值税按内销补，企税走明细账口径 */
+  /* 真实利润：跨境电商（亚马逊为主）行业常见约 15% 销售额；据此估企业所得税（查账/非核定口径） */
+  var realProfit=Math.round(sales*0.15*10)/10;
+  var citRate=realProfit<300?0.05:0.25;
+  /* 路径一：如实补缴（视同内销）——增值税按内销补，企税按真实利润 × 5%（查账口径） */
   var vat1=Math.round(sales*vatRate*10)/10;
-  var profit=Math.max(0,Math.round((sales-plat-purch-labor)*10)/10);
-  var citRate=profit<300?0.05:0.25;
-  var cit1=Math.round(profit*citRate*10)/10;
+  var cit1=Math.round(realProfit*citRate*10)/10;
   var tax1=Math.round((vat1+cit1)*10)/10;
   var late=Math.round(tax1*0.1825*10)/10;      /* 滞纳金按日万分之五、约 12 个月估算 */
   var fineLow=Math.round(tax1*0.5*10)/10;
   var fineHigh=Math.round(tax1*5*10)/10;
   var low1=Math.round((tax1+late+fineLow)*10)/10;
   var high1=Math.round((tax1+late+fineHigh)*10)/10;
-  /* 路径二：合规处理——增值税免（出口免税），企税按核定 2%~4% 沟通 */
-  var cit2Low=Math.round(sales*0.02*10)/10;
-  var cit2High=Math.round(sales*0.04*10)/10;
+  /* 核定判定：仅 2025 Q3/Q4 可沟通核定；2026 起各季度不可核定（以开始经营网店时间判定） */
+  var hed=heDingEligible();
+  /* 路径二：合规处理——增值税免（出口免税）；企税：可核定时 = 销售额×核定利润率(2%~4%)×5%，不可核定时 = 真实利润×5% */
+  var cit2Low, cit2High, cit2Note;
+  if(hed===false){
+    cit2Low=Math.round(realProfit*citRate*10)/10;   // 同路径一，无核定优惠
+    cit2High=cit2Low;
+    cit2Note='按真实利润 × '+Math.round(citRate*100)+'%（不可核定）';
+  } else {
+    cit2Low=Math.round(sales*0.02*0.05*10)/10;     // 销售额 × 2% × 5%
+    cit2High=Math.round(sales*0.04*0.05*10)/10;     // 销售额 × 4% × 5%
+    cit2Note='核定（销售额 × 核定利润率 2%~4% × 5%）';
+  }
   var saveLow=Math.round((low1-cit2High)*10)/10;
   var saveHigh=Math.round((high1-cit2Low)*10)/10;
-  return {ok:true, sales:sales, isGen:isGen, vatRate:vatRate, head:head,
-    plat:plat, purch:purch, labor:labor,
-    vat1:vat1, cit1:cit1, citRate:citRate, tax1:tax1, late:late,
+  return {ok:true, sales:sales, isGen:isGen, vatRate:vatRate,
+    realProfit:realProfit, citRate:citRate, vat1:vat1, cit1:cit1, tax1:tax1, late:late,
     fineLow:fineLow, fineHigh:fineHigh, low1:low1, high1:high1,
-    cit2Low:cit2Low, cit2High:cit2High, saveLow:saveLow, saveHigh:saveHigh};
+    cit2Low:cit2Low, cit2High:cit2High, cit2Note:cit2Note, hed:hed,
+    saveLow:saveLow, saveHigh:saveHigh};
 }
 async function genPlanDoc(text, d){
   if(typeof docx==='undefined') throw new Error('docx 库未加载，请刷新页面重试');
@@ -3403,9 +3446,12 @@ async function genPlanDoc(text, d){
 
   /* 三、落地方案（具体怎么执行，对客视角） */
   paras.push(hdg('三、落地方案', true));
+  var leadHed=heDingEligible();
   paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[
     R('推进原则：',{ font:FHei, size:21, bold:true, color:'7A5A12' }),
-    R('整体按「先合规、再核定」推进——先把出口资质、免税备案、按汇总单如实申报这三项跑通，形成稳定的合规申报口径，再处理历史遗留数据并对接核定征收。顺序不可颠倒：未合规先行申请核定，税务机关不予受理；先动手补税而未算清缺口，又容易多缴。以下为具体执行步骤：',{ font:FSong, size:21 })
+    R((leadHed===false
+      ? '整体按「先合规、后据实申报」推进——先把出口资质、免税备案、按汇总单如实申报这三项跑通，形成稳定的合规申报口径，再处理历史遗留数据并按查账征收（真实利润 × 5%）申报企业所得税。以下为具体执行步骤：'
+      : '整体按「先合规、再核定」推进——先把出口资质、免税备案、按汇总单如实申报这三项跑通，形成稳定的合规申报口径，再处理历史遗留数据并对接核定征收。顺序不可颠倒：未合规先行申请核定，税务机关不予受理；先动手补税而未算清缺口，又容易多缴。以下为具体执行步骤：'),{ font:FSong, size:21 })
   ] }));
   var S=roadmap(d);
   for(var j=0;j<S.length;j++){
@@ -3417,7 +3463,7 @@ async function genPlanDoc(text, d){
   }
   paras.push(new P({ spacing:{ before:160, after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[
     R('预期效果：',{ font:FHei, size:21, bold:true, color:'B45309' }),
-    R('以上步骤完成后，贵司将具备自属报关单与出口免税依据，增值税可按出口免税口径降至 0；申报口径与平台汇总单一致，平台佣金、FBA 配送、仓储、广告等支出可据实录入成本，企业所得税通过核定征收与人力成本专项规划进一步优化。日常只需按月导出汇总单，即可稳定维持合规状态。',{ font:FSong, size:21 })
+    R('以上步骤完成后，贵司将具备自属报关单与出口免税依据，增值税可按出口免税口径降至 0；申报口径与平台汇总单一致，平台佣金、FBA 配送、仓储、广告等支出可据实录入成本。'+(heDingEligible()===false?'企业所得税按查账征收、以真实利润（约销售额 15%）× 5% 计，并通过人力成本专项规划进一步优化。':'企业所得税通过核定征收（2025 Q3/Q4 可适用）与人力成本专项规划进一步优化。')+'日常只需按月导出汇总单，即可稳定维持合规状态。',{ font:FSong, size:21 })
   ] }));
 
   /* 历史遗留数据处理方案（按客户实际情况定制，最重要的部分）：落地步骤 + 税费测算对比 + 处理方案 */
@@ -3432,10 +3478,11 @@ async function genPlanDoc(text, d){
 
   /* （一）落地步骤 */
   paras.push(new P({ spacing:{ before:160, after:80, line:320, lineRule:'auto' }, children:[ R('（一）落地步骤',{ font:FHei, size:22, bold:true, color:'2A2118' }) ] }));
+  var hed2=heDingEligible();
   var hpSteps=[
     '第一步｜调取平台后台对应季度的汇总单流水，与原代账的申报表进行差额比对，形成「历史数据缺口表」，逐季列示销售额差异。',
     '第二步｜分别按「如实补缴」与「走免税备案」两条路径测算补缴税款及滞纳金，向贵司列示具体金额，供贵司比选确定补法。',
-    '第三步｜待出口资质、免税备案等合规流程跑通后，再对接主管税务机关沟通核定征收——顺序不可颠倒，未合规先行申请核定，税务机关不予受理。'
+    '第三步｜待出口资质、免税备案等合规流程跑通后，'+(hed2===false?'按查账征收以真实利润（约销售额 15%）× 5% 申报企业所得税——2026 年起各季度均不可核定，须据实申报。':'对接主管税务机关沟通核定征收（仅 2025 年 Q3/Q4 可适用，口径为销售额 × 核定利润率 2%~4% × 5%，并非直接按销售额 2%~4% 计征）——顺序不可颠倒，未合规先行申请核定，税务机关不予受理。')
   ];
   for(var hs=0;hs<hpSteps.length;hs++) paras.push(new P({ spacing:{ after:30, line:320, lineRule:'auto' }, indent:{ left:380, hanging:240 }, children:[ R('· '+hpSteps[hs],{ font:FSong, size:21 }) ] }));
 
@@ -3469,17 +3516,17 @@ async function genPlanDoc(text, d){
         left:{style:BS.SINGLE,size:4,color:'E0D5C0'}, right:{style:BS.SINGLE,size:4,color:'E0D5C0'},
         insideHorizontal:{style:BS.SINGLE,size:2,color:'ECE3D6'}, insideVertical:{style:BS.SINGLE,size:2,color:'ECE3D6'} },
       rows:[
-        hRow('测算项目','路径一：如实补缴','路径二：合规处理（免税 + 核定）','B45309',true),
+        hRow('测算项目','路径一：如实补缴','路径二：合规处理（出口免税）','B45309',true),
         hRow('年销售额（测算基数）', htc.sales+' 万元', htc.sales+' 万元','FFFFFF',false),
         hRow('增值税', htc.vat1+' 万元（按内销 '+Math.round(htc.vatRate*100)+'% 补缴）', '0 元（出口免税）','FBF3E4',false),
-        hRow('企业所得税', htc.cit1+' 万元（明细账口径 '+Math.round(htc.citRate*100)+'%）', htc.cit2Low+' ~ '+htc.cit2High+' 万元（核定约 2%~4%）','FFFFFF',false),
+        hRow('企业所得税', htc.cit1+' 万元（真实利润 '+Math.round(htc.realProfit)+' 万 × '+Math.round(htc.citRate*100)+'%）', (htc.hed===false? (htc.cit2Low+' 万元（不可核定，按真实利润 × '+Math.round(htc.citRate*100)+'%）') : (htc.cit2Low+' ~ '+htc.cit2High+' 万元（核定：销售额 × 2%~4% × 5%）')),'FFFFFF',false),
         hRow('滞纳金（日万分之五）', htc.late+' 万元（按约 12 个月估算）', '无（合规后不产生）','FBF3E4',false),
         hRow('罚款风险（0.5~5 倍）', htc.fineLow+' ~ '+htc.fineHigh+' 万元', '无（合规后不产生）','FFFFFF',false),
-        hRow('合计', htc.low1+' ~ '+htc.high1+' 万元', htc.cit2Low+' ~ '+htc.cit2High+' 万元','FBF3E4',true)
+        hRow('合计', htc.low1+' ~ '+htc.high1+' 万元', (htc.hed===false? (htc.cit2Low+' 万元') : (htc.cit2Low+' ~ '+htc.cit2High+' 万元')),'FBF3E4',true)
       ] }));
     paras.push(new P({ spacing:{ before:120, after:60, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[
       R('测算说明：',{ font:FHei, size:21, bold:true, color:'7A5A12' }),
-      R('按贵司年销售额约 '+htc.sales+' 万测算（成本估算：平台成本约 '+htc.plat+' 万、采购成本约 '+htc.purch+' 万、人力约 '+htc.labor+' 万'+(htc.head>0?('（'+htc.head+' 人 × 6 万/年）'):'')+'）。路径一为被核查倒查或主动补缴的代价，除税款外还需承担滞纳金与罚款风险；路径二为合规后的正常税负。',{ font:FSong, size:21 })
+      R('按贵司年销售额约 '+htc.sales+' 万测算：企业所得税按「真实利润 × '+Math.round(htc.citRate*100)+'%」估算，跨境电商（亚马逊为主）真实利润率行业常见约 15%，即真实利润约 '+htc.realProfit+' 万；增值税按内销 '+Math.round(htc.vatRate*100)+'% 计。'+(htc.hed===false?'因贵司于 2026 年方开展网店经营，2026 年起各季度均不可沟通核定，路径二企业所得税同样按真实利润 × '+Math.round(htc.citRate*100)+'% 计，合规节省主要来自增值税免缴及消除滞纳金、罚款风险。':'核定仅适用于 2025 年 Q3/Q4 季度，其口径为「销售额 × 核定利润率（约 2%~4%）× 企业所得税税率 5%」，并非直接按销售额的 2%~4% 计征；路径二为合规后的正常税负。')+'路径一为被核查倒查或主动补缴的代价，除税款外还需承担滞纳金与罚款风险。',{ font:FSong, size:21 })
     ] }));
     paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[
       R('对比结论：',{ font:FHei, size:21, bold:true, color:'B45309' }),
@@ -3503,6 +3550,7 @@ async function genPlanDoc(text, d){
   var guar=[
     '专属跨境会计交付：跨境账目由专职会计按明细账核算，平台成本按汇总单逐站点、逐月录入，不做一笔打包入账。',
     '月度账税报告：每月申报前出具报告，列明利润、报关数额、免税额度及账目问题，并有财税老师电话或群内专项讲解。',
+    '合同服务承诺：跨境服务合同内约定季度服务不满意可按约申请退费，以合同条款为准。',
     '数字化查账：贵司可通过微信小程序随时查看每月整体账税情况及三大报表数据。',
     '资金链路优化：可协助搭建网商银行收款方案，实现回款免手续费并提供较优汇率，降低资金成本。',
     '全程陪跑：从尽调、方案设计到落地执行的全周期服务，协助应对税务机关沟通与核查情况说明。'
