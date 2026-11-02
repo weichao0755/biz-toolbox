@@ -2450,7 +2450,9 @@ function histTaxCalc(o){
   var base=Number(o.annualProfit)||0;
   /* 企税档位：并入当年利润后判定（超 300 万转 25%） */
   var citRate=((base+pBook)<300)?0.05:0.25;
-  var cit=Math.round(pBook*citRate*10)/10;
+  /* 计税基础 = 利润 − 增值税（企业所得税法：应纳税所得额不含增值税） */
+  var citBase=Math.round(Math.max(0,pBook-vat)*10)/10;
+  var cit=Math.round(citBase*citRate*10)/10;
   var tax=Math.round((vat+cit)*10)/10;
   var mon=Math.max(0,Number(o.mon)||0);
   var latePct=Math.round(mon/12*18.25*10)/10;
@@ -2461,7 +2463,7 @@ function histTaxCalc(o){
   var low=Math.round((tax+late+fineLow)*10)/10;
   var high=Math.round((tax+late+fineHigh)*10)/10;
   return {ok:true,gap:gap,isGen:isGen,vatRate:vatRate,free:free,vat:vat,labor:labor,
-    platCost:platCost,purchCost:purchCost,costAll:costAll,pBook:pBook,citRate:citRate,cit:cit,
+    platCost:platCost,purchCost:purchCost,costAll:costAll,pBook:pBook,citBase:citBase,citRate:citRate,cit:cit,
     tax:tax,mon:mon,latePct:latePct,late:late,fineLow:fineLow,fineHigh:fineHigh,low:low,high:high};
 }
 function renderHistTax(){
@@ -2480,13 +2482,13 @@ function renderHistTax(){
         ? '先办理进出口权与免税备案，再按出口免税填报，增值税免；但免税填报无明文规定，被核查需按实际金额更正'
         : '没有本公司抬头的报关单，视同内销按 '+Math.round(r.vatRate*100)+'% 补缴')+'</td></tr>'
    +'<tr><td>能录入的成本合计</td><td>'+txNum(r.costAll)+'</td><td>平台成本 '+txNum(r.platCost)+' + 采购成本 '+txNum(r.purchCost)+' + 人力 '+txNum(r.labor)+'（'+ (Math.round(r.labor/6*10)/10) +' 人 × 6 万/人/年）</td></tr>'
-   +'<tr><td>企业所得税（明细账口径）</td><td><b>'+txNum(r.cit)+'</b></td><td>利润 = 销售额 '+r.gap+' − 成本 '+txNum(r.costAll)+' = '+txNum(r.pBook)+'，企税 '+Math.round(r.citRate*100)+'%</td></tr>'
+   +'<tr><td>企业所得税（明细账口径）</td><td><b>'+txNum(r.cit)+'</b></td><td>计税基础 = 利润 '+txNum(r.pBook)+' − 增值税 '+txNum(r.vat)+' = '+txNum(r.citBase)+'，企税 '+Math.round(r.citRate*100)+'%</td></tr>'
    +'<tr><td>滞纳金</td><td>'+txNum(r.late)+'</td><td>按日万分之五，'+r.mon+' 个月约 '+r.latePct+'%</td></tr>'
    +'<tr class="cur"><td><b>税费 + 滞纳金</b></td><td><b>'+txNum(r.tax+r.late)+'</b></td><td>增值税 + 企业所得税（明细账口径）+ 滞纳金</td></tr>'
    +'<tr><td>罚款（区间）</td><td>'+txNum(r.fineLow)+' ~ '+txNum(r.fineHigh)+'</td><td>按不合规的全额税款 '+txNum(r.tax)+' 万的 0.5 倍 ~ 5 倍估算，具体由税务机关裁量</td></tr>'
    +'<tr class="cur"><td><b>合计（含罚款）</b></td><td><b>'+txNum(r.low)+' ~ '+txNum(r.high)+'</b></td><td>低：按 0.5 倍罚款；高：按 5 倍罚款</td></tr>'
    +'</tbody></table></div></div>';
-  h+='<p class="txsave">口径说明：企业所得税走<b>明细账</b>——销售额减去你能提供的平台成本、采购成本和人力，剩下的按 '+Math.round(r.citRate*100)+'% 算企税，<b>不按核定率折算</b>。成本填得越全，算出来的企税和罚款越低；反过来，拿不出成本凭证的部分会被算进利润里。</p>';
+  h+='<p class="txsave">口径说明：企业所得税走<b>明细账</b>——销售额减去你能提供的平台成本、采购成本和人力，得出利润后<b>再扣掉增值税作为计税基础</b>，按 '+Math.round(r.citRate*100)+'% 算企税，<b>不按核定率折算</b>。成本填得越全，算出来的企税和罚款越低；反过来，拿不出成本凭证的部分会被算进利润里。</p>';
   h+='<p class="txsave">说实话的边界：主动更正并补缴的，实践中多按下限处理，部分地区只收税款与滞纳金；但<b>不得向客户承诺具体金额、也不得承诺"不会被罚"</b>。滞纳金按日万分之五计算，实践中一般不高于税款本金。企税档位会随这笔补报并入当年利润后的总额变化（当年利润超 300 万转 25%）。</p>';
   box.innerHTML=h;
 }
@@ -2541,13 +2543,14 @@ function taxCalc(o){
   var purch=Math.round(sales*purchR*10)/10;
   var labor=Math.round(head*6*10)/10;
   var profit=Math.round((sales-plat-purch-labor)*10)/10;
-  var citRate=profit<300?0.05:0.25;
-  var cit=Math.round(Math.max(0,profit)*citRate*10)/10;
   var vat=Math.round(sales*vatRate*10)/10;
+  var citRate=profit<300?0.05:0.25;
+  var citBase=Math.round(Math.max(0,profit-vat)*10)/10;
+  var cit=Math.round(citBase*citRate*10)/10;
   var baseTax=Math.round((vat+cit)*10)/10;
   var baseRate=Math.round(baseTax/sales*1000)/10;
   var r={ok:true,sales:sales,isGen:isGen,exempt:exempt,vatRate:vatRate,purchR:purchR,platR:platR,head:head,
-    plat:plat,purch:purch,labor:labor,profit:profit,citRate:citRate,cit:cit,vat:vat,
+    plat:plat,purch:purch,labor:labor,profit:profit,citBase:citBase,citRate:citRate,cit:cit,vat:vat,
     baseTax:baseTax,baseRate:baseRate,plans:[],afterTax:null,afterRate:null};
   /* 节税 1：没有报关单 → 办理进出口权 + 免税备案，取得报关单后走出口免税 */
   if(!exempt&&vat>0){
@@ -2555,12 +2558,12 @@ function taxCalc(o){
       desc:'目前没有本公司抬头的报关单，销售额视同内销，增值税 '+vat+' 万。先办理进出口权，再办理免税备案，取得本公司抬头的报关单后出口免税栏（13 栏）可填报，这部分增值税可免。'});
   }
   /* 节税 2：年终奖 3.6 万/人，个税 3% < 企税，做工资抵扣 */
-  if(head>0&&profit>0){
+  if(head>0&&citBase>0){
     var bonus=Math.round(head*3.6*10)/10;
     var bonusTax=Math.round(head*3.6*0.03*10)/10;
-    var citSaved=Math.round(Math.min(bonus,profit)*citRate*10)/10;
+    var citSaved=Math.round(Math.min(bonus,citBase)*citRate*10)/10;
     var net=Math.round((citSaved-bonusTax)*10)/10;
-    var afterCit=Math.round(Math.max(0,profit-bonus)*citRate*10)/10;
+    var afterCit=Math.round(Math.max(0,citBase-bonus)*citRate*10)/10;
     var afterTax=Math.round((vat+afterCit+bonusTax)*10)/10;
     r.plans.push({id:'bonus',net:net,title:'年终奖做工资抵扣',
       desc:head+' 名员工各发 3.6 万年终奖，个税按 3% 计 '+bonusTax+' 万；利润同步下降，少交企业所得税约 '+citSaved+' 万。净省约 '+net+' 万（3% < 企税 '+(citRate*100)+'%）。'});
@@ -2595,7 +2598,7 @@ function renderTax(){
    +'<tr><td>增值税</td><td>'+r.vat+'</td><td>'+(r.exempt
         ? '已取得本公司抬头的报关单，走出口免税，增值税免'
         : '没有报关单，视同内销按 '+Math.round(r.vatRate*100)+'% 缴')+'</td></tr>'
-   +'<tr><td>企业所得税</td><td>'+r.cit+'</td><td>利润 '+(r.profit<300?'300 万以内按 5%':'超过 300 万按 25%')+'</td></tr>'
+   +'<tr><td>企业所得税</td><td>'+r.cit+'</td><td>计税基础 = 利润 '+r.profit+' − 增值税 '+r.vat+' = '+r.citBase+'，'+(r.profit<300?'利润 300 万以内按 5%':'利润超过 300 万按 25%')+'</td></tr>'
    +'<tr class="cur"><td><b>合计税负</b></td><td><b>'+r.baseTax+'</b></td><td>综合税负率 <b>'+r.baseRate+'%</b></td></tr>'
    +'</tbody></table></div></div>';
   if(r.plans.length){
@@ -4966,7 +4969,7 @@ function aiFacts(d){
   if(gf.has) L.push('历史缺口测算：'+gf.scope+(gf.vat!=null?('；如补增值税约 '+gf.vat+' 万'+(gf.late!=null?('，滞纳金拖一年约 '+gf.late+' 万'):'')):'')+'。'+(A.szExempt?'深圳可先尝试往期免税填报，压低补税。':''));
   var tmf=taxModel();
   if(tmf.ok){
-    L.push('税负测算：增值税 '+tmf.vat+' 万（'+(tmf.isGen?'一般人13%':'小规模1%')+'），利润 '+tmf.profit+' 万 × '+(tmf.citRate*100)+'% 企税 = '+tmf.cit+' 万，综合税负约 '+tmf.baseRate+'%。'+(tmf.afterTax!=null?('做年终奖工资抵扣后约 '+tmf.afterRate+'%。'):''));
+    L.push('税负测算：增值税 '+tmf.vat+' 万（'+(tmf.isGen?'一般人13%':'小规模1%')+'），计税基础(利润 '+tmf.profit+' − 增值税 '+tmf.vat+') = '+tmf.citBase+' 万 × '+(tmf.citRate*100)+'% 企税 = '+tmf.cit+' 万，综合税负约 '+tmf.baseRate+'%。'+(tmf.afterTax!=null?('做年终奖工资抵扣后约 '+tmf.afterRate+'%。'):''));
     if(tmf.plans.length) L.push('节税方案：'+tmf.plans.map(function(p){return p.title+'：'+p.desc;}).join(' ｜ '));
   }
   L.push('可对外承诺：'+d.ok);
@@ -5372,7 +5375,7 @@ function gapInfo(){
    输入：年销售额(sales,万) · 纳税人性质(small/general) · 人数 · 申报/发票/城市
    公式（按客户给定）：
      利润 = 销售额 - 平台费用(50%) - 国内采购(20%) - 人力(人数 × 5000 元/月 × 12 = 6 万/人/年)
-     企业所得税：利润<300万→5%，≥300万→25%
+     企业所得税：计税基础 = 利润 − 增值税；利润<300万→5%，≥300万→25%
      增值税：小规模1% / 一般人13%
      综合税负 = (增值税 + 企业所得税 + 节税方案个税) / 销售额 */
 function taxModel(){
@@ -5389,13 +5392,15 @@ function taxModel(){
   var purch=Math.round(sales*0.2*10)/10;
   var labor=Math.round(head*6*10)/10;          /* 5000 元/月 × 12 = 6 万/人/年 */
   var profit=Math.round((sales-plat-purch-labor)*10)/10;
-  var citRate=profit<300?0.05:0.25;
-  var cit=Math.round(Math.max(0,profit)*citRate*10)/10;
   var vat=Math.round(sales*vatRate*10)/10;
+  var citRate=profit<300?0.05:0.25;
+  /* 计税基础 = 利润 − 增值税（企业所得税法：应纳税所得额不含增值税） */
+  var citBase=Math.round(Math.max(0,profit-vat)*10)/10;
+  var cit=Math.round(citBase*citRate*10)/10;
   var baseTax=Math.round((vat+cit)*10)/10;
   var baseRate=Math.round(baseTax/sales*1000)/10;
   r={ok:true, sales:sales, isGen:isGen, vatRate:vatRate, head:head, headEst:headEst,
-      plat:plat, purch:purch, labor:labor, profit:profit, citRate:citRate, cit:cit, vat:vat,
+      plat:plat, purch:purch, labor:labor, profit:profit, citBase:citBase, citRate:citRate, cit:cit, vat:vat,
       baseTax:baseTax, baseRate:baseRate, plans:[], afterTax:null, afterRate:null};
   /* 方案1：专票收点过高 → 改普票 / 不拿票 */
   if(A.invoice==='special'){
@@ -5403,12 +5408,12 @@ function taxModel(){
       desc:'供应商开专票要加 8%~10% 收点，高于您企业所得税边际税率（'+(citRate*100)+'%）。拿专票不划算：建议沟通开普票（收点约 1%~3%），或评估不拿票（省下收点，但利润上升、企税也随之上升，要权衡）。'});
   }
   /* 方案2：发年终奖 3.6万/人，个税3% < 企税，做工资抵扣 */
-  if(head>0){
+  if(head>0&&citBase>0){
     var bonus=Math.round(head*3.6*10)/10;
     var bonusTax=Math.round(head*3.6*0.03*10)/10;
-    var citSaved=Math.round(bonus*citRate*10)/10;
+    var citSaved=Math.round(Math.min(bonus,citBase)*citRate*10)/10;
     var net=Math.round((citSaved-bonusTax)*10)/10;
-    var afterCit=Math.round(Math.max(0,profit-bonus)*citRate*10)/10;
+    var afterCit=Math.round(Math.max(0,citBase-bonus)*citRate*10)/10;
     var afterTax=Math.round((vat+afterCit+bonusTax)*10)/10;
     var afterRate=Math.round(afterTax/sales*1000)/10;
     r.plans.push({id:'bonus', title:'年终奖工资抵扣',
