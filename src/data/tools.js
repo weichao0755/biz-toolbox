@@ -266,6 +266,24 @@ export const TOOLS = [
     component: EmbeddedToolView
   },
   {
+    path: '/tools/cross-handoff',
+    name: 'cross-handoff',
+    title: '跨境需求交接表填写工具',
+    desc: '销售只填极简子项（平台/店铺数/年流水/有无无票/报关方式…），工具自动拼装「客户画像/实际业务流程/业务问题/核心需求」等整段交接文案，一键导出可编辑 Excel 交给财务，大幅减少填表工作量',
+    color: '#0d9488',
+    category: 'cross',
+    iconSvg: svgWrap(`
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <path d="M9 13h6"/>
+      <path d="M9 17h4"/>
+      <path d="M16 13l2 2 2-2"/>
+    `),
+    url: 'tools/cross-handoff/index.html',
+    component: EmbeddedToolView,
+    newTab: true // 表单重交互 + 导出 Excel/复制，独立标签页打开体验更稳（与 huashu/qualification 同理）
+  },
+  {
     path: '/tools/cross-quiz',
     name: 'cross-quiz',
     title: '跨境电商考核题库',
