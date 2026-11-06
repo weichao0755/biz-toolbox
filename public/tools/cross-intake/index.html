@@ -271,18 +271,28 @@
   /* ---------- 出图 ---------- */
   function download(){
     renderPreview();
-    var node=$('sheet');
     if(typeof html2canvas==='undefined'){toast('出图组件未加载，请刷新重试');return;}
     toast('正在生成图片…');
-    html2canvas(node,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,allowTaint:true}).then(function(canvas){
+    // 关键：克隆 #sheet 到脱离缩放环境的离屏容器（自然 720px、无 transform），
+    // 否则 html2canvas 会受预览区 transform:scale 影响导致中文重叠/占位与正文叠印
+    var node=$('sheet');
+    var holder=document.createElement('div');
+    holder.style.cssText='position:fixed;left:-99999px;top:0;width:720px;background:#fff;z-index:-1;overflow:visible';
+    var clone=node.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.style.transform='none';
+    holder.appendChild(clone);
+    document.body.appendChild(holder);
+    html2canvas(clone,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,allowTaint:true}).then(function(canvas){
       try{
+        if(holder.parentNode)document.body.removeChild(holder);
         var link=document.createElement('a');
         link.download='跨境电商客户对接情况.png';
         link.href=canvas.toDataURL('image/png');
         document.body.appendChild(link);link.click();document.body.removeChild(link);
         toast('图片已生成并下载');
-      }catch(e){toast('生成失败：'+e.message);}
-    }).catch(function(e){toast('生成失败：'+(e&&e.message||e));});
+      }catch(e){if(holder.parentNode)document.body.removeChild(holder);toast('生成失败：'+e.message);}
+    }).catch(function(e){if(holder.parentNode)document.body.removeChild(holder);toast('生成失败：'+(e&&e.message||e));});
   }
 
   /* ---------- chips ---------- */
