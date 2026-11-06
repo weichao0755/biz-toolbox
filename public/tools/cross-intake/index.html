@@ -56,8 +56,10 @@
   .sample-note{font-size:11.5px;color:var(--muted);text-align:center;margin-top:6px}
 
   /* ===== 出图专用：仿 Excel 蓝白表（独立于主题） ===== */
-  .sheet-wrap{background:#eef1f4;border:1px solid var(--border);border-radius:var(--r);padding:14px;overflow-x:auto}
-  #sheet{width:720px;background:#fff;padding:22px 20px 26px;margin:0 auto;border:1px solid #d0d5da}
+  .pv-head{font-size:12.5px;color:var(--text-2);background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;box-shadow:var(--sh)}
+  .preview-fit{width:100%;overflow:hidden;background:#eef1f4;border:1px solid var(--border);border-radius:var(--r);box-sizing:border-box;box-shadow:var(--sh)}
+  .preview-stage{width:720px;transform-origin:top left}
+  #sheet{width:720px;background:#fff;padding:16px 14px 18px;margin:0 auto;border:1px solid #d0d5da;box-sizing:border-box}
   .xtitle{text-align:center;color:#1f6fbf;font-size:22px;font-weight:700;letter-spacing:1px;margin-bottom:14px;font-family:"Microsoft YaHei","PingFang SC",sans-serif}
   .xtable{width:100%}
   .xrow{display:flex;width:100%;border-left:1px solid #c4c9cf;border-bottom:1px solid #c4c9cf}
@@ -97,6 +99,8 @@
     <div class="card">
       <h3>一、基础对接</h3>
       <div class="lead">客户身份与当前模式，决定表格前三行的彩色标签。</div>
+      <label class="lab">公司名称</label>
+      <input type="text" id="custName" placeholder="如：深圳市某某跨境电子商务有限公司">
       <label class="lab">客户纳税性质</label>
       <select id="taxType">
         <option value="">请选择</option>
@@ -166,8 +170,11 @@
 
   <!-- ============ 预览出图 ============ -->
   <div class="pane" id="pane-preview">
-    <div class="sheet-wrap">
-      <div id="sheet"></div>
+    <div class="pv-head">预览效果（下载即为此图，已自动缩放适配屏幕）</div>
+    <div class="preview-fit" id="previewFit">
+      <div class="preview-stage" id="previewStage">
+        <div id="sheet"></div>
+      </div>
     </div>
     <div class="nav2">
       <button class="btn ghost" id="btnBack">← 返回修改</button>
@@ -188,7 +195,7 @@
     '亚马逊':'#ff9900','eBay':'#e53238','Shopee':'#ee4d2d','TikTok Shop':'#fe2c55',
     '独立站':'#6c5ce7','其他':'#95a5a6'
   };
-  var S={taxType:'',platforms:[],customsNow:'',ieStatus:'',
+  var S={custName:'',taxType:'',platforms:[],customsNow:'',ieStatus:'',
     forex:false,reHistory:false,hasBooks:false,socialSec:false,citPlan:false,assessed25:false,
     reAccountPeriod:'',reTaxPeriod:'',taxPwd:'',customsNext:'',others:''};
 
@@ -205,7 +212,7 @@
   function cellChoice(v){return v?esc(v):'—';}
   function cellText(v,ph){return v?esc(v):'<span class="xph">'+esc(ph)+'</span>';}
   function cellCb(b){return '<span class="xcb'+(b?' on':'')+'"></span>';}
-  function cellPills(arr){if(!arr.length)return '—';return arr.map(function(p){var c=PLAT_COLOR[p]||'#95a5a6';return '<span class="xpill" style="background:'+c+'">'+esc(p)+'</span>';}).join('');}
+  function cellPills(arr){arr=arr||[];if(!arr.length)return '—';return arr.map(function(p){var c=PLAT_COLOR[p]||'#95a5a6';return '<span class="xpill" style="background:'+c+'">'+esc(p)+'</span>';}).join('');}
 
   /* ---------- 15 行定义 ---------- */
   function sheetRows(s){
@@ -230,6 +237,7 @@
   function buildSheet(s){
     var rows=sheetRows(s);
     var h='<div class="xtitle">跨境电商客户对接情况</div>';
+    h+='<div style="margin:0 0 10px;padding:8px 10px;background:#eef4fb;border:1px solid #c4c9cf;border-radius:4px;font-size:14px;font-weight:700;color:#1f3a5f">公司名称：'+(s.custName?esc(s.custName):'<span style="color:#b8bcc2;font-weight:400">（未填写）</span>')+'</div>';
     h+='<div class="xtable">';
     h+='<div class="xrow xhead"><div class="xc c1">序号</div><div class="xc c2">办理事项</div><div class="xc c3">特殊事项</div><div class="xc c4">备注</div></div>';
     rows.forEach(function(r){
@@ -241,9 +249,18 @@
   }
 
   /* ---------- 预览渲染 ---------- */
-  function renderPreview(){var box=$('sheet');if(box)box.innerHTML=buildSheet(readAll());}
+  function renderPreview(){var box=$('sheet');if(box)box.innerHTML=buildSheet(readAll());fitPreview();}
+  function fitPreview(){
+    var fit=$('previewFit'),stage=$('previewStage');
+    if(!fit||!stage)return;
+    var w=fit.clientWidth; if(w<=0)w=560;
+    var scale=w/720; if(scale>1)scale=1;
+    stage.style.transform='scale('+scale+')';
+    fit.style.height=Math.round(720*scale)+'px';
+  }
   function readAll(){
     return {
+      custName:($('custName').value||'').trim(),
       taxType:($('taxType').value||'').trim(),platforms:chipState.platforms.slice(),customsNow:($('customsNow').value||'').trim(),ieStatus:($('ieStatus').value||'').trim(),
       forex:S.forex,reHistory:S.reHistory,hasBooks:S.hasBooks,socialSec:S.socialSec,citPlan:S.citPlan,assessed25:S.assessed25,
       reAccountPeriod:($('reAccountPeriod').value||'').trim(),reTaxPeriod:($('reTaxPeriod').value||'').trim(),taxPwd:($('taxPwd').value||'').trim(),
@@ -291,7 +308,7 @@
   /* ---------- 持久化 ---------- */
   function serialize(){
     if(typeof localStorage==='undefined')return;
-    var f={taxType:($('taxType').value||''),customsNow:($('customsNow').value||''),ieStatus:($('ieStatus').value||''),
+    var f={custName:($('custName').value||''),taxType:($('taxType').value||''),customsNow:($('customsNow').value||''),ieStatus:($('ieStatus').value||''),
       reAccountPeriod:($('reAccountPeriod').value||''),reTaxPeriod:($('reTaxPeriod').value||''),taxPwd:($('taxPwd').value||''),
       customsNext:($('customsNext').value||''),others:($('others').value||'')};
     var obj={f:f,platforms:chipState.platforms.slice(),S:S};
@@ -308,10 +325,10 @@
 
   /* ---------- 示例 / 清空 ---------- */
   function loadSample(){
-    var s={taxType:'一般纳税人',customsNow:'买单出口',ieStatus:'客户已有资质',
+    var s={custName:'深圳市佰瑞斯科技有限公司',taxType:'一般纳税人',customsNow:'买单出口',ieStatus:'客户已有资质',
       reAccountPeriod:'',reTaxPeriod:'',taxPwd:'已收（国税+个税）',customsNext:'9810免税自己报关',others:'客户希望走通 9810 全链路退税',
       forex:true,reHistory:false,hasBooks:true,socialSec:false,citPlan:true,assessed25:false};
-    $('taxType').value=s.taxType;$('customsNow').value=s.customsNow;$('ieStatus').value=s.ieStatus;
+    $('custName').value=s.custName;$('taxType').value=s.taxType;$('customsNow').value=s.customsNow;$('ieStatus').value=s.ieStatus;
     $('reAccountPeriod').value=s.reAccountPeriod;$('reTaxPeriod').value=s.reTaxPeriod;$('taxPwd').value=s.taxPwd;
     $('customsNext').value=s.customsNext;$('others').value=s.others;
     chipState.platforms=['Walmart','速卖通','Temu','SHEIN'];syncChips();
@@ -320,7 +337,7 @@
   }
   function clearAll(){
     if(typeof localStorage!=='undefined'){try{localStorage.removeItem(KEY);}catch(e){}}
-    ['taxType','customsNow','ieStatus','reAccountPeriod','reTaxPeriod','taxPwd','customsNext','others'].forEach(function(k){var e=$(k);if(e)e.value='';});
+    ['custName','taxType','customsNow','ieStatus','reAccountPeriod','reTaxPeriod','taxPwd','customsNext','others'].forEach(function(k){var e=$(k);if(e)e.value='';});
     chipState.platforms=[];syncChips();
     S={taxType:'',platforms:[],customsNow:'',ieStatus:'',forex:false,reHistory:false,hasBooks:false,socialSec:false,citPlan:false,assessed25:false,reAccountPeriod:'',reTaxPeriod:'',taxPwd:'',customsNext:'',others:''};
     syncToggles();toast('已清空');
@@ -341,11 +358,12 @@
       window.scrollTo(0,0);
     };});
     $('btnGen').onclick=function(){
-      renderPreview();
       document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on');});
       document.querySelector('.tab[data-pane=preview]').classList.add('on');
       document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on');});
-      $('pane-preview').classList.add('on');window.scrollTo(0,0);
+      $('pane-preview').classList.add('on');
+      renderPreview();
+      window.scrollTo(0,0);
     };
     $('btnBack').onclick=function(){
       document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on');});
@@ -356,6 +374,7 @@
     $('btnImg').onclick=download;
     $('btnSample').onclick=loadSample;
     $('btnClear').onclick=clearAll;
+    window.addEventListener('resize',function(){ if($('pane-preview').classList.contains('on')) fitPreview(); });
     restore();
   }
 
