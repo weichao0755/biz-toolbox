@@ -268,6 +268,23 @@ export const TOOLS = [
     newTab: true // 表单重交互 + 导出 Excel/复制，独立标签页打开体验更稳（与 huashu/qualification 同理）
   },
   {
+    path: '/tools/cross-intake',
+    name: 'cross-intake',
+    title: '跨境电商客户对接表 · 出图',
+    desc: '销售只勾选/填写/下拉选择 15 项对接信息（纳税性质/平台/报关模式/资质/账务勾选/后续合规路径），一键生成仿 Excel 的「客户对接情况」表并导出 PNG，用于发客户或内部交接',
+    color: '#0d9488',
+    category: 'cross',
+    iconSvg: svgWrap(`
+      <rect x="3" y="4" width="18" height="16" rx="2"/>
+      <line x1="3" y1="9" x2="21" y2="9"/>
+      <line x1="9" y1="9" x2="9" y2="20"/>
+      <path d="M13 13l2 2 3-3"/>
+    `),
+    url: 'tools/cross-intake/index.html',
+    component: EmbeddedToolView,
+    newTab: true // 表单 + html2canvas 出图，独立标签页打开体验更稳
+  },
+  {
     path: '/tools/cross-quiz',
     name: 'cross-quiz',
     title: '跨境电商考核题库',
