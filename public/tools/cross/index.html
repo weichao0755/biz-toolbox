@@ -1293,7 +1293,7 @@ function tkPName(p){
 function tkReset(){
   TK={cid:'',stage:'entry',subs:1,plats:[],city:'',flow:null,impExp:false,taxFiling:false,
       fuls:{},decls:{},sms:'',quarters:[],amt:null,qna:false,qDone:false,
-      entity:'',file:'',hist:'',startMonth:'',invoice:'',qual:'',staff:'',staffN:null,
+      entity:'',file:'',hist:'',startMonth:'',invoice:'',qual:'',staff:'',staffN:null,fresh:false,
       asks:[],log:[],boostSms:false,open:null,confAck:[],note:''};
   AIPLAN=null; AI_NOW={}; AIPAIN=null;   /* 换客户不能把上一单的 AI 结论带过来 */
   tkRender();
@@ -1598,6 +1598,7 @@ function tkAmtNa(){ TK.amt='na'; tkCommit('amt'); }
 function tkChoice(id,v){ TK[id]=v; tkCommit(id); }
 function tkSetCheck(id,v){ TK[id]=v?true:false; tkRender(); }
 function tkSetStart(v){ TK.startMonth=(v==='na')?'na':(v||''); tkRender(); }
+function tkFresh(){ TK.fresh=true; TK.startMonth='na'; TK.hist='new'; tkCommit('hist'); }
 
 /* —— 追问卡片 —— */
 function tkCardHTML(id){
@@ -1702,6 +1703,7 @@ function tkBodyHTML(id){
        '<input class="tk-in" type="month" value="'+(TK.startMonth&&TK.startMonth!=='na'?TK.startMonth:'')+'" onchange="tkSetStart(this.value)">'+
        '<p class="tk-mtip" style="margin:7px 0 0">填「开始那个月」。系统会结合申报口径自动判断：若一直零申报、且开始时间距今已超半年，基本可断定以前数据对不上——只是税局还没发短信点名到。</p></div>';
     h+='<button class="tk-o na" style="margin-top:4px" onclick="tkSetStart(\'na\')">客户不记得 / 说不清</button>';
+    h+='<button class="tk-o fresh" style="margin-top:4px" onclick="tkFresh()"><b>刚注册 / 还没开始做（无历史）</b><span class="s">新主体，从零搭建合规，无存量要补</span></button>';
     h+='<button class="tk-go" '+(TK.startMonth!==''?'':'disabled')+' onclick="tkCommit(\'hist\')">记下</button>';
     return h;
   }
@@ -2320,7 +2322,7 @@ function tkToA(){
   A.smsQNa=!!TK.qna;
   A.file=TK.file||'na';
   A.startMonth=TK.startMonth||'na';
-  A.hist=tkHistDerive();
+  A.hist=(TK.fresh?'new':tkHistDerive());
   A.invoice=TK.invoice||'na';
   A.qual=TK.qual||'na';
   /* 基本盘勾选：没打钩=未办理（默认 false，null 也按未办理） */
@@ -4355,7 +4357,7 @@ function roadmap(d){
       talk:'"办完资质、把销售额免税报上去之后，我们就要帮您做账了。平台上这些支出——佣金、FBA 仓储费、配送费、广告费——都要做进企业成本。但这里有个问题：这些都没有发票，国内又需要有票才能做成本抵扣。交给我们的话，我们会按明细一笔一笔录进去做成明细账，这个明细账很有必要，不然税局可能不认。光是平台支出这一块，少则占销售额的 40%，多则有 60% 甚至 70%，做进去就能把账面利润大幅压下来。然后再加一块：供应商开的进项票，大概在 10 到 30 个点，这样您的企业成本就做到了 70% 左右。国内成本还有一块，我们把财务公司服务费、企业员工工资、交通费、差旅费、餐饮费、业务招待费、货代物流费这些也一并做进企业成本。这样下来，您在税务系统里的利润就落在 10% 到 20%。这个利润是贴着实际的，甚至比您实际利润还低一点，因为我们可能多做了一些人工工资、多开了一些本来就该开的票来做抵扣。采购票要普票不要专票，专票对您没意义，白多付八到十个点。"',
       up:'把平台费用、采购票、工资三类成本固定成每月对账三件事',
       done:'三类成本在账上都有明细，能对上汇总单'});
-    S.push({k:'s1',t:'历史遗留处理：先合规，再核定',
+    if(!custNew()) S.push({k:'s1',t:'历史遗留处理：先合规，再核定',
       time:'合规跑通后启动',
         acts:['调取平台后台流水，与原代账申报表进行差额比对，形成"缺口表"',
             '分别按"维持原状 / 半合规"与"走免税备案"两条路径测算补税及滞纳金，给出具体金额',
@@ -4368,7 +4370,7 @@ function roadmap(d){
       done:'您选定补法，历史这块有明确的结案口径'});
   }
   else if(d.decl==='有'){
-    S.push({k:'s4',t:'定口径：核实历史缺口金额',
+    if(!custNew()) S.push({k:'s4',t:'定口径：核实历史缺口金额',
       time:'约一周（以资料齐全为准）',
         acts:['比对平台流水与已申报收入，列示差额',
             '与贵司确认既往申报口径为"按到账金额"或"按销售额"',
@@ -4454,7 +4456,7 @@ function roadmap(d){
       talk:'"这张单要是不下来，我们就换个走法：把账做干净，把企业所得税降下来。这个我能给您保证。"',
       up:'平台结算单每月导出，佣金、配送、广告分项列出来，不要只有一个总数',
       done:'您接受"账务线"方案，或确认可以改自报'});
-    S.push({k:'s9',t:'历史缺口处理',
+    if(!custNew()) S.push({k:'s9',t:'历史缺口处理',
       time:'约一周（以流水与申报资料齐全为准）',
         acts:['比对平台流水与已申报收入，列示差额',
             '判断应作往期更正，或以新主体承接',
@@ -5335,6 +5337,14 @@ function histOf(){
   if(h==='none') return 'new';
   return 'na';
 }
+
+/* 客户是否「新注册 / 刚起步、无历史存量」：用于让方案书自动跳过历史修正内容。
+   命中条件：流程里点了「刚注册无历史」(TK.fresh) 或 系统推导 A.hist==='new'。 */
+function custNew(){
+  if(TK && TK.fresh) return true;
+  return histOf()==='new';
+}
+
 /* 距今天数（月）：输入 'YYYY-MM'，返回整数月数；非法返回 -1 */
 function monthsAgo(ym){
   if(!ym||ym==='na') return -1;
@@ -5354,6 +5364,7 @@ function tkHistDerive(){
 }
 /* 历史存量结论的展示文案（基于 TK 直接算，不依赖 A） */
 function tkHistInferText(){
+  if(TK.fresh) return '新主体 / 刚起步，无历史存量';
   if(TK.sms==='y') return '已收到税局短信（存量确认）';
   if(!TK.startMonth||TK.startMonth==='na') return '未问 / 客户不记得';
   var m=monthsAgo(TK.startMonth);
