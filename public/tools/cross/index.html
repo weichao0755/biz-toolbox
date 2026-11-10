@@ -876,7 +876,14 @@
           <option value="yes">有（可走出口免税，增值税免）</option>
         </select>
       </label>
+      <label>小规模季度销售额是否超 30 万
+        <select id="txQ" onchange="renderTax()">
+          <option value="yes">超过 30 万（增值税照 1% 缴）</option>
+          <option value="no">未超 30 万（免征增值税）</option>
+        </select>
+      </label>
     </div>
+    <p class="hint" style="margin:-4px 0 12px">「季度销售额是否超 30 万」仅对<b>小规模纳税人</b>有效：季销售额 ≤ 30 万免征增值税，不用一棒子按 1% 打死；一般纳税人不论额度均按 13%。很多小客户季度都不到 30 万，记得勾这个选项。</p>
     <div id="txOut"></div>
 
     <p class="grp" style="margin-top:22px">② 历史问题账目：税费 + 罚款<small>往期没如实申报的部分，被查或被点名要掏多少</small></p>
@@ -2585,7 +2592,7 @@ function renderHistTax(){
   var g=function(id){ var e=document.getElementById(id); return e?e.value:''; };
   var box=document.getElementById('hxOut'); if(!box) return;
   /* 当年利润：借用 ① 的结果判断企税档位（填了年销售额才用得上） */
-  var cur=taxCalc({sales:g('txSales'),ent:g('txEnt'),head:g('txHead'),purch:g('txPurch'),plat:g('txPlat'),decl:g('txDecl')});
+  var cur=taxCalc({sales:g('txSales'),ent:g('txEnt'),head:g('txHead'),purch:g('txPurch'),plat:g('txPlat'),decl:g('txDecl'),q:g('txQ')});
   var r=histTaxCalc({gap:g('hxGap'),ent:g('txEnt'),head:g('txHead'),
     platCost:g('hxPlatCost'),purchCost:g('hxPurchCost'),
     way:g('hxWay'),mon:g('hxMon'),annualProfit:(cur.ok?cur.profit:0)});
@@ -2650,7 +2657,11 @@ function taxCalc(o){
   if(!(sales>0)) return {ok:false};
   var isGen=(o.ent==='general');
   var exempt=(o.decl==='yes');
-  var vatRate=exempt?0:(isGen?0.13:0.01);
+  /* 小规模纳税人季度销售额 ≤ 30 万免征增值税（财税〔2019〕13 号等延续政策）；
+     一般纳税人无此优惠；已有出口免税备案者本就为 0，三者取免。 */
+  var qOver=(o.q==='yes');            // 季度销售额是否超过 30 万
+  var smallFree=(!isGen && !exempt && !qOver);
+  var vatRate=exempt?0:(isGen?0.13:(smallFree?0:0.01));
   var purchR=pct(o.purch,20)/100;
   var platR=pct(o.plat,50)/100;
   var head=Number(o.head)||0;
@@ -2664,7 +2675,7 @@ function taxCalc(o){
   var cit=Math.round(citBase*citRate*10)/10;
   var baseTax=Math.round((vat+cit)*10)/10;
   var baseRate=Math.round(baseTax/sales*1000)/10;
-  var r={ok:true,sales:sales,isGen:isGen,exempt:exempt,vatRate:vatRate,purchR:purchR,platR:platR,head:head,
+  var r={ok:true,sales:sales,isGen:isGen,exempt:exempt,smallFree:smallFree,vatRate:vatRate,purchR:purchR,platR:platR,head:head,
     plat:plat,purch:purch,labor:labor,profit:profit,citBase:citBase,citRate:citRate,cit:cit,vat:vat,
     baseTax:baseTax,baseRate:baseRate,plans:[],afterTax:null,afterRate:null};
   /* 节税 1：没有报关单 → 办理进出口权 + 免税备案，取得报关单后走出口免税 */
@@ -2684,8 +2695,8 @@ function taxCalc(o){
       desc:head+' 名员工各发 3.6 万年终奖，个税按 3% 计 '+bonusTax+' 万；利润同步下降，少交企业所得税约 '+citSaved+' 万。净省约 '+net+' 万（3% < 企税 '+(citRate*100)+'%）。'});
     r.afterTax=afterTax; r.afterRate=Math.round(afterTax/sales*1000)/10;
   }
-  /* 节税 3：小规模超 500 万 → 控额 / 月份拆分，把增值税尽量留在 1%（已走出口免税则增值税本就为 0，此项不适用） */
-  if(!isGen&&sales>500&&!exempt){
+  /* 节税 3：小规模超 500 万 → 控额 / 月份拆分，把增值税尽量留在 1%（已走出口免税或季销售额≤30万免征则增值税本就为 0，此项不适用） */
+  if(!isGen&&sales>500&&!exempt&&!smallFree){
     var tol=Math.round(500*1.05), over=Math.max(0,Math.round((sales-tol)*10)/10);
     var allGen=Math.round(sales*0.13*10)/10;
     var planned=Math.round((tol*0.01+over*0.13)*10)/10;
@@ -2700,7 +2711,7 @@ function taxCalc(o){
 function renderTax(){
   var g=function(id){ var e=document.getElementById(id); return e?e.value:''; };
   var box=document.getElementById('txOut'); if(!box) return;
-  var o={sales:g('txSales'),ent:g('txEnt'),head:g('txHead'),purch:g('txPurch'),plat:g('txPlat'),decl:g('txDecl')};
+  var o={sales:g('txSales'),ent:g('txEnt'),head:g('txHead'),purch:g('txPurch'),plat:g('txPlat'),decl:g('txDecl'),q:g('txQ')};
   var r=taxCalc(o);
   if(!r.ok){ box.innerHTML='<p class="hint" style="margin:0">先填年销售额，下面的数会自动算出来。</p>'; return; }
   var h='';
@@ -2712,7 +2723,9 @@ function renderTax(){
    +'<tr><td><b>利润</b></td><td><b>'+r.profit+'</b></td><td>销售额 − 平台费用 − 国内采购 − 人力成本</td></tr>'
    +'<tr><td>增值税</td><td>'+r.vat+'</td><td>'+(r.exempt
         ? '已取得本公司抬头的报关单，走出口免税，增值税免'
-        : '没有报关单，视同内销按 '+Math.round(r.vatRate*100)+'% 缴')+'</td></tr>'
+        : (r.smallFree
+          ? '小规模纳税人季度销售额 ≤ 30 万，免征增值税（无需按 1% 视同内销）'
+          : '没有报关单，视同内销按 '+Math.round(r.vatRate*100)+'% 缴'))+'</td></tr>'
    +'<tr><td>企业所得税</td><td>'+r.cit+'</td><td>计税基础 = 利润 '+r.profit+' − 增值税 '+r.vat+' = '+r.citBase+'，'+(r.profit<300?'利润 300 万以内按 5%':'利润超过 300 万按 25%')+'</td></tr>'
    +'<tr class="cur"><td><b>合计税负</b></td><td><b>'+r.baseTax+'</b></td><td>综合税负率 <b>'+r.baseRate+'%</b></td></tr>'
    +'</tbody></table></div></div>';
