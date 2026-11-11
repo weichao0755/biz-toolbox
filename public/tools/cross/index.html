@@ -2950,7 +2950,7 @@ function planCheck(d){
   if(d.decl==='有'){ i1='报关单在客户自己名下，这条路是通的。'; }
   else if(d.decl==='部分'){ v1='warn'; i1='一部分票有客户自己抬头，一部分没有——按最差的那部分算，等于没有。'; }
   else if(d.decl==='无'){ v1='bad';
-    i1='报关单位是'+declTxt+'，不是客户公司，客户手里没有自己名下的报关单或报关清单——出口这一环不合规。'; }
+    i1='报关单位是'+declTxt+'，不是客户公司，客户手里没有自己名下的报关清单——出口这一环不合规。'; }
   else { v1='warn'; i1='报关主体还没问清——这是全部结论的前提，不确认就不能往下讲。'; }
   if(A.decl==='self'&&f&&f.decl==='无'){ v1='bad';
     i1='按「'+d.n+'」出货，报关单通常是平台或物流商的名字，客户记成自己抬头报关——出货方式和报关主体对不上。'; }
@@ -3201,7 +3201,7 @@ function ckClient(d){
   } else if(d.decl==='部分'){
     R.push({t:'报关单　只有一部分是贵司抬头',tag:'warn',line:'现在有一部分报关单是贵司抬头、有一部分不是。按还没有的那部分算，出口凭证这一环还不算完整。'});
   } else if(d.decl==='无'){
-    R.push({t:'报关单　拿不到贵司抬头的',tag:'bad',line:'报关现在是走「'+dn+'」出去的，不是贵司的名字，所以贵司手里拿不到自己名下的报关单或报关清单。出口这一环没有自己的凭证，免税和退税就没有依据。'});
+    R.push({t:'报关单　拿不到贵司抬头的',tag:'bad',line:'报关现在是走「'+dn+'」出去的，不是贵司的名字，所以贵司手里拿不到自己名下的报关清单。出口这一环没有自己的凭证，免税和退税就没有依据。'});
   } else {
     R.push({t:'报关单　还需要再确认一次',tag:'warn',line:'报关这块我们再跟您对一遍抬头的情况。确认清楚之后，后面的报关方式就能一次定下来。'});
   }
@@ -3239,7 +3239,8 @@ function ckClient(d){
     hb=true;
   }
   if(histOf()==='zero'){ hz.push('一直零申报或者按回款申报，做跨境已经超过半年。平台按季报送之后，数据迟早会对不上，先把缺口算清楚再动手会更稳。'); hb=true; }
-  if(A.szExempt){ hz.push('深圳主体的 13 栏免税是默认开通的，过往的数据可以先尝试按免税填报，能免则免，免不了的差额再更正补税。'); }
+  if(noVatRisk()){ hz.push('公司目前的主体不存在增值税问题，需要处理的是企业所得税的问题，这部分可以延后处理。'); }
+  else if(A.szExempt){ hz.push('深圳主体的 13 栏免税是默认开通的，过往的数据可以先尝试按免税填报，能免则免，免不了的差额再更正补税。'); }
   if(!hz.length) hz.push('历史上没有存量问题，从今年开始按合规走就可以。');
   R.push({t:'历史　'+(hb?'有存量要先处理':'没有问题'),tag:(hb?'bad':'ok'),line:hz.join('')});
   return R;
@@ -3439,6 +3440,11 @@ function histPlan(d){
    计算口径（按用户给定规则）：
    · 路径一（维持原状 / 半合规）：增值税按内销补缴；企业所得税按「税局核定利润」计——平台费用等成本约占销售额 50%，维持原状或凭证不合规时税局不予认可，核定利润上浮至约销售额 65%（= 真实利润 15% + 不被认可成本 50%），企税 = 核定利润 × 5%（利润<300万）或 25%。
    · 路径二（合规处理）：增值税出口免税；企业所得税按真实利润（约销售额 15%）× 5%（<300万）或 25%；可核定时（仅 2025 Q3/Q4，以开始经营网店时间判定）= 销售额 × 核定利润率(2%~4%) × 5%，并非直接按销售额 × 2%~4% 计征。 */
+function noVatRisk(){
+  /* 小规模纳税人且年销售额 < 120 万：增值税依法免征（季度≤30万），
+     无增值税滞纳金 / 罚款风险，仅需处理企业所得税，历史遗留可延后。 */
+  return (A.entity==='small' && A.flow!=null && A.flow!=='na' && Number(A.flow)>0 && Number(A.flow)<120);
+}
 function histTaxCompare(){
   var sales=(A&&A.flow!=null&&A.flow!=='na')?Number(A.flow):null;
   if(!(sales>0)) return {ok:false};
@@ -3462,6 +3468,7 @@ function histTaxCompare(){
   var late=Math.round(tax1*0.1825*10)/10;      /* 滞纳金按日万分之五、约 12 个月估算 */
   var fineLow=Math.round(tax1*0.5*10)/10;
   var fineHigh=Math.round(tax1*5*10)/10;
+  if(vatExempt){ late=0; fineLow=0; fineHigh=0; }   /* 小规模年销<120万：增值税免征，无增值税滞纳金/罚款风险，仅计企业所得税 */
   var low1=Math.round((tax1+late+fineLow)*10)/10;
   var high1=Math.round((tax1+late+fineHigh)*10)/10;
   /* 核定判定：仅 2025 Q3/Q4 可沟通核定；2026 起各季度不可核定（以开始经营网店时间判定） */
@@ -3481,7 +3488,7 @@ function histTaxCompare(){
   var saveHigh=Math.round((high1-cit2Low)*10)/10;
   return {ok:true, sales:sales, isGen:isGen, vatRate:vatRate,
     realProfit:realProfit, citRate:citRate, assessedProfit:assessedProfit, citRate1:citRate1,
-    vat1:vat1, vat1Note:vat1Note, cit1:cit1, tax1:tax1, late:late,
+    vat1:vat1, vat1Note:vat1Note, cit1:cit1, tax1:tax1, noVatRisk:vatExempt, late:late,
     fineLow:fineLow, fineHigh:fineHigh, low1:low1, high1:high1,
     cit2Low:cit2Low, cit2High:cit2High, cit2Note:cit2Note, hed:hed,
     saveLow:saveLow, saveHigh:saveHigh};
@@ -3596,11 +3603,12 @@ async function genPlanDoc(text, d){
   /* 三、落地方案（具体怎么执行，对客视角） */
   paras.push(hdg('三、落地方案', true));
   var leadHed=heDingEligible();
+  var _nvr=noVatRisk();
   paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[
     R('推进原则：',{ font:FHei, size:21, bold:true, color:'7A5A12' }),
     R((leadHed===false
       ? '整体按「先合规、后据实申报」推进——先把出口资质、免税备案、按汇总单如实申报这三项跑通，形成稳定的合规申报口径，再处理历史遗留数据并按查账征收（真实利润 × 5%）申报企业所得税。以下为具体执行步骤：'
-      : '整体按「先合规、再核定」推进——先把出口资质、免税备案、按汇总单如实申报这三项跑通，形成稳定的合规申报口径，再处理历史遗留数据并对接核定征收。顺序不可颠倒：未合规先行申请核定，税务机关不予受理；先动手补税而未算清缺口，又容易多缴。以下为具体执行步骤：'),{ font:FSong, size:21 })
+      : '整体按「'+(_nvr?'先合规':'先合规、再核定')+'」推进——先把出口资质、免税备案、按汇总单如实申报这三项跑通，形成稳定的合规申报口径，再处理历史遗留数据并对接核定征收。顺序不可颠倒：未合规先行申请核定，税务机关不予受理；先动手补税而未算清缺口，又容易多缴。以下为具体执行步骤：'),{ font:FSong, size:21 })
   ] }));
   var S=roadmap(d);
   for(var j=0;j<S.length;j++){
@@ -3669,9 +3677,9 @@ async function genPlanDoc(text, d){
         hRow('年销售额（测算基数）', htc.sales+' 万元', htc.sales+' 万元','FFFFFF',false),
         hRow('增值税', (htc.vat1>0? (htc.vat1+' 万元（'+htc.vat1Note+'）') : ('0 元（'+htc.vat1Note+'）')), '0 元（出口免税）','FBF3E4',false),
         hRow('企业所得税', htc.cit1+' 万元（税局核定利润 '+Math.round(htc.assessedProfit)+' 万（销售额 × 65%）× '+Math.round(htc.citRate1*100)+'%）', (htc.hed===false? (htc.cit2Low+' 万元（不可核定，按真实利润 × '+Math.round(htc.citRate*100)+'%）') : (htc.cit2Low+' ~ '+htc.cit2High+' 万元（核定：销售额 × 2%~4% × 5%）')),'FFFFFF',false),
-        hRow('滞纳金（日万分之五）', htc.late+' 万元（按约 12 个月估算）', '无（合规后不产生）','FBF3E4',false),
-        hRow('罚款风险（0.5~5 倍）', htc.fineLow+' ~ '+htc.fineHigh+' 万元', '无（合规后不产生）','FFFFFF',false),
-        hRow('合计', htc.low1+' ~ '+htc.high1+' 万元', (htc.hed===false? (htc.cit2Low+' 万元') : (htc.cit2Low+' ~ '+htc.cit2High+' 万元')),'FBF3E4',true)
+        hRow('滞纳金（日万分之五）', htc.noVatRisk?'暂不计算':(htc.late+' 万元（按约 12 个月估算）'), '无（合规后不产生）','FBF3E4',false),
+        hRow('罚款风险（0.5~5 倍）', htc.noVatRisk?'':(htc.fineLow+' ~ '+htc.fineHigh+' 万元'), '无（合规后不产生）','FFFFFF',false),
+        hRow('合计', htc.noVatRisk?(htc.low1+' 万元'):(htc.low1+' ~ '+htc.high1+' 万元'), (htc.hed===false? (htc.cit2Low+' 万元') : (htc.cit2Low+' ~ '+htc.cit2High+' 万元')),'FBF3E4',true)
       ] }));
     paras.push(new P({ spacing:{ before:120, after:60, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[
       R('测算说明：',{ font:FHei, size:21, bold:true, color:'7A5A12' }),
@@ -3679,7 +3687,7 @@ async function genPlanDoc(text, d){
     ] }));
     paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[
       R('对比结论：',{ font:FHei, size:21, bold:true, color:'B45309' }),
-      R('按上述测算，合规处理相比维持原状 / 半合规预计可节省税费支出约 '+htc.saveLow+' ~ '+htc.saveHigh+' 万元，并同时消除滞纳金与罚款风险。金额随实际缺口表数据浮动，最终以逐季汇总单核对结果为准。',{ font:FSong, size:21 })
+      R('按上述测算，合规处理相比维持原状 / 半合规预计可节省税费支出约 '+(htc.noVatRisk?(htc.saveLow+' 万元'):(htc.saveLow+' ~ '+htc.saveHigh+' 万元'))+'，并同时消除滞纳金与罚款风险。金额随实际缺口表数据浮动，最终以逐季汇总单核对结果为准。',{ font:FSong, size:21 })
     ] }));
   } else {
     paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED,
@@ -4578,33 +4586,43 @@ function roadmap(d){
       ask:'blk3',
       up:'每次向平台申请的单据和回复都截图存档，这是唯一能证明"我尽力了"的材料',
       done:_s7done});
-    if(d.mode!=='9610' && d.mode!=='9810'){
-    S.push({k:'s8',t:'无法取得时转为账务合规 + 企税优化方案',
+    var _s8_9610=(d.mode==='9610'||d.mode==='9810');
+    S.push({k:'s8',
+      t: _s8_9610?'企税优化方案':'无法取得时转为账务合规 + 企税优化方案',
       time:'约一周（以流水与申报资料齐全为准）',
-        acts:['按平台结算单建立账务，佣金 / 配送 / 广告全部计入成本',
+        acts: _s8_9610?['按平台结算单建立账务，佣金 / 配送 / 广告全部计入成本']
+              :['按平台结算单建立账务，佣金 / 配送 / 广告全部计入成本',
             d.c==='硬约束'?'该路径先行排除：'+d.platN+' 强制指定物流，贵司无法自选货代与报关行，改为自报不可行'
               :'评估能否调整为自发货或海外仓（该平台规则允许，值得尝试）',
             '若无法调整，则固定执行账务合规与企业所得税优化，不再讨论免税'],
-      watch:(d.c==='硬约束'?'别为了签单承诺"我去帮你要"——平台规则改不了，要不到就是退单'
+      watch: _s8_9610?'企业所得税是这类模式的主要税负，把账务做干净比追着要报关单更实在'
+            :(d.c==='硬约束'?'别为了签单承诺"我去帮你要"——平台规则改不了，要不到就是退单'
             :'这张单有一半概率要不到，先跟客户把"要不到怎么办"说在前面'),
       cli:['平台结算单','成本凭证（有多少给多少）'],
-      talk:'"这张单要是不下来，我们就换个走法：把账做干净，把企业所得税降下来。这个我能给您保证。"',
+      talk: _s8_9610?'"账这块我帮您做干净：平台结算单上的佣金、配送、广告都做进成本，把企业所得税稳稳压下来。这是确定能落地的事。"'
+            :'"这张单要是不下来，我们就换个走法：把账做干净，把企业所得税降下来。这个我能给您保证。"',
       up:'平台结算单每月导出，佣金、配送、广告分项列出来，不要只有一个总数',
       done:'您接受"账务线"方案，或确认可以改自报'});
-    }
-    if(!custNew()) S.push({k:'s9',t:'历史缺口处理',
-      time:'约一周（以流水与申报资料齐全为准）',
-        acts:['比对平台流水与已申报收入，列示差额',
+    if(!custNew()){
+      var _defer=noVatRisk();
+      S.push({k:'s9',
+        t: _defer?'历史缺口处理（延后处理）':'历史缺口处理',
+        time: _defer?'延后处理（以流水与申报资料齐全为准）':'约一周（以流水与申报资料齐全为准）',
+        acts: _defer?['比对平台流水与已申报收入，列示差额','判断应作往期更正·排定处理顺序：先止损，再规范']
+              :['比对平台流水与已申报收入，列示差额',
             '判断应作往期更正，或以新主体承接',
             '排定处理顺序：先止损，再规范'],
-      watch:(histOf()==='sms'?'有提示的客户，顺序不能反——先处理程序上的事，再谈优化'
+        watch: _defer?'增值税本就免征，历史缺口主要是企业所得税，不急在一时，先把合规跑通再慢慢处理'
+              :(histOf()==='sms'?'有提示的客户，顺序不能反——先处理程序上的事，再谈优化'
             :histOf()==='zero'?'零申报时间越久，能补救的空间越小，先算清缺口再动手'
             :histOf()==='upgrade'?'升级前先把税负算清楚，不要先升上去再想办法'
             :'新主体没有历史包袱，但别把老主体的业务直接平移，容易带出连带风险'),
-      cli:['历史申报表','平台后台流水'],
-      talk:'"先把口子堵上，再谈省钱。反过来做，省下来的还不够补的。"',
-      up:'把历年流水和申报数做成一张表，自己心里先有一本账',
-      done:'历史这块有明确结论和处理时间表'});
+        cli:['历史申报表','平台后台流水'],
+        talk: _defer?'"您这增值税本来就是免的，历史那点事主要是企业所得税，不急。咱先把合规跑通，这事儿后面慢慢处理。"'
+              :'"先把口子堵上，再谈省钱。反过来做，省下来的还不够补的。"',
+        up:'把历年流水和申报数做成一张表，自己心里先有一本账',
+        done: _defer?'延后处理':'历史这块有明确结论和处理时间表'});
+    }
   }
 
   if(big){
@@ -4622,7 +4640,7 @@ function roadmap(d){
   /* 节税筹划：第一性原则，主动帮客户少交税 / 不交税（建立在真实业务与凭证之上） */
   if(A.szExempt||A.file==='cash'||taxModel().ok){
     var s13a=[];
-    if(A.szExempt) s13a.push('深圳主体：13 栏免税默认开通，本期及历史数据优先按免税填报，将增值税降至 0');
+    if(A.szExempt) s13a.push('深圳主体：13 栏免税默认开通，本期及历史数据优先按免税填报');
     if(A.file==='cash') s13a.push('贵司为回款申报：建议收汇通过网商银行，免收跨境 / 跨行提现手续费，回款流水更清晰');
     var tmr=taxModel();
     if(tmr.ok&&tmr.plans.length) for(var zi=0;zi<tmr.plans.length;zi++) s13a.push(tmr.plans[zi].desc);
