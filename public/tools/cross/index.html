@@ -72,6 +72,10 @@
   .tcard .gtag{float:right;margin-left:6px;font-size:10.5px;font-weight:400;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:1px 7px}
   .tcard .alias{margin:2px 0 0;color:var(--accent);opacity:.75;font-size:11.5px}
   .kbf{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;-webkit-overflow-scrolling:touch}
+  .kbf2{display:flex;flex-wrap:wrap;gap:6px;padding:2px 0 6px}
+  .kflabel{flex-basis:100%;font-size:12px;color:var(--text-2);font-weight:600;margin:2px 0 1px;letter-spacing:.4px}
+  .kchip.dis{opacity:.38;cursor:default;background:var(--surface);border-color:var(--border);color:var(--text-2)}
+  .kchip.dis:hover{background:var(--surface)}
   /* ===== v4.0 · 对照表 ===== */
   .mchip{flex:0 0 auto;background:var(--accent);color:#fff;border-radius:6px;padding:1px 6px;font-size:11px;font-weight:700;letter-spacing:.3px}
   .mchip.tap{box-shadow:0 0 0 3px var(--accent-bg)}
@@ -829,6 +833,7 @@
   <div class="pane" id="p-tbl">
     <p class="hint" style="margin:0 0 10px">这张表回答一个问题：<b>这个客户，能承诺到哪一步、绝不能承诺什么</b>。一行就是「站点 × 发货方式」的一个结论，先看免税 / 退税两列定生死，需要细节再点开那一行。</p>
     <div class="kbf" id="tblf"></div>
+    <div class="kbf2" id="tblf2"></div>
     <p class="hint" id="tblcnt" style="margin:0 0 10px"></p>
     <div id="tbllist"></div>
     <p class="grp" style="margin-top:22px">5 个报关代码的能力边界<small>先看这张，再看上面的平台行——0110 是免抵退不是免税，9610 只免不退</small></p>
@@ -1140,8 +1145,24 @@ var TBL=[
 ];
 
 /* —— 对照表：平台 → 站点 → 履约方式 → 报关模式 —— */
-var TBLP='all', TBLORDER=[['all','全部'],['amazon','亚马逊'],['tiktok','TikTok'],['temu','Temu'],['ozon','Ozon'],['shopee','虾皮'],['aliexpress','速卖通'],['independent','独立站'],['shein','希音'],['walmart','沃尔玛'],['ebay','eBay'],['coupang','酷澎'],['lazada','来赞达'],['mercadolibre','美客多'],['wildberries','野莓'],['noon','Noon'],['trendyol','Trendyol'],['rakuten','乐天']];
-function setTBLP(p){ TBLP=p; renderTBL(); }
+var TBLP='all', TBLS='all';
+var TBLORDER=[['all','全部'],['amazon','亚马逊'],['tiktok','TikTok（抖音国际版）'],['temu','Temu（拼多多跨境）'],['ozon','Ozon'],['shopee','虾皮'],['aliexpress','速卖通'],['independent','独立站'],['shein','希音'],['walmart','沃尔玛'],['ebay','eBay（易贝）'],['coupang','酷澎'],['lazada','来赞达'],['mercadolibre','美客多'],['wildberries','野莓'],['noon','Noon'],['trendyol','Trendyol'],['rakuten','乐天']];
+function tblPlatCount(k){ var c=0,j; for(j=0;j<TBL.length;j++){ if(TBLS!=='all'&&TBL[j].st!==TBLS) continue; if(k==='all'||TBL[j].p===k) c++; } return c; }
+function tblRegionAvail(r){ var j; for(j=0;j<TBL.length;j++){ if(TBLP!=='all'&&TBL[j].p!==TBLP) continue; if(TBL[j].st===r) return true; } return false; }
+function setTBLP(p){
+  if(p!=='all' && TBLS!=='all'){                            /* 选平台自动收拢地区：不兼容的地区重置为全部 */
+    var ok=false,j; for(j=0;j<TBL.length;j++){ if(TBL[j].p===p&&TBL[j].st===TBLS){ ok=true; break; } }
+    if(!ok) TBLS='all';
+  }
+  TBLP=p; renderTBL();
+}
+function setTBLS(s){
+  if(s!=='all' && TBLP!=='all'){                            /* 选地区自动收拢平台：不兼容的平台重置为全部 */
+    var ok=false,j; for(j=0;j<TBL.length;j++){ if(TBL[j].st===s&&TBL[j].p===TBLP){ ok=true; break; } }
+    if(!ok) TBLP='all';
+  }
+  TBLS=s; renderTBL();
+}
 function jd(v){
   var s=String(v||'');
   if(s.indexOf('不可')===0) return 'no';
@@ -1188,10 +1209,22 @@ function renderTBL(){
     var h='',i,c;
     for(i=0;i<TBLORDER.length;i++){
       var k=TBLORDER[i][0];
-      c=0; for(var j=0;j<TBL.length;j++) if(k==='all'||TBL[j].p===k) c++;
-      h+='<button class="kchip'+(TBLP===k?' on':'')+'" onclick="setTBLP(\''+k+'\')">'+TBLORDER[i][1]+'<i>'+c+'</i></button>';
+      c=tblPlatCount(k);
+      var dis=(k!=='all'&&c===0)?' dis':'';
+      h+='<button class="kchip'+(TBLP===k?' on':'')+dis+'" onclick="setTBLP(\''+k+'\')">'+TBLORDER[i][1]+'<i>'+c+'</i></button>';
     }
     f.innerHTML=h;
+  }
+  var f2=document.getElementById('tblf2');
+  if(f2){
+    var h2='<div class="kflabel">地区（选平台自动收拢 · 选地区反查平台）</div>', r, seen={}, order=[], j;
+    for(j=0;j<TBL.length;j++){ if(seen[TBL[j].st]) continue; seen[TBL[j].st]=1; order.push(TBL[j].st); }
+    for(i=0;i<order.length;i++){
+      r=order[i];
+      var ra=tblRegionAvail(r), dis2=(!ra)?' dis':'';
+      h2+='<button class="kchip'+(TBLS===r?' on':'')+dis2+'" onclick="setTBLS(\''+r.replace(/'/g,'\\\'')+'\')">'+r+'</button>';
+    }
+    f2.innerHTML=h2;
   }
   var out='<div class="tblscroll"><table class="ptbl">'
     +'<thead><tr><th>发货方式</th><th>模式</th><th class="ghide">自有报关单</th><th>免税</th><th>退税</th></tr></thead><tbody>';
@@ -1199,6 +1232,7 @@ function renderTBL(){
   for(s=0;s<TBL.length;s++){
     var S=TBL[s];
     if(TBLP!=='all'&&S.p!==TBLP) continue;
+    if(TBLS!=='all'&&S.st!==TBLS) continue;
     n++;
     out+='<tr class="ghrow"><th colspan="5"><span class="sn">'+S.pn+' · '+S.st+'</span>'+tblGap(S.gap)
       +'<span class="gask"><b>开场先问</b>'+S.ask+'</span></th></tr>';
@@ -1238,7 +1272,12 @@ function renderTBL(){
   var box=document.getElementById('tbllist');
   if(box) box.innerHTML=out||'<p class="hint">这个平台暂无对照行</p>';
   var cnt=document.getElementById('tblcnt');
-  if(cnt) cnt.innerHTML='共 <b>'+n+'</b> 个站点 · 点任意一行展开明细（可承诺 / 不可承诺）';
+  if(cnt){
+    var fdesc='';
+    if(TBLP!=='all'){ for(var z=0;z<TBLORDER.length;z++) if(TBLORDER[z][0]===TBLP){ fdesc+='平台：'+TBLORDER[z][1]; break; } }
+    if(TBLS!=='all'){ fdesc+=(fdesc?' · ':'')+'地区：'+TBLS; }
+    cnt.innerHTML='共 <b>'+n+'</b> 个站点'+(fdesc?'（'+fdesc+'）':'')+' · 点任意一行展开明细（可承诺 / 不可承诺）';
+  }
 }
 
 function renderMode5(){
@@ -1947,12 +1986,14 @@ function tkRender(){
     stream.innerHTML=tkRecHTML();
     if(TK._from==='his'){
       dock.innerHTML='<div class="tk-btns"><button class="tk-b2" onclick="tkRecCopy(this)">复制全文</button>'+
+        '<button class="tk-b2" onclick="tkCustTableImg(this)">客户情况表</button>'+
         '<button class="tk-go" onclick="tkHis()">返回历史</button></div>';
       return;
     }
     dock.innerHTML=(TK._hisNote?'<p class="tk-hintline" style="margin:0 0 8px">'+TK._hisNote+'</p>':'')+
       tkAskRowHTML()+'<div class="tk-chips">'+tkChipsHTML()+'</div>'+
       '<div class="tk-btns"><button class="tk-b2" onclick="tkRecCopy(this)">复制全文</button>'+
+      '<button class="tk-b2" onclick="tkCustTableImg(this)">客户情况表</button>'+
       '<button class="tk-b2" onclick="tkRecSave(this)">更新到历史</button></div>'+
       '<div class="tk-btns" style="margin-top:8px"><button class="tk-b2" onclick="tkBack()">返回信息表</button>'+
       '<button class="tk-go" onclick="tkPlan()">生成方案</button></div>';
@@ -3770,6 +3811,187 @@ function tkPlanImg(btn){
   try{ var n=planDrawImage(full); tkToast('方案图片已生成（'+n+' 张）'); }
   catch(e){ alert('生成图片失败：'+(e&&e.message?e.message:e)); }
 }
+/* —— 客户情况表（图片）：把沟通记录里「客户情况」类信息抽成结构化表格出图 —— */
+function tkCustTableImg(btn){
+  var o=btn?btn.textContent:'', ot=o;
+  try{
+    if(btn){ btn.disabled=true; btn.textContent='生成中…'; }
+    var b=custBuild();
+    var n=custDrawImage(b);
+    tkToast('客户情况表已生成（'+n+' 张）');
+  }catch(e){ alert('生成图片失败：'+(e&&e.message?e.message:e)); }
+  finally{ if(btn){ btn.disabled=false; btn.textContent=o; } }
+}
+/* 抽取客户情况：只取登记类 / 现状类信息，不混入问答流水、沟通轨迹、补充信息 */
+function custBuild(){
+  var L=TK.plats.slice(), i;
+  var now=new Date(TK._savedAt||Date.now());
+  function p2(n){ return ('0'+n).slice(-2); }
+  var at=now.getFullYear()+'-'+p2(now.getMonth()+1)+'-'+p2(now.getDate())+' '+p2(now.getHours())+':'+p2(now.getMinutes());
+  var full=(TK.subs>1&&TK.flow!=null)?Math.round(TK.flow/TK.subs):TK.flow;
+  var b=[];
+  function sec(t){ b.push({ty:'sec',t:t}); }
+  function kv(k,v,ind){ b.push({ty:'kv',k:k,v:String(v==null?'':v),ind:ind||0}); }
+  function sub(t){ b.push({ty:'sub',t:t}); }
+
+  sec('一、客户基本信息');
+  kv('客户编号', TK.cid||'未填');
+  kv('记录时间', at);
+  kv('沟通人', TK_ME?TK_ME:'未填');
+  kv('主体数量', TK.subs+' 个');
+  kv('涉及平台', L.length?L.map(tkPName).join('、'):'未填');
+  kv('注册城市', TK.city==='sz'?'含深圳':(TK.city==='out'?'全在外地':'未填'));
+  kv('合计年流水', TK.flow==null?'未填':(TK.flow+' 万元'+(TK.subs>1&&full!=null?('（单主体约 '+full+' 万）'):'')));
+  kv('进出口权', TK.impExp===true?'已办理':'未办理');
+  kv('免/退税备案', TK.taxFiling===true?'已备案':'未备案');
+
+  var ds=[];
+  for(i=0;i<L.length;i++){
+    (function(p){
+      if(!TK.fuls[p]) return;
+      ds.push(withPlat(p,TK.fuls[p],function(){ return derive(); }));
+    })(L[i]);
+  }
+  if(ds.length){
+    sec('二、各平台履约与结论');
+    for(i=0;i<ds.length;i++){
+      var d=ds[i];
+      sub(d.platN.replace(/\s*[（(].*$/,''));
+      kv('发货方式', d.n||'待确认', 16);
+      kv('谁报关', d.declN||'待确认', 16);
+      kv('报关模式', d.modeShow||'待确认', 16);
+      kv('出口免税', d.mian||'待确认', 16);
+      kv('出口退税', d.tui||'待确认', 16);
+    }
+  }else{
+    sec('二、各平台履约与结论');
+    kv('结论', '还没问到发货方式，结论待补');
+  }
+
+  sec('三、税局与存量');
+  kv('是否收到税局短信', {y:'已收到',n:'没收到',na:'说不清'}[TK.sms]||'未问');
+  kv('点名季度', TK.qna?'记不清':(TK.quarters.length?TK.quarters.join('、'):'未问'));
+  kv('季度合计流水', (TK.amt==null)?'未问':(TK.amt==='na'?'不愿说':TK.amt+' 万元'));
+  kv('当前申报口径', {real:'按实际申报',cash:'按回款申报',zero:'零申报',na:'说不清'}[TK.file]||'未问');
+  kv('开始做跨境', TK.startMonth==='na'?'客户不记得':(TK.startMonth||'未问'));
+  kv('存量推断', tkHistInferText());
+
+  sec('四、主体与票据');
+  kv('纳税人身份', {small:'小规模纳税人',general:'一般纳税人',na:'说不清'}[TK.entity]||'未问');
+  kv('供应商发票', {normal:'能开普票',special:'能开专票',none:'基本开不了',na:'还没问清'}[TK.invoice]||'未问');
+  var staffTxt={yes:'有在职员工，能发工资',retired:'只有退休返聘',no:'没有人员',na:'说不清'}[TK.staff]||'未问';
+  if(TK.staffN!=null&&TK.staffN!=='') staffTxt+='（约 '+TK.staffN+' 人）';
+  kv('人员情况', staffTxt);
+
+  return b;
+}
+function custWrapText(ctx,text,maxW){
+  var lines=[], paras=String(text==null?'':text).split('\n'), p, i, raw, cur, t;
+  for(p=0;p<paras.length;p++){
+    raw=paras[p];
+    if(raw===''){ if(paras.length>1) lines.push(''); continue; }
+    cur='';
+    for(i=0;i<raw.length;i++){
+      t=cur+raw.charAt(i);
+      if(cur!=='' && ctx.measureText(t).width>maxW){ lines.push(cur); cur=raw.charAt(i); }
+      else cur=t;
+    }
+    if(cur!=='') lines.push(cur);
+  }
+  if(!lines.length) lines.push('');
+  return lines;
+}
+/* 结构化表格分页出图：复用方案图调色板 / 字体 / 弹窗 */
+function custDrawImage(blocks){
+  var W=790, padOut=16, cpad=30;
+  var cw=W-padOut*2, bx=padOut+cpad, bw=cw-cpad*2;
+  var labelW=150, lh=24, MAXBODY=1180;
+  var m=document.createElement('canvas').getContext('2d');
+  var rows=[], i;
+  for(i=0;i<blocks.length;i++){
+    var b=blocks[i];
+    if(b.ty==='sec'){ rows.push({ty:'sec',t:b.t,h:42}); }
+    else if(b.ty==='sub'){ rows.push({ty:'sub',t:b.t,h:34}); }
+    else {
+      m.font=planFont(15,'');
+      var lines=custWrapText(m,b.v,bw-labelW);
+      var rh=Math.max(lh,lines.length*lh)+10;
+      rows.push({ty:'kv',k:b.k,v:b.v,ind:b.ind,lines:lines,h:rh});
+    }
+  }
+  var pages=[], cur=[], curH=0;
+  for(i=0;i<rows.length;i++){
+    if(curH+rows[i].h>MAXBODY && cur.length){ pages.push(cur); cur=[]; curH=0; }
+    cur.push(rows[i]); curH+=rows[i].h;
+  }
+  if(cur.length) pages.push(cur);
+  if(!pages.length) pages.push([{ty:'sec',t:'（空）',h:42}]);
+  var urls=[], n=pages.length, q, ph;
+  for(i=0;i<n;i++){
+    ph=0; for(q=0;q<pages[i].length;q++) ph+=pages[i][q].h;
+    urls.push(custDrawPage(pages[i],i+1,n,ph));
+  }
+  planShowImgs(urls,{head:'共 '+n+' 张 · 客户情况表（图片）',base:'客户情况表'});
+  return n;
+}
+function custDrawPage(rows,pno,total,contentH){
+  var W=790, padOut=16, cpad=30, TOPBAR=6, HDR=74, FTR=54, RAD=14;
+  var cw=W-padOut*2, cx=padOut, cy=padOut;
+  var cardH=TOPBAR+HDR+contentH+cpad*2+FTR;
+  var H=padOut*2+cardH;
+  var cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  var ctx=cv.getContext('2d');
+  ctx.fillStyle=PT.bg; ctx.fillRect(0,0,W,H);
+  ctx.save();
+  ctx.shadowColor='rgba(42,33,24,.10)'; ctx.shadowBlur=14; ctx.shadowOffsetY=4;
+  planRR(ctx,cx,cy,cw,cardH,RAD); ctx.fillStyle=PT.card; ctx.fill();
+  ctx.restore();
+  ctx.save();
+  planRR(ctx,cx,cy,cw,cardH,RAD); ctx.clip();
+  ctx.fillStyle=PT.card; ctx.fillRect(cx,cy,cw,cardH);
+  var g=ctx.createLinearGradient(cx,cy,cx+cw,cy);
+  g.addColorStop(0,PT.acc2); g.addColorStop(1,PT.acc);
+  ctx.fillStyle=g; ctx.fillRect(cx,cy,cw,TOPBAR);
+  ctx.fillStyle=PT.head; ctx.fillRect(cx,cy+TOPBAR,cw,HDR);
+  ctx.fillStyle=PT.border; ctx.fillRect(cx,cy+TOPBAR+HDR,cw,1);
+  ctx.restore();
+  var hy=cy+TOPBAR, bxx=cx+cpad, bww=cw-cpad*2;
+  ctx.textBaseline='top';
+  ctx.font=planFont(20,'bold'); ctx.fillStyle=PT.acc;
+  ctx.fillText('跨境电商客户情况表',bxx,hy+16);
+  ctx.font=planFont(12,''); ctx.fillStyle=PT.mut2;
+  ctx.fillText(planToday(),bxx,hy+44);
+  var pgtxt=pno+' / '+total;
+  ctx.font=planFont(13,'bold');
+  var pw=ctx.measureText(pgtxt).width+26;
+  planRR(ctx,cx+cw-cpad-pw,hy+20,pw,28,14); ctx.fillStyle=PT.acc; ctx.fill();
+  ctx.fillStyle='#ffffff'; ctx.textAlign='center';
+  ctx.fillText(pgtxt,cx+cw-cpad-pw/2,hy+27); ctx.textAlign='left';
+  var y0=cy+TOPBAR+HDR+cpad, y=y0, labelW=150, lh=24;
+  for(var i=0;i<rows.length;i++){
+    var r=rows[i];
+    if(r.ty==='sec'){
+      ctx.fillStyle=PT.acc2; planRR(ctx,bxx-2,y+6,4,22,2); ctx.fill();
+      ctx.font=planFont(18,'bold'); ctx.fillStyle=PT.tx;
+      ctx.fillText(r.t,bxx,y+4); y+=r.h;
+    } else if(r.ty==='sub'){
+      ctx.font=planFont(16,'bold'); ctx.fillStyle=PT.acc;
+      ctx.fillText(r.t,bxx+14,y+5); y+=r.h;
+    } else {
+      ctx.font=planFont(15,'bold'); ctx.fillStyle=PT.tx;
+      ctx.fillText(r.k,bxx+r.ind,y+3);
+      ctx.font=planFont(15,''); ctx.fillStyle=PT.tx2;
+      for(var j=0;j<r.lines.length;j++){ ctx.fillText(r.lines[j],bxx+labelW,y+3+j*lh); }
+      y+=r.h;
+      ctx.fillStyle=PT.border; ctx.fillRect(bxx,y-7,bww,1);
+    }
+  }
+  var fy=cy+TOPBAR+HDR+contentH+cpad*2;
+  ctx.fillStyle=PT.border; ctx.fillRect(bxx,fy,bww,1);
+  ctx.textAlign='right'; ctx.font=planFont(11,''); ctx.fillStyle=PT.mut2;
+  ctx.fillText('第 '+pno+' / '+total+' 页',bxx+bww,fy+18); ctx.textAlign='left';
+  return cv.toDataURL('image/png');
+}
 /* 轻量 toast（cross 工具未内置） */
 function tkToast(msg){
   var t=document.getElementById('tkToast');
@@ -3989,15 +4211,18 @@ function planDrawImage(text){
   planShowImgs(urls);
   return n;
 }
-function planShowImgs(urls){
+var planImgBase='跨境方案';
+function planShowImgs(urls,opt){
+  opt=opt||{}; planImgBase=opt.base||'跨境方案';
+  var head=opt.head||('共 '+urls.length+' 张 · 可逐张保存，也可一键保存全部');
   var m=document.getElementById('planImgModal');
   if(!m){ m=document.createElement('div'); m.id='planImgModal'; m.className='plan-img-modal';
     m.onclick=function(e){ if(e.target===m) m.style.display='none'; };
     document.body.appendChild(m); }
-  var inner='<div class="pim-head">共 '+urls.length+' 张 · 可逐张保存，也可一键保存全部</div>';
+  var inner='<div class="pim-head">'+head+'</div>';
   for(var i=0;i<urls.length;i++){
-    inner+='<div class="pim-page"><img src="'+urls[i]+'" alt="方案图片'+(i+1)+'">'
-      +'<a href="'+urls[i]+'" download="跨境方案_'+(i+1)+'.png" class="btn">保存第 '+(i+1)+' 张</a></div>';
+    inner+='<div class="pim-page"><img src="'+urls[i]+'" alt="'+planImgBase+'图片'+(i+1)+'">'
+      +'<a href="'+urls[i]+'" download="'+planImgBase+'_'+(i+1)+'.png" class="btn">保存第 '+(i+1)+' 张</a></div>';
   }
   inner+='<div class="pim-foot"><button class="btn" onclick="planSaveAll()">保存全部</button>'
     +'<button class="btn ghost" onclick="document.getElementById(\'planImgModal\').style.display=\'none\'">关闭</button></div>';
@@ -4008,7 +4233,7 @@ function planSaveAll(){
   var m=document.getElementById('planImgModal'); if(!m) return;
   var imgs=m.querySelectorAll('img'), n=0;
   for(var i=0;i<imgs.length;i++){
-    var a=document.createElement('a'); a.href=imgs[i].src; a.download='跨境方案_'+(i+1)+'.png';
+    var a=document.createElement('a'); a.href=imgs[i].src; a.download=planImgBase+'_'+(i+1)+'.png';
     document.body.appendChild(a); try{ a.click(); }catch(e){} document.body.removeChild(a); n++;
   }
   tkToast('已开始保存 '+n+' 张图片');
