@@ -41,6 +41,12 @@ check('contains 巴西(新增站点)', out.indexOf('巴西')>=0);
 check('chip count shows 希音', chips.indexOf('希音')>=0);
 check('chip count shows 美客多', chips.indexOf('美客多')>=0);
 check('免税口径 detail from mi.x', out.indexOf('平台统一申报')>=0);
+check('platform count == 50', ctx.TBLPLATS.length===50);
+check('no 待补 chip', chips.indexOf('待补')<0);
+check('new platform eMAG chip', chips.indexOf('eMAG')>=0);
+check('new platform 兰亭集势 chip', chips.indexOf('兰亭集势')>=0);
+check('new platform 阿里巴巴国际站 chip', chips.indexOf('阿里巴巴国际站')>=0);
+check('new platform 小红书 chip', chips.indexOf('小红书')>=0);
 
 ctx.setTBLP('shein');
 const out2=els['tbllist'].innerHTML;
