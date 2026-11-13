@@ -125,6 +125,7 @@
   .sgap{display:inline-block;font-size:10.5px;border-radius:999px;padding:0 6px;border:1px solid var(--border);color:var(--muted);white-space:nowrap;vertical-align:1px;font-weight:400}
   .sgap.ok{color:var(--green);border-color:var(--green);background:var(--green-bg)}
   .sgap.warn{color:#B45309;border-color:#E9C08A;background:#FBF1E4}
+  .sgap.na{color:#B45309;border-color:#E0901A;background:#FBF1E4}
   .gask{display:block;margin-top:3px;font-size:11.5px;color:var(--text-2);font-weight:400;line-height:1.55}
   .gask b{color:var(--muted);font-weight:700;font-size:10.5px;letter-spacing:.3px;margin-right:4px}
   table.ptbl tr.trow{cursor:pointer}
@@ -165,6 +166,10 @@
   .kchip i{font-style:normal;opacity:.55;margin-left:4px;font-size:11px}
   .kchip.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .kchip.on i{opacity:.85}
+  .kchip i.pend{opacity:1;color:#b45309;border:1px dashed #e0901a;font-style:normal;font-size:10px;padding:0 3px;border-radius:4px;margin-left:4px;line-height:1.5}
+  .kchip.pend{color:var(--text-2);background:var(--surface)}
+  .kchip.pend.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .kchip.pend.on i.pend{color:#fff;border-color:#fff}
   .mtag{display:inline-block;background:var(--accent-bg);color:var(--accent);border-radius:999px;padding:1px 9px;font-size:10.5px;margin-bottom:6px}
   .modal .malias{margin:-2px 0 8px;font-size:11.5px;color:var(--muted)}
   .modal .mwhere{margin:0 0 10px;font-size:11px;color:var(--muted);opacity:.8}
@@ -1142,6 +1147,39 @@ var TBL=[
    {f:'RGL 专线集运（平台统一报关）',m:'9610',subj:'乐天指定物流商',doc:'无',mi:'有条件(平台统一申报，卖家侧无自有报关单)',tu:'不可',why:'卖家发货至乐天国内仓，平台委托报关行以 9610 集中申报，卖家侧无自有报关单。',lvl:'硬约束',concl:'只能做账务合规 + 无票免税；退税不成立。',promise:'可承诺账务与免税；不可承诺退税。',chk:'2026-12-31',note:'与亚马逊日本站同理。'},
    {f:'FBC 日本海外仓',m:'9810',subj:'卖家',doc:'有',mi:'可',tu:'可',why:'入仓日本需卖家自行进口清关并注册 JCT；中国出口端可备案退税。',lvl:'软约束',concl:'全套 + 退税 + JCT，三件套可打包。',promise:'可承诺退税与 JCT 申报；不可承诺无票退税。',chk:'2026-12-31',note:'JCT 是日本站差异化卖点。'}
   ]}
+,{p:'emag',pn:'eMAG',st:'俄罗斯 / 东欧',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'tokopedia',pn:'Tokopedia',st:'印尼',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'tiki',pn:'Tiki',st:'东南亚（六国）',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'qoo10',pn:'Qoo10',st:'新加坡 / 马来西亚',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'gmarket',pn:'Gmarket',st:'韩国',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'allegro',pn:'Allegro',st:'俄罗斯 / 东欧',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'cdiscount',pn:'Cdiscount',st:'法国',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'otto',pn:'Otto',st:'欧洲（英/德/法/意/西）',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'bolcom',pn:'Bol.com',st:'欧洲（英/德/法/意/西）',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'zalando',pn:'Zalando',st:'欧洲（英/德/法/意/西）',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'fnac',pn:'Fnac',st:'欧洲（英/德/法/意/西）',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'miravia',pn:'Miravia',st:'西班牙',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'kaufland',pn:'Kaufland',st:'欧洲（英/德/法/意/西）',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'hepsiburada',pn:'Hepsiburada',st:'土耳其',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'falabella',pn:'Falabella',st:'拉美',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'jumia',pn:'Jumia',st:'非洲',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'takealot',pn:'Takealot',st:'非洲',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'target',pn:'Target',st:'美国',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'bestbuy',pn:'Best Buy',st:'美国',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'wayfair',pn:'Wayfair',st:'美国',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'newegg',pn:'Newegg',st:'美国',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'etsy',pn:'Etsy',st:'美国',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'wish',pn:'Wish',st:'美国',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'flipkart',pn:'Flipkart',st:'印度',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'meesho',pn:'Meesho',st:'印度',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'taobao',pn:'淘宝/天猫',st:'中国',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'jd',pn:'京东国际',st:'中国',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'pdd',pn:'拼多多',st:'中国',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'douyin',pn:'抖音电商',st:'中国',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'xiaohongshu',pn:'小红书',st:'中国',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'alibaba',pn:'阿里巴巴国际站',st:'中国',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'dhgate',pn:'敦煌网',st:'中国',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
+,{p:'lightinthebox',pn:'兰亭集势',st:'中国',ask:'',notice:'',practice:'',gap:'待补',risk:'',modes:'',ful:'',rows:[]}
 ];
 
 /* —— 对照表：平台 → 站点 → 履约方式 → 报关模式 —— */
@@ -1152,7 +1190,10 @@ var TBLORDER=[['all','全部'],['amazon','亚马逊'],['tiktok','TikTok（抖音
 var TBLPLATS=(function(){ var seen={},out=[],q; for(var z=0;z<TBL.length;z++){ var p=TBL[z].p; if(seen[p]) continue; seen[p]=1; var label=TBL[z].pn; for(q=0;q<TBLORDER.length;q++){ if(TBLORDER[q][0]===p){ label=TBLORDER[q][1]; break; } } out.push([p,label]); }
   out.sort(function(a,b){ var ia=TBLORDER.indexOf(a[0]), ib=TBLORDER.indexOf(b[0]); if(ia<0) ia=999; if(ib<0) ib=999; return ia-ib; }); return out; })();
 var TBLPNAME={}; (function(){ for(var i=0;i<TBLPLATS.length;i++) TBLPNAME[TBLPLATS[i][0]]=TBLPLATS[i][1]; })();
-function tblPlatCount(k){ var c=0,j; for(j=0;j<TBL.length;j++){ if(TBLS!=='all'&&TBL[j].st!==TBLS) continue; if(k==='all'||TBL[j].p===k) c++; } return c; }
+function tblPlatCount(k){ var c=0,j; for(j=0;j<TBL.length;j++){ if(TBLS!=='all'&&TBL[j].st!==TBLS) continue; if(k!=='all'&&TBL[j].p!==k) continue; if(TBL[j].rows&&TBL[j].rows.length) c++; } return c; }
+/* 平台是否有报关对照数据（按全局条目判定，与地区筛选无关） */
+function platDataCount(p){ var c=0,j; for(j=0;j<TBL.length;j++){ if(TBL[j].p===p && TBL[j].rows && TBL[j].rows.length) c++; } return c; }
+function platHasData(p){ return platDataCount(p)>0; }
 function tblRegionAvail(r){ var j; for(j=0;j<TBL.length;j++){ if(TBLP!=='all'&&TBL[j].p!==TBLP) continue; if(TBL[j].st===r) return true; } return false; }
 function setTBLP(p){
   if(p!=='all' && TBLS!=='all'){                            /* 选平台自动收拢地区：不兼容的地区重置为全部 */
@@ -1215,9 +1256,9 @@ function renderTBL(){
     h+='<button class="kchip'+(TBLP==='all'?' on':'')+'" onclick="setTBLP(\'all\')">全部<i>'+tblPlatCount('all')+'</i></button>';
     for(i=0;i<TBLPLATS.length;i++){
       var k=TBLPLATS[i][0];
-      c=tblPlatCount(k);
-      var dis=(c===0)?' dis':'';
-      h+='<button class="kchip'+(TBLP===k?' on':'')+dis+'" onclick="setTBLP(\''+k+'\')">'+TBLPLATS[i][1]+'<i>'+c+'</i></button>';
+      var hd=platHasData(k);
+      var badge = hd ? ('<i>'+platDataCount(k)+'</i>') : '<i class="pend">待补</i>';
+      h+='<button class="kchip'+(TBLP===k?' on':'')+(hd?'':' pend')+'" onclick="setTBLP(\''+k+'\')">'+TBLPLATS[i][1]+badge+'</button>';
     }
     f.innerHTML=h;
   }
@@ -1239,6 +1280,14 @@ function renderTBL(){
     var S=TBL[s];
     if(TBLP!=='all'&&S.p!==TBLP) continue;
     if(TBLS!=='all'&&S.st!==TBLS) continue;
+    if(!(S.rows&&S.rows.length)){
+      /* 待补平台：默认视图（平台=全部 且 地区=全部）不渲染，避免刷屏；选中该平台或该地区时才显示占位 */
+      if((TBLP!=='all'&&TBLP===S.p) || TBLS!=='all'){
+        out+='<tr class="ghrow"><th colspan="5"><span class="sn">'+S.pn+' · '+S.st+'</span><span class="sgap na">待补</span></th></tr>';
+        out+='<tr><td colspan="5" class="hint" style="text-align:center;padding:12px">该平台报关对照数据补充中（暂无对照行）</td></tr>';
+      }
+      continue;
+    }
     n++;
     out+='<tr class="ghrow"><th colspan="5"><span class="sn">'+S.pn+' · '+S.st+'</span>'+tblGap(S.gap)
       +'<span class="gask"><b>开场先问</b>'+S.ask+'</span></th></tr>';
@@ -1282,7 +1331,9 @@ function renderTBL(){
     var fdesc='';
     if(TBLP!=='all'){ for(var z=0;z<TBLORDER.length;z++) if(TBLORDER[z][0]===TBLP){ fdesc+='平台：'+TBLORDER[z][1]; break; } }
     if(TBLS!=='all'){ fdesc+=(fdesc?' · ':'')+'地区：'+TBLS; }
-    cnt.innerHTML='共 <b>'+n+'</b> 个站点'+(fdesc?'（'+fdesc+'）':'')+' · 点任意一行展开明细（可承诺 / 不可承诺）';
+    cnt.innerHTML=(n===0)
+      ? '该范围内暂无报关对照数据（待补充）'+(fdesc?'（'+fdesc+'）':'')
+      : '共 <b>'+n+'</b> 个站点'+(fdesc?'（'+fdesc+'）':'')+' · 点任意一行展开明细（可承诺 / 不可承诺）';
   }
 }
 
