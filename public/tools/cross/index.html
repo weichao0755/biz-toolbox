@@ -1146,7 +1146,12 @@ var TBL=[
 
 /* —— 对照表：平台 → 站点 → 履约方式 → 报关模式 —— */
 var TBLP='all', TBLS='all';
+/* 展示顺序 + 中文别名（仅作优先排序参考）；实际平台列表从下方 TBL 数据派生，永不脱节 */
 var TBLORDER=[['all','全部'],['amazon','亚马逊'],['tiktok','TikTok（抖音国际版）'],['temu','Temu（拼多多跨境）'],['ozon','Ozon'],['shopee','虾皮'],['aliexpress','速卖通'],['independent','独立站'],['shein','希音'],['walmart','沃尔玛'],['ebay','eBay（易贝）'],['coupang','酷澎'],['lazada','来赞达'],['mercadolibre','美客多'],['wildberries','野莓'],['noon','Noon'],['trendyol','Trendyol'],['rakuten','乐天']];
+/* 平台筛选 chips 直接从 TBL 数据派生：保证筛选列表与数据一致，不会漏平台（曾因手工维护脱节漏掉 Noon/Trendyol/乐天） */
+var TBLPLATS=(function(){ var seen={},out=[],q; for(var z=0;z<TBL.length;z++){ var p=TBL[z].p; if(seen[p]) continue; seen[p]=1; var label=TBL[z].pn; for(q=0;q<TBLORDER.length;q++){ if(TBLORDER[q][0]===p){ label=TBLORDER[q][1]; break; } } out.push([p,label]); }
+  out.sort(function(a,b){ var ia=TBLORDER.indexOf(a[0]), ib=TBLORDER.indexOf(b[0]); if(ia<0) ia=999; if(ib<0) ib=999; return ia-ib; }); return out; })();
+var TBLPNAME={}; (function(){ for(var i=0;i<TBLPLATS.length;i++) TBLPNAME[TBLPLATS[i][0]]=TBLPLATS[i][1]; })();
 function tblPlatCount(k){ var c=0,j; for(j=0;j<TBL.length;j++){ if(TBLS!=='all'&&TBL[j].st!==TBLS) continue; if(k==='all'||TBL[j].p===k) c++; } return c; }
 function tblRegionAvail(r){ var j; for(j=0;j<TBL.length;j++){ if(TBLP!=='all'&&TBL[j].p!==TBLP) continue; if(TBL[j].st===r) return true; } return false; }
 function setTBLP(p){
@@ -1207,11 +1212,12 @@ function renderTBL(){
   var f=document.getElementById('tblf');
   if(f){
     var h='',i,c;
-    for(i=0;i<TBLORDER.length;i++){
-      var k=TBLORDER[i][0];
+    h+='<button class="kchip'+(TBLP==='all'?' on':'')+'" onclick="setTBLP(\'all\')">全部<i>'+tblPlatCount('all')+'</i></button>';
+    for(i=0;i<TBLPLATS.length;i++){
+      var k=TBLPLATS[i][0];
       c=tblPlatCount(k);
-      var dis=(k!=='all'&&c===0)?' dis':'';
-      h+='<button class="kchip'+(TBLP===k?' on':'')+dis+'" onclick="setTBLP(\''+k+'\')">'+TBLORDER[i][1]+'<i>'+c+'</i></button>';
+      var dis=(c===0)?' dis':'';
+      h+='<button class="kchip'+(TBLP===k?' on':'')+dis+'" onclick="setTBLP(\''+k+'\')">'+TBLPLATS[i][1]+'<i>'+c+'</i></button>';
     }
     f.innerHTML=h;
   }
