@@ -47,6 +47,15 @@ check('new platform eMAG chip', chips.indexOf('eMAG')>=0);
 check('new platform 兰亭集势 chip', chips.indexOf('兰亭集势')>=0);
 check('new platform 阿里巴巴国际站 chip', chips.indexOf('阿里巴巴国际站')>=0);
 check('new platform 小红书 chip', chips.indexOf('小红书')>=0);
+check('no undefined label in chips', chips.indexOf('undefined')<0);
+
+// verify table header shows platform name, not undefined, for a filled new platform
+ctx.setTBLP('eMAG');
+const outEmag=els['tbllist'].innerHTML;
+check('eMAG table header has no undefined', outEmag.indexOf('undefined')<0 && outEmag.indexOf('eMAG')>=0);
+ctx.setTBLP('兰亭集势');
+const outLt=els['tbllist'].innerHTML;
+check('兰亭集势 table header has no undefined', outLt.indexOf('undefined')<0 && outLt.indexOf('兰亭集势')>=0);
 
 ctx.setTBLP('shein');
 const out2=els['tbllist'].innerHTML;
