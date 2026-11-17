@@ -1672,7 +1672,7 @@ function tkPName(p){
   return SAY_P[p]||P.n.replace(/\s*[（(].*$/,'');
 }
 function tkReset(){
-  TK={cid:'',stage:'entry',subs:1,plats:[],city:'',flow:null,impExp:false,taxFiling:false,
+  TK={cid:'',stage:'entry',subs:1,plats:[],city:'',cityText:'',flow:null,impExp:false,taxFiling:false,
       fuls:{},decls:{},sms:'',quarters:[],amt:null,qna:false,qDone:false,
       entity:'',file:'',hist:'',startMonth:'',invoice:'',qual:'',staff:'',staffN:null,fresh:false,
       asks:[],log:[],boostSms:false,open:null,confAck:[],note:''};
@@ -1875,7 +1875,7 @@ function tkCopy(id,btn){
 /* —— 记录文案 —— */
 function tkAnsText(id){
   if(id==='base'){
-    var c=TK.city==='sz'?'含深圳':(TK.city==='out'?'全在外地':'未填');
+    var c=tkCityShow();
     return TK.subs+' 个主体 · '+TK.plats.map(tkPName).join('、')+' · '+c+' · 年流水约 '+TK.flow+' 万';
   }
   if(id==='sms') return {y:'收到了',n:'没收到',na:'说不清'}[TK.sms]||'';
@@ -1952,6 +1952,18 @@ function tkPickPlat(p,btn){
 }
 function tkSetSubs(n,btn){ TK.subs=n; tkRender(); }
 function tkSetCity(v,btn){ TK.city=v; tkRender(); }
+/* 城市改为手动输入：cityText 存具体文本；city 仍按是否含「深圳」推断 sz/out，兼容下游方案书判断 */
+function tkCityText(){ return (TK&&TK.cityText&&String(TK.cityText).trim())?String(TK.cityText).trim():''; }
+/* 展示用：新录入显示具体城市名；老存档无 cityText 时回退「含深圳/全在外地」 */
+function tkCityShow(){ var t=tkCityText(); if(t) return t; return TK.city==='sz'?'含深圳':(TK.city==='out'?'全在外地':'未填'); }
+function tkCityIn(el){
+  var v=el?String(el.value||'').trim():'';
+  TK.cityText=v;
+  TK.city=v?((v.indexOf('深圳')>=0)?'sz':'out'):'';
+  var hint=document.getElementById('tkCityHint');
+  if(hint) hint.innerHTML=v?('将按'+(TK.city==='sz'?'含深圳':'外地')+'口径处理 · '+v):'多个城市用顿号隔开，例：深圳、东莞';
+  tkBaseSum();
+}
 function tkFlowIn(el){ var n=parseFloat(el.value); TK.flow=isNaN(n)?null:n; tkBaseSum(); }
 function tkSetStaffN(el){ var n=parseFloat(el.value); TK.staffN=isNaN(n)?null:n; tkRender(); }
 function tkBaseSum(){
@@ -2009,10 +2021,10 @@ function tkBodyHTML(id){
     for(i=0;i<TK_PLAT_ORD.length;i++){ if(!PLAT[TK_PLAT_ORD[i]]) continue; var p=TK_PLAT_ORD[i];
       h+='<button class="'+(TK.plats.indexOf(p)>=0?'on':'')+'" onclick="tkPickPlat(\''+p+'\')">'+tkPName(p)+'</button>'; }
     h+='</div></div>';
-    h+='<div class="tk-field"><label>③ 城市里有没有深圳</label><div class="tk-seg">';
-    h+='<button class="'+(TK.city==='sz'?'on':'')+'" onclick="tkSetCity(\'sz\')">有深圳</button>';
-    h+='<button class="'+(TK.city==='out'?'on':'')+'" onclick="tkSetCity(\'out\')">全在外地</button>';
-    h+='</div></div>';
+    var _cv=String(TK.cityText||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+    h+='<div class="tk-field"><label>③ 主体注册城市（手动填写）</label>'+
+       '<input class="tk-in" type="text" maxlength="60" placeholder="例：深圳 / 广州 / 义乌 / 深圳、东莞" value="'+_cv+'" oninput="tkCityIn(this)">'+
+       '<div style="font-size:11px;color:var(--text-2);margin-top:6px" id="tkCityHint">'+(TK.cityText?('将按'+(TK.city==='sz'?'含深圳':'外地')+'口径处理 · '+tkCityText()):'多个城市用顿号隔开，例：深圳、东莞')+'</div></div>';
     h+='<div class="tk-field"><label>④ 这些主体合计年流水（万元）</label>'+
        '<input class="tk-in" type="number" min="0" inputmode="numeric" placeholder="例：680" value="'+(TK.flow==null?'':TK.flow)+'" oninput="tkFlowIn(this)"></div>';
     h+='<div class="tk-field"><label style="margin-bottom:7px">⑤ 是否办理了进出口权？</label>'+
@@ -2468,7 +2480,7 @@ function tkRecHTML(){
   h+=recSec('一、客户基本盘',[
     ['主体数量',TK.subs+' 个'],
     ['涉及平台',L.length?L.map(tkPName).join('、'):'未填'],
-    ['注册城市',TK.city==='sz'?'含深圳':(TK.city==='out'?'全在外地':'未填')],
+    ['注册城市',tkCityShow()],
     ['合计年流水',TK.flow==null?'未填':TK.flow+' 万元'],
     /* 勾选框没打钩（含没动过、旧存档为 null）一律按「未办理」计 */
     ['进出口权',TK.impExp===true?'已办理':'未办理'],
@@ -2771,7 +2783,7 @@ function tkPlanHTML(){
     h+='</div>';
   }
   h+='<div class="tk-card"><div class="tk-eyebrow">本次采集到的信息</div><div style="font-size:12.5px;line-height:1.85;color:var(--text-2)">'+
-     '主体：'+TK.subs+' 个 ｜ 城市：'+(TK.city==='sz'?'含深圳':(TK.city==='out'?'全外地':'未填'))+' ｜ 年流水：'+(TK.flow==null?'未填':TK.flow+' 万')+'<br>'+
+     '主体：'+TK.subs+' 个 ｜ 城市：'+tkCityShow()+' ｜ 年流水：'+(TK.flow==null?'未填':TK.flow+' 万')+'<br>'+
      '平台：'+(TK.plats.length?TK.plats.map(tkPName).join('、'):'未填')+'<br>'+
      '短信：'+({y:'已收到',n:'没收到',na:'说不清'}[TK.sms]||'未问')+
      ' ｜ 申报口径：'+({real:'按实际',cash:'按回款',zero:'零申报',na:'说不清'}[TK.file]||'未问')+
@@ -3796,7 +3808,7 @@ async function genPlanDoc(text, d){
   function addRow(label,val){ if(val==null) val=''; val=String(val).trim(); if(val==='') val='—'; rows.push([label,val]); }
   addRow('主营平台', (TK&&TK.plats&&TK.plats.length)?TK.plats.map(tkPName).join('、'):'');
   addRow('站点 / 主体数量', (TK&&TK.subs!=null)?(TK.subs+' 个'):'');
-  addRow('注册城市', (TK&&TK.city==='sz')?'深圳':((TK&&TK.city==='out')?'外地':''));
+  addRow('注册城市', TK?tkCityText():'');
   addRow('年销售额', (TK&&TK.flow!=null)?(TK.flow+' 万元'):'');
   addRow('纳税人性质', safeAns('entity'));
   addRow('进出口权与免税备案', safeAns('qual'));
@@ -3834,7 +3846,7 @@ async function genPlanDoc(text, d){
   var bp='业务概况：贵司主营 '+(TK&&TK.plats&&TK.plats.length?TK.plats.map(tkPName).join('、'):'跨境电商业务');
   if(TK&&TK.subs!=null) bp+='，'+(TK.subs>1?('共 '+TK.subs+' 个站点 / 主体'):'单站点经营');
   if(TK&&TK.flow!=null) bp+='，年销售额约 '+TK.flow+' 万元';
-  bp+='，注册于'+((TK&&TK.city==='sz')?'深圳':((TK&&TK.city==='out')?'外地':'待确认城市'))+'，纳税人性质为'+(safeAns('entity')||'待确认')+'。';
+  bp+='，注册于'+((TK&&tkCityText())?tkCityText():'待确认城市')+'，纳税人性质为'+(safeAns('entity')||'待确认')+'。';
   bp+='当前申报方式为'+(safeAns('file')||'待确认')+'，报关抬头为'+(safeAns('decl')||'待确认')+'，'+(safeAns('qual')||'出口资质待确认')+'。';
   if(TK&&TK.sms==='y') bp+='需特别说明：贵司已收到税务机关的提醒短信，历史申报数据存在需要更正的情形，本方案已将历史遗留数据处理单列并给出落地步骤。';
   paras.push(new P({ spacing:{ before:160, after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED,
@@ -4062,7 +4074,7 @@ function custBuild(){
   kv('沟通人', TK_ME?TK_ME:'未填');
   kv('主体数量', TK.subs+' 个');
   kv('涉及平台', L.length?L.map(tkPName).join('、'):'未填');
-  kv('注册城市', TK.city==='sz'?'含深圳':(TK.city==='out'?'全在外地':'未填'));
+  kv('注册城市', tkCityShow());
   kv('合计年流水', TK.flow==null?'未填':(TK.flow+' 万元'+(TK.subs>1&&full!=null?('（单主体约 '+full+' 万）'):'')));
   kv('进出口权', TK.impExp===true?'已办理':'未办理');
   kv('免/退税备案', TK.taxFiling===true?'已备案':'未备案');
