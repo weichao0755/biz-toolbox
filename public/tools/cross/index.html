@@ -3768,6 +3768,70 @@ function histTaxCompare(){
     cit2Low:cit2Low, cit2High:cit2High, cit2Note:cit2Note, hed:hed,
     saveLow:saveLow, saveHigh:saveHigh};
 }
+/* 未来税负预测（新主体专用，替代「历史遗留数据处理方案」）
+   客户为刚注册 / 刚开始经营、无历史存量可补，方案书不谈核定 / 补税，改为预测合规经营后的未来正常税负。
+   口径与税负速算一致：出口免税后增值税=0；企税走明细账——利润=销售额−平台成本(50%)−采购成本(20%)−人力(人数×6万)，
+   计税基础=利润−增值税，税率按利润(<300万 5% / ≥300万 25%)。 */
+function futureTaxParas(S){
+  var R=S.R, P=S.P, T=S.T, TR=S.TR, TC=S.TC, WT=S.WT, BS=S.BS, AT=S.AT, FHei=S.FHei, FSong=S.FSong;
+  var out=[];
+  out.push(new P({ spacing:{ before:280, after:120, line:320, lineRule:'auto' },
+    border:{ bottom:{ style:BS.SINGLE, size:10, color:'E0D5C0', space:6 } },
+    children:[ R('未来税负预测',{ font:FHei, size:26, bold:true, color:'B45309' }) ] }));
+  var sales=(A&&A.flow!=null&&A.flow!=='na')?Number(A.flow):null;
+  var isNew=custNew();
+  var intro='贵司为'+(TK&&TK.fresh?'刚注册的新主体':'刚开始经营、暂无历史存量')+'，从一开始就按合规口径经营，没有需要更正的往期申报数据。以下按贵司当前经营数据，预测合规经营后每年的正常税负水平，供贵司提前规划现金流。';
+  out.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[ R(intro,{ font:FSong, size:21 }) ] }));
+  if(!(sales>0)){
+    out.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED,
+      children:[ R('待贵司提供预计年销售额，我方将按明细账口径测算合规后的增值税、企业所得税及综合税负率。',{ font:FSong, size:21 }) ] }));
+    return out;
+  }
+  /* 合规后：出口免税 → 增值税 0；用 taxCalc 的明细账口径算企税 */
+  var headN=(TK&&TK.staffN!=null&&TK.staffN!=='')?Number(TK.staffN):0;
+  var r=taxCalc({ sales:sales, ent:A.entity||'small', decl:'yes', q:'no', head:headN, purch:20, plat:50 });
+  var cm={ top:90, bottom:90, left:140, right:110 };
+  function fRow(a,b,c,shade,bold){
+    return new TR({ children:[
+      new TC({ width:{ size:30, type:WT.PERCENTAGE }, shading:{ fill:shade }, margins:cm,
+        children:[ new P({ spacing:{ line:300, lineRule:'auto' }, children:[ R(a,{ font:FHei, size:20, bold:!!bold, color:bold?'B45309':'7A5A12' }) ] }) ] }),
+      new TC({ width:{ size:35, type:WT.PERCENTAGE }, shading:{ fill:shade }, margins:cm,
+        children:[ new P({ spacing:{ line:300, lineRule:'auto' }, children:[ R(b,{ font:FSong, size:20, bold:!!bold }) ] }) ] }),
+      new TC({ width:{ size:35, type:WT.PERCENTAGE }, shading:{ fill:shade }, margins:cm,
+        children:[ new P({ spacing:{ line:300, lineRule:'auto' }, children:[ R(c,{ font:FSong, size:20, bold:!!bold }) ] }) ] })
+    ] });
+  }
+  var entName=(A.entity==='general')?'一般纳税人':(A.entity==='small'?'小规模纳税人':'纳税人类型待确认');
+  out.push(new P({ spacing:{ before:120, after:80, line:320, lineRule:'auto' }, children:[ R('（一）年度税负测算',{ font:FHei, size:22, bold:true, color:'2A2118' }) ] }));
+  out.push(new T({ width:{ size:100, type:WT.PERCENTAGE },
+    borders:{ top:{style:BS.SINGLE,size:4,color:'E0D5C0'}, bottom:{style:BS.SINGLE,size:4,color:'E0D5C0'},
+      left:{style:BS.SINGLE,size:4,color:'E0D5C0'}, right:{style:BS.SINGLE,size:4,color:'E0D5C0'},
+      insideHorizontal:{style:BS.SINGLE,size:2,color:'ECE3D6'}, insideVertical:{style:BS.SINGLE,size:2,color:'ECE3D6'} },
+    rows:[
+      fRow('测算项目','金额（万元）','口径说明','B45309',true),
+      fRow('预计年销售额', r.sales+' 万元', entName+' · '+(TK&&TK.subs||1)+' 个主体合计','FFFFFF',false),
+      fRow('平台成本（预估）', r.plat+' 万元', '销售额 × 50%（以平台汇总单实际为准）','FBF3E4',false),
+      fRow('采购成本（预估）', r.purch+' 万元', '销售额 × 20%（以实际收票为准）','FFFFFF',false),
+      fRow('人力成本（预估）', r.labor+' 万元', (headN||0)+' 人 × 6 万/人/年','FBF3E4',false),
+      fRow('利润（明细账口径）', r.profit+' 万元', '销售额 − 平台成本 − 采购成本 − 人力','FFFFFF',false),
+      fRow('增值税', '0 元', '出口免税（取得报关单 / 报关清单后 13 栏填报）','FBF3E4',false),
+      fRow('企业所得税', r.cit+' 万元', '计税基础 '+r.citBase+' 万（利润 − 增值税）× '+Math.round(r.citRate*100)+'%','FFFFFF',false),
+      fRow('年度税费合计', r.baseTax+' 万元', '增值税 0 + 企业所得税 '+r.cit+' 万','FBF3E4',true),
+      fRow('综合税负率', r.baseRate+'%', '年度税费合计 ÷ 预计年销售额','FFFFFF',true)
+    ] }));
+  out.push(new P({ spacing:{ before:120, after:60, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[
+    R('测算说明：',{ font:FHei, size:21, bold:true, color:'7A5A12' }),
+    R('以上为合规经营后的正常税负预测。企业所得税按明细账口径——销售额减去平台成本、采购成本和人力成本得出利润，再扣除增值税作为计税基础，按 '+Math.round(r.citRate*100)+'% 计征；增值税在取得本公司抬头报关单 / 报关清单后按出口免税填报，为 0。平台成本、采购成本填得越完整，账面利润与税负越低。以上金额为预估值，实际以逐月汇总单、收票情况为准。',{ font:FSong, size:21 })
+  ] }));
+  out.push(new P({ spacing:{ before:160, after:80, line:320, lineRule:'auto' }, children:[ R('（二）降低未来税负的三件事',{ font:FHei, size:22, bold:true, color:'2A2118' }) ] }));
+  var tips=[
+    '把平台成本做进明细账：佣金、配送、仓储、广告等平台支出按汇总单逐月据实录入，不打包入账——这部分通常占销售额 40%~60%，是压低账面利润的主要来源。',
+    '采购成本按票入账：向上游索取发票，可取得发票的据实抵扣；无票部分单列，避免混入有票成本。',
+    '人力成本合规列支：通过返聘退休人员、符合条件员工的工资与年终奖等方式合理列支，进一步优化企业所得税。'
+  ];
+  for(var i=0;i<tips.length;i++) out.push(new P({ spacing:{ after:30, line:320, lineRule:'auto' }, indent:{ left:380, hanging:240 }, children:[ R('· '+tips[i],{ font:FSong, size:21 }) ] }));
+  return out;
+}
 async function genPlanDoc(text, d){
   if(typeof docx==='undefined') throw new Error('docx 库未加载，请刷新页面重试');
   var FSong={ascii:'Times New Roman',hAnsi:'Times New Roman',eastAsia:'宋体'};
@@ -3881,9 +3945,11 @@ async function genPlanDoc(text, d){
   var _nvr=noVatRisk();
   paras.push(new P({ spacing:{ after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[
     R('推进原则：',{ font:FHei, size:21, bold:true, color:'7A5A12' }),
-    R((leadHed===false
-      ? '整体按「先合规、后据实申报」推进——先把出口资质、免税备案、按汇总单如实申报这三项跑通，形成稳定的合规申报口径，再处理历史遗留数据并按查账征收（真实利润 × 5%）申报企业所得税。以下为具体执行步骤：'
-      : '整体按「'+(_nvr?'先合规':'先合规、再核定')+'」推进——先把出口资质、免税备案、按汇总单如实申报这三项跑通，形成稳定的合规申报口径，再处理历史遗留数据并对接核定征收。顺序不可颠倒：未合规先行申请核定，税务机关不予受理；先动手补税而未算清缺口，又容易多缴。以下为具体执行步骤：'),{ font:FSong, size:21 })
+    R(custNew()
+      ? '整体按「先合规、稳经营」推进——先把出口资质、免税备案、按汇总单如实申报这三项跑通，从一开始就形成稳定的合规申报口径，企业所得税按明细账以真实利润（约销售额 15%）× 5% 据实申报。贵司无历史存量需要处理，以下为具体执行步骤：'
+      : (leadHed===false
+        ? '整体按「先合规、后据实申报」推进——先把出口资质、免税备案、按汇总单如实申报这三项跑通，形成稳定的合规申报口径，再处理历史遗留数据并按查账征收（真实利润 × 5%）申报企业所得税。以下为具体执行步骤：'
+        : '整体按「'+(_nvr?'先合规':'先合规、再核定')+'」推进——先把出口资质、免税备案、按汇总单如实申报这三项跑通，形成稳定的合规申报口径，再处理历史遗留数据并对接核定征收。顺序不可颠倒：未合规先行申请核定，税务机关不予受理；先动手补税而未算清缺口，又容易多缴。以下为具体执行步骤：'),{ font:FSong, size:21 })
   ] }));
   var S=roadmap(d);
   for(var j=0;j<S.length;j++){
@@ -3895,9 +3961,14 @@ async function genPlanDoc(text, d){
   }
   paras.push(new P({ spacing:{ before:160, after:120, line:320, lineRule:'auto' }, alignment:AT.JUSTIFIED, children:[
     R('预期效果：',{ font:FHei, size:21, bold:true, color:'B45309' }),
-    R('以上步骤完成后，贵司将具备自属报关单与出口免税依据，增值税可按出口免税口径降至 0；申报口径与平台汇总单一致，平台佣金、FBA 配送、仓储、广告等支出可据实录入成本。'+(heDingEligible()===false?'企业所得税按查账征收、以真实利润（约销售额 15%）× 5% 计，并通过人力成本专项规划进一步优化。':'企业所得税通过核定征收（2025 Q3/Q4 可适用）与人力成本专项规划进一步优化。')+'日常只需按月导出汇总单，即可稳定维持合规状态。',{ font:FSong, size:21 })
+    R('以上步骤完成后，贵司将具备自属报关单与出口免税依据，增值税可按出口免税口径降至 0；申报口径与平台汇总单一致，平台佣金、FBA 配送、仓储、广告等支出可据实录入成本。'+(custNew()||heDingEligible()===false?'企业所得税按查账征收、以真实利润（约销售额 15%）× 5% 计，并通过人力成本专项规划进一步优化。':'企业所得税通过核定征收（2025 Q3/Q4 可适用）与人力成本专项规划进一步优化。')+'日常只需按月导出汇总单，即可稳定维持合规状态。',{ font:FSong, size:21 })
   ] }));
 
+  /* 新主体（刚注册 / 无历史存量）：不谈核定与补税，改为「未来税负预测」；有历史的客户仍走原历史遗留章节 */
+  if(custNew()){
+    var _fp=futureTaxParas({R:R,P:P,T:T,TR:TR,TC:TC,WT:WT,BS:BS,AT:AT,FHei:FHei,FSong:FSong});
+    for(var fi=0;fi<_fp.length;fi++) paras.push(_fp[fi]);
+  } else {
   /* 历史遗留数据处理方案（按客户实际情况定制，最重要的部分）：落地步骤 + 税费测算对比 + 处理方案 */
   var hp=histPlan(d), htc=histTaxCompare();
   paras.push(new P({ spacing:{ before:280, after:120, line:320, lineRule:'auto' },
@@ -3975,6 +4046,7 @@ async function genPlanDoc(text, d){
   /* （五）企业所得税处理方案 */
   paras.push(new P({ spacing:{ before:160, after:80, line:320, lineRule:'auto' }, children:[ R('（五）企业所得税处理方案',{ font:FHei, size:22, bold:true, color:'2A2118' }) ] }));
   for(var ci=0;ci<hp.cit.length;ci++) paras.push(new P({ spacing:{ after:30, line:320, lineRule:'auto' }, indent:{ left:380, hanging:240 }, children:[ R('· '+hp.cit[ci],{ font:FSong, size:21 }) ] }));
+  } /* end if(!custNew()) 历史遗留章节 */
 
   /* 四、关于我们（品牌内容来自公司企业简章） */
   paras.push(hdg('四、关于我们', true));
