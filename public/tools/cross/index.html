@@ -1675,6 +1675,8 @@ function tkReset(){
   TK={cid:'',stage:'entry',subs:1,plats:[],city:'',cityText:'',flow:null,impExp:false,taxFiling:false,
       fuls:{},decls:{},sms:'',quarters:[],amt:null,qna:false,qDone:false,
       entity:'',file:'',hist:'',startMonth:'',invoice:'',qual:'',staff:'',staffN:null,fresh:false,
+      /* 方案书生成约束（三态 auto/force/forceNo；老存档缺字段按 auto 处理） */
+      genHist:'auto', genFine:'auto', genHed:'auto',
       asks:[],log:[],boostSms:false,open:null,confAck:[],note:''};
   AIPLAN=null; AI_NOW={}; AIPAIN=null;   /* 换客户不能把上一单的 AI 结论带过来 */
   tkRender();
@@ -1763,6 +1765,7 @@ function tkHas(id){
   if(id==='invoice') return TK.invoice!=='';
   if(id==='qual') return TK.qual!=='';
   if(id==='staff') return TK.staff!=='';
+  if(id==='gen') return (TK.genHist||'auto')!=='auto'||(TK.genFine||'auto')!=='auto'||(TK.genHed||'auto')!=='auto';
   return false;
 }
 function tkNeed(id){
@@ -1775,7 +1778,7 @@ function tkNeed(id){
 }
 /* 优先级：客户主动提到短信 → 立刻插到最前（用户点名的场景） */
 function tkPri(id){
-  var base={base:100,sms:95,quarters:96,amt:94,ful:80,decl:75,qual:72,entity:60,file:55,hist:50,invoice:45,staff:38};
+  var base={base:100,sms:95,quarters:96,amt:94,ful:80,decl:75,qual:72,entity:60,file:55,hist:50,invoice:45,staff:38,gen:5};
   if(id==='sms'&&TK.boostSms) return 120;
   if((id==='quarters'||id==='amt')&&TK.boostSms) return 118;
   return base[id]||0;
@@ -1887,6 +1890,7 @@ function tkAnsText(id){
   if(id==='file') return {real:'按实际申报',cash:'按回款申报',zero:'零申报',na:'说不清'}[TK.file]||'';
   if(id==='hist') return TK.startMonth==='na'?'不记得':(TK.startMonth||'未填');
   if(id==='invoice') return {normal:'能开普票',special:'只能开专票，税点很贵',unknown:'说开不了，但没问过供应商',none:'问了明确不开',na:'还没问清'}[TK.invoice]||'';
+  if(id==='gen') return tkGenSummary();
   if(id==='qual') return {both:'进出口权 + 免税备案都有',qualOnly:'只有进出口权，没做免税备案',none:'两个都没有',na:'说不清'}[TK.qual]||'';
   if(id==='staff') return {yes:'有在职员工，能发工资',retired:'只有退休返聘',no:'没有人员',na:'说不清'}[TK.staff]||'';
   return '';
@@ -1964,6 +1968,43 @@ function tkCityIn(el){
   if(hint) hint.innerHTML=v?('将按'+(TK.city==='sz'?'含深圳':'外地')+'口径处理 · '+v):'多个城市用顿号隔开，例：深圳、东莞';
   tkBaseSum();
 }
+/* —— 方案书生成约束（三开关）：默认 auto 跟随系统判断，force/forceNo 手动覆盖 —— */
+var TK_GEN_FIELDS=[
+  {k:'genHist',n:'历史数据 / 历史税费',yes:'计算',no:'不计算',
+   auto:'按系统判断：新主体出「未来税负预测」，有存量出「历史遗留测算」',
+   yesTip:'强制出历史遗留章节 + 税费测算（适合客户其实有存量、但被判成新主体的情况）',
+   noTip:'强制不出历史遗留，只出未来税负预测（适合确认无存量的客户）'},
+  {k:'genFine',n:'罚款风险',yes:'计算',no:'不计算',
+   auto:'按系统判断：小规模年销 <120 万免增值税时不算罚款',
+   yesTip:'强制在测算表显示罚款 0.5~5 倍（适合要明确吓醒客户的场景）',
+   noTip:'强制隐去罚款行（适合存量小、不希望放大风险的客户）'},
+  {k:'genHed',n:'核定征收口径',yes:'可核定',no:'不可核定',
+   auto:'按开始经营年份判断：2025 及以前 Q3/Q4 可核定，2026 起不可',
+   yesTip:'强制按可核定口径出文案（仅政策口径特殊、确认可沟通时使用）',
+   noTip:'强制按不可核定、据实申报口径出文案'}
+];
+function tkGenVal(k){ return (TK&&TK[k])||'auto'; }
+function tkGenSet(k,v){ if(!TK) return; TK[k]=v; tkRender(); }
+function tkGenSummary(){
+  var parts=[],i,f,v;
+  for(i=0;i<TK_GEN_FIELDS.length;i++){
+    f=TK_GEN_FIELDS[i]; v=tkGenVal(f.k);
+    if(v!=='auto') parts.push(f.n+'：'+(v==='force'?f.yes:f.no));
+  }
+  return parts.length?parts.join(' · '):'';  /* 全 auto 显示「未填」，不占采集进度 */
+}
+function tkGenBodyHTML(){
+  var h='<p class="tk-mtip" style="margin:0 0 10px">三项默认「自动」，由系统按客户信息判断。只有判断不准时才手动改——改完导出方案书即生效，不影响采集进度。</p>',i,f,v;
+  for(i=0;i<TK_GEN_FIELDS.length;i++){
+    f=TK_GEN_FIELDS[i]; v=tkGenVal(f.k);
+    h+='<div class="tk-field" style="margin-bottom:11px"><label>'+f.n+'</label><div class="tk-seg">';
+    h+='<button class="'+(v==='auto'?'on':'')+'" onclick="tkGenSet(\''+f.k+'\',\'auto\')">自动</button>';
+    h+='<button class="'+(v==='force'?'on':'')+'" onclick="tkGenSet(\''+f.k+'\',\'force\')" title="'+f.yesTip+'">'+f.yes+'</button>';
+    h+='<button class="'+(v==='forceNo'?'on':'')+'" onclick="tkGenSet(\''+f.k+'\',\'forceNo\')" title="'+f.noTip+'">'+f.no+'</button>';
+    h+='</div><p class="tk-mtip" style="margin:6px 0 0">'+(v==='auto'?f.auto:(v==='force'?f.yesTip:f.noTip))+'</p></div>';
+  }
+  return h;
+}
 function tkFlowIn(el){ var n=parseFloat(el.value); TK.flow=isNaN(n)?null:n; tkBaseSum(); }
 function tkSetStaffN(el){ var n=parseFloat(el.value); TK.staffN=isNaN(n)?null:n; tkRender(); }
 function tkBaseSum(){
@@ -2012,6 +2053,7 @@ function tkCardHTML(id){
 }
 function tkBodyHTML(id){
   var h='',i;
+  if(id==='gen') return tkGenBodyHTML();
   if(id==='base'){
     h+='<div class="tk-field"><label>① 主体数量</label><div class="tk-seg">';
     var S=[[1,'1 个'],[2,'2 个'],[3,'3 个以上']];
@@ -2376,9 +2418,10 @@ var TK_SECS=[
   {t:'① 基本盘', ids:['base']},
   {t:'② 税局与存量', ids:['sms','quarters','amt']},
   {t:'③ 发货与报关', ids:['ful','decl']},
-  {t:'④ 主体与申报', ids:['entity','file','hist','invoice']}
+  {t:'④ 主体与申报', ids:['entity','file','hist','invoice']},
+  {t:'⑤ 方案书设置（可选 · 不阻塞采集）', ids:['gen']}
 ];
-var TK_LABEL={base:'基本盘',sms:'税局短信',quarters:'点名季度',amt:'季度流水',ful:'发货方式',decl:'谁报关',qual:'出口资质',entity:'纳税人身份',file:'申报口径',hist:'开始做跨境',invoice:'供应商发票',staff:'人员成本'};
+var TK_LABEL={base:'基本盘',sms:'税局短信',quarters:'点名季度',amt:'季度流水',ful:'发货方式',decl:'谁报关',qual:'出口资质',entity:'纳税人身份',file:'申报口径',hist:'开始做跨境',invoice:'供应商发票',staff:'人员成本',gen:'方案书设置'};
 function tkRowHTML(id,nx,openId){
   var has=tkHas(id), isNx=(id===nx), open=(id===openId);
   var cls='tk-rowv'+(has?' has':' todo')+(isNx?' nx':'')+(open?' open':'');
@@ -3665,6 +3708,10 @@ async function buildCover(){
    以客户「开始经营网店」的时间（A.startMonth / TK.startMonth，格式 YYYY-MM）判定：
    2026 年及以后开始 → 不可核定(false)；2025 年及以前 → 可核定(true)；未填/不记得 → 无法判定(null)。 */
 function heDingEligible(){
+  /* 方案书设置：核定口径手动覆盖优先（force=可核定 / forceNo=不可核定） */
+  var gh=TK&&TK.genHed;
+  if(gh==='force') return true;
+  if(gh==='forceNo') return false;
   var sm=(A&&A.startMonth&&A.startMonth!=='na')?A.startMonth:(TK&&TK.startMonth&&TK.startMonth!=='na'?TK.startMonth:'');
   if(!sm||sm==='na') return null;
   var yr=parseInt(String(sm).split('-')[0],10);
@@ -3717,7 +3764,8 @@ function histPlan(d){
    · 路径二（合规处理）：增值税出口免税；企业所得税按真实利润（约销售额 15%）× 5%（<300万）或 25%；可核定时（仅 2025 Q3/Q4，以开始经营网店时间判定）= 销售额 × 核定利润率(2%~4%) × 5%，并非直接按销售额 × 2%~4% 计征。 */
 function noVatRisk(){
   /* 小规模纳税人且年销售额 < 120 万：增值税依法免征（季度≤30万），
-     无增值税滞纳金 / 罚款风险，仅需处理企业所得税，历史遗留可延后。 */
+     无增值税滞纳金 / 罚款风险，仅需处理企业所得税，历史遗留可延后。
+     注：罚款是否显示的手动开关在 histTaxCompare 的 fineOff 处理，不改变本业务事实判定。 */
   return (A.entity==='small' && A.flow!=null && A.flow!=='na' && Number(A.flow)>0 && Number(A.flow)<120);
 }
 function histTaxCompare(){
@@ -3744,6 +3792,16 @@ function histTaxCompare(){
   var fineLow=Math.round(tax1*0.5*10)/10;
   var fineHigh=Math.round(tax1*5*10)/10;
   if(vatExempt){ late=0; fineLow=0; fineHigh=0; }   /* 小规模年销<120万：增值税免征，无增值税滞纳金/罚款风险，仅计企业所得税 */
+  /* 方案书设置：genFine 只决定「是否计算/显示罚款与滞纳金」，不碰增值税免征判定（vatExempt 不动） */
+  var fineOff=!!vatExempt;
+  if(TK&&TK.genFine==='forceNo'){ late=0; fineLow=0; fineHigh=0; fineOff=true; }
+  else if(TK&&TK.genFine==='force'){
+    /* 强制算罚款：即使小规模免增值税也恢复滞纳金/罚款（按企业所得税缺口 tax1 计） */
+    fineOff=false;
+    late=Math.round(tax1*0.1825*10)/10;
+    fineLow=Math.round(tax1*0.5*10)/10;
+    fineHigh=Math.round(tax1*5*10)/10;
+  }
   var low1=Math.round((tax1+late+fineLow)*10)/10;
   var high1=Math.round((tax1+late+fineHigh)*10)/10;
   /* 核定判定：仅 2025 Q3/Q4 可沟通核定；2026 起各季度不可核定（以开始经营网店时间判定） */
@@ -3763,7 +3821,7 @@ function histTaxCompare(){
   var saveHigh=Math.round((high1-cit2Low)*10)/10;
   return {ok:true, sales:sales, isGen:isGen, vatRate:vatRate,
     realProfit:realProfit, citRate:citRate, assessedProfit:assessedProfit, citRate1:citRate1,
-    vat1:vat1, vat1Note:vat1Note, cit1:cit1, tax1:tax1, noVatRisk:vatExempt, late:late,
+    vat1:vat1, vat1Note:vat1Note, cit1:cit1, tax1:tax1, noVatRisk:fineOff, vatExempt:vatExempt, late:late,
     fineLow:fineLow, fineHigh:fineHigh, low1:low1, high1:high1,
     cit2Low:cit2Low, cit2High:cit2High, cit2Note:cit2Note, hed:hed,
     saveLow:saveLow, saveHigh:saveHigh};
@@ -6026,6 +6084,11 @@ function histOf(){
 /* 客户是否「新注册 / 刚起步、无历史存量」：用于让方案书自动跳过历史修正内容。
    命中条件：流程里点了「刚注册无历史」(TK.fresh) 或 系统推导 A.hist==='new'。 */
 function custNew(){
+  /* 方案书设置：历史数据手动覆盖优先
+     forceNo(不计算历史)=强制走新主体式未来税负预测；force(计算历史)=强制走历史遗留章节 */
+  var gh=TK&&TK.genHist;
+  if(gh==='forceNo') return true;
+  if(gh==='force') return false;
   if(TK && TK.fresh) return true;
   return histOf()==='new';
 }
