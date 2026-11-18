@@ -1668,11 +1668,12 @@ var TK_Q=tkQOptions();
 var TK_PLAT_ORD=['amazon','tiktok','temu','ozon','shopee','aliexpress','independent'];
 
 function tkPName(p){
+  if(typeof p==='string'&&p.indexOf('custom:')===0) return p.slice(7);
   var P=PLAT[p]; if(!P) return p;
   return SAY_P[p]||P.n.replace(/\s*[（(].*$/,'');
 }
 function tkReset(){
-  TK={cid:'',stage:'entry',subs:1,plats:[],city:'',cityText:'',flow:null,impExp:false,taxFiling:false,
+  TK={cid:'',stage:'entry',subs:1,plats:[],otherOpen:false,otherText:'',city:'',cityText:'',flow:null,impExp:false,taxFiling:false,
       fuls:{},decls:{},sms:'',quarters:[],amt:null,qna:false,qDone:false,
       entity:'',file:'',hist:'',startMonth:'',invoice:'',qual:'',staff:'',staffN:null,fresh:false,
       /* 方案书生成约束（三态 auto/force/forceNo；老存档缺字段按 auto 处理） */
@@ -1886,7 +1887,7 @@ function tkAnsText(id){
   if(id==='amt') return TK.amt===null?'不愿说':('约 '+TK.amt+' 万');
   if(id==='ful') return TK.plats.map(function(p){return tkPName(p)+' → '+(PLAT[p].ful[TK.fuls[p]]||{}).n;}).join('；');
   if(id==='decl') return TK.plats.map(function(p){return tkPName(p)+' → '+({self:'自己公司抬头',maidan:'买单',ddp:'双清包税',plat:'平台代报',na:'待确认'}[TK.decls[p]]||'待确认');}).join('；');
-  if(id==='entity') return {small:'小规模纳税人',general:'一般纳税人',na:'说不清'}[TK.entity]||'';
+  if(id==='entity') return entNameOf(TK.entity)==='待确认'?'':entNameOf(TK.entity);
   if(id==='file') return {real:'按实际申报',cash:'按回款申报',zero:'零申报',na:'说不清'}[TK.file]||'';
   if(id==='hist') return TK.startMonth==='na'?'不记得':(TK.startMonth||'未填');
   if(id==='invoice') return {normal:'能开普票',special:'只能开专票，税点很贵',unknown:'说开不了，但没问过供应商',none:'问了明确不开',na:'还没问清'}[TK.invoice]||'';
@@ -1906,7 +1907,7 @@ function tkInsight(id){
   if(id==='decl') return TK.plats.some(function(p){return TK.decls[p]==='maidan'||TK.decls[p]==='ddp';})
     ? '那我明白了。报关单不在您名下，<b>免税和退税都做不了</b>。这个得先解决，别的事往后放。'
     : '那挺好，报关单是您自己的，<b>免税这条路能走</b>。接下来看城市和发票。';
-  if(id==='entity') return TK.entity==='general'?'一般人 13 个点，有票能抵。<b>票够不够比税率要紧</b>。':'小规模 1 个点。<b>年流水超过 500 万需登记为一般纳税人</b>，请留意该标准。';
+  if(id==='entity') return TK.entity==='general'?'一般人 13 个点，有票能抵。<b>票够不够比税率要紧</b>。':(TK.entity==='person'?'个人 / 个体户按经营所得算税，<b>没有企业所得税这一项</b>，增值税仍按 1% 口径。':'小规模 1 个点。<b>年流水超过 500 万需登记为一般纳税人</b>，请留意该标准。');
   if(id==='file'){
     if(TK.file==='zero') return '零申报，可平台上有流水。<b>这中间差的是全额</b>，得先把这个口子堵上。';
     if(TK.file==='cash') return '按回款报的，那差的<b>就是佣金、运费和退款那一段</b>。比零申报少，可也得重算。';
@@ -1952,6 +1953,26 @@ function tkPickPlat(p,btn){
   var i=TK.plats.indexOf(p);
   if(i<0) TK.plats.push(p); else TK.plats.splice(i,1);
   if(TK.plats.indexOf(p)<0){ delete TK.fuls[p]; delete TK.decls[p]; }
+  tkRender();
+}
+/* —— 平台「其他」手动输入 —— */
+function tkCustomPlats(){ var a=[]; for(var i=0;i<TK.plats.length;i++) if(TK.plats[i].indexOf('custom:')===0) a.push(TK.plats[i]); return a; }
+function tkToggleOther(){ TK.otherOpen=!TK.otherOpen; tkRender(); }
+function tkOtherIn(v){ if(TK) TK.otherText=String(v||''); }
+function tkAddCustom(){
+  if(!TK) return;
+  var v=String(TK.otherText||'').trim().replace(/\s+/g,' ');
+  if(!v){ tkToast('先填平台名'); return; }
+  var key='custom:'+v;
+  if(TK.plats.indexOf(key)<0){ TK.plats.push(key); TK.otherText=''; }
+  TK.otherOpen=false;
+  tkRender();
+}
+function tkDelCustom(k){
+  if(!TK) return;
+  var i=TK.plats.indexOf(k);
+  if(i>=0) TK.plats.splice(i,1);
+  delete TK.fuls[k]; delete TK.decls[k];
   tkRender();
 }
 function tkSetSubs(n,btn){ TK.subs=n; tkRender(); }
@@ -2059,10 +2080,29 @@ function tkBodyHTML(id){
     var S=[[1,'1 个'],[2,'2 个'],[3,'3 个以上']];
     for(i=0;i<S.length;i++) h+='<button class="'+(TK.subs===S[i][0]?'on':'')+'" onclick="tkSetSubs('+S[i][0]+')">'+S[i][1]+'</button>';
     h+='</div></div>';
-    h+='<div class="tk-field"><label>② 这些主体做哪些平台（可多选）</label><div class="tk-seg">';
+    h+='<div class="tk-field"><label>② 这些主体做哪些平台（可多选 · 没有的选「其他」手动填）</label><div class="tk-seg">';
     for(i=0;i<TK_PLAT_ORD.length;i++){ if(!PLAT[TK_PLAT_ORD[i]]) continue; var p=TK_PLAT_ORD[i];
       h+='<button class="'+(TK.plats.indexOf(p)>=0?'on':'')+'" onclick="tkPickPlat(\''+p+'\')">'+tkPName(p)+'</button>'; }
-    h+='</div></div>';
+    h+='<button class="'+(TK.otherOpen?'on':'')+'" onclick="tkToggleOther()">其他</button>';
+    h+='</div>';
+    /* 已添加的自定义平台：可单独删除 */
+    var _cps=tkCustomPlats();
+    if(_cps.length){
+      h+='<div class="tk-qsel" style="margin-top:7px">已添加：';
+      for(i=0;i<_cps.length;i++){
+        var cp=_cps[i];
+        h+='<span class="tk-chip" style="margin-right:6px;cursor:pointer" onclick="tkDelCustom(\''+cp+'\')" title="点一下删除">'+tkPName(cp)+' ×</span>';
+      }
+      h+='</div>';
+    }
+    /* 「其他」被选中时显示输入框 */
+    if(TK.otherOpen){
+      var _otherVal=String(TK.otherText||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+      h+='<input class="tk-in" type="text" maxlength="30" id="tkOtherPlat" placeholder="输入平台名，回车或点添加，例：Lazada / Coupang" style="margin-top:7px" value="'+_otherVal+'" oninput="tkOtherIn(this.value)" onkeydown="if(event.key===\'Enter\')tkAddCustom()">'+
+         '<button class="tk-b2" style="margin-top:7px" onclick="tkAddCustom()">添加平台</button>'+
+         '<p class="tk-mtip" style="margin:6px 0 0">自定义平台按通用口径判定履约与报关，具体清关规则以该平台实际要求为准。</p>';
+    }
+    h+='</div>';
     var _cv=String(TK.cityText||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
     h+='<div class="tk-field"><label>③ 主体注册城市（手动填写）</label>'+
        '<input class="tk-in" type="text" maxlength="60" placeholder="例：深圳 / 广州 / 义乌 / 深圳、东莞" value="'+_cv+'" oninput="tkCityIn(this)">'+
@@ -2105,7 +2145,7 @@ function tkBodyHTML(id){
       var p=TK.plats[i];
       h+='<div class="tk-field"><label>'+tkPName(p)+'</label><div class="tk-seg">';
       if(id==='ful'){
-        var F=PLAT[p].ful,ks=[];
+        var F=platDef(p).ful,ks=[];
         for(var k in F) ks.push(k);
         for(var j=0;j<ks.length;j++){
           var nm=F[ks[j]].n.replace(/\s*[（(].*$/,'').split(/\s*\/\s*/)[0];
@@ -2123,6 +2163,7 @@ function tkBodyHTML(id){
   if(id==='entity'){
     h+='<button class="tk-o" onclick="tkChoice(\'entity\',\'small\')"><b>小规模纳税人</b><span class="s">开 1% 的票</span></button>';
     h+='<button class="tk-o" onclick="tkChoice(\'entity\',\'general\')"><b>一般纳税人</b><span class="s">开 13% 的票，进项能抵</span></button>';
+    h+='<button class="tk-o" onclick="tkChoice(\'entity\',\'person\')"><b>个人 / 个体户</b><span class="s">无公司主体，按经营所得算税</span></button>';
     h+='<button class="tk-o na" onclick="tkChoice(\'entity\',\'na\')">客户说不清</button>';
     return h;
   }
@@ -2557,7 +2598,7 @@ function tkRecHTML(){
   ]);
 
   h+=recSec('四、主体与票据',[
-    ['纳税人身份',{small:'小规模纳税人',general:'一般纳税人',na:'说不清'}[TK.entity]||'未问'],
+    ['纳税人身份',entNameOf(TK.entity)==='待确认'?'未问':entNameOf(TK.entity)],
     ['供应商发票',{normal:'能开普票',special:'能开专票',none:'基本开不了',na:'还没问清'}[TK.invoice]||'未问']
   ]);
 
@@ -3136,10 +3177,25 @@ var PLAT={
    mp:{n:'市场采购出口（1039）',note:'无票小商品的合法通道',mode:'1039',decl:'有',mian:'可',tui:'不可',c:'软约束',
      why:'1039 是“免征不退”：免增值税，但放弃了退税，二者只能选一个。',
      ok:'免税出口',no:'退税（选了免征就没有）'},
+ }},
+ /* 其他 / 手动输入平台：销售自填的小众平台共用这套通用履约模板，口径按报关方式判定 */
+ other:{n:'其他（手动填写）',ful:{
+   direct:{n:'直邮 / 平台物流发货',note:'小包或平台指定物流，无自有报关单',mode:'9610',decl:'部分',mian:'可',tui:'不可',c:'软约束',
+     why:'平台物流 / 专线多由物流商统一申报，卖家侧通常无自有报关单；综试区无票免税可用。',
+     ok:'账务合规 + 无票免税',no:'无票也承诺退税'},
+   wh:{n:'海外仓 / 本地仓备货',note:'货主自主报关出境',mode:'9810',decl:'有',mian:'可',tui:'可',c:'软约束',
+     why:'货主自行出口报关并备案海外仓，有进项专票可退税；具体以该平台清关口径为准。',
+     ok:'全套 + 退税（有票）',no:'无票退税'},
  }}
 };
+/* 平台定义兜底：自定义平台（custom:xxx）映射到 other 通用模板，保证 ful/decl/derive 不崩 */
+function platKey(p){ return (typeof p==='string'&&p.indexOf('custom:')===0)?'other':p; }
+function platDef(p){ return PLAT[platKey(p)]||PLAT.other; }
+/* 纳税人身份统一显示名：个人/个体户按小规模口径处理（增值税 1%、所得税按经营所得另算） */
+function entNameOf(x){ return ({small:'小规模纳税人',general:'一般纳税人',person:'个人 / 个体户',na:'说不清'})[x]||'待确认'; }
+function entShortOf(x){ return ({small:'小规模',general:'一般纳税人',person:'个人',na:'待确认'})[x]||'待确认'; }
 function derive(){
-  var P=PLAT[A.platform];
+  var P=A.platform?platDef(A.platform):null;
   if(!P) return {plat:A.platform,platN:'待确认',n:'待确认',mode:'待确认',decl:'待确认',mian:'待确认',tui:'待确认',why:'平台没拿到，判定做不了',c:'待确认',ok:'—',no:'—',modeShow:'待确认'};
   var f=P.ful[A.ful];
   if(!f) return {plat:A.platform,platN:P.n,n:'待确认',mode:'待确认',decl:'待确认',mian:'待确认',tui:'待确认',why:'发货方式没拿到，判定做不了',c:'待确认',ok:'—',no:'—',modeShow:'待确认'};
@@ -3723,7 +3779,7 @@ function histPlan(d){
      增值税——一般纳税人可直填免税；小规模+免税备案后 深圳直填 / 外地需报关单；可与税管员沟通历史数据填免税（各城市具体沟通）。
      企业所得税——可沟通核定（2025 Q3 约 2% / Q4 约 4%，部分城市如广州约 8%，其他视沟通）；平台成本按平台汇总单正常录入；采购成本依收票录入。注意：根据最新政策，过往补申报期间的人力成本（工资）无法补录入账，故补申报口径不含人力成本，其规范列支仅在日常合规账务中规划。 */
   var ent=A.entity, city=A.city, ie=ieState(), decl=(d&&d.decl);
-  var entName=(ent==='general')?'一般纳税人':(ent==='small'?'小规模纳税人':'纳税人类型待确认');
+  var entName=entNameOf(ent)==='待确认'?'纳税人类型待确认':entNameOf(ent);
   var cityName=(city==='shenzhen')?'深圳':(city==='other'?'外地':'注册地待确认');
   var vat=[], cit=[];
   if(ent==='general'){
@@ -3745,6 +3801,7 @@ function histPlan(d){
     vat.push('纳税人类型待确认：一般纳税人可直接填报免税；小规模纳税人须完成免税备案后，深圳可直接填报、外地须凭报关单填报免税。');
   }
   vat.push('【沟通要点】可与税管员沟通将之前数据填报免税，但须按具体城市、具体沟通确定，无统一口径。');
+  if(ent==='person') cit.push('个人所得税：个人 / 个体户不缴企业所得税，经营所得按个体工商户个人所得税口径计征，具体税率与核定方式须结合注册地与征收方式单独确认；以下企业所得税段落仅供参考，实际以个人所得税口径为准。');
   var hed=heDingEligible();
   if(hed===false){
     cit.push('企业所得税：因贵司 2026 年方开展网店经营，2026 年起各季度均不可沟通核定，按查账征收以真实利润为计税依据（跨境电商真实利润率行业常见约 15%，即 真实利润 × 5%）。');
@@ -3766,7 +3823,8 @@ function noVatRisk(){
   /* 小规模纳税人且年销售额 < 120 万：增值税依法免征（季度≤30万），
      无增值税滞纳金 / 罚款风险，仅需处理企业所得税，历史遗留可延后。
      注：罚款是否显示的手动开关在 histTaxCompare 的 fineOff 处理，不改变本业务事实判定。 */
-  return (A.entity==='small' && A.flow!=null && A.flow!=='na' && Number(A.flow)>0 && Number(A.flow)<120);
+  var isSmallLike=(A.entity==='small'||A.entity==='person');
+  return (isSmallLike && A.flow!=null && A.flow!=='na' && Number(A.flow)>0 && Number(A.flow)<120);
 }
 function histTaxCompare(){
   var sales=(A&&A.flow!=null&&A.flow!=='na')?Number(A.flow):null;
@@ -3859,7 +3917,7 @@ function futureTaxParas(S){
         children:[ new P({ spacing:{ line:300, lineRule:'auto' }, children:[ R(c,{ font:FSong, size:20, bold:!!bold }) ] }) ] })
     ] });
   }
-  var entName=(A.entity==='general')?'一般纳税人':(A.entity==='small'?'小规模纳税人':'纳税人类型待确认');
+  var entName=entNameOf(A.entity)==='待确认'?'纳税人类型待确认':entNameOf(A.entity);
   out.push(new P({ spacing:{ before:120, after:80, line:320, lineRule:'auto' }, children:[ R('（一）年度税负测算',{ font:FHei, size:22, bold:true, color:'2A2118' }) ] }));
   out.push(new T({ width:{ size:100, type:WT.PERCENTAGE },
     borders:{ top:{style:BS.SINGLE,size:4,color:'E0D5C0'}, bottom:{style:BS.SINGLE,size:4,color:'E0D5C0'},
@@ -4186,7 +4244,7 @@ function tkCustTableImg(btn){
   }catch(e){ alert('生成图片失败：'+(e&&e.message?e.message:e)); }
   finally{ if(btn){ btn.disabled=false; btn.textContent=o; } }
 }
-/* 抽取客户情况：只取登记类 / 现状类信息，不混入问答流水、沟通轨迹、补充信息 */
+/* 抽取客户情况：登记类 / 现状类信息 + 补充信息（销售现场记的线索），不混入问答流水与沟通轨迹 */
 function custBuild(){
   var L=TK.plats.slice(), i;
   var now=new Date(TK._savedAt||Date.now());
@@ -4241,11 +4299,16 @@ function custBuild(){
   kv('存量推断', tkHistInferText());
 
   sec('四、主体与票据');
-  kv('纳税人身份', {small:'小规模纳税人',general:'一般纳税人',na:'说不清'}[TK.entity]||'未问');
+  kv('纳税人身份', entNameOf(TK.entity)==='待确认'?'未问':entNameOf(TK.entity));
   kv('供应商发票', {normal:'能开普票',special:'能开专票',none:'基本开不了',na:'还没问清'}[TK.invoice]||'未问');
   var staffTxt={yes:'有在职员工，能发工资',retired:'只有退休返聘',no:'没有人员',na:'说不清'}[TK.staff]||'未问';
   if(TK.staffN!=null&&TK.staffN!=='') staffTxt+='（约 '+TK.staffN+' 人）';
   kv('人员情况', staffTxt);
+
+  /* 五、补充信息：销售现场记的额外线索，也要进客户情况表 */
+  sec('五、补充信息');
+  var note=(TK&&TK.note)?String(TK.note).trim():'';
+  kv('补充信息', note||'未填');
 
   return b;
 }
@@ -4723,7 +4786,7 @@ function planWhyHTML(d){
     +'<tr><td>平台 × 发货 × 谁报关</td><td>'+d.platN+' · '+d.n+' · '+(d.declN||'待确认')+'</td><td>走 <b>'+d.modeShow+'</b></td></tr>'
     +'<tr><td>报关单在谁名下</td><td>'+(d.decl==='有'?'客户自己公司':(d.decl==='部分'?'看物流渠道':'平台 / 货代'))+'</td><td>免税 <b>'+d.mian+'</b>　退税 <b>'+d.tui+'</b></td></tr>'
     +'<tr><td>注册地</td><td>'+(A.city==='shenzhen'?'深圳':(A.city==='na'?'待确认':'外地'))+'</td><td>'+(A.city==='shenzhen'?'13 栏可直填免税':'先有报关单才能申 13 栏')+'</td></tr>'
-    +'<tr><td>主体 + 流水</td><td>'+(A.entity==='small'?'小规模':'一般纳税人')+'</td><td>套餐 <b>'+pkg.name+'</b></td></tr>'
+    +'<tr><td>主体 + 流水</td><td>'+entShortOf(A.entity)+'</td><td>套餐 <b>'+pkg.name+'</b></td></tr>'
     +'</tbody></table></div>';
   h+='<div class="wsec"><h4>为什么按这个顺序</h4>'+orderWhyHTML(d)+'</div>';
   h+='<div class="wsec"><h4>为什么不是另外两条路</h4>'+roadCmpHTML(d)+'</div>';
@@ -5433,7 +5496,7 @@ function deliverTextOne(d){
   L.push('平台：'+d.platN+'　发货方式：'+d.n);
   L.push('报关模式：'+d.modeShow);
   L.push('报关单：'+(d.decl==='有'?'客户自己公司':(d.decl==='部分'?'看物流渠道':'平台 / 货代'))+'　出口免税：'+d.mian+'　出口退税：'+d.tui);
-  L.push('城市：'+(A.city==='shenzhen'?'深圳':'外地')+'　主体：'+(A.entity==='small'?'小规模':'一般纳税人'));
+  L.push('城市：'+(A.city==='shenzhen'?'深圳':'外地')+'　主体：'+entShortOf(A.entity));
   L.push('');
   L.push('【一、当前存在的问题】');
   if(!P.length) L.push('1. 暂未发现明显问题，属可从容规划型');
@@ -5737,7 +5800,7 @@ function aiFacts(d){
   L.push('报关单归属：'+(d.decl==='有'?'客户自己公司':(d.decl==='部分'?'看物流渠道，部分有':'平台或货代，客户名下没有')));
   L.push('出口免税：'+d.mian+'；出口退税：'+d.tui);
   L.push('注册城市：'+(A.city==='shenzhen'?'深圳':(A.city==='na'?'待确认':'外地')));
-  L.push('纳税身份：'+(A.entity==='small'?'小规模纳税人':'一般纳税人')+'；年流水：'
+  L.push('纳税身份：'+entNameOf(A.entity)+'；年流水：'
     +(A.flow==null||A.flow==='na'||A.flow===''?'未填':'约 '+A.flow+' 万（区间 '+bandLabel(flowBand())+'）')
     +'；主体数：'+(A.subs||1)+' 个');
   L.push('申报口径：'+({real:'按实际销售额申报',cash:'按平台回款申报',zero:'零申报'}[A.file]||'未填'));
