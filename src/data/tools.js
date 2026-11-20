@@ -11,7 +11,8 @@ export const CATEGORIES = [
   { key: 'qual', label: '资质类', desc: '建筑工程资质办理与查询', color: '#16a34a' },
   { key: 'sales', label: '销售类', desc: '报价与收款测算', color: '#ea580c' },
   { key: 'efficiency', label: '效率类', desc: '个人待办与效率工具', color: '#5f3dc4' },
-  { key: 'cross', label: '跨境类', desc: '跨境电商谈单训练与合规口径', color: '#0d9488' }
+  { key: 'cross', label: '跨境类', desc: '跨境电商谈单训练与合规口径', color: '#0d9488' },
+  { key: 'compliance', label: '合规类', desc: '行业合规账方案与诊断工具', color: '#b45309' }
 ]
 
 // ============ 工具注册表 ============
@@ -302,7 +303,7 @@ export const TOOLS = [
     title: '业务方案书生成工具',
     desc: '按行业（跨境电商 / 国内电商）填写客户参数，AI 严格依据填写的事实生成方案大纲，确认后可导出正式 Word 方案书；不编造事实、数字与承诺',
     color: '#b45309',
-    category: 'sales',
+    category: 'compliance',
     iconSvg: svgWrap(`
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
       <polyline points="14 2 14 8 20 8"/>

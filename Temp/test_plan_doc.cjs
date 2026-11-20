@@ -107,7 +107,8 @@ check('genWord is function', typeof t.genWord==='function');
 // 6. 工具注册（源码层）
 var toolsJs=fs.readFileSync('src/data/tools.js','utf8');
 check('registered in tools.js', toolsJs.indexOf("path: '/tools/plan-doc'")>=0 && toolsJs.indexOf("url: 'tools/plan-doc/index.html'")>=0);
-check('registered as sales category', /path: '\/tools\/plan-doc'[\s\S]{0,500}category: 'sales'/.test(toolsJs));
+check('registered as compliance category', /path: '\/tools\/plan-doc'[\s\S]{0,500}category: 'compliance'/.test(toolsJs));
+check('compliance category defined', /key: 'compliance', label: '合规类'/.test(toolsJs));
 
 console.log(pass?'\nALL PLAN-DOC CHECKS PASSED':'\nSOME CHECKS FAILED');
 process.exit(pass?0:1);
