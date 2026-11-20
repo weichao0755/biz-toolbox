@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>业务方案书生成工具</title>
+<script src="docx.umd.js"></script>
+<style>
+  :root{
+    --bg:#faf7f2; --surface:#fffefb; --surface-2:#fdf6ec; --border:#ece3d6;
+    --text:#2a2118; --text-2:#6b5d4a; --muted:#9a8a72;
+    --accent:#b45309; --accent-2:#e0901a; --grad:linear-gradient(135deg,#e0901a 0%,#b45309 100%);
+    --accent-bg:#fdf3e3; --green:#2f8f5b; --green-bg:#e8f3ec; --red:#c0392f; --red-bg:#fbecea;
+    --amber:#b5730a; --amber-bg:#fbf0dd; --r:12px; --r-lg:18px;
+    --sh:0 1px 2px rgba(60,40,10,.05),0 2px 8px -4px rgba(60,40,10,.08);
+    --sh2:0 6px 20px -8px rgba(60,40,10,.14),0 14px 40px -16px rgba(60,40,10,.18);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    background-color:var(--bg);
+    background-image:radial-gradient(circle at 1px 1px,rgba(224,144,26,.07) 1px,transparent 0);
+    background-size:24px 24px;color:var(--text);font-size:14px;line-height:1.65}
+  .wrap{max-width:880px;margin:0 auto;padding:22px 18px 60px}
+  .brand{display:inline-block;font-size:11px;font-weight:600;padding:4px 11px;border-radius:999px;background:var(--accent-bg);color:var(--accent);margin-bottom:9px;letter-spacing:.3px}
+  h1{font-size:23px;font-weight:700;letter-spacing:-.3px;margin-bottom:5px}
+  .sub{color:var(--text-2);font-size:13px;margin-bottom:18px;line-height:1.7}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px;box-shadow:var(--sh)}
+  .card h2{font-size:16px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+  .card h2 .num{display:inline-flex;width:22px;height:22px;align-items:center;justify-content:center;border-radius:7px;background:var(--grad);color:#fff;font-size:12px;flex:0 0 auto}
+  .card .desc{font-size:12px;color:var(--muted);margin-bottom:14px;margin-left:30px}
+  .ind-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:11px}
+  .ind{border:1.5px solid var(--border);border-radius:12px;padding:15px;cursor:pointer;transition:.15s;background:var(--surface)}
+  .ind:hover{border-color:var(--accent-2);transform:translateY(-1px)}
+  .ind.on{border-color:var(--accent);background:var(--accent-bg);box-shadow:0 4px 14px -6px rgba(224,144,26,.35)}
+  .ind b{font-size:15px;display:block;margin-bottom:4px}
+  .ind span{font-size:11.5px;color:var(--text-2);line-height:1.6;display:block}
+  .ind .tag{display:inline-block;margin-top:8px;font-size:10.5px;padding:2px 8px;border-radius:999px;background:var(--surface-2);color:var(--accent)}
+  .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px 16px}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:5px}
+  .field label .req{color:var(--red);font-size:11px}
+  .field input,.field select,.field textarea{width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 11px;font-size:13.5px;color:var(--text);background:var(--surface);font-family:inherit;transition:.15s}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent-2);box-shadow:0 0 0 3px rgba(224,144,26,.1)}
+  .field textarea{resize:vertical;min-height:74px;line-height:1.6}
+  .field .tip{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{border:1px solid var(--border);border-radius:8px;padding:6px 11px;font-size:12.5px;cursor:pointer;background:var(--surface);color:var(--text-2);transition:.15s;user-select:none}
+  .chip:hover{border-color:var(--accent-2)}
+  .chip.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);font-weight:600}
+  .btn{border:none;border-radius:9px;padding:11px 20px;font-size:14px;font-weight:600;cursor:pointer;background:var(--grad);color:#fff;box-shadow:0 6px 16px -6px rgba(224,144,26,.4);transition:.15s;font-family:inherit}
+  .btn:hover{opacity:.93;transform:translateY(-1px)}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+  .btn.ghost{background:var(--surface);color:var(--text-2);border:1px solid var(--border);box-shadow:var(--sh)}
+  .btn.sm{padding:7px 13px;font-size:12.5px}
+  .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px}
+  .notice{background:var(--amber-bg);border-left:3px solid var(--amber);border-radius:0 8px 8px 0;padding:10px 13px;font-size:12.5px;color:var(--text-2);margin-bottom:14px;line-height:1.7}
+  .notice b{color:var(--accent)}
+  .aibox{background:linear-gradient(135deg,#fffbf3,#fdf3e3);border:1px solid var(--accent-2);border-radius:var(--r);padding:16px;margin-bottom:14px}
+  .aibox h3{font-size:15px;margin-bottom:6px;color:var(--accent)}
+  .aibox p{font-size:12.5px;color:var(--text-2);margin-bottom:12px;line-height:1.7}
+  .out{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;min-height:120px;white-space:pre-wrap;font-size:13.5px;line-height:1.85;color:var(--text)}
+  .out:empty::before{content:'AI 生成的大纲会显示在这里，确认后再导出 Word…';color:var(--muted)}
+  .status{font-size:12.5px;color:var(--accent);margin:9px 0;min-height:18px}
+  .stepbadge{display:inline-block;font-size:10.5px;padding:2px 9px;border-radius:999px;background:var(--surface-2);color:var(--accent);margin-left:8px;font-weight:600}
+  .hidden{display:none!important}
+  .keybar{position:fixed;right:18px;bottom:18px;z-index:20}
+  .keyfab{width:44px;height:44px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--accent);font-size:18px;cursor:pointer;box-shadow:var(--sh2)}
+  .mask{position:fixed;inset:0;background:rgba(42,33,24,.42);display:none;align-items:center;justify-content:center;z-index:30;padding:18px}
+  .mask.on{display:flex}
+  .modal{background:var(--surface);border-radius:var(--r-lg);padding:22px;max-width:440px;width:100%;box-shadow:var(--sh2)}
+  .modal h3{font-size:17px;margin-bottom:12px}
+  .modal .field{margin-bottom:12px}
+  .modal .bar{justify-content:flex-end}
+  .hint-sm{font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:8px}
+  @media(max-width:600px){.wrap{padding:16px 12px 50px}.fgrid{grid-template-columns:1fr}h1{font-size:20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="brand">金米财税 · 业务工具箱</span>
+  <h1>业务方案书生成工具</h1>
+  <p class="sub">选择行业 → 填写客户参数 → AI 严格按你填的事实生成方案大纲 → 确认后导出正式 Word 方案书。<b>AI 不编造任何你没填的事实、数字或承诺。</b></p>
+
+  <!-- ① 行业选择 -->
+  <div class="card">
+    <h2><span class="num">1</span>选择业务行业</h2>
+    <p class="desc">不同行业走不同方案模板。首版已实装两个行业，其余可后续扩展。</p>
+    <div class="ind-grid" id="indGrid"></div>
+  </div>
+
+  <!-- ② 参数填写 -->
+  <div class="card" id="paramCard">
+    <h2><span class="num">2</span>填写客户参数 <span class="stepbadge" id="indBadge">未选行业</span></h2>
+    <p class="desc">只填你确实知道的信息。留空的项 AI 不会编造，会写「待确认」。</p>
+    <div id="paramForm"></div>
+  </div>
+
+  <!-- ③ AI 生成 -->
+  <div class="aibox">
+    <h3>③ AI 生成方案大纲 <span class="stepbadge">严格按事实</span></h3>
+    <p>AI 会基于上面填的参数和内置行业口径，生成四段方案大纲（客户情况 / 诊断 / 落地方案 / 服务说明）。生成后先预览，确认无误再导出 Word。</p>
+    <div class="bar">
+      <button class="btn" id="genBtn" onclick="genOutline()" disabled>生成方案大纲</button>
+      <button class="btn ghost sm" onclick="clearForm()">清空重填</button>
+    </div>
+    <div class="status" id="genStatus"></div>
+  </div>
+
+  <!-- ④ 预览 + 导出 -->
+  <div class="card" id="outCard">
+    <h2><span class="num">4</span>方案大纲预览</h2>
+    <p class="desc">可直接在下方修改文字，改完再导出——改过的内容会原样进 Word。</p>
+    <div class="out" id="outBox" contenteditable="true" spellcheck="false"></div>
+    <div class="bar" style="margin-top:14px">
+      <button class="btn" id="docBtn" onclick="genWord()" disabled>导出 Word 方案书</button>
+      <span class="hint-sm" id="outHint"></span>
+    </div>
+  </div>
+</div>
+
+<!-- AI Key 设置 -->
+<div class="keybar"><button class="keyfab" onclick="openKey()" title="AI 设置">⚙</button></div>
+<div class="mask" id="keyMask" onclick="closeKey(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3>AI 设置（DeepSeek）</h3>
+    <div class="field"><label>API Key</label><input type="password" id="keyIn" placeholder="sk-…"></div>
+    <div class="field"><label>模型</label><select id="modelIn">
+      <option value="deepseek-chat">deepseek-chat（快，日常够用）</option>
+      <option value="deepseek-reasoner">deepseek-reasoner（慢，分析更细）</option>
+    </select></div>
+    <p class="hint-sm">与「跨境销售辅助工具」共用同一把 Key（存本机 localStorage），在一处填过这里自动生效。Key 不上传、不进方案书。</p>
+    <div class="bar" style="margin-top:14px">
+      <button class="btn ghost sm" onclick="closeKey()">取消</button>
+      <button class="btn sm" onclick="saveKey()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ 行业模板定义 ============
+   每个行业一套参数清单 + 一段"固定口径"提示词素材。
+   参数都是结构化事实，strict 模式下 AI 只能用这些，不能编。 */
+var INDUSTRIES={
+  cross:{
+    name:'跨境电商', tag:'跨境合规账', icon:'🌍',
+    desc:'面向做亚马逊/TikTok/Temu/Shopee 等出海平台、需要合规账务与出口免税方案的客户',
+    fields:[
+      {k:'cid',label:'客户名称 / 编号',type:'text',ph:'例：深圳某某科技 / A001'},
+      {k:'plats',label:'经营平台',type:'chips',opts:['亚马逊','TikTok Shop','Temu','Shopee','速卖通','Ozon','独立站','其他']},
+      {k:'city',label:'注册城市',type:'text',ph:'例：深圳 / 广州 / 义乌'},
+      {k:'entity',label:'纳税人身份',type:'select',opts:['','小规模纳税人','一般纳税人','个人 / 个体户','待确认']},
+      {k:'flow',label:'年销售额（万元）',type:'text',ph:'例：300'},
+      {k:'decl',label:'报关情况',type:'select',opts:['','已有本公司抬头报关单/清单','平台或物流代报、无自有凭证','买单出口、无自有凭证','待确认']},
+      {k:'hist',label:'历史申报情况',type:'select',opts:['','一直零申报','按回款申报','按实际申报','收到税局短信','刚起步无历史','待确认']},
+      {k:'need',label:'客户主要诉求（可多选）',type:'chips',opts:['合规报关','出口免税','账务规范','历史数据更正','成本票缺失','税负优化']},
+      {k:'note',label:'补充信息（你确实知道的）',type:'textarea',ph:'例：客户刚收到税局短信；老板担心补税占现金流；有 3 个店铺……'}
+    ],
+    base:'本行业服务为「跨境电商合规账」：协助办理进出口权与出口免税备案、报关抬头切换、按平台汇总单据实申报与明细账核算、平台无票成本入账、历史数据梳理。',
+    rules:[
+      '增值税免税以取得本公司抬头报关单/清单并按出口免税口径申报为前提，未取得前不承诺免税。',
+      '报关单/清单离岸价按国内采购成本加合理利润申报，不与平台零售销售额一一对应；增值税免税申报则按平台实际销售额（营业额−退货）如实填报。',
+      '企业所得税按明细账：利润=销售额−平台成本−采购成本−人力；不按核定率折算。',
+      '客户是「刚起步无历史」时，不写历史补税/核定/罚款，改为未来税负预测视角。',
+      '小规模年销售额低于 120 万时增值税依法免征，不作为风险点吓客户。'
+    ]
+  },
+  domestic:{
+    name:'国内电商', tag:'国内合规账', icon:'🛒',
+    desc:'面向做淘宝/天猫/拼多多/抖音/京东等国内平台、需要规范账务与税务申报的客户',
+    fields:[
+      {k:'cid',label:'客户名称 / 编号',type:'text',ph:'例：广州某某贸易 / B012'},
+      {k:'plats',label:'经营平台',type:'chips',opts:['淘宝/天猫','拼多多','抖音电商','京东','小红书','视频号','其他']},
+      {k:'city',label:'注册城市',type:'text',ph:'例：广州 / 杭州 / 义乌'},
+      {k:'entity',label:'纳税人身份',type:'select',opts:['','小规模纳税人','一般纳税人','个人 / 个体户','待确认']},
+      {k:'flow',label:'年销售额（万元）',type:'text',ph:'例：500'},
+      {k:'invoice',label:'供应商发票情况',type:'select',opts:['','能开普票','只能开专票','大多开不了票','待确认']},
+      {k:'decl',label:'当前申报口径',type:'select',opts:['','按实际申报','按回款申报','零申报','收到税局短信','待确认']},
+      {k:'need',label:'客户主要诉求（可多选）',type:'chips',opts:['账务规范','成本票缺失','税负优化','历史数据更正','申报口径调整','风险排查']},
+      {k:'note',label:'补充信息（你确实知道的）',type:'textarea',ph:'例：平台后台数据完整；缺供应商票较多；老板希望本月出方案……'}
+    ],
+    base:'本行业服务为「国内电商合规账」：按平台后台汇总单据实申报收入、平台佣金/广告/配送等无票支出按明细账据实入账、供应商发票规划、人力成本合规列支、历史申报数据梳理。',
+    rules:[
+      '收入按平台实际销售额（营业额−退货）如实申报，不按回款申报；税局掌握平台推送数据。',
+      '平台支出（佣金、广告、配送、仓储）凭平台汇总单按明细账入账，不打包一笔录入。',
+      '企业所得税按明细账利润计算，不按核定率折算；年利润 300 万以内适用小微优惠税率。',
+      '供应商普票/专票按实际情况规划，不承诺取得不存在的发票。',
+      '「刚起步」客户不写历史补税/罚款，侧重从一开始建立规范账务。'
+    ]
+  }
+};
+var IND_KEYS=['cross','domestic'];
+var curInd='';
+var DATA={};
+var OUTTEXT='';
+
+/* ============ AI 配置（与 cross 共用 cbx_ai） ============ */
+var AIBASE='https://api.deepseek.com/chat/completions';
+var AIRELAY='http://127.0.0.1:8792';
+var AICFG={key:'',model:'deepseek-chat'};
+function aiLoad(){ try{ var o=JSON.parse(localStorage.getItem('cbx_ai')||'{}'); AICFG.key=o.key||''; AICFG.model=o.model||'deepseek-chat'; }catch(e){} }
+function aiClean(v){ return String(v||'').replace(/[\s\u200b\u200c\u200d\ufeff\u00a0"']/g,''); }
+function openKey(){ aiLoad(); document.getElementById('keyIn').value=AICFG.key; document.getElementById('modelIn').value=AICFG.model||'deepseek-chat'; document.getElementById('keyMask').className='mask on'; }
+function closeKey(e){ if(e&&e.target&&e.target.id!=='keyMask')return; document.getElementById('keyMask').className='mask'; }
+function saveKey(){ AICFG.key=aiClean(document.getElementById('keyIn').value); AICFG.model=document.getElementById('modelIn').value; try{localStorage.setItem('cbx_ai',JSON.stringify(AICFG));}catch(e){} document.getElementById('keyMask').className='mask'; }
+async function aiFetch(messages,opt){
+  opt=opt||{}; var key=aiClean(AICFG.key); if(!key) throw new Error('NO_KEY');
+  var body={model:AICFG.model,messages:messages,temperature:0.5};
+  if(opt.maxTokens)body.max_tokens=opt.maxTokens;
+  var ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
+  var timer=setTimeout(function(){try{ctrl&&ctrl.abort();}catch(e){}},90000);
+  var r=null,err=null;
+  try{ r=await fetch(AIBASE,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify(body),signal:ctrl?ctrl.signal:undefined}); }
+  catch(e){ err=e; try{ r=await fetch(AIRELAY,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify(body),signal:ctrl?ctrl.signal:undefined}); }catch(e2){err=e2;} }
+  finally{ clearTimeout(timer); }
+  if(!r) throw err||new Error('请求失败');
+  if(!r.ok){ var t='';try{t=await r.text();}catch(e){} throw new Error('HTTP '+r.status+(t?('　'+t.slice(0,150)):'')); }
+  var j=await r.json();
+  var c=j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content;
+  if(!c) throw new Error('AI 返回为空');
+  return c;
+}
+
+/* ============ 渲染 ============ */
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function renderInds(){
+  var h='';
+  IND_KEYS.forEach(function(k){
+    var it=INDUSTRIES[k];
+    h+='<div class="ind'+(curInd===k?' on':'')+'" onclick="pickInd(\''+k+'\')">'
+      +'<b>'+it.icon+' '+esc(it.name)+'</b><span>'+esc(it.desc)+'</span>'
+      +'<span class="tag">'+esc(it.tag)+'</span></div>';
+  });
+  document.getElementById('indGrid').innerHTML=h;
+}
+function pickInd(k){
+  curInd=k; DATA.industry=INDUSTRIES[k].name;
+  renderInds(); renderForm();
+  document.getElementById('indBadge').textContent=INDUSTRIES[k].name;
+  document.getElementById('genBtn').disabled=false;
+  document.getElementById('genStatus').textContent='';
+}
+function renderForm(){
+  if(!curInd||!INDUSTRIES[curInd]){
+    document.getElementById('paramForm').innerHTML='<p class="hint-sm">请先在上面选择一个业务行业，参数表单会按行业自动切换。</p>';
+    return;
+  }
+  var it=INDUSTRIES[curInd], h='<div class="fgrid">';
+  it.fields.forEach(function(f){
+    var v=DATA[f.k]==null?'':DATA[f.k];
+    h+='<div class="field" style="'+(f.type==='chips'||f.type==='textarea'?'grid-column:1/-1':'')+'"><label>'+esc(f.label)+'</label>';
+    if(f.type==='text') h+='<input type="text" value="'+esc(v)+'" placeholder="'+esc(f.ph||'')+'" oninput="setVal(\''+f.k+'\',this.value)">';
+    else if(f.type==='select'){
+      h+='<select onchange="setVal(\''+f.k+'\',this.value)">';
+      f.opts.forEach(function(o){ h+='<option value="'+esc(o)+'"'+(v===o?' selected':'')+'>'+(o||'请选择…')+'</option>'; });
+      h+='</select>';
+    } else if(f.type==='textarea') h+='<textarea placeholder="'+esc(f.ph||'')+'" oninput="setVal(\''+f.k+'\',this.value)">'+esc(v)+'</textarea>';
+    else if(f.type==='chips'){
+      var arr=Array.isArray(v)?v:[];
+      h+='<div class="chips">';
+      f.opts.forEach(function(o){ h+='<span class="chip'+(arr.indexOf(o)>=0?' on':'')+'" onclick="toggleChip(\''+f.k+'\',\''+esc(o)+'\')">'+esc(o)+'</span>'; });
+      h+='</div>';
+    }
+    h+='</div>';
+  });
+  h+='</div>';
+  document.getElementById('paramForm').innerHTML=h;
+}
+function setVal(k,v){ DATA[k]=v; }
+function toggleChip(k,o){
+  var arr=DATA[k]||[]; var i=arr.indexOf(o);
+  if(i<0)arr.push(o);else arr.splice(i,1);
+  DATA[k]=arr; renderForm();
+}
+function clearForm(){ DATA={}; OUTTEXT=''; document.getElementById('outBox').innerHTML=''; document.getElementById('outHint').textContent=''; document.getElementById('docBtn').disabled=true; renderForm(); }
+
+/* ============ AI prompt：严格只用输入事实 ============ */
+function collectFacts(){
+  var it=INDUSTRIES[curInd], L=[];
+  it.fields.forEach(function(f){
+    var v=DATA[f.k];
+    if(v==null||v===''||(Array.isArray(v)&&!v.length))return;
+    L.push('　- '+f.label+'：'+(Array.isArray(v)?v.join('、'):v));
+  });
+  return L.length?L.join('\n'):'　（销售尚未填写任何事实）';
+}
+function buildPrompt(){
+  var it=INDUSTRIES[curInd], facts=collectFacts();
+  return [
+    '你是财税公司的方案撰写助手。请严格依据下面【客户事实】和【本行业固定口径】，生成一份对客户讲的方案书大纲。',
+    '',
+    '【铁律 · 必须遵守，违反即失败】',
+    '1. 只能使用【客户事实】里明确给出的信息；事实里没有的，一律写「待确认」，严禁编造公司名、平台名、城市、数字、税率、金额、套餐价格、时效、成功案例。',
+    '2. 严禁编造客户痛点、预算、顾虑；不得写「您担心费用贵」「您怕被查」这类客户没说过的话。',
+    '3. 严禁出现任何对外报价数字、服务费价格、具体补税金额。',
+    '4. 不得承诺「一定免税」「一定不被查」「包通过」；涉及结果一律写「以税务机关认定为准 / 以实际核实为准」。',
+    '5. 不写「我们替客户跟货代沟通」这类越界表述；货代/物流对接由客户自行完成，我方提供话术与指导。',
+    '6. 语言用中性标准普通话、书面专业口吻，对客称谓用「贵司」，不用方言、不用内部作业黑话。',
+    '',
+    '【本行业服务范围】', it.base,
+    '【本行业固定口径（只能照此表述，不得改写含义）】',
+    it.rules.map(function(r,i){return '　'+(i+1)+'. '+r;}).join('\n'),
+    '',
+    '【客户事实（销售填写，唯一事实来源）】', facts,
+    '',
+    '【输出格式 · 严格按四段，用中文序号】',
+    '一、客户情况\n（把事实里的信息归类陈述；没填的写「待确认」，不补写。）',
+    '\n二、现状与关注点\n（只基于客户填的诉求和申报/报关现状，指出需要在方案里处理的事项；不臆测客户没说的痛点。）',
+    '\n三、落地方案\n（紧扣本行业服务范围和固定口径，列出可执行步骤；步骤里不要出现任何价格、时效承诺、具体金额。）',
+    '\n四、服务说明\n（说明我方按本行业服务范围提供协助，客户需配合提供资料；不承诺结果、不报价。）',
+    '',
+    '只输出上面四段正文，不要加标题、不要加解释、不要写「以下是方案」这类开场白。'
+  ].join('\n');
+}
+async function genOutline(){
+  if(!curInd){ document.getElementById('genStatus').textContent='请先选择行业'; return; }
+  aiLoad();
+  if(!aiClean(AICFG.key)){ openKey(); document.getElementById('genStatus').textContent='请先填 AI Key（已弹出设置）'; return; }
+  var btn=document.getElementById('genBtn'), st=document.getElementById('genStatus');
+  btn.disabled=true; st.textContent='AI 正在按你填的事实生成大纲，请稍候…';
+  try{
+    var txt=await aiFetch([{role:'user',content:buildPrompt()}]);
+    txt=String(txt).trim();
+    /* 兜底：AI 若自带 Markdown 标题符号，去掉最外层装饰 */
+    txt=txt.replace(/^\s*```(?:markdown|md)?\s*/i,'').replace(/\s*```\s*$/,'').trim();
+    OUTTEXT=txt;
+    document.getElementById('outBox').innerText=txt;
+    document.getElementById('docBtn').disabled=false;
+    document.getElementById('outHint').textContent='已生成 ' + txt.length + ' 字 · 可直接改文字';
+    st.textContent='生成完成，确认后导出 Word。';
+  }catch(e){
+    st.textContent='生成失败：'+(e&&e.message?e.message:'未知错误');
+  }finally{ btn.disabled=false; }
+}
+
+/* ============ Word 生成（复用 cross 的 docx 排版风格） ============ */
+async function genWord(){
+  if(!OUTTEXT.trim()){ return; }
+  if(typeof docx==='undefined'){ alert('Word 组件未加载，请刷新页面重试'); return; }
+  var btn=document.getElementById('docBtn'), ot=btn.textContent;
+  btn.disabled=true; btn.textContent='生成中…';
+  try{
+    var F={ascii:'Times New Roman',hAnsi:'Times New Roman',eastAsia:'宋体'};
+    var FH={ascii:'Arial',hAnsi:'Arial',eastAsia:'黑体'};
+    function R(t,o){ o=o||{}; if(!o.font)o.font=F; return new docx.TextRun(Object.assign({text:String(t==null?'':t)},o)); }
+    var AT=docx.AlignmentType,P=docx.Paragraph,Doc=docx.Document,PK=docx.Packer,T=docx.Table,TR=docx.TableRow,TC=docx.TableCell,WT=docx.WidthType,BS=docx.BorderStyle;
+    var paras=[];
+    /* 封面标题块 */
+    paras.push(new P({spacing:{after:80,line:400,lineRule:'auto'},alignment:AT.CENTER,children:[R('业务方案书',{font:FH,size:36,bold:true,color:'B45309'})]}));
+    paras.push(new P({spacing:{after:260,line:300,lineRule:'auto'},alignment:AT.CENTER,children:[R(INDUSTRIES[curInd].name+' · 合规账务服务方案',{font:F,size:20,color:'7A5A12'})]}));
+    /* 客户信息表 */
+    var rows=[];
+    INDUSTRIES[curInd].fields.forEach(function(f){
+      var v=DATA[f.k];
+      if(v==null||v===''||(Array.isArray(v)&&!v.length))return;
+      rows.push(new TR({children:[
+        new TC({width:{size:28,type:WT.PERCENTAGE},children:[new P({children:[R(f.label,{font:FH,size:20,bold:true,color:'7A5A12'})]})]}),
+        new TC({width:{size:72,type:WT.PERCENTAGE},children:[new P({children:[R(Array.isArray(v)?v.join('、'):v,{font:F,size:20})]})]})
+      ]}));
+    });
+    if(rows.length){
+      paras.push(new P({spacing:{before:120,after:100,line:320,lineRule:'auto'},children:[R('客户基本情况',{font:FH,size:24,bold:true,color:'B45309'})]}));
+      paras.push(new T({width:{size:100,type:WT.PERCENTAGE},
+        borders:{top:{style:BS.SINGLE,size:4,color:'E0D5C0'},bottom:{style:BS.SINGLE,size:4,color:'E0D5C0'},left:{style:BS.SINGLE,size:4,color:'E0D5C0'},right:{style:BS.SINGLE,size:4,color:'E0D5C0'},insideHorizontal:{style:BS.SINGLE,size:2,color:'ECE3D6'},insideVertical:{style:BS.SINGLE,size:2,color:'ECE3D6'}},rows:rows}));
+    }
+    /* 方案正文：按一/二/三/四分段 */
+    paras.push(new P({spacing:{before:260,after:120,line:320,lineRule:'auto'},children:[R('方案正文',{font:FH,size:24,bold:true,color:'B45309'})]}));
+    var lines=OUTTEXT.split('\n');
+    lines.forEach(function(ln){
+      var s=String(ln).trim();
+      if(!s)return;
+      var isHead=/^[一二三四]、/.test(s);
+      paras.push(new P({spacing:{before:isHead?180:40,after:isHead?90:30,line:320,lineRule:'auto'},alignment:isHead?AT.LEFT:AT.JUSTIFIED,
+        children:[R(s,{font:isHead?FH:F,size:isHead?22:21,bold:isHead,color:isHead?'B45309':'2A2118'})]}));
+    });
+    /* 页脚声明 */
+    paras.push(new P({spacing:{before:280,after:60,line:300,lineRule:'auto'},children:[R('说明：本方案基于贵司目前提供的信息拟定，未明确事项以核实结果为准；最终涉税处理以主管税务机关认定为准。',{font:F,size:19,color:'7A5A12'})]}));
+    var doc=new Doc({styles:{default:{document:{run:{font:F,size:22}}}},
+      sections:[{properties:{page:{margin:{top:1080,bottom:1080,left:1080,right:1080}}},
+        footers:{default:new docx.Footer({children:[new P({alignment:AT.CENTER,children:[R('金米财税 · 业务方案书',{size:18,color:'808080'})]})]})},
+        children:paras}]});
+    var blob=await PK.toBlob(doc);
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    var nm=DATA.cid?String(DATA.cid).slice(0,20):'客户';
+    a.download=INDUSTRIES[curInd].name+'方案书-'+nm+'.docx';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){try{URL.revokeObjectURL(a.href);}catch(e){}},5000);
+  }catch(e){ alert('生成失败：'+(e&&e.message?e.message:e)); }
+  finally{ btn.disabled=false; btn.textContent=ot; }
+}
+
+/* 初始化 */
+aiLoad(); renderInds(); renderForm();
+</script>
+</body>
+</html>
