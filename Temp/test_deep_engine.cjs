@@ -43,6 +43,15 @@ var rZero=D.build('domestic',dZero);
 ck('domestic zero: built', rZero.industry==='国内电商');
 ck('domestic zero: 收入申报 bad', rZero.checks.some(c=>c.dir==='收入申报'&&c.v==='bad'));
 ck('domestic zero: 成本入账 bad', rZero.checks.some(c=>c.dir==='成本入账'&&c.v==='bad'));
+// 国内电商平台成本口径：可申请发票（与跨境不同）
+ck('domestic: has 平台发票 check', rZero.checks.some(c=>c.dir==='平台发票'));
+ck('domestic: 平台发票 can 申请增值税发票', rZero.checks.filter(c=>c.dir==='平台发票')[0].issue.indexOf('申请增值税发票')>=0);
+ck('domestic: 平台发票 mentions 专票抵进项', rZero.checks.filter(c=>c.dir==='平台发票')[0].issue.indexOf('抵扣进项')>=0);
+ck('domestic: 平台发票 汇总单仅核对', rZero.checks.filter(c=>c.dir==='平台发票')[0].issue.indexOf('不能替代发票')>=0);
+ck('domestic: roadmap 平台成本申请发票 step', rZero.roadmap.some(r=>/平台成本申请发票/.test(r.t)));
+var roadTxt=rZero.roadmap.map(function(r){return r.t+' '+r.acts.join(' ');}).join(' | ');
+ck('domestic: roadmap 广告费开票', roadTxt.indexOf('广告费')>=0 && roadTxt.indexOf('增值税发票')>=0);
+ck('domestic: no old 无票汇总单口径', roadTxt.indexOf('凭汇总单逐月录入')<0);
 ck('domestic zero: roadmap 如实申报 step', rZero.roadmap.some(r=>/如实申报/.test(r.t)));
 ck('domestic zero: roadmap 历史 step', rZero.roadmap.some(r=>/历史申报缺口/.test(r.t)));
 ck('domestic zero: points 按平台销售额', rZero.points.join('|').indexOf('按平台销售额')>=0);
