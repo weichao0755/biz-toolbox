@@ -15,28 +15,32 @@ var CrossDeep={
     var plats=(p.plats||[]).map(function(n){ return crossKey(n); }).filter(Boolean);
     if(!plats.length) plats=['amazon'];
     var declKey=/自有抬头|报关单/.test(p.decl||'')?'own':(/代报|平台/.test(p.decl||'')?'plat':(/买单|无自有/.test(p.decl||'')?'maidan':'na'));
-    /* 履约方式 key 必须取该平台实际拥有的键（各平台不同：fba/wh/self/direct…），否则 derive() 返回「待确认」 */
-    var wantWh=/海外仓|FBA/.test((p.need||[]).join('')+' '+(p.note||''));
+    /* 履约方式：优先读独立的 p.ful 字段，否则从备注/诉求推断 */
+    var wantWh=/海外仓|FBA/.test((p.ful||'')+' '+(p.need||[]).join('')+' '+(p.note||''));
     var fulKey='';
     var P=(E&&E.PLAT)?E.PLAT[plats[0]]:null;
     if(P&&P.ful){
       var ks=Object.keys(P.ful);
-      fulKey=wantWh ? (ks.indexOf('wh')>=0?'wh':ks[0]) : ks[0];
+      fulKey=wantWh ? (ks.indexOf('wh')>=0?'wh':ks[0]) : (/直邮|小包|专线/.test(p.ful||'')?(ks.indexOf('direct')>=0?'direct':ks[0]):ks[0]);
     }
     if(!fulKey) fulKey='direct';
     var entityKey=/一般/.test(p.entity||'')?'general':(/个人|个体/.test(p.entity||'')?'person':(/小规模/.test(p.entity||'')?'small':'na'));
-    var fileKey=/零申报/.test(p.hist||'')?'zero':(/回款/.test(p.hist||'')?'cash':(/实际/.test(p.hist||'')?'real':'na'));
-    var isNew=/刚起步|无历史/.test(p.hist||'');
+    var fileSrc=(p.declMethod||'')+' '+(p.hist||'');
+    var fileKey=/零申报/.test(fileSrc)?'zero':(/回款/.test(fileSrc)?'cash':(/实际/.test(fileSrc)?'real':'na'));
+    var isNew=/刚起步|无历史/.test(p.hist||'')||/刚注册/.test(p.founded||'');
     var sms=/短信/.test(p.hist||'')?'y':'n';
     var fm=/^(\d{4})-(\d{1,2})$/.exec(p.startMonth||'');
+    var hasIE=/已办理|已办/.test(p.impExp||''), hasTF=/已备案|已办/.test(p.taxFiling||'');
+    var subsM=parseInt(String(p.subs||''),10);
     var TK={
-      cid:p.cid||'',subs:Number(p.subs)||1,plats:plats,
+      cid:p.cid||'',subs:isNaN(subsM)?1:subsM,plats:plats,
       fuls:{},decls:{},city:/深圳/.test(p.city||'')?'sz':'out',cityText:p.city||'',
-      flow:parseFloat(p.flow)||null,impExp:!!p.impExp,taxFiling:!!p.taxFiling,
+      flow:parseFloat(p.flow)||null,impExp:hasIE,taxFiling:hasTF,
       entity:entityKey,file:fileKey,hist:isNew?'new':'',startMonth:fm?p.startMonth:(isNew?'2026-01':''),
-      invoice:/无票|开不了/.test(p.invoice||'')?'none':(/专票/.test(p.invoice||'')?'special':'normal'),
-      qual:(p.impExp&&p.taxFiling)?'both':(p.impExp?'qualOnly':'none'),
-      staff:'no',staffN:null,sms:sms,quarters:[],amt:null,qna:false,fresh:isNew,
+      invoice:/无票|开不了|大多/.test(p.invoice||'')?'none':(/专票/.test(p.invoice||'')?'special':'normal'),
+      qual:(hasIE&&hasTF)?'both':(hasIE?'qualOnly':'none'),
+      staff:'no',staffN:parseFloat(p.staffN)||null,sms:sms,
+      quarters:[],amt:null,qna:false,fresh:isNew,
       genHist:'auto',genFine:'auto',genHed:'auto',asks:[],log:[],confAck:[]
     };
     plats.forEach(function(k){ TK.fuls[k]=fulKey; TK.decls[k]=declKey; });
@@ -45,7 +49,7 @@ var CrossDeep={
       ful:fulKey,decl:declKey,city:TK.city==='sz'?'shenzhen':'other',szExempt:TK.city==='sz',
       entity:entityKey,flow:TK.flow,sms:sms,smsQ:[],smsAmt:'na',file:fileKey,
       startMonth:TK.startMonth,hist:isNew?'new':'',invoice:TK.invoice,qual:TK.qual,
-      impExp:TK.impExp,taxFiling:TK.taxFiling,staff:'no',staffN:null
+      impExp:TK.impExp,taxFiling:TK.taxFiling,staff:'no',staffN:TK.staffN
     };
     return {TK:TK,A:A};
   },
@@ -96,10 +100,34 @@ var CrossDeep={
         '判定：'+derived.platN+' / '+derived.n+' / 模式 '+derived.mode+' / 免税 '+derived.mian+' / 退税 '+derived.tui,
         isNew?'客户为新主体，无历史存量需要处理，方案按未来正常税负视角展开':'客户存在历史经营，按实际申报情况处理历史数据',
         '落地方案 '+road.length+' 步：'+road.map(function(r,i){return (i+1)+'.'+r.t;}).join(' ')
-      ]
+      ].concat(detailPoints(p))
     };
   }
 };
+
+/* 把销售填的详细参数整理成「已定事实要点」——AI 只能据此措辞，不得新增。
+   只输出实际填写的字段，按主题拼成几行，避免逐项罗列太碎。 */
+function detailPoints(p){
+  var out=[];
+  function line(title,pairs){
+    var a=[];
+    pairs.forEach(function(x){
+      var v=p[x[0]];
+      if(v==null||v===''||(Array.isArray(v)&&!v.length))return;
+      a.push(x[1]+'：'+(Array.isArray(v)?v.join('、'):v));
+    });
+    if(a.length) out.push(title+'——'+a.join('；')+'。');
+  }
+  line('客户基本资料',[['cid','客户'],['subs','主体数量'],['founded','成立时间'],['city','注册城市'],['entity','纳税人身份'],['flow','年销售额(万元)'],['staffN','员工人数']]);
+  line('经营盘面',[['plats','平台'],['shopN','店铺/站点'],['category','主营品类'],['skuN','SKU数'],['avgPrice','客单价'],['orderN','年订单量'],['salesChannel','销售模式']]);
+  line('报关与资质',[['decl','报关抬头'],['ful','发货方式'],['declMode','报关模式'],['impExp','进出口权'],['taxFiling','免税备案'],['dest','出口市场'],['forwarder','货代'],['customsFee','报关费']]);
+  line('票据与成本',[['invoice','供应商票'],['platInvoice','平台费发票'],['platCostPct','平台费占比'],['purchasePct','采购占比'],['noTicketPct','无票占比'],['laborCost','年人力成本']]);
+  line('账务与申报',[['bookStatus','记账方式'],['declMethod','增值税申报'],['invoiceIssue','开票情况'],['bankAccount','收款账户'],['reconcile','账票款核对']]);
+  line('历史与风险',[['hist','历史申报'],['smsQ','短信季度'],['histGap','预估缺口'],['startMonth','开始经营'],['taxRisk','客户最担心']]);
+  line('诉求与决策',[['need','主要诉求'],['deadline','时间要求'],['decision','决策人'],['budget','预算敏感'],['competitor','对比服务商'],['relationship','客户来源']]);
+  if(p.note) out.push('销售补充信息——'+p.note+'。');
+  return out;
+}
 
 /* 平台中文名 → cross 引擎 key */
 function crossKey(n){
@@ -177,10 +205,10 @@ var DomesticDeep={
         '纳税人身份：'+entity+'；年销售额：'+(p.flow||'待确认')+' 万元',
         '当前申报口径：'+(p.decl||'待确认')+'；供应商票据：'+(p.invoice||'待确认')+'；历史：'+(p.hist||'待确认'),
         '合规诊断共 '+checks.length+' 项（不合规 '+bad+' / 待确认 '+warn+'）：'+checks.map(function(c){return c.dir+'('+({bad:'不合规',warn:'待确认',ok:'合规'}[c.v])+')';}).join('、'),
-        '关键判定：收入按平台销售额（营业额−退货）如实申报，不按回款；平台成本凭汇总单按明细账入账',
+        '关键判定：收入按平台销售额（营业额−退货）如实申报，不按回款；平台佣金/技术服务费/广告费可向平台申请增值税发票入账，汇总单仅核对金额',
         isNew?'客户为新主体，无历史存量需要处理，侧重从一开始建立规范账务':'客户有经营历史，按申报口径决定是否处理历史缺口',
         '落地方案 '+road.length+' 步：'+road.map(function(r,i){return (i+1)+'.'+r.t;}).join(' ')
-      ]
+      ].concat(detailPoints(p))
     };
   }
 };

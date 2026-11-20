@@ -7,6 +7,7 @@
 <script src="docx.umd.js"></script>
 <script src="engine.js"></script>
 <script src="deep-engine.js"></script>
+<script src="fields.js"></script>
 <style>
   :root{
     --bg:#faf7f2; --surface:#fffefb; --surface-2:#fdf6ec; --border:#ece3d6;
@@ -73,6 +74,16 @@
   .modal .field{margin-bottom:12px}
   .modal .bar{justify-content:flex-end}
   .hint-sm{font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:8px}
+  /* 分组详表 */
+  .fsec{border:1px solid var(--border);border-radius:11px;margin-bottom:11px;overflow:hidden;background:var(--surface)}
+  .fsec-h{display:flex;align-items:center;gap:9px;padding:11px 14px;cursor:pointer;background:var(--surface-2);user-select:none}
+  .fsec-h b{font-size:13.5px;flex:1}
+  .fsec-h .cnt{font-size:11px;color:var(--muted);font-weight:400}
+  .fsec-h .arw{font-size:12px;color:var(--accent);transition:transform .15s}
+  .fsec.closed .arw{transform:rotate(-90deg)}
+  .fsec-b{padding:14px;border-top:1px solid var(--border)}
+  .fsec.closed .fsec-b{display:none}
+  .fsec-h .filled{font-size:10.5px;padding:1px 7px;border-radius:999px;background:var(--green-bg);color:var(--green)}
   @media(max-width:600px){.wrap{padding:16px 12px 50px}.fgrid{grid-template-columns:1fr}h1{font-size:20px}}
 </style>
 </head>
@@ -440,31 +451,60 @@ function pickInd(k){
   document.getElementById('genBtn').disabled=false;
   document.getElementById('genStatus').textContent='';
 }
+function fieldHTML(f){
+  var v=DATA[f.k]==null?'':DATA[f.k];
+  var h='<div class="field" style="'+(f.type==='chips'||f.type==='textarea'?'grid-column:1/-1':'')+'"><label>'+esc(f.label)+'</label>';
+  if(f.type==='text') h+='<input type="text" value="'+esc(v)+'" placeholder="'+esc(f.ph||'')+'" oninput="setVal(\''+f.k+'\',this.value)">';
+  else if(f.type==='select'){
+    h+='<select onchange="setVal(\''+f.k+'\',this.value)">';
+    f.opts.forEach(function(o){ h+='<option value="'+esc(o)+'"'+(v===o?' selected':'')+'>'+(o||'请选择…')+'</option>'; });
+    h+='</select>';
+  } else if(f.type==='textarea') h+='<textarea placeholder="'+esc(f.ph||'')+'" oninput="setVal(\''+f.k+'\',this.value)">'+esc(v)+'</textarea>';
+  else if(f.type==='chips'){
+    var arr=Array.isArray(v)?v:[];
+    h+='<div class="chips">';
+    f.opts.forEach(function(o){ h+='<span class="chip'+(arr.indexOf(o)>=0?' on':'')+'" onclick="toggleChip(\''+f.k+'\',\''+esc(o)+'\')">'+esc(o)+'</span>'; });
+    h+='</div>';
+  }
+  return h+'</div>';
+}
 function renderForm(){
   if(!curInd||!INDUSTRIES[curInd]){
     document.getElementById('paramForm').innerHTML='<p class="hint-sm">请先在上面选择一个业务行业，参数表单会按行业自动切换。</p>';
     return;
   }
-  var it=INDUSTRIES[curInd], h='<div class="fgrid">';
-  it.fields.forEach(function(f){
-    var v=DATA[f.k]==null?'':DATA[f.k];
-    h+='<div class="field" style="'+(f.type==='chips'||f.type==='textarea'?'grid-column:1/-1':'')+'"><label>'+esc(f.label)+'</label>';
-    if(f.type==='text') h+='<input type="text" value="'+esc(v)+'" placeholder="'+esc(f.ph||'')+'" oninput="setVal(\''+f.k+'\',this.value)">';
-    else if(f.type==='select'){
-      h+='<select onchange="setVal(\''+f.k+'\',this.value)">';
-      f.opts.forEach(function(o){ h+='<option value="'+esc(o)+'"'+(v===o?' selected':'')+'>'+(o||'请选择…')+'</option>'; });
-      h+='</select>';
-    } else if(f.type==='textarea') h+='<textarea placeholder="'+esc(f.ph||'')+'" oninput="setVal(\''+f.k+'\',this.value)">'+esc(v)+'</textarea>';
-    else if(f.type==='chips'){
-      var arr=Array.isArray(v)?v:[];
-      h+='<div class="chips">';
-      f.opts.forEach(function(o){ h+='<span class="chip'+(arr.indexOf(o)>=0?' on':'')+'" onclick="toggleChip(\''+f.k+'\',\''+esc(o)+'\')">'+esc(o)+'</span>'; });
-      h+='</div>';
-    }
+  var it=INDUSTRIES[curInd], h='';
+  var groups=(typeof Fields!=='undefined')?Fields.groupsFor(curInd):null;
+  if(groups&&groups.length){
+    /* 深度行业：分组详表，可折叠 */
+    groups.forEach(function(g,gi){
+      var done=g.keys.filter(function(k){ var v=DATA[k]; return v!=null&&v!==''&&!(Array.isArray(v)&&!v.length); }).length;
+      var closed=!!(DATA['_secClosed_'+gi]);
+      h+='<div class="fsec'+(closed?' closed':'')+'">';
+      h+='<div class="fsec-h" onclick="toggleSec('+gi+')"><span class="arw">▼</span><b>'+esc(g.t)+'</b>'
+        +'<span class="cnt">'+(done?done+' / ':'')+g.keys.length+' 项</span>'
+        +(done?('<span class="filled">已填 '+done+'</span>'):'')+'</div>';
+      h+='<div class="fsec-b"><div class="fgrid">';
+      g.keys.forEach(function(k){ var f=Fields.F[k]; if(f) h+=fieldHTML(f); });
+      h+='</div></div></div>';
+    });
+    h+='<p class="hint-sm" style="margin-top:4px">共 '+fieldsForCurrent().length+' 项参数。填得越细，AI 结论越准；留空项不会编造，写「待确认」。</p>';
+  } else {
+    /* 浅行业：沿用平铺 */
+    h='<div class="fgrid">';
+    it.fields.forEach(function(f){ h+=fieldHTML(f); });
     h+='</div>';
-  });
-  h+='</div>';
+  }
   document.getElementById('paramForm').innerHTML=h;
+}
+function fieldsForCurrent(){
+  if(typeof Fields==='undefined') return INDUSTRIES[curInd].fields||[];
+  return Fields.fieldsFor(curInd)||INDUSTRIES[curInd].fields||[];
+}
+function toggleSec(gi){
+  var k='_secClosed_'+gi;
+  DATA[k]=!DATA[k];
+  renderForm();
 }
 function setVal(k,v){ DATA[k]=v; }
 function toggleChip(k,o){
@@ -476,8 +516,8 @@ function clearForm(){ DATA={}; OUTTEXT=''; document.getElementById('outBox').inn
 
 /* ============ AI prompt：严格只用输入事实 ============ */
 function collectFacts(){
-  var it=INDUSTRIES[curInd], L=[];
-  it.fields.forEach(function(f){
+  var L=[];
+  fieldsForCurrent().forEach(function(f){
     var v=DATA[f.k];
     if(v==null||v===''||(Array.isArray(v)&&!v.length))return;
     L.push('　- '+f.label+'：'+(Array.isArray(v)?v.join('、'):v));
