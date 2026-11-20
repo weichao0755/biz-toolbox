@@ -18,12 +18,17 @@ var sb={document:{readyState:'complete',getElementById(id){if(!els[id])els[id]=f
 sb.window=sb; sb.window.scrollTo=function(){}; sb.window.addEventListener=function(){};
 
 vm.createContext(sb);
-try{ new vm.Script(code,{filename:'plan-doc-inline.js'}).runInContext(sb); }
+try{
+  // 先加载引擎脚本（模拟 <script src> 加载顺序）
+  new vm.Script(fs.readFileSync('public/tools/plan-doc/engine.js','utf8'),{filename:'engine.js'}).runInContext(sb);
+  new vm.Script(fs.readFileSync('public/tools/plan-doc/deep-engine.js','utf8'),{filename:'deep-engine.js'}).runInContext(sb);
+  new vm.Script(code,{filename:'plan-doc-inline.js'}).runInContext(sb);
+}
 catch(e){ console.error('SYNTAX/RUN ERROR:',e.message); process.exit(1); }
 
 // 暴露内部函数（末尾追加，脚本是全局作用域）
 try{
-  new vm.Script(code+'\nwindow.__t={INDUSTRIES:INDUSTRIES,IND_KEYS:IND_KEYS,buildPrompt:buildPrompt,collectFacts:collectFacts,pickInd:pickInd,setVal:setVal,toggleChip:toggleChip,genWord:genWord,esc:esc,getData:function(){return DATA;},setData:function(v){DATA=v;},setInd:function(v){curInd=v;}};').runInContext(sb);
+  new vm.Script(code+'\nwindow.__t={INDUSTRIES:INDUSTRIES,IND_KEYS:IND_KEYS,buildPrompt:buildPrompt,buildDeepPrompt:buildDeepPrompt,isDeep:isDeep,DEEP_INDS:DEEP_INDS,collectFacts:collectFacts,pickInd:pickInd,setVal:setVal,toggleChip:toggleChip,genWord:genWord,esc:esc,getData:function(){return DATA;},setData:function(v){DATA=v;},setInd:function(v){curInd=v;}};').runInContext(sb);
 }catch(e){ console.error('EXPOSE ERROR:',e.message); process.exit(1); }
 var t=sb.__t;
 if(!t){ console.error('FAIL: 函数未暴露'); process.exit(1); }
@@ -78,7 +83,25 @@ check('domestic prompt has filled entity', p2.indexOf('小规模纳税人')>=0);
 // 4. 转义（XSS 防护）
 check('esc escapes quotes', t.esc('a"b<c>').indexOf('&quot;')>=0 && t.esc('a"b<c>').indexOf('&lt;')>=0);
 
-// 5. Word 生成函数存在（不实测 blob，避免 docx 桩复杂度）
+// 5. 深度模式：两行业规则引擎接入
+check('DEEP_INDS has cross & domestic', t.DEEP_INDS.length===2 && t.DEEP_INDS.indexOf('cross')>=0 && t.DEEP_INDS.indexOf('domestic')>=0);
+check('isDeep(cross) true', t.isDeep('cross')===true);
+check('isDeep(domestic) true', t.isDeep('domestic')===true);
+check('isDeep(foreign) false (still shallow)', t.isDeep('foreign')===false);
+// 深度 prompt：结论已锁定、AI 只润色
+var deepData={
+  industry:'跨境电商',isNew:true,checks:[{dir:'基础合规',v:'warn'}],clientChecks:[],derived:{},htc:{ok:false},
+  roadmap:[{t:'办理资质',time:'x',acts:['a'],cli:[],done:'d'}],facts:{},
+  points:['客户：测试公司','合规诊断共 1 项：基础合规(待确认)','落地方案 1 步：1.办理资质']
+};
+var dp=t.buildDeepPrompt(deepData,t.INDUSTRIES.cross);
+check('deep prompt locks conclusions', dp.indexOf('不得更改结论')>=0 && dp.indexOf('结论已锁定')>=0);
+check('deep prompt has points', dp.indexOf('客户：测试公司')>=0 && dp.indexOf('落地方案 1 步')>=0);
+check('deep prompt has 铁律', dp.indexOf('严禁编造')>=0 && dp.indexOf('对外报价数字')>=0);
+check('deep prompt bans promises', dp.indexOf('包通过')>=0);
+check('deep prompt 4 sections', dp.indexOf('一、客户情况')>=0 && dp.indexOf('四、服务说明')>=0);
+
+// 6. Word 生成函数存在（不实测 blob，避免 docx 桩复杂度）
 check('genWord is function', typeof t.genWord==='function');
 
 // 6. 工具注册（源码层）

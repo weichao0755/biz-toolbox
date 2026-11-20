@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>业务方案书生成工具</title>
 <script src="docx.umd.js"></script>
+<script src="engine.js"></script>
+<script src="deep-engine.js"></script>
 <style>
   :root{
     --bg:#faf7f2; --surface:#fffefb; --surface-2:#fdf6ec; --border:#ece3d6;
@@ -482,32 +484,59 @@ function collectFacts(){
   });
   return L.length?L.join('\n'):'　（销售尚未填写任何事实）';
 }
+var DEEP_INDS=['cross','domestic'];  /* 已深度定制的行业（规则引擎定结论）；其余为浅模板 */
+var LAST_DEEP=null;                   /* 最近一次深度方案数据，供 Word 用结构化结论 */
+function isDeep(ind){ return DEEP_INDS.indexOf(ind)>=0; }
+
+/* 通用铁律（深/浅模式共用） */
+var AI_RULES=[
+  '1. 只能使用【要点/事实】里给出的信息；没有的一律写「待确认」，严禁编造公司名、平台、城市、数字、税率、金额、套餐价格、时效、成功案例。',
+  '2. 严禁编造客户痛点、预算、顾虑；不得写「您担心费用贵」「您怕被查」这类客户没说过的话。',
+  '3. 严禁出现任何对外报价数字、服务费价格、具体补税金额。',
+  '4. 不得承诺「一定免税」「一定不被查」「包通过」；涉及结果一律写「以税务机关认定为准 / 以实际核实为准」。',
+  '5. 不写「我们替客户跟货代沟通」这类越界表述；对接由客户自行完成，我方提供话术与指导。',
+  '6. 语言用中性标准普通话、书面专业口吻，对客称谓用「贵司」。'
+].join('\n');
+var OUT_FORMAT=[
+  '一、客户情况\n（把要点里的客户信息归类陈述，没填的写「待确认」。）',
+  '\n二、现状与关注点\n（只按要点里已列出的诊断结论陈述，不新增、不臆测痛点。）',
+  '\n三、落地方案\n（严格按要点里列出的步骤，一步步写清楚，不增步骤、不加价格时效承诺、不加具体金额。）',
+  '\n四、服务说明\n（说明我方按本行业服务范围协助，客户需配合提供资料；不承诺结果、不报价。）'
+].join('\n');
+
+/* 深度模式 prompt：AI 只把「已由规则引擎定好的结论」连成通顺对客文字 */
+function buildDeepPrompt(deep,it){
+  return [
+    '你是财税公司的方案文案助手。下面【已定要点】是由规则引擎根据客户信息算出的结论，**不得更改结论、不得新增事实或数字**。你的唯一任务：把这些要点连成一份通顺、专业、对客的方案书正文。',
+    '',
+    '【绝对铁律】',AI_RULES,
+    '',
+    '【行业服务范围】',it.base,
+    '【已定要点 · 结论已锁定，只能照此措辞，不得改写含义】',
+    deep.points.map(function(s,i){return '　'+(i+1)+'. '+s;}).join('\n'),
+    '',
+    '【输出格式 · 严格四段中文序号】', OUT_FORMAT,
+    '',
+    '只输出四段正文，不加标题、不加解释、不写「以下是方案」这类开场白。'
+  ].join('\n');
+}
+/* 浅模式 prompt（其余行业，未深度定制前沿用） */
 function buildPrompt(){
   var it=INDUSTRIES[curInd], facts=collectFacts();
   return [
     '你是财税公司的方案撰写助手。请严格依据下面【客户事实】和【本行业固定口径】，生成一份对客户讲的方案书大纲。',
     '',
-    '【铁律 · 必须遵守，违反即失败】',
-    '1. 只能使用【客户事实】里明确给出的信息；事实里没有的，一律写「待确认」，严禁编造公司名、平台名、城市、数字、税率、金额、套餐价格、时效、成功案例。',
-    '2. 严禁编造客户痛点、预算、顾虑；不得写「您担心费用贵」「您怕被查」这类客户没说过的话。',
-    '3. 严禁出现任何对外报价数字、服务费价格、具体补税金额。',
-    '4. 不得承诺「一定免税」「一定不被查」「包通过」；涉及结果一律写「以税务机关认定为准 / 以实际核实为准」。',
-    '5. 不写「我们替客户跟货代沟通」这类越界表述；货代/物流对接由客户自行完成，我方提供话术与指导。',
-    '6. 语言用中性标准普通话、书面专业口吻，对客称谓用「贵司」，不用方言、不用内部作业黑话。',
+    '【铁律 · 必须遵守】',AI_RULES,
     '',
     '【本行业服务范围】', it.base,
     '【本行业固定口径（只能照此表述，不得改写含义）】',
     it.rules.map(function(r,i){return '　'+(i+1)+'. '+r;}).join('\n'),
     '',
-    '【客户事实（销售填写，唯一事实来源）】', facts,
+    '【客户事实（唯一事实来源）】', facts,
     '',
-    '【输出格式 · 严格按四段，用中文序号】',
-    '一、客户情况\n（把事实里的信息归类陈述；没填的写「待确认」，不补写。）',
-    '\n二、现状与关注点\n（只基于客户填的诉求和申报/报关现状，指出需要在方案里处理的事项；不臆测客户没说的痛点。）',
-    '\n三、落地方案\n（紧扣本行业服务范围和固定口径，列出可执行步骤；步骤里不要出现任何价格、时效承诺、具体金额。）',
-    '\n四、服务说明\n（说明我方按本行业服务范围提供协助，客户需配合提供资料；不承诺结果、不报价。）',
+    '【输出格式 · 严格四段中文序号】', OUT_FORMAT,
     '',
-    '只输出上面四段正文，不要加标题、不要加解释、不要写「以下是方案」这类开场白。'
+    '只输出四段正文，不加标题、不加解释、不写「以下是方案」这类开场白。'
   ].join('\n');
 }
 async function genOutline(){
@@ -515,17 +544,30 @@ async function genOutline(){
   aiLoad();
   if(!aiClean(AICFG.key)){ openKey(); document.getElementById('genStatus').textContent='请先填 AI Key（已弹出设置）'; return; }
   var btn=document.getElementById('genBtn'), st=document.getElementById('genStatus');
-  btn.disabled=true; st.textContent='AI 正在按你填的事实生成大纲，请稍候…';
+  var deep=null, prompt;
+  if(isDeep(curInd)){
+    st.textContent='规则引擎正在分析客户信息…';
+    try{
+      if(typeof DeepEngine==='undefined'||typeof Engine==='undefined') throw new Error('方案引擎未加载，请刷新页面重试');
+      deep=DeepEngine.build(curInd,DATA,Engine);
+      LAST_DEEP=deep;
+      prompt=buildDeepPrompt(deep,INDUSTRIES[curInd]);
+    }catch(e){ st.textContent='分析失败：'+(e&&e.message||e); btn.disabled=false; return; }
+    st.textContent='结论已由规则引擎算出，AI 正在整理措辞…';
+  } else {
+    LAST_DEEP=null;
+    prompt=buildPrompt();
+    st.textContent='AI 正在按你填的事实生成大纲，请稍候…';
+  }
+  btn.disabled=true;
   try{
-    var txt=await aiFetch([{role:'user',content:buildPrompt()}]);
-    txt=String(txt).trim();
-    /* 兜底：AI 若自带 Markdown 标题符号，去掉最外层装饰 */
-    txt=txt.replace(/^\s*```(?:markdown|md)?\s*/i,'').replace(/\s*```\s*$/,'').trim();
+    var txt=await aiFetch([{role:'user',content:prompt}]);
+    txt=String(txt).trim().replace(/^\s*```(?:markdown|md)?\s*/i,'').replace(/\s*```\s*$/,'').trim();
     OUTTEXT=txt;
     document.getElementById('outBox').innerText=txt;
     document.getElementById('docBtn').disabled=false;
-    document.getElementById('outHint').textContent='已生成 ' + txt.length + ' 字 · 可直接改文字';
-    st.textContent='生成完成，确认后导出 Word。';
+    document.getElementById('outHint').textContent='已生成 '+txt.length+' 字 · 结论由规则引擎锁定，可直接改文字';
+    st.textContent=deep?'生成完成（结论已锁定，AI 仅润色），确认后导出 Word。':'生成完成，确认后导出 Word。';
   }catch(e){
     st.textContent='生成失败：'+(e&&e.message?e.message:'未知错误');
   }finally{ btn.disabled=false; }
