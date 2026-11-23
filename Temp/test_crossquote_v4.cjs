@@ -60,7 +60,8 @@ const officers=L.filter(x=>x.group==='金米合规官 · 月度服务');
 ck('officer prices are annual (×12)',JSON.stringify(officers.map(x=>x.price))===JSON.stringify(years));
 ck('officer unit is 年',officers.every(x=>x.unit==='年'));
 ck('officer names show 元/月 × 12',officers.every(x=>x.name.indexOf('元/月 × 12')>=0));
-ck('officer desc says 按年收费',officers.every(x=>x.desc.indexOf('按年收费')>=0&&x.desc.indexOf('年费 ')>=0));
+ck('officer desc says 年费',officers.every(x=>x.desc.indexOf('年费 ')>=0));
+ck('officer desc NO 按月报价按年收费 phrase',officers.every(x=>x.desc.indexOf('按月报价、按年收费')<0));
 
 // 6) 推荐逻辑：按营收落 6 档
 const cases=[[50,'officer_0_100'],[100,'officer_0_100'],[101,'officer_100_300'],[300,'officer_100_300'],[301,'officer_300_500'],[500,'officer_300_500'],[501,'officer_500_1000'],[1000,'officer_500_1000'],[1001,'officer_1000_1500'],[1500,'officer_1000_1500'],[1501,'officer_1500_2000'],[2000,'officer_1500_2000']];
