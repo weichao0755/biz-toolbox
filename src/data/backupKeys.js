@@ -45,7 +45,8 @@ export const BACKUP_KEYS = [
   'cross_quote_lib_v2',
   'cross_quote_lib_v3',   /* 历史键：年度星级账体系（4888~14888） */
   'cross_quote_lib_v4',   /* 历史：金米合规官月度体系（750~2500/月）+ 配套服务 + 专项收费 */
-  'cross_quote_lib_v5',   /* 当前：合规官体系 + 星级账套餐（老客户沿用，两套并存） */
+  'cross_quote_lib_v5',   /* 历史键：短暂恢复星级账的版本（v1.20.7），已按老板要求撤销 */
+  'cross_quote_lib_v6',   /* 当前：仅合规官体系，按月报价按年收费（9000~30000 元/年），旧星级账全删 */
   'cross_quote_ai_config',
   'cross_quiz_v1',
   /* —— 跨境销售辅助工具（cross） —— */

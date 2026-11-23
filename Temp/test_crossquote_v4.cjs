@@ -19,16 +19,13 @@ const t=sb.__t;
 let pass=true;function ck(n,c){if(!c){console.log('FAIL:',n);pass=false;}else console.log('ok  :',n);}
 
 // 1) LIB_KEY v5：合规官体系 + 星级账恢复并存
-ck('LIB_KEY is v5',t.LIB_KEY==='cross_quote_lib_v5');
+ck('LIB_KEY is v6',t.LIB_KEY==='cross_quote_lib_v6');
 const L=t.DEFAULT_LIB;
-ck('lib has 32 entries (20+12)',L.length===32);
+ck('lib has 20 entries (only 合规官体系)',L.length===20);
 
-// 2) 合规官 6 档价格准确
+// 2) 合规官 6 档（年度价格在下面第5段验证）
 const officer=L.filter(x=>x.group==='金米合规官 · 月度服务');
 ck('6 officer tiers',officer.length===6);
-const prices=officer.map(x=>x.price);
-ck('officer prices 750/750/1000/1500/2000/2500',JSON.stringify(prices)==='[750,750,1000,1500,2000,2500]');
-ck('officer unit 月',officer.every(x=>x.unit==='月'));
 ck('officer 0-100 desc has 6 services',officer[0].desc.indexOf('首次账务规则梳理')>=0&&officer[0].desc.indexOf('合规咨询')>=0);
 
 // 3) 配套服务 4 类
@@ -51,16 +48,17 @@ ck('跨区变更 1000/次',fmap['公司股东 / 地址跨区变更']&&fmap['公�
 ck('地址挂靠 1800/年',fmap['地址挂靠']&&fmap['地址挂靠'].price===1800);
 ck('注销/香港 一事一议 price 0',fmap['注销公司'].price===0&&fmap['香港及非深圳公司代办'].price===0);
 
-// 5) 星级账套餐恢复保留（老客户仍在用，两套并存）
-const star=L.filter(x=>x.group==='星级账套餐 · 老客户沿用');
-ck('12 star entries restored',star.length===12);
-const starPkg=star.filter(x=>/4888|6888|10888|14888/.test(x.name));
-ck('4 star packages restored',starPkg.length===4);
-ck('star prices 4888/6888/10888/14888',JSON.stringify(starPkg.map(x=>x.price))==='[4888,6888,10888,14888]');
-const included=star.filter(x=>x.price===0);
-ck('8 包含服务 items (price=0)',included.length===8);
-ck('包含服务 names from screenshot',['办理进出口权','跨境电商企业备案','申领电子口岸 IC 卡（UKey）','出口免税备案 / 13 栏填报申请','出口免税申报（按期）','平台明细账（按站点）','供应商发票规划','人力成本与年终奖个税规划'].every(n=>included.some(x=>x.name===n)));
-ck('isIncluded treats price0 as 包含服务',included.every(x=>!(Number(x.price)>0)));
+// 5) 旧星级账已全清，只留合规官新体系
+const all=JSON.stringify(L)+html;
+ck('old star packages all removed',all.indexOf('pkg4888')<0&&all.indexOf('星级账套餐')<0&&all.indexOf('4888')<0&&all.indexOf('6888')<0&&all.indexOf('10888')<0&&all.indexOf('14888')<0);
+ck('only new groups remain',['金米合规官 · 月度服务','配套服务','专项收费'].every(g=>L.some(x=>x.group===g)) && !L.some(x=>x.group.indexOf('星级账')>=0));
+// 按月报价、按年收费：price=月费×12, unit=年
+const months=[750,750,1000,1500,2000,2500], years=[9000,9000,12000,18000,24000,30000];
+const officers=L.filter(x=>x.group==='金米合规官 · 月度服务');
+ck('officer prices are annual (×12)',JSON.stringify(officers.map(x=>x.price))===JSON.stringify(years));
+ck('officer unit is 年',officers.every(x=>x.unit==='年'));
+ck('officer names show 元/月 × 12',officers.every(x=>x.name.indexOf('元/月 × 12')>=0));
+ck('officer desc says 按年收费',officers.every(x=>x.desc.indexOf('按年收费')>=0&&x.desc.indexOf('年费 ')>=0));
 
 // 6) 推荐逻辑：按营收落 6 档
 const cases=[[50,'officer_0_100'],[100,'officer_0_100'],[101,'officer_100_300'],[300,'officer_100_300'],[301,'officer_300_500'],[500,'officer_300_500'],[501,'officer_500_1000'],[1000,'officer_500_1000'],[1001,'officer_1000_1500'],[1500,'officer_1000_1500'],[1501,'officer_1500_2000'],[2000,'officer_1500_2000']];
@@ -78,7 +76,7 @@ t.setBiz({flow:'400',entity:'general'});
 ck('entity no longer affects tier',t.pkgReco().id==='officer_300_500');
 
 // 7) loadLib 空存储返回 v5 默认库（合规官 + 星级账并存）
-ck('loadLib returns v5 defaults',(()=>{const l=t.loadLib();return l.length===32&&l[0].group==='金米合规官 · 月度服务'&&l.some(x=>x.group==='星级账套餐 · 老客户沿用');})());
+ck('loadLib returns v6 defaults',(()=>{const l=t.loadLib();return l.length===20&&l[0].group==='金米合规官 · 月度服务'&&!l.some(x=>x.group.indexOf('星级账')>=0);})());
 
 console.log(pass?'\nALL CROSS-QUOTE V4 CHECKS PASSED':'\nSOME CHECKS FAILED');
 process.exit(pass?0:1);
