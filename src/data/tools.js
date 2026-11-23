@@ -238,7 +238,7 @@ export const TOOLS = [
     path: '/tools/cross-quote',
     name: 'cross-quote',
     title: '跨境电商报价单生成器',
-    desc: '填三步出跨境专属报价单（图片/Word）：客户信息+跨境业务盘面（平台/站点/年流水/纳税人/报关模式）+套餐按流水自动推荐，统一跨境报价口径',
+    desc: '填三步出跨境专属报价单（图片/Word）：客户信息+跨境业务盘面+金米合规官月度服务档位按年营收自动推荐（750~2500元/月），含配套服务与专项收费，统一跨境报价口径',
     color: '#0d9488',
     category: 'cross',
     iconSvg: svgWrap(`
