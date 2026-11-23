@@ -483,7 +483,7 @@
 /* ============ 常量 ============ */
 const LS_KEY = 'cross_quote_data_v1'
 const REC_KEY = 'cross_quote_records_v1'
-const LIB_KEY = 'cross_quote_lib_v6'   /* v6：报价按月报、收费按年收——合规官6档改年度收费(月费×12: 9000/9000/12000/18000/24000/30000 元每年)，unit改年 */
+const LIB_KEY = 'cross_quote_lib_v7'   /* v7：合规官6项服务内容从描述拆成独立服务项(price=0,选合规官档自动带上,明细表显示【包含服务】) */
 const AGENCY_NAME = '深圳市金米启航企业服务有限公司'
 const AGENCY_PHONE = '0755-00000000'
 function agencyName(){
@@ -495,12 +495,12 @@ const REC_LIMIT = 30
 /* ============ 跨境价目库（价格取自公司《跨境电商SOP流程梳理》与《客户标准问答库》） ============ */
 const DEFAULT_LIB = [
   /* ===== 一、金米合规官 · 月度服务（按年营收分6档，价格取自《跨境电商服务报价》） ===== */
-  { id:'officer_0_100', group:'金米合规官 · 月度服务', name:'合规官服务 · 营收 0-100 万（750 元/月 × 12）', desc:'按月报价、按年收费。年费 9000 元/年（月费 750 元）。含：①首次账务规则梳理（账务梳理与账号 + 出口模式选择与流程 / 记账规则）②会计管理（账务质检、进度监管、入账规范指导）③税务风险管控（业务流、收入与申报、收汇结汇与资金回流、核对出口发票购买方与实际付费方的账上差异）④动态纳税规划（业务架构规划、多店铺退税方案合规规划、工资个税规划、政策适用匹配）⑤出口退税全流程陪伴（含首次下户核查预演与陪同、报关单填制咨询）⑥合规咨询（业务、股权、银行、政策、知识产权、亲友咨询）', price:9000, unit:'年' },
-  { id:'officer_100_300', group:'金米合规官 · 月度服务', name:'合规官服务 · 营收 100-300 万（750 元/月 × 12）', desc:'按月报价、按年收费。年费 9000 元/年（月费 750 元）。服务内容同 0-100 万档：首次账务规则梳理 + 会计管理 + 税务风险管控 + 动态纳税规划 + 出口退税全流程陪伴 + 合规咨询', price:9000, unit:'年' },
-  { id:'officer_300_500', group:'金米合规官 · 月度服务', name:'合规官服务 · 营收 300-500 万（1000 元/月 × 12）', desc:'按月报价、按年收费。年费 12000 元/年（月费 1000 元）。服务内容同上六项：首次账务规则梳理 + 会计管理 + 税务风险管控 + 动态纳税规划 + 出口退税全流程陪伴 + 合规咨询', price:12000, unit:'年' },
-  { id:'officer_500_1000', group:'金米合规官 · 月度服务', name:'合规官服务 · 营收 500-1000 万（1500 元/月 × 12）', desc:'按月报价、按年收费。年费 18000 元/年（月费 1500 元）。服务内容同上六项：首次账务规则梳理 + 会计管理 + 税务风险管控 + 动态纳税规划 + 出口退税全流程陪伴 + 合规咨询', price:18000, unit:'年' },
-  { id:'officer_1000_1500', group:'金米合规官 · 月度服务', name:'合规官服务 · 营收 1000-1500 万（2000 元/月 × 12）', desc:'按月报价、按年收费。年费 24000 元/年（月费 2000 元）。服务内容同上六项：首次账务规则梳理 + 会计管理 + 税务风险管控 + 动态纳税规划 + 出口退税全流程陪伴 + 合规咨询', price:24000, unit:'年' },
-  { id:'officer_1500_2000', group:'金米合规官 · 月度服务', name:'合规官服务 · 营收 1500-2000 万（2500 元/月 × 12）', desc:'按月报价、按年收费。年费 30000 元/年（月费 2500 元）。服务内容同上六项：首次账务规则梳理 + 会计管理 + 税务风险管控 + 动态纳税规划 + 出口退税全流程陪伴 + 合规咨询', price:30000, unit:'年' },
+  { id:'officer_0_100', group:'金米合规官 · 月度服务', name:'合规官服务 · 营收 0-100 万（750 元/月 × 12）', desc:'按月报价、按年收费。年费 9000 元/年（月费 750 元）。跨境合规官定制服务：首次账务规则梳理 + 会计管理 + 税务风险管控 + 动态纳税规划 + 出口退税全流程陪伴 + 合规咨询', price:9000, unit:'年' },
+  { id:'officer_100_300', group:'金米合规官 · 月度服务', name:'合规官服务 · 营收 100-300 万（750 元/月 × 12）', desc:'按月报价、按年收费。年费 9000 元/年（月费 750 元）。跨境合规官定制服务：首次账务规则梳理 + 会计管理 + 税务风险管控 + 动态纳税规划 + 出口退税全流程陪伴 + 合规咨询', price:9000, unit:'年' },
+  { id:'officer_300_500', group:'金米合规官 · 月度服务', name:'合规官服务 · 营收 300-500 万（1000 元/月 × 12）', desc:'按月报价、按年收费。年费 12000 元/年（月费 1000 元）。跨境合规官定制服务：首次账务规则梳理 + 会计管理 + 税务风险管控 + 动态纳税规划 + 出口退税全流程陪伴 + 合规咨询', price:12000, unit:'年' },
+  { id:'officer_500_1000', group:'金米合规官 · 月度服务', name:'合规官服务 · 营收 500-1000 万（1500 元/月 × 12）', desc:'按月报价、按年收费。年费 18000 元/年（月费 1500 元）。跨境合规官定制服务：首次账务规则梳理 + 会计管理 + 税务风险管控 + 动态纳税规划 + 出口退税全流程陪伴 + 合规咨询', price:18000, unit:'年' },
+  { id:'officer_1000_1500', group:'金米合规官 · 月度服务', name:'合规官服务 · 营收 1000-1500 万（2000 元/月 × 12）', desc:'按月报价、按年收费。年费 24000 元/年（月费 2000 元）。跨境合规官定制服务：首次账务规则梳理 + 会计管理 + 税务风险管控 + 动态纳税规划 + 出口退税全流程陪伴 + 合规咨询', price:24000, unit:'年' },
+  { id:'officer_1500_2000', group:'金米合规官 · 月度服务', name:'合规官服务 · 营收 1500-2000 万（2500 元/月 × 12）', desc:'按月报价、按年收费。年费 30000 元/年（月费 2500 元）。跨境合规官定制服务：首次账务规则梳理 + 会计管理 + 税务风险管控 + 动态纳税规划 + 出口退税全流程陪伴 + 合规咨询', price:30000, unit:'年' },
 
   /* ===== 二、配套服务（按类勾选，价格一事一议/按项计，先不预设数字） ===== */
   { id:'match_accountant', group:'配套服务', name:'合规会计', desc:'①做账资料和数据催收、核对和沟通 ②月度做账报税 ③月度账务沟通 ④退税提交和反馈', price:0, unit:'项' },
@@ -518,7 +518,15 @@ const DEFAULT_LIB = [
   { id:'fee_change', group:'专项收费', name:'公司股东 / 地址跨区变更', desc:'工商变更登记办理', price:1000, unit:'次' },
   { id:'fee_addr', group:'专项收费', name:'地址挂靠', desc:'注册地址挂靠服务', price:1800, unit:'年' },
   { id:'fee_cancel', group:'专项收费', name:'注销公司', desc:'一事一议，按实际情况报价', price:0, unit:'事项' },
-  { id:'fee_hk', group:'专项收费', name:'香港及非深圳公司代办', desc:'一事一议，按实际情况报价', price:0, unit:'事项' }]
+  { id:'fee_hk', group:'专项收费', name:'香港及非深圳公司代办', desc:'一事一议，按实际情况报价', price:0, unit:'事项' },
+  /* ===== 合规官包含服务明细（6项，从原描述拆出；price=0 显示【包含服务】，选合规官档自动带上） ===== */
+  { id:'officer_s1', group:'合规官 · 包含服务明细', name:'① 首次账务规则梳理', desc:'账务梳理与账号 + 出口模式选择与流程 / 记账规则', price:0, unit:'项' },
+  { id:'officer_s2', group:'合规官 · 包含服务明细', name:'② 会计管理', desc:'账务质检、进度监管、入账规范指导', price:0, unit:'项' },
+  { id:'officer_s3', group:'合规官 · 包含服务明细', name:'③ 税务风险管控', desc:'业务流、收入与申报、收汇结汇与资金回流、核对出口发票购买方与实际付费方的账上差异', price:0, unit:'项' },
+  { id:'officer_s4', group:'合规官 · 包含服务明细', name:'④ 动态纳税规划', desc:'业务架构规划、多店铺退税方案合规规划、工资个税规划、政策适用匹配', price:0, unit:'项' },
+  { id:'officer_s5', group:'合规官 · 包含服务明细', name:'⑤ 出口退税全流程陪伴', desc:'含首次下户核查预演与陪同、报关单填制咨询', price:0, unit:'项' },
+  { id:'officer_s6', group:'合规官 · 包含服务明细', name:'⑥ 合规咨询', desc:'业务、股权、银行、政策、知识产权、亲友咨询', price:0, unit:'项' }
+]
 
 /* ============ 状态 ============ */
 let state = loadState()
@@ -578,12 +586,19 @@ let lib = loadLib()
    的项目内容——所以旧档位（如星级账 4888 / 包含服务）会一直跟到新版本里。
    规则：libId 在当前价目库里、或以 c 开头（自定义项）的保留，其余视为已删除项剔除。 */
 function validItemIds(){ const s=new Set(lib.map(x=>x.id)); return s; }
+/* 已下线服务的名称黑名单：即便 id 被误存成自定义(c 开头)，按名字也要清掉（老客户星级账包含服务） */
+const REMOVED_ITEM_NAMES=['跨境电商星级账 4888 / 年','跨境电商星级账 6888 / 年','跨境电商星级账 10888 / 年','跨境电商星级账 14888 / 年',
+  '办理进出口权','跨境电商企业备案','申领电子口岸 IC 卡（UKey）','出口免税备案 / 13 栏填报申请','出口免税申报（按期）',
+  '平台明细账（按站点）','供应商发票规划','人力成本与年终奖个税规划','网商银行收汇通道搭建','多主体 / 多店铺架构咨询',
+  '历史账目整理与更正（小规模）','历史账目整理与更正（一般纳税人）'];
 function pruneItems(items){
   if(!Array.isArray(items)) return []
   const ok=validItemIds()
   return items.filter(it=>{
     const id=String(it&&it.libId||'')
-    return ok.has(id) || id.charAt(0)==='c'   // c 开头 = 用户自定义项，永远保留
+    const name=String(it&&it.name||'')
+    if(REMOVED_ITEM_NAMES.indexOf(name)>=0) return false   // 已下线服务名，一律剔除
+    return ok.has(id) || id.charAt(0)==='c'   // c 开头 = 用户自定义项，保留
   })
 }
 function pruneState(s){
@@ -895,8 +910,22 @@ function renderSvcList(){
   document.getElementById('svcList').innerHTML = h || '<div class="lib-empty">价目库为空，点击下方按钮添加服务项</div>'
 }
 function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+/* 合规官包含服务明细：选任一合规官档位时自动带上这 6 项（price=0，明细表显示【包含服务】） */
+const OFFICER_DETAIL_IDS = ['officer_s1','officer_s2','officer_s3','officer_s4','officer_s5','officer_s6']
+function isOfficerPkg(id){ return /^officer_(0_100|100_300|300_500|500_1000|1000_1500|1500_2000)$/.test(String(id||'')) }
+function syncOfficerDetails(){
+  const hasPkg = state.items.some(x=>isOfficerPkg(x.libId))
+  if(hasPkg){
+    OFFICER_DETAIL_IDS.forEach(id=>{
+      const l=libFind(id)
+      if(l && !state.items.find(x=>x.libId===id)) state.items.push({ libId:id, name:l.name, desc:l.desc, unit:l.unit, qty:1, price:l.price })
+    })
+  }else{
+    state.items = state.items.filter(x=>OFFICER_DETAIL_IDS.indexOf(x.libId)<0)
+  }
+}
 function toggleSvc(id, on){
-  const l = libFind(id); if(!l) return
+  const l = libFind(id); if(!l && OFFICER_DETAIL_IDS.indexOf(id)<0) return
   if(on){
     if(!state.items.find(x=>x.libId===id)){
       state.items.push({ libId:id, name:l.name, desc:l.desc, unit:l.unit, qty:1, price:l.price })
@@ -904,6 +933,7 @@ function toggleSvc(id, on){
   }else{
     state.items = state.items.filter(x=>x.libId!==id)
   }
+  syncOfficerDetails()   /* 选/弃合规官档时自动带出或移除 6 项服务明细 */
   saveState(); renderReco(); renderSvcList(); renderSum()
 }
 function updSvc(id, field, v){
@@ -1376,6 +1406,7 @@ function loadRecord(id){
   try{
     state = JSON.parse(rec.snapshot)
     pruneState(state)   /* 历史快照里已删除的服务项不再载入 */
+    syncOfficerDetails()   /* 历史快照同步合规官包含明细 */
     if(!state.step || state.step<1 || state.step>4) state.step = 4
     saveState(); renderAll()
     closeRecModal()
@@ -1631,6 +1662,7 @@ async function aiWriteNotes(){
 
 /* ============ 初始化 ============ */
 migrateOldItems()   /* 清掉草稿/历史快照里已从价目库删除的旧服务项（如星级账） */
+if(typeof syncOfficerDetails==='function') syncOfficerDetails()   /* 旧草稿补齐合规官包含明细 */
 if(!state.quote.no) state.quote.no = autoNo()
 renderAll()
 saveState()

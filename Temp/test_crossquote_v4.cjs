@@ -19,9 +19,9 @@ const t=sb.__t;
 let pass=true;function ck(n,c){if(!c){console.log('FAIL:',n);pass=false;}else console.log('ok  :',n);}
 
 // 1) LIB_KEY v5：合规官体系 + 星级账恢复并存
-ck('LIB_KEY is v6',t.LIB_KEY==='cross_quote_lib_v6');
+ck('LIB_KEY is v7',t.LIB_KEY==='cross_quote_lib_v7');
 const L=t.DEFAULT_LIB;
-ck('lib has 20 entries (only 合规官体系)',L.length===20);
+ck('lib has 26 entries (20+6 包含明细)',L.length===26);
 
 // 2) 合规官 6 档（年度价格在下面第5段验证）
 const officer=L.filter(x=>x.group==='金米合规官 · 月度服务');
@@ -78,7 +78,7 @@ t.setBiz({flow:'400',entity:'general'});
 ck('entity no longer affects tier',t.pkgReco().id==='officer_300_500');
 
 // 7) loadLib 空存储返回 v5 默认库（合规官 + 星级账并存）
-ck('loadLib returns v6 defaults',(()=>{const l=t.loadLib();return l.length===20&&l[0].group==='金米合规官 · 月度服务'&&!l.some(x=>x.group.indexOf('星级账')>=0);})());
+ck('loadLib returns v7 defaults',(()=>{const l=t.loadLib();return l.length===26&&l[0].group==='金米合规官 · 月度服务'&&l.filter(x=>x.group==='合规官 · 包含服务明细').length===6&&!l.some(x=>x.group.indexOf('星级账')>=0);})());
 
 console.log(pass?'\nALL CROSS-QUOTE V4 CHECKS PASSED':'\nSOME CHECKS FAILED');
 process.exit(pass?0:1);

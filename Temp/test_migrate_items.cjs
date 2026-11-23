@@ -34,7 +34,7 @@ ck('draft: old pkg4888 removed',ids.indexOf('pkg4888')<0);
 ck('draft: old imp removed',ids.indexOf('imp')<0);
 ck('draft: new officer kept',ids.indexOf('officer_0_100')>=0);
 ck('draft: custom item kept',ids.indexOf('c1234567890')>=0);
-ck('draft: exactly 2 items remain',st.items.length===2);
+ck('draft: old removed, new+custom+6details remain',st.items.length===8&&st.items.some(x=>x.libId==='officer_s1'));
 
 // 历史快照也被清洗
 const recs=t.loadRecords();
@@ -49,6 +49,12 @@ ck('history record itself preserved',recs.length===1&&recs[0].customer==='历史
 const test=[{libId:'pkg4888'},{libId:'c999'},{libId:'officer_300_500'},{libId:'obsolete_xyz'}];
 const pruned=t.pruneItems(test);
 ck('pruneItems keeps valid+custom',pruned.length===2&&pruned[0].libId==='c999'&&pruned[1].libId==='officer_300_500');
+
+
+// 按名称黑名单清理：即便 id 是 c 开头（伪装成自定义），旧服务名也要清掉
+const fake=[{libId:'c999_old',name:'跨境电商企业备案'},{libId:'c888',name:'我的真实自定义'}];
+const p2=t.pruneItems(fake);
+ck('old service name removed even if id starts with c',p2.length===1 && p2[0].name==='我的真实自定义');
 
 console.log(pass?'\nALL MIGRATION CHECKS PASSED':'\nSOME CHECKS FAILED');
 process.exit(pass?0:1);
