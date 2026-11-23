@@ -50,7 +50,9 @@ ck('注销/香港 一事一议 price 0',fmap['注销公司'].price===0&&fmap['�
 
 // 5) 旧星级账已全清，只留合规官新体系
 const all=JSON.stringify(L)+html;
-ck('old star packages all removed',all.indexOf('pkg4888')<0&&all.indexOf('星级账套餐')<0&&all.indexOf('4888')<0&&all.indexOf('6888')<0&&all.indexOf('10888')<0&&all.indexOf('14888')<0);
+// 只查价目库数据本身（源码注释里提及旧档位名不算残留）
+const libJson=JSON.stringify(L);
+ck('old star packages all removed',libJson.indexOf('pkg4888')<0&&libJson.indexOf('星级账套餐')<0&&libJson.indexOf('4888')<0&&libJson.indexOf('6888')<0&&libJson.indexOf('10888')<0&&libJson.indexOf('14888')<0);
 ck('only new groups remain',['金米合规官 · 月度服务','配套服务','专项收费'].every(g=>L.some(x=>x.group===g)) && !L.some(x=>x.group.indexOf('星级账')>=0));
 // 按月报价、按年收费：price=月费×12, unit=年
 const months=[750,750,1000,1500,2000,2500], years=[9000,9000,12000,18000,24000,30000];

@@ -572,6 +572,50 @@ function loadLib(){
   return DEFAULT_LIB.map(x=>({...x}))
 }
 let lib = loadLib()
+
+/* ============ 旧数据迁移：剔除已从价目库删除的服务项 ============
+   换价目库 key 只更新「可选清单」，不会动已存草稿(state.items)和历史记录快照(snapshot)里
+   的项目内容——所以旧档位（如星级账 4888 / 包含服务）会一直跟到新版本里。
+   规则：libId 在当前价目库里、或以 c 开头（自定义项）的保留，其余视为已删除项剔除。 */
+function validItemIds(){ const s=new Set(lib.map(x=>x.id)); return s; }
+function pruneItems(items){
+  if(!Array.isArray(items)) return []
+  const ok=validItemIds()
+  return items.filter(it=>{
+    const id=String(it&&it.libId||'')
+    return ok.has(id) || id.charAt(0)==='c'   // c 开头 = 用户自定义项，永远保留
+  })
+}
+function pruneState(s){
+  if(!s||typeof s!=='object') return s
+  const kept=pruneItems(s.items)
+  if(!Array.isArray(s.items)||kept.length!==s.items.length) s.items=kept
+  return s
+}
+function migrateOldItems(){
+  // 1) 当前草稿
+  const before=Array.isArray(state.items)?state.items.length:0
+  pruneState(state)
+  if(before!==state.items.length){ saveState(); console.log('[迁移] 草稿剔除旧服务项',before-state.items.length,'条') }
+  // 2) 历史记录快照（一次性清洗，保留记录本身）
+  try{
+    const raw=localStorage.getItem(REC_KEY)
+    if(!raw) return
+    const arr=JSON.parse(raw)
+    if(!Array.isArray(arr)) return
+    let changed=false
+    arr.forEach(r=>{
+      if(!r.snapshot) return
+      try{
+        const snap=JSON.parse(r.snapshot)
+        const n0=Array.isArray(snap.items)?snap.items.length:0
+        pruneState(snap)
+        if(n0!==snap.items.length){ r.snapshot=JSON.stringify(snap); changed=true }
+      }catch(e){}
+    })
+    if(changed) localStorage.setItem(REC_KEY,JSON.stringify(arr))
+  }catch(e){}
+}
 function saveLib(){
   lib = lib.map(x=>({...x})).filter(x=>String(x.name||'').trim())
   state.items = state.items.filter(x=> lib.some(l=>l.id===x.libId))
@@ -1331,6 +1375,7 @@ function loadRecord(id){
   if(!confirm("将载入「"+rec.timeStr+"」记录的完整数据（覆盖当前表单），确定？")) return
   try{
     state = JSON.parse(rec.snapshot)
+    pruneState(state)   /* 历史快照里已删除的服务项不再载入 */
     if(!state.step || state.step<1 || state.step>4) state.step = 4
     saveState(); renderAll()
     closeRecModal()
@@ -1585,6 +1630,7 @@ async function aiWriteNotes(){
 })
 
 /* ============ 初始化 ============ */
+migrateOldItems()   /* 清掉草稿/历史快照里已从价目库删除的旧服务项（如星级账） */
 if(!state.quote.no) state.quote.no = autoNo()
 renderAll()
 saveState()
