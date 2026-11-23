@@ -81,5 +81,9 @@ ck('entity no longer affects tier',t.pkgReco().id==='officer_300_500');
 // 7) loadLib 空存储返回 v5 默认库（合规官 + 星级账并存）
 ck('loadLib returns v7 defaults',(()=>{const l=t.loadLib();return l.length===26&&l[0].group==='金米合规官 · 月度服务'&&l.filter(x=>x.group==='合规官 · 包含服务明细').length===6&&!l.some(x=>x.group.indexOf('星级账')>=0);})());
 
+// 分组顺序：合规官档 → 包含服务明细 → 配套服务 → 专项收费（老板要求明细放配套服务之前）
+const gOrder=[];L.forEach(x=>{if(gOrder[gOrder.length-1]!==x.group)gOrder.push(x.group)});
+ck('group order: 明细在配套服务之前',gOrder.indexOf('合规官 · 包含服务明细')>=0 && gOrder.indexOf('配套服务')>gOrder.indexOf('合规官 · 包含服务明细') && gOrder.indexOf('金米合规官 · 月度服务')<gOrder.indexOf('合规官 · 包含服务明细'));
+
 console.log(pass?'\nALL CROSS-QUOTE V4 CHECKS PASSED':'\nSOME CHECKS FAILED');
 process.exit(pass?0:1);
