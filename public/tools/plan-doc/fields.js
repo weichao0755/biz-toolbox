@@ -57,7 +57,40 @@ var F={
   budget:{k:'budget',label:'预算敏感度',type:'select',opts:['','价格敏感，要对比','看价值，合理就行','预算充足','待确认']},
   competitor:{k:'competitor',label:'是否在对比其他服务商',type:'select',opts:['','是，在对比','否，只找我们','还没定','待确认']},
   relationship:{k:'relationship',label:'客户来源 / 关系',type:'select',opts:['','老客户介绍','自己找来','渠道转介绍','我们主动联系','待确认']},
-  note:{k:'note',label:'补充信息（客户原话 / 特殊情况）',type:'textarea',ph:'例：老板本人不在国内，真正拍板的是运营主管；平台后台数据完整；之前找过一家代账做砸了……'}
+  note:{k:'note',label:'补充信息（客户原话 / 特殊情况）',type:'textarea',ph:'例：老板本人不在国内，真正拍板的是运营主管；平台后台数据完整；之前找过一家代账做砸了……'},
+
+  /* ===== 方案书模板专有问诊字段（来自《跨境合规服务方案书模板》附录 A / 一 / 六 / 八） ===== */
+  docDate:{k:'docDate',label:'编制日期',type:'text',ph:'例：2026 年 11 月 25 日'},
+  bizModel:{k:'bizModel',label:'业务模式',type:'select',opts:['','自营出口','平台代运营','达人带货','一般贸易','其他']},
+  grossMargin:{k:'grossMargin',label:'毛利率（%）',type:'text',ph:'例：35'},
+  netMargin:{k:'netMargin',label:'净利率（%）',type:'text',ph:'例：12'},
+  revenueNext:{k:'revenueNext',label:'未来一年营收预估（万元）',type:'text',ph:'例：800'},
+  cashierN:{k:'cashierN',label:'出纳人数',type:'text',ph:'例：1'},
+  accountantN:{k:'accountantN',label:'会计人数',type:'text',ph:'例：2'},
+  shareholder:{k:'shareholder',label:'股东情况',type:'select',opts:['','家族企业','外部合伙人','投资机构','其他']},
+  futurePlan:{k:'futurePlan',label:'未来发展规划',type:'select',opts:['','做生意','上市','高新','集团化','连锁经营','多元化','融资','其他']},
+  consultantFee:{k:'consultantFee',label:'顾问费',type:'text',ph:'例：以报价单为准'},
+  consultant:{k:'consultant',label:'洽谈咨询师',type:'text',ph:'例：张顾问'},
+  bossTrait:{k:'bossTrait',label:'老板性格 / 偏好',type:'text',ph:'例：决策快、看重落地节奏'},
+  specialNeed:{k:'specialNeed',label:'客户对顾问的特殊需求',type:'text',ph:'例：希望固定一位咨询师对接'},
+  taxIncluded:{k:'taxIncluded',label:'报价含税口径',type:'select',opts:['','不含税','含税']},
+  invoiceType:{k:'invoiceType',label:'发票类型',type:'text',ph:'例：增值税普通发票'},
+  serviceStart:{k:'serviceStart',label:'服务期起',type:'text',ph:'例：2026 年 12 月 1 日'},
+  serviceEnd:{k:'serviceEnd',label:'服务期止',type:'text',ph:'例：2027 年 11 月 30 日'},
+  teamPM:{k:'teamPM',label:'项目经理人数',type:'text',ph:'例：1'},
+  teamConsultant:{k:'teamConsultant',label:'税务咨询师人数',type:'text',ph:'例：1'},
+  teamAccountant:{k:'teamAccountant',label:'做账会计人数',type:'text',ph:'例：1'},
+  teamAssistant:{k:'teamAssistant',label:'税务助理人数',type:'text',ph:'例：1'},
+  /* 附录 B 风险诊断清单（勾选结果自动进第一章风险诊断表） */
+  riskCheck:{k:'riskCheck',label:'风险诊断清单（与客户逐项确认后勾选）',type:'chips',opts:[
+    '收入未申报或收入报送存在差异','平台回款与账面收入口径不一致','无票收入处理不规范',
+    '账务核算混乱','暂估成本巨大','上游取票难，税负成本高','达人佣金等大额支出取票不完整',
+    '资金、发票处理不合规','资金回流路径与账务数据不一致','出口发票购买方信息与实际不符',
+    '员工工资、社保、个税不规范','兼职/外包人员个税申报不规范',
+    '各主体人员混同、业务边界不清','股权架构乱，未设计合理架构',
+    '出口退税流程未建立或单证备案不完整','经营所需资质缺失或临期',
+    '被税务自查、稽查过','合作过不专业、不靠谱的财税机构','历史账务遗留问题待处理'
+  ]}
 };
 
 /* ============ 分组定义 ============ */
@@ -69,7 +102,8 @@ var GROUPS={
     {t:'D · 票据与成本',keys:['invoice','platInvoice','platCostPct','purchasePct','noTicketPct','laborCost']},
     {t:'E · 账务与申报',keys:['bookStatus','declMethod','invoiceIssue','bankAccount','reconcile']},
     {t:'F · 历史与风险',keys:['hist','smsQ','histGap','startMonth','taxRisk']},
-    {t:'G · 诉求与决策',keys:['need','deadline','decision','budget','competitor','relationship','note']}
+    {t:'G · 诉求与决策',keys:['need','deadline','decision','budget','competitor','relationship','note']},
+    {t:'H · 方案书问诊（模板专用）',keys:['docDate','bizModel','grossMargin','netMargin','revenueNext','cashierN','accountantN','shareholder','futurePlan','consultantFee','consultant','bossTrait','specialNeed','taxIncluded','invoiceType','serviceStart','serviceEnd','teamPM','teamConsultant','teamAccountant','teamAssistant','riskCheck']}
   ],
   domestic:[
     {t:'A · 基本盘',keys:['cid','subs','founded','city','entity','flow','staffN']},

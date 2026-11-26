@@ -8,6 +8,7 @@
 <script src="engine.js"></script>
 <script src="deep-engine.js"></script>
 <script src="fields.js"></script>
+<script src="cross-template.js"></script>
 <style>
   :root{
     --bg:#faf7f2; --surface:#fffefb; --surface-2:#fdf6ec; --border:#ece3d6;
@@ -61,6 +62,26 @@
   .aibox h3{font-size:15px;margin-bottom:6px;color:var(--accent)}
   .aibox p{font-size:12.5px;color:var(--text-2);margin-bottom:12px;line-height:1.7}
   .out{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;min-height:120px;white-space:pre-wrap;font-size:13.5px;line-height:1.85;color:var(--text)}
+  /* 模板驱动方案书预览 */
+  .out:has(.tpl-cover){white-space:normal}
+  .tpl-cover{text-align:center;padding:16px 0 22px;border-bottom:2px solid var(--accent);margin-bottom:16px}
+  .tpl-cover h2{font-size:24px;color:var(--accent);letter-spacing:2px;margin-bottom:8px}
+  .tpl-cover p{font-size:12.5px;color:var(--muted);line-height:1.9}
+  .tpl-toc{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-bottom:18px}
+  .tpl-toc b{font-size:14px;color:var(--accent)}
+  .tpl-toc ol{margin:8px 0 0;padding-left:22px;font-size:12.5px;line-height:1.9;color:var(--text)}
+  .tpl-h1{font-size:16px;color:var(--accent);border-left:4px solid var(--accent);padding-left:10px;margin:22px 0 10px}
+  .tpl-h2{font-size:14px;color:#7A5A12;margin:16px 0 8px}
+  .tpl-sub{font-size:13px;font-weight:600;color:var(--text);margin:12px 0 4px}
+  .tpl-p,.tpl-note{font-size:13px;line-height:1.85;margin:6px 0}
+  .tpl-note{color:var(--muted);font-size:12px}
+  .tpl-guide{font-size:11.5px;color:#a07830;background:#fdf6e6;border:1px dashed #e8d5a8;border-radius:6px;padding:7px 10px;margin:8px 0}
+  .tpl-list{margin:6px 0 10px;padding-left:22px;font-size:13px;line-height:1.85}
+  .tpl-table{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:12.5px}
+  .tpl-table th,.tpl-table td{border:1px solid var(--border);padding:7px 9px;text-align:left;vertical-align:top;line-height:1.65}
+  .tpl-table th{background:#f3eadb;color:#7a5a12;font-weight:600;white-space:nowrap}
+  .tpl-ai{background:#fffdf6;border:1px dashed var(--accent);border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.9;margin:8px 0 14px;outline:none}
+  .tpl-ai:focus{box-shadow:0 0 0 2px rgba(180,83,9,.15)}
   .out:empty::before{content:'AI 生成的大纲会显示在这里，确认后再导出 Word…';color:var(--muted)}
   .status{font-size:12.5px;color:var(--accent);margin:9px 0;min-height:18px}
   .stepbadge{display:inline-block;font-size:10.5px;padding:2px 9px;border-radius:999px;background:var(--surface-2);color:var(--accent);margin-left:8px;font-weight:600}
@@ -110,7 +131,7 @@
   <!-- ③ AI 生成 -->
   <div class="aibox">
     <h3>③ AI 生成方案大纲 <span class="stepbadge">严格按事实</span></h3>
-    <p>AI 会基于上面填的参数和内置行业口径，生成四段方案大纲（客户情况 / 诊断 / 落地方案 / 服务说明）。生成后先预览，确认无误再导出 Word。</p>
+    <p>跨境电商按《跨境合规服务方案书模板》生成 8 章 + 目录 + 4 附录（AI 只写业务链路、服务背景、客户诉求三段，其余固定）；其他行业生成四段方案大纲。生成后先预览，确认无误再导出 Word。</p>
     <div class="bar">
       <button class="btn" id="genBtn" onclick="genOutline()" disabled>生成方案大纲</button>
       <button class="btn ghost sm" onclick="clearForm()">清空重填</button>
@@ -512,7 +533,7 @@ function toggleChip(k,o){
   if(i<0)arr.push(o);else arr.splice(i,1);
   DATA[k]=arr; renderForm();
 }
-function clearForm(){ DATA={}; OUTTEXT=''; document.getElementById('outBox').innerHTML=''; document.getElementById('outHint').textContent=''; document.getElementById('docBtn').disabled=true; renderForm(); }
+function clearForm(){ DATA={}; OUTTEXT=''; TPL_BLOCKS=null; TPL_AI={}; LAST_DEEP=null; document.getElementById('outBox').innerHTML=''; document.getElementById('outHint').textContent=''; document.getElementById('docBtn').disabled=true; renderForm(); }
 
 /* ============ AI prompt：严格只用输入事实 ============ */
 function collectFacts(){
@@ -579,13 +600,161 @@ function buildPrompt(){
     '只输出四段正文，不加标题、不加解释、不写「以下是方案」这类开场白。'
   ].join('\n');
 }
+/* ============ 跨境电商 · 模板驱动方案书（来自《跨境合规服务方案书模板.docx》倒推） ============
+ * 只重做跨境电商行业；其余 13 行业保持原四段路径不变。
+ * AI 只写 3 段客观陈述（业务链路 / 服务背景 / 客户诉求），其余章节与表格由模板确定性渲染。 */
+var TPL_BLOCKS = null, TPL_AI = {};
+function isTplMode(){ return curInd === 'cross'; }
+
+function buildTplPrompt(){
+  var facts = collectFacts();
+  return [
+    '你是财税公司的方案文案助手。请严格依据下面【客户事实】，只写三段客观陈述，用于填入一份固定结构的方案书模板。',
+    '',
+    '【绝对铁律】', AI_RULES,
+    '',
+    '【客户事实（唯一事实来源）】', facts,
+    '',
+    '【输出格式 · 严格三段，用标记行分隔，不要写其他内容】',
+    '【业务链路】',
+    '用 2–3 段客观描述客户的业务链路：订单从哪个平台来、货从哪里出、钱回到哪个主体、发票由谁开具、由谁负责记账报税。只写事实中有的信息，没有的写「待确认」，不得编造。',
+    '【服务背景】',
+    '用 1 段补充与服务相关的背景：多主体经营、是否有专职财务、此前合作过的财税机构、是否被税务自查或稽查过。只写事实中有的，没有的写「待确认」。',
+    '【客户诉求】',
+    '把客户诉求按原话转述为 3–5 条编号列表，每条一行。只写事实里明确给出的诉求，不足 3 条就写实际条数，不得补写客户没说过的话。',
+    '',
+    '只输出这三个标记段的内容，不加标题、不加解释、不写「以下是」这类开场白。'
+  ].join('\n');
+}
+function parseTplAI(txt){
+  var out = {bizStatus:'',bizBackground:'',needs:''};
+  var s = String(txt||'').replace(/^\s*`{3}(?:markdown|md)?\s*/i,'').replace(/\s*`{3}\s*$/,'').trim();
+  var re = /【(业务链路|服务背景|客户诉求)】/g, m, hits = [];
+  while((m = re.exec(s)) !== null) hits.push({k:m[1], i:m.index, end:re.lastIndex});
+  for(var i=0;i<hits.length;i++){
+    var body = s.slice(hits[i].end, i+1<hits.length ? hits[i+1].i : s.length).trim();
+    if(hits[i].k === '业务链路') out.bizStatus = body;
+    else if(hits[i].k === '服务背景') out.bizBackground = body;
+    else out.needs = body;
+  }
+  if(!hits.length) out.bizStatus = s;   /* AI 没按格式输出，整段兜底当业务链路，不丢内容 */
+  return out;
+}
+function escT(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+/* 结构化 blocks → HTML 预览（guide 块标记为内部指引，不进 Word） */
+function tplHTML(blocks){
+  var h = '';
+  blocks.forEach(function(b){
+    if(b.t === 'cover'){
+      h += '<div class="tpl-cover"><h2>'+escT(b.lines[1])+'</h2><p>'+escT(b.lines[2])+'</p><p>'+escT(b.lines[0])+'</p>'
+        + '<p>'+escT(b.lines[3])+'　'+escT(b.lines[4])+'</p><p>'+escT(b.lines[5])+'</p></div>';
+    } else if(b.t === 'toc'){
+      h += '<div class="tpl-toc"><b>目录</b><ol>'+b.items.map(function(x){return '<li>'+escT(x)+'</li>';}).join('')+'</ol></div>';
+    } else if(b.t === 'h1') h += '<h3 class="tpl-h1">'+escT(b.no+'、'+b.text)+'</h3>';
+    else if(b.t === 'h1x') h += '<h3 class="tpl-h1">'+escT(b.text)+'</h3>';
+    else if(b.t === 'h2') h += '<h4 class="tpl-h2">'+escT(b.no+' '+b.text)+'</h4>';
+    else if(b.t === 'sub') h += '<div class="tpl-sub">'+escT(b.text)+'</div>';
+    else if(b.t === 'p' || b.t === 'note') h += '<p class="'+(b.t==='note'?'tpl-note':'tpl-p')+'">'+escT(b.text).replace(/\n/g,'<br>')+'</p>';
+    else if(b.t === 'guide') h += '<p class="tpl-guide">【内部填写指引 · 不进 Word】'+escT(b.text)+'</p>';
+    else if(b.t === 'list') h += '<ul class="tpl-list">'+b.items.map(function(x){return '<li>'+escT(x)+'</li>';}).join('')+'</ul>';
+    else if(b.t === 'aitext') h += '<div class="tpl-ai" data-slot="'+escT(b.slot||'')+'" contenteditable="true">'+escT(b.text).replace(/\n/g,'<br>')+'</div>';
+    else if(b.t === 'table'){
+      var rows = b.rows||[];
+      h += '<table class="tpl-table"><thead><tr>'+b.head.map(function(x){return '<th>'+escT(x)+'</th>';}).join('')+'</tr></thead><tbody>';
+      if(!rows.length) h += '<tr><td colspan="'+b.head.length+'" style="text-align:center;color:#999">'+escT(b.emptyText||'（暂无）')+'</td></tr>';
+      rows.forEach(function(r){ h += '<tr>'+r.map(function(c){return '<td>'+escT(c).replace(/\n/g,'<br>')+'</td>';}).join('')+'</tr>'; });
+      h += '</tbody></table>';
+    }
+  });
+  return h;
+}
+function syncTplAI(){
+  var nodes = document.querySelectorAll('#outBox .tpl-ai');
+  for(var i=0;i<nodes.length;i++){
+    var s = nodes[i].getAttribute('data-slot');
+    if(s) TPL_AI[s] = nodes[i].innerText;
+  }
+}
+/* 结构化 blocks → Word（复用 docx；guide 块跳过） */
+function tplWordParas(blocks, docx, R, F, FH, AT, P, T, TR, TC, WT, BS){
+  var paras = [];
+  function cell(text, o){
+    o = o||{};
+    var cfg = {width:{size:o.w||50,type:WT.PERCENTAGE}};
+    if(o.fill) cfg.shading = {fill:o.fill};
+    cfg.children = [new P({spacing:{before:40,after:40,line:300,lineRule:'auto'},
+      children:[R(text, o.h?{font:FH,size:19,bold:true,color:'7A5A12'}:{font:F,size:19})]})];
+    return new TC(cfg);
+  }
+  function table(b){
+    var head = [new TR({tableHeader:true, children:b.head.map(function(x){return cell(x,{h:true,fill:'F3EADB'});})})];
+    var rows = (b.rows||[]).map(function(r){ return new TR({children:r.map(function(c){return cell(c,{});})}); });
+    if(!rows.length) rows = [new TR({children:[new TC({columnSpan:b.head.length, children:[new P({children:[R(b.emptyText||'（暂无）',{font:F,size:19})]})]})]})];
+    return new T({width:{size:100,type:WT.PERCENTAGE},
+      borders:{top:{style:BS.SINGLE,size:4,color:'E0D5C0'},bottom:{style:BS.SINGLE,size:4,color:'E0D5C0'},
+        left:{style:BS.SINGLE,size:4,color:'E0D5C0'},right:{style:BS.SINGLE,size:4,color:'E0D5C0'},
+        insideHorizontal:{style:BS.SINGLE,size:2,color:'ECE3D6'},insideVertical:{style:BS.SINGLE,size:2,color:'ECE3D6'}},
+      rows:[head].concat(rows)});
+  }
+  blocks.forEach(function(b){
+    switch(b.t){
+      case 'cover':
+        paras.push(new P({spacing:{after:80,line:400,lineRule:'auto'},alignment:AT.CENTER,children:[R(b.lines[1],{font:FH,size:36,bold:true,color:'B45309'})]}));
+        paras.push(new P({spacing:{after:160,line:300,lineRule:'auto'},alignment:AT.CENTER,children:[R(b.lines[2],{font:FH,size:22,color:'7A5A12'})]}));
+        paras.push(new P({spacing:{after:260,line:300,lineRule:'auto'},alignment:AT.CENTER,children:[R(b.lines[3]+'　'+b.lines[4],{font:F,size:20})]}));
+        paras.push(new P({alignment:AT.CENTER,children:[R(b.lines[5],{font:F,size:18,color:'808080'})]}));
+        paras.push(new P({pageBreakBefore:true,children:[R('',{})]}));
+        break;
+      case 'toc':
+        paras.push(new P({spacing:{after:120},children:[R('目录',{font:FH,size:28,bold:true,color:'B45309'})]}));
+        b.items.forEach(function(x){ paras.push(new P({spacing:{after:60,line:300,lineRule:'auto'},children:[R(x,{font:F,size:20})]})); });
+        paras.push(new P({pageBreakBefore:true,children:[R('',{})]}));
+        break;
+      case 'h1': case 'h1x':
+        paras.push(new P({spacing:{before:280,after:120,line:320,lineRule:'auto'},children:[R(b.t==='h1'?(b.no+'、'+b.text):b.text,{font:FH,size:26,bold:true,color:'B45309'})]}));
+        break;
+      case 'h2':
+        paras.push(new P({spacing:{before:180,after:90,line:320,lineRule:'auto'},children:[R(b.no+' '+b.text,{font:FH,size:22,bold:true,color:'7A5A12'})]}));
+        break;
+      case 'sub':
+        paras.push(new P({spacing:{before:120,after:60,line:320,lineRule:'auto'},children:[R(b.text,{font:FH,size:21,bold:true})]}));
+        break;
+      case 'p': case 'note': case 'aitext':
+        String(b.text||'').split('\n').forEach(function(ln){
+          if(!String(ln).trim())return;
+          paras.push(new P({spacing:{before:40,after:40,line:320,lineRule:'auto'},alignment:AT.JUSTIFIED,
+            children:[R(ln,{font:F,size:20,color:b.t==='note'?'8A7A62':'2A2118'})]}));
+        });
+        break;
+      case 'list':
+        b.items.forEach(function(x){ paras.push(new P({spacing:{before:30,after:30,line:320,lineRule:'auto'},indent:{left:360},children:[R('• '+x,{font:F,size:20})]})); });
+        break;
+      case 'table':
+        paras.push(new P({spacing:{before:80,after:80},children:[table(b)]}));
+        break;
+      case 'guide': break;  /* 内部指引不进 Word */
+    }
+  });
+  return paras;
+}
+
 async function genOutline(){
   if(!curInd){ document.getElementById('genStatus').textContent='请先选择行业'; return; }
   aiLoad();
   if(!aiClean(AICFG.key)){ openKey(); document.getElementById('genStatus').textContent='请先填 AI Key（已弹出设置）'; return; }
   var btn=document.getElementById('genBtn'), st=document.getElementById('genStatus');
-  var deep=null, prompt;
-  if(isDeep(curInd)){
+  var deep=null, prompt, tplMode=isTplMode();
+  if(tplMode){
+    /* 跨境电商模板模式：规则引擎仍跑（供风险表兜底），但 AI 只写 3 段客观陈述 */
+    try{
+      if(typeof DeepEngine!=='undefined'&&typeof Engine!=='undefined') { deep=DeepEngine.build('cross',DATA,Engine); LAST_DEEP=deep; }
+      else LAST_DEEP=null;
+      if(typeof CrossTemplate==='undefined') throw new Error('方案书模板未加载，请刷新页面重试');
+    }catch(e){ st.textContent='分析失败：'+(e&&e.message||e); return; }
+    prompt=buildTplPrompt();
+    st.textContent='模板已就位，AI 只写业务链路 / 服务背景 / 客户诉求三段…';
+  } else if(isDeep(curInd)){
+    TPL_BLOCKS=null; TPL_AI={};
     st.textContent='规则引擎正在分析客户信息…';
     try{
       if(typeof DeepEngine==='undefined'||typeof Engine==='undefined') throw new Error('方案引擎未加载，请刷新页面重试');
@@ -596,6 +765,7 @@ async function genOutline(){
     st.textContent='结论已由规则引擎算出，AI 正在整理措辞…';
   } else {
     LAST_DEEP=null;
+    TPL_BLOCKS=null;
     prompt=buildPrompt();
     st.textContent='AI 正在按你填的事实生成大纲，请稍候…';
   }
@@ -603,11 +773,25 @@ async function genOutline(){
   try{
     var txt=await aiFetch([{role:'user',content:prompt}]);
     txt=String(txt).trim().replace(/^\s*```(?:markdown|md)?\s*/i,'').replace(/\s*```\s*$/,'').trim();
-    OUTTEXT=txt;
-    document.getElementById('outBox').innerText=txt;
-    document.getElementById('docBtn').disabled=false;
-    document.getElementById('outHint').textContent='已生成 '+txt.length+' 字 · 结论由规则引擎锁定，可直接改文字';
-    st.textContent=deep?'生成完成（结论已锁定，AI 仅润色），确认后导出 Word。':'生成完成，确认后导出 Word。';
+    if(tplMode){
+      TPL_AI=parseTplAI(txt);
+      TPL_BLOCKS=CrossTemplate.build(DATA,TPL_AI,LAST_DEEP);
+      OUTTEXT=TPL_AI.bizStatus+'\n'+TPL_AI.bizBackground+'\n'+TPL_AI.needs;
+      var ob=document.getElementById('outBox');
+      ob.setAttribute('contenteditable','false');   /* 模板骨架只读，仅高亮 AI 段落可改 */
+      ob.innerHTML=tplHTML(TPL_BLOCKS);
+      document.getElementById('docBtn').disabled=false;
+      document.getElementById('outHint').textContent='模板 8 章 + 目录 + 4 附录已渲染 · 高亮段落可直接改文字（改后自动带回 Word）';
+      st.textContent='生成完成（模板骨架固定，AI 仅写 3 段），确认后导出 Word。';
+    } else {
+      OUTTEXT=txt;
+      var ob2=document.getElementById('outBox');
+      ob2.setAttribute('contenteditable','true');   /* 四段模式全文可改，恢复原行为 */
+      ob2.innerText=txt;
+      document.getElementById('docBtn').disabled=false;
+      document.getElementById('outHint').textContent='已生成 '+txt.length+' 字 · 结论由规则引擎锁定，可直接改文字';
+      st.textContent=deep?'生成完成（结论已锁定，AI 仅润色），确认后导出 Word。':'生成完成，确认后导出 Word。';
+    }
   }catch(e){
     st.textContent='生成失败：'+(e&&e.message?e.message:'未知错误');
   }finally{ btn.disabled=false; }
@@ -625,6 +809,23 @@ async function genWord(){
     function R(t,o){ o=o||{}; if(!o.font)o.font=F; return new docx.TextRun(Object.assign({text:String(t==null?'':t)},o)); }
     var AT=docx.AlignmentType,P=docx.Paragraph,Doc=docx.Document,PK=docx.Packer,T=docx.Table,TR=docx.TableRow,TC=docx.TableCell,WT=docx.WidthType,BS=docx.BorderStyle;
     var paras=[];
+    /* ===== 跨境电商模板模式：8 章 + 目录 + 4 附录 + 表格，一次成型 ===== */
+    if(isTplMode() && TPL_BLOCKS){
+      syncTplAI();                       /* 带回用户在预览里改过的 AI 段落 */
+      var tb=CrossTemplate.build(DATA,TPL_AI,LAST_DEEP);
+      var tparas=tplWordParas(tb,docx,R,F,FH,AT,P,T,TR,TC,WT,BS);
+      var tdoc=new Doc({styles:{default:{document:{run:{font:F,size:20}}}},
+        sections:[{properties:{page:{margin:{top:1080,bottom:1080,left:1080,right:1080}}},
+          footers:{default:new docx.Footer({children:[new P({alignment:AT.CENTER,children:[R('金米财税 · 跨境合规服务方案书',{size:18,color:'808080'})]})]})},
+          children:tparas}]});
+      var tblob=await PK.toBlob(tdoc);
+      var ta=document.createElement('a'); ta.href=URL.createObjectURL(tblob);
+      var tnm=DATA.cid?String(DATA.cid).slice(0,20):'客户';
+      ta.download='跨境合规服务方案书-'+tnm+'.docx';
+      document.body.appendChild(ta);ta.click();ta.remove();
+      setTimeout(function(){try{URL.revokeObjectURL(ta.href);}catch(e){}},5000);
+      return;
+    }
     /* 封面标题块 */
     paras.push(new P({spacing:{after:80,line:400,lineRule:'auto'},alignment:AT.CENTER,children:[R('业务方案书',{font:FH,size:36,bold:true,color:'B45309'})]}));
     paras.push(new P({spacing:{after:260,line:300,lineRule:'auto'},alignment:AT.CENTER,children:[R(INDUSTRIES[curInd].name+' · 合规账务服务方案',{font:F,size:20,color:'7A5A12'})]}));

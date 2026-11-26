@@ -21,7 +21,7 @@ let pass=true;function ck(n,c){if(!c){console.log('FAIL:',n);pass=false;}else co
 
 // 1. 字段池与分组
 ck('field pool >40 fields',Object.keys(F.F).length>=40);
-ck('cross 45 fields / 7 groups',F.fieldsFor('cross').length===45&&F.groupsFor('cross').length===7);
+ck('cross 67 fields / 8 groups',F.fieldsFor('cross').length===67&&F.groupsFor('cross').length===8);
 ck('domestic 37 fields / 6 groups',F.fieldsFor('domestic').length===37&&F.groupsFor('domestic').length===6);
 ck('no duplicate field keys across groups',function(){
   const keys=F.fieldsFor('cross');return new Set(keys.map(f=>f.k)).size===keys.length;
@@ -34,10 +34,10 @@ ck('groups cover all fields',function(){
 // 2. 分组渲染
 t.pickInd('cross');
 var form=t.getForm();
-ck('form renders group headers',(form.match(/class="fsec"/g)||[]).length===7);
-ck('form has 45 fields',(form.match(/class="field"/g)||[]).length===45);
+ck('form renders group headers',(form.match(/class="fsec"/g)||[]).length===8);
+ck('form has 67 fields',(form.match(/class="field"/g)||[]).length===67);
 ck('form group titles',form.indexOf('A · 基本盘')>=0&&form.indexOf('G · 诉求与决策')>=0);
-ck('form shows total count',form.indexOf('45 项参数')>=0);
+ck('form shows total count',form.indexOf('67 项参数')>=0);
 t.toggleSec(0);
 ck('toggleSec collapses group',t.getForm().indexOf('fsec closed')>=0);
 t.toggleSec(0);
