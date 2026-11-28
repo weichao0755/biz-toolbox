@@ -44,8 +44,10 @@ function api(method,p,body){
   const parentSha=process.env.PARENT_OVERRIDE||parent;
   console.log('using parent:',parentSha);
   if(remote.sha!==parentSha) throw new Error('remote main != parentSha; NOT safe to push (diverged)');
-  const files=execFileSync('git',['diff-tree','--no-commit-id','--name-status','-r','HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
-  console.log('files in commit:',files.length);
+  // BASE_OVERRIDE：推送多个本地 commit 时，用基准提交算全部变更文件
+  const base=process.env.BASE_OVERRIDE||'HEAD^';
+  const files=execFileSync('git',['diff','--name-status',base,'HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
+  console.log('files since',base+':',files.length);
   const tree=[];
   for(const line of files){
     const [st,...rest]=line.split('\t');
@@ -61,7 +63,7 @@ function api(method,p,body){
   const newTree=await api('POST','/git/trees',{base_tree:parentCommit.tree.sha,tree:tree.filter(x=>x.sha)});
   const delEntries=tree.filter(x=>!x.sha);
   const finalTree=delEntries.length?await api('POST','/git/trees',{base_tree:newTree.sha,tree:delEntries.map(x=>({path:x.path,mode:'100644',sha:null}))}):newTree;
-  const msg=execFileSync('git',['log','-1','--pretty=%B'],{encoding:'utf8'}).trim();
+  const msg=process.env.MSG_OVERRIDE||execFileSync('git',['log','-1','--pretty=%B'],{encoding:'utf8'}).trim();
   const commit=await api('POST','/git/commits',{message:msg,tree:finalTree.sha,parents:[parentSha]});
   console.log('created commit:',commit.sha);
   await api('PATCH','/git/refs/heads/main',{sha:commit.sha,force:false});
