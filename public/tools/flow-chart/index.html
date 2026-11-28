@@ -26,6 +26,13 @@
   .btn:hover{opacity:.92}
   .btn.ghost{background:#fff8ec;color:#b45309;border:1px solid #e8d5b8}
   .hint{font-size:12px;color:#9a8a72;margin-top:10px;line-height:1.7}
+  .urow{display:flex;gap:7px;align-items:center;margin-bottom:7px}
+  .urow input,.urow select{padding:7px 9px;border:1px solid #e0d5c0;border-radius:7px;background:#fffdf8;color:#2a2118;font-size:12.5px;font-family:inherit;outline:none;min-width:0}
+  .urow input[type=text]{flex:1}
+  .urow select{flex:1}
+  .urow button{border:0;background:#f6ecdc;color:#b45309;border-radius:6px;cursor:pointer;font-size:12px;padding:6px 9px;font-family:inherit}
+  .urow button:hover{background:#efdcc0}
+  .urow .idx{color:#9a8a72;font-size:11.5px;width:18px;flex:0 0 auto}
   .flow-toggles{display:flex;flex-wrap:wrap;gap:12px}
   .flow-btn{border:1.5px solid #ddd2bd;background:#fffdf8;color:#9a8a72;border-radius:999px;padding:9px 18px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;transition:.18s}
   .flow-btn:hover{opacity:.85}
@@ -71,13 +78,12 @@
 <body>
 <div class="wrap">
   <div class="hd"><h1>业务链路图生成器</h1><span class="tag">选模式 · 填客户 → 一键出图</span></div>
-  <p class="sub">按业务链路示意图还原：节点框 + 实线/虚线/点线箭头 + 注释框。7 种模式（赛维1.0/2.0、0110、9610、9710、9810、1039）一键切换，销售只需选模式、填客户名和平台，即可导出 PNG 发客户或贴方案书。</p>
+  <p class="sub">按业务链路示意图还原：节点框 + 实线/虚线/点线箭头 + 注释框。7 种固定模式（赛维1.0/2.0、0110、9610、9710、9810、1039）+ 自定义模式一键切换，销售只需选模式即可一键导出 PNG 发客户或贴方案书。</p>
 
   <div class="card">
-    <h2>1 · 填写信息</h2>
+    <h2>1 · 选择业务模式</h2>
     <div class="frow">
-      <div class="fg"><label>客户名称</label><input id="cid" placeholder="如：深圳某某科技有限公司" oninput="save()"></div>
-      <div class="fg"><label>业务模式</label><select id="mode" onchange="save();render()">
+      <div class="fg"><label>业务模式</label><select id="mode" onchange="save();renderUserEditor();render()">
         <option value="saiwei1">赛维 1.0（协议控制 · 第三方账户）</option>
         <option value="saiwei2">赛维 2.0（本土账户 · 收入申报）</option>
         <option value="m0110">一般贸易出口 0110（免抵退）</option>
@@ -85,13 +91,29 @@
         <option value="m9710">跨境电商 B2B 直接出口 9710</option>
         <option value="m9810">跨境电商出口海外仓 9810</option>
         <option value="m1039">市场采购贸易 1039（免征不退）</option>
-      </select></div>
-      <div class="fg"><label>主营平台</label><select id="platform" onchange="save();render()">
-        <option>亚马逊</option><option>TikTok Shop</option><option>Temu</option><option>速卖通</option><option>独立站</option><option>多平台</option>
+        <option value="user">自定义（自己填节点和连线）</option>
       </select></div>
       <div class="fg" style="flex:0 0 auto"><label>&nbsp;</label><button class="btn ghost" onclick="render()">重新生成</button></div>
     </div>
-    <div class="hint">示意图节点与文案随模式自动切换；注释框为通用口径，可按客户实情口头解释。</div>
+    <div class="hint">节点与文案随模式自动切换；注释框为通用口径，可按客户实情口头解释。</div>
+  </div>
+
+  <div class="card" id="userCard" style="display:none">
+    <h2>自定义链路图 · 填写节点与连线</h2>
+    <div class="hint" style="margin:0 0 12px">填好节点名称和连线，工具自动排版（不用管位置）。改完点「重新生成」或下面的「应用到图」。</div>
+    <div style="display:flex;gap:20px;flex-wrap:wrap">
+      <div style="flex:1;min-width:300px">
+        <div style="font-weight:600;color:#7a5a12;margin-bottom:8px">节点（按顺序填名称）</div>
+        <div id="userNodes"></div>
+        <button class="btn ghost" style="margin-top:8px;padding:7px 14px;font-size:12.5px" onclick="userAddNode()">＋ 加节点</button>
+      </div>
+      <div style="flex:1;min-width:340px">
+        <div style="font-weight:600;color:#7a5a12;margin-bottom:8px">连线（起点 → 终点，选流类型）</div>
+        <div id="userEdges"></div>
+        <button class="btn ghost" style="margin-top:8px;padding:7px 14px;font-size:12.5px" onclick="userAddEdge()">＋ 加连线</button>
+      </div>
+    </div>
+    <button class="btn" style="margin-top:14px" onclick="userApply()">应用到图</button>
   </div>
 
   <div class="card">
@@ -116,8 +138,8 @@
 var LS='flow_chart_v1';
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function val(id){return document.getElementById(id).value;}
-function save(){try{localStorage.setItem(LS,JSON.stringify({cid:val('cid'),mode:val('mode'),platform:val('platform')}));}catch(e){}}
-function load(){try{var s=JSON.parse(localStorage.getItem(LS)||'{}');if(s.cid)document.getElementById('cid').value=s.cid;if(s.mode)document.getElementById('mode').value=s.mode;if(s.platform)document.getElementById('platform').value=s.platform;}catch(e){}}
+function save(){try{localStorage.setItem(LS,JSON.stringify({mode:val('mode')}));}catch(e){}}
+function load(){try{var s=JSON.parse(localStorage.getItem(LS)||'{}');if(s.mode)document.getElementById('mode').value=s.mode;}catch(e){}}
 /* 预览区等比缩放适配宽度（仅影响屏幕显示；出图用离屏克隆，不受影响） */
 function fitStage(){
   var box=document.querySelector('.preview-box'), stage=document.getElementById('stage');
@@ -261,6 +283,49 @@ function renderWires(d,nodes){
   return parts.join('')+lp.join('');
 }
 
+/* ===== 自定义链路图编辑（填空式 + 自动排版） ===== */
+var USER_DATA=FlowData.loadCustom();
+var FLOW_OPT=[['','主干（灰实线）'],['goods','货物流（蓝虚线）'],['fund','资金流（红点线）'],['invoice','票据流（金长虚线）']];
+function isUserMode(){ return val('mode')==='user'; }
+function userSave(){ FlowData.saveCustom(USER_DATA); }
+function userNodeOpts(sel){
+  return USER_DATA.nodes.map(function(n){ return '<option value="'+n.id+'"'+(n.id===sel?' selected':'')+'>'+esc(n.name||n.id)+'</option>'; }).join('');
+}
+function renderUserEditor(){
+  var nc=document.getElementById('userCard'); if(!nc)return;
+  nc.style.display=isUserMode()?'block':'none';
+  if(!isUserMode())return;
+  var hn='';
+  USER_DATA.nodes.forEach(function(n,i){
+    hn+='<div class="urow"><span class="idx">'+(i+1)+'</span><input type="text" value="'+esc(n.name||'')+'" placeholder="节点'+ (i+1) +'名称" oninput="USER_DATA.nodes['+i+'].name=this.value;userSave()">'
+      +'<button onclick="USER_DATA.nodes.splice('+i+',1);USER_DATA.edges=USER_DATA.edges.filter(function(e){return e.from!==\''+n.id+'\'&&e.to!==\''+n.id+'\';});userSave();renderUserEditor()">删</button></div>';
+  });
+  document.getElementById('userNodes').innerHTML=hn||'<div class="hint">还没有节点，点下面「加节点」</div>';
+  var he='';
+  USER_DATA.edges.forEach(function(e,i){
+    var opts=FLOW_OPT.map(function(o){ return '<option value="'+o[0]+'"'+((e.flow||'')===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('');
+    he+='<div class="urow"><span class="idx">'+(i+1)+'</span>'
+      +'<select onchange="USER_DATA.edges['+i+'].from=this.value;userSave()">'+userNodeOpts(e.from)+'</select>'
+      +'<span style="color:#9a8a72">→</span>'
+      +'<select onchange="USER_DATA.edges['+i+'].to=this.value;userSave()">'+userNodeOpts(e.to)+'</select>'
+      +'<select onchange="USER_DATA.edges['+i+'].flow=this.value;userSave()">'+opts+'</select>'
+      +'<input type="text" style="flex:0 0 70px;width:70px" value="'+esc(e.label||'')+'" placeholder="标签" oninput="USER_DATA.edges['+i+'].label=this.value;userSave()">'
+      +'<button onclick="USER_DATA.edges.splice('+i+',1);userSave();renderUserEditor()">删</button></div>';
+  });
+  document.getElementById('userEdges').innerHTML=he||'<div class="hint">还没有连线，点下面「加连线」</div>';
+}
+function userAddNode(){
+  var i=USER_DATA.nodes.length+1;
+  USER_DATA.nodes.push({id:'n'+Date.now().toString(36)+i,name:'节点'+i});
+  userSave();renderUserEditor();
+}
+function userAddEdge(){
+  if(USER_DATA.nodes.length<2){ alert('至少要有 2 个节点才能加连线'); return; }
+  USER_DATA.edges.push({from:USER_DATA.nodes[0].id,to:USER_DATA.nodes[1].id,flow:'',label:''});
+  userSave();renderUserEditor();
+}
+function userApply(){ USER_DATA=FlowData.loadCustom(); render(); }
+
 /* 三条流向线的显示状态（默认全亮） */
 var FLOW_ON={goods:true,fund:true,invoice:true};
 function flowColor(flow){ var d=FlowData.FLOW_DEFS[flow]; return d?d.color:'#8a7a62'; }
@@ -298,8 +363,8 @@ function nodeHTML(n){
 function render(){
   var mode=val('mode'), T=FlowData.THEME;
   /* 赛维族用店群架构骨架；m0110/m9610/m9710/m9810/m1039 用报关出口骨架 */
-  var d=(mode.charAt(0)==='m'&&FlowData.fillCustom)?FlowData.fillCustom(mode):FlowData.fillMode(mode);
-  var cid=val('cid')||'【客户名称】', plat=val('platform');
+  var d=isUserMode()?FlowData.fillCustomUser(USER_DATA):((mode.charAt(0)==='m'&&FlowData.fillCustom)?FlowData.fillCustom(mode):FlowData.fillMode(mode));
+  var modeName=d.mode.name;
   var map={};d.nodes.forEach(function(n){map[n.id]=n;});
   var wires=renderWires(d,d.nodes);
   var nh='';
@@ -311,8 +376,8 @@ function render(){
     return '<span style="color:'+flowColor(f)+'">● '+FlowData.FLOW_DEFS[f].name+'</span>';
   }).join('　')||'<span style="color:#9a8a72">（未显示流向线）</span>';
   document.getElementById('sheet').innerHTML=
-    '<div class="sheet-hd"><h2>业务链路图</h2><div class="meta">客户：'+esc(cid)+'<br>平台：'+esc(plat)+'　模式：'+esc(d.mode.name)+'</div></div>'
-    +'<div class="sheet-mode">'+esc(d.mode.name)+'　'+legend+'　<span style="color:#8a7a62">· 灰实线为主干业务链</span></div>'
+    '<div class="sheet-hd"><h2>业务链路图</h2><div class="meta">模式：'+esc(modeName)+'</div></div>'
+    +'<div class="sheet-mode">'+esc(modeName)+'　'+legend+'　<span style="color:#8a7a62">· 灰实线为主干业务链</span></div>'
     +'<div class="canvas-area">'+wires+d.nodes.map(nodeHTML).join('')+nh+'</div>'
     +'<div class="sheet-ft"><span>金米财税 · 跨境合规业务链路图</span><span>商业保密 · 仅限收件方内部使用</span></div>';
 }
@@ -327,13 +392,12 @@ async function download(){
   try{
     var canvas=await html2canvas(clone,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,allowTaint:true});
     var a=document.createElement('a');a.href=canvas.toDataURL('image/png');
-    var nm=(val('cid')||'客户').slice(0,20).replace(/[\\/:*?"<>|]/g,'');
-    a.download='业务链路图-'+nm+'.png';document.body.appendChild(a);a.click();a.remove();
+    a.download='业务链路图-'+val('mode')+'.png';document.body.appendChild(a);a.click();a.remove();
     toast('已下载 ✅');
   }catch(e){toast('出图失败：'+(e&&e.message||e));}
   finally{box.innerHTML='';}
 }
-load();renderToggles();render();fitStage();
+load();renderUserEditor();renderToggles();render();fitStage();
 </script>
 </body>
 </html>

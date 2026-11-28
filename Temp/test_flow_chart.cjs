@@ -48,12 +48,13 @@ ck('no placeholder leftovers',!/__[A-Z_]+__/.test(JSON.stringify(a))&&!/__[A-Z_]
 ck('shop group has 4 subs',a.nodes.find(n=>n.id==='shops').subs.length===4);
 
 // 3) 渲染：默认 saiwei1
-els.cid.value='深圳测试科技';els.mode.value='saiwei1';els.platform.value='亚马逊';
+els.mode.value='saiwei1';
 t.render();
 let h=els.sheet.innerHTML;
 const eq=(sb.FlowData.NOTES||[]).find(n=>n.id==='equity');
 ck('equity note moved below, not over buyer',!!eq && eq.y>500 && eq.x+eq.w<=1400);
-ck('render sheet header',h.indexOf('业务链路图')>=0&&h.indexOf('深圳测试科技')>=0&&h.indexOf('赛维 1.0')>=0);
+ck('render sheet header',h.indexOf('业务链路图')>=0&&h.indexOf('赛维 1.0')>=0);
+ck('no customer/platform on sheet',h.indexOf('客户：')<0&&h.indexOf('平台：')<0);
 ck('render 14 nodes',(h.match(/class="node/g)||[]).length===14);
 ck('render 20 edges (all flows on)',(h.match(/<path d="M[^"]+" fill="none" stroke=/g)||[]).length===20);
 ck('render 5 notes',(h.match(/class="note/g)||[]).length===5);
@@ -64,18 +65,18 @@ ck('render 3 flow colors',h.indexOf('#2d7fb8')>=0&&h.indexOf('#c0392b')>=0&&h.in
 ck('render mode label 协议控制',h.indexOf('协议控制')>=0);
 
 // 4) 切到 saiwei2 重新渲染
-els.mode.value='saiwei2';els.platform.value='Temu';t.render();
+els.mode.value='saiwei2';t.render();
 h=els.sheet.innerHTML;
-ck('switch mode updates header',h.indexOf('赛维 2.0')>=0&&h.indexOf('Temu')>=0);
+ck('switch mode updates header',h.indexOf('赛维 2.0')>=0);
 ck('switch mode updates label',h.indexOf('本土银行账户')>=0&&h.indexOf('协议控制')<0);
 ck('switch mode updates note',h.indexOf('15号文')>=0);
 
 // 4b) 切到报关模式族：骨架换成 11 节点、文案来自 cross 口径
-els.mode.value='m9610';els.cid.value='广州测试贸易';t.render();
+els.mode.value='m9610';t.render();
 h=els.sheet.innerHTML;
 ck('customs mode renders 11 nodes',(h.match(/class="node/g)||[]).length===11);
 ck('customs mode renders 15 edges',(h.match(/<path d="M[^"]+" fill="none" stroke=/g)||[]).length===15);
-ck('customs mode header',h.indexOf('跨境电商零售出口 9610')>=0&&h.indexOf('广州测试贸易')>=0);
+ck('customs mode header',h.indexOf('跨境电商零售出口 9610')>=0);
 ck('customs mode 只免不退 note',h.indexOf('只免不退')>=0);
 ck('customs mode no saiwei nodes',h.indexOf('店铺公司群')<0&&h.indexOf('第三方账户主账户')<0);
 els.mode.value='m9810';t.render();h=els.sheet.innerHTML;
@@ -86,6 +87,7 @@ ck('switch back to saiwei restores 14 nodes',(h.match(/class="node/g)||[]).lengt
 
 // 4c) 三条流开关：默认全亮；关闭某流线数减少且颜色消失；全关只剩主干
 ck('FLOW_ON default all true',t.FLOW_ON&&t.FLOW_ON.goods&&t.FLOW_ON.fund&&t.FLOW_ON.invoice);
+ck('form has no cid/platform inputs',html.indexOf('id="cid"')<0&&html.indexOf('id="platform"')<0&&html.indexOf('客户名称')<0&&html.indexOf('主营平台')<0);
 ck('3 flow buttons rendered',(els.flowToggles.innerHTML.match(/class="flow-btn/g)||[]).length===3);
 ck('3 colors distinct',new Set(['#2d7fb8','#c0392b','#b8860b']).size===3);
 t.toggleFlow('goods'); h=els.sheet.innerHTML;
@@ -114,6 +116,33 @@ const bk=fs.readFileSync('src/data/backupKeys.js','utf8');
 ck('flow-chart registered in 合规区(compliance)',/path: '\/tools\/flow-chart'[\s\S]{0,500}?category: 'compliance'/.test(tools));
 ck('backupKeys registers flow_chart_v1',bk.indexOf("'flow_chart_v1'")>=0);
 ck('html2canvas dep copied',fs.existsSync(DIR+'html2canvas.min.js'));
+
+// 7) 自定义模式：填空 + 自动排版
+ck('mode dropdown has 自定义',html.indexOf('value="user"')>=0&&html.indexOf('自定义（自己填节点和连线）')>=0);
+ck('custom editor DOM exists',html.indexOf('id="userNodes"')>=0&&html.indexOf('id="userEdges"')>=0&&html.indexOf('userApply()')>=0);
+ck('backupKeys registers flow_custom_v1',bk.indexOf("'flow_custom_v1'")>=0);
+const F=sb.FlowData;
+ck('CUSTOM_DEFAULT 6 nodes / 7 edges',F.CUSTOM_DEFAULT.nodes.length===6&&F.CUSTOM_DEFAULT.edges.length===7);
+/* 自动排版：忽略资金流反向边，6节点应均匀排6列（x 递增，y 相同） */
+const positions=F.autoLayout(F.CUSTOM_DEFAULT.nodes,F.CUSTOM_DEFAULT.edges);
+const xs=F.CUSTOM_DEFAULT.nodes.map(n=>positions[n.id].x).sort((a,b)=>a-b);
+ck('autoLayout 6 distinct columns',xs.length===6&&xs[5]-xs[0]===215*5);
+const filled=F.fillCustomUser(F.CUSTOM_DEFAULT);
+ck('fillCustomUser shape',filled.nodes.length===6&&filled.edges.length===7&&filled.mode.name==='自定义链路图');
+ck('custom edges keep flow types',filled.edges.filter(e=>e.flow==='goods').length===3&&filled.edges.filter(e=>e.flow==='fund').length===1&&filled.edges.filter(e=>e.flow==='invoice').length===1);
+const edited={nodes:[{id:'a',name:'工厂'},{id:'b',name:'外贸'},{id:'c',name:'客户'}],edges:[{from:'a',to:'b',flow:'',label:'卖'},{from:'b',to:'c',flow:'fund',label:'钱'}]};
+const ef=F.fillCustomUser(edited);
+ck('user filled nodes render by name',ef.nodes.length===3&&ef.nodes[0].label==='工厂'&&ef.nodes[2].label==='客户');
+ck('user filled edges keep labels',ef.edges[0].label==='卖'&&ef.edges[1].flow==='fund');
+/* 端到端：切到自定义模式渲染 */
+els.mode.value='user';els.flowToggles.innerHTML='';t.render();
+h=els.sheet.innerHTML;
+ck('user mode renders 6 nodes',(h.match(/class="node/g)||[]).length===6);
+ck('user mode renders 7 edges',(h.match(/<path d="M[^"]+" fill="none" stroke=/g)||[]).length===7);
+ck('user mode header 自定义链路图',h.indexOf('自定义链路图')>=0&&h.indexOf('客户：')<0);
+/* 切回固定模式恢复 */
+els.mode.value='m9610';t.render();
+ck('switch back from custom to fixed',(els.sheet.innerHTML.match(/class="node/g)||[]).length===11);
 
 console.log(pass?'\nALL FLOW-CHART CHECKS PASSED':'\nSOME CHECKS FAILED');
 process.exit(pass?0:1);

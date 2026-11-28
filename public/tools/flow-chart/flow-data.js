@@ -267,5 +267,74 @@ function fillMode(mode){
   };
 }
 
-scope.FlowData={NODES:NODES,EDGES:EDGES,NOTES:NOTES,MODES:MODES,CUSTOM_MODES:CUSTOM_MODES,THEME:THEME,FLOW_DEFS:FLOW_DEFS,FLOW_ORDER:FLOW_ORDER,fillMode:fillMode,fillCustom:fillCustom};
+/* ===== 自定义链路图：销售填节点/连线，自动排版 ===== */
+var CUSTOM_KEY='flow_custom_v1';
+var CUSTOM_DEFAULT={
+  nodes:[
+    {id:'n1',name:'供应商'},
+    {id:'n2',name:'出口主体'},
+    {id:'n3',name:'报关行'},
+    {id:'n4',name:'海外仓'},
+    {id:'n5',name:'平台'},
+    {id:'n6',name:'消费者'}
+  ],
+  edges:[
+    {from:'n1',to:'n2',flow:null,label:'采购'},
+    {from:'n2',to:'n3',flow:null,label:'报关'},
+    {from:'n3',to:'n4',flow:'goods',label:'头程'},
+    {from:'n4',to:'n5',flow:'goods',label:'备货'},
+    {from:'n5',to:'n6',flow:'goods',label:'销售'},
+    {from:'n1',to:'n2',flow:'invoice',label:'进项票'},
+    {from:'n6',to:'n5',flow:'fund',label:'支付货款'}
+  ]
+};
+function loadCustom(){
+  try{ var s=JSON.parse(localStorage.getItem(CUSTOM_KEY)||'null');
+    if(s&&Array.isArray(s.nodes)&&Array.isArray(s.edges)) return s;
+  }catch(e){}
+  return JSON.parse(JSON.stringify(CUSTOM_DEFAULT));
+}
+function saveCustom(o){ try{localStorage.setItem(CUSTOM_KEY,JSON.stringify(o));}catch(e){} }
+/* 拓扑分层排版：入度0在最左列，按边逐层右推；同列纵向均分 */
+function autoLayout(nodes,edges){
+  var idx={},indeg={},out={};
+  nodes.forEach(function(n,i){ idx[n.id]=i; indeg[n.id]=0; out[n.id]=[]; });
+  /* 资金流常是反向（买家→平台），不参与拓扑分层，否则节点被推到后面 */
+  edges.forEach(function(e){ if(e.flow==='fund') return; if(idx[e.from]!=null&&idx[e.to]!=null){ indeg[e.to]++; out[e.from].push(e.to); } });
+  /* 分层（限制层数防环导致死循环） */
+  var layer={}, queue=[], cnt=0;
+  nodes.forEach(function(n){ if(indeg[n.id]===0){ layer[n.id]=0; queue.push(n.id); } });
+  while(queue.length && cnt++<200){
+    var id=queue.shift(), nd=out[id];
+    nd.forEach(function(to){ var L=(layer[id]!=null?layer[id]:0)+1; if(layer[to]==null||L>layer[to]){ layer[to]=L; queue.push(to); } });
+  }
+  nodes.forEach(function(n){ if(layer[n.id]==null) layer[n.id]=0; });
+  /* 按层分组，超出6层的压到第6层 */
+  var cols={};
+  nodes.forEach(function(n){ var L=Math.min(layer[n.id]||0,5); (cols[L]=cols[L]||[]).push(n.id); });
+  var keys=Object.keys(cols).map(Number).sort(function(a,b){return a-b;});
+  var pos={};
+  keys.forEach(function(L){
+    var arr=cols[L], per=Math.max(1,Math.floor(6/arr.length));
+    arr.forEach(function(id,i){ pos[id]={x:60+L*215, y:170+(i-(arr.length-1)/2)*110}; });
+  });
+  return pos;
+}
+function fillCustomUser(data){
+  data=data||CUSTOM_DEFAULT;
+  var nodes=(data.nodes||[]).map(function(n){ return Object.assign({},n); });
+  var edges=(data.edges||[]).filter(function(e){ return e.from&&e.to&&e.from!==e.to; });
+  var pos=autoLayout(nodes,edges);
+  var outNodes=nodes.map(function(n,i){
+    var p=pos[n.id]||{x:60+(i%6)*215,y:170+Math.floor(i/6)*110};
+    return {id:n.id, x:p.x, y:p.y, w:130, h:52, shape:'rect', kind:'orange', label:n.name||n.id};
+  });
+  var outEdges=edges.map(function(e,i){ return {id:'e'+i,from:e.from,to:e.to,kind:e.flow==='fund'?'red-dot':'solid',flow:e.flow||null,label:e.label||''}; });
+  return {
+    nodes:outNodes, edges:outEdges, notes:[],
+    mode:{name:'自定义链路图',defNote:'',useNote:'',limitNote:'',docNote:'',trapNote:''}
+  };
+}
+
+scope.FlowData={NODES:NODES,EDGES:EDGES,NOTES:NOTES,MODES:MODES,CUSTOM_MODES:CUSTOM_MODES,THEME:THEME,FLOW_DEFS:FLOW_DEFS,FLOW_ORDER:FLOW_ORDER,fillMode:fillMode,fillCustom:fillCustom,CUSTOM_KEY:CUSTOM_KEY,CUSTOM_DEFAULT:CUSTOM_DEFAULT,loadCustom:loadCustom,saveCustom:saveCustom,autoLayout:autoLayout,fillCustomUser:fillCustomUser};
 })(typeof window!=='undefined'?window:globalThis);
