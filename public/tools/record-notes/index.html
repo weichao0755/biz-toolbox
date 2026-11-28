@@ -261,6 +261,31 @@
   </div>
 </div>
 
+<div class="modal-mask" id="shareGuideMask">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head"><h3>录对方声音 · 一步不能漏</h3><div class="spacer"></div><button class="btn ghost sm" onclick="closeShareGuide()">✕</button></div>
+    <div class="modal-body" style="font-size:13px;line-height:1.9;color:var(--text-2)">
+      <div style="background:#fff8ec;border:1px solid var(--accent-line);border-radius:9px;padding:12px 14px;margin-bottom:14px">
+        <b style="color:#9a5b0c">为什么之前只听到你自己？</b><br>
+        浏览器默认只录麦克风（你的声音）。对方在微信电脑版 / 腾讯会议里的声音是从<b>电脑扬声器</b>出来的，必须单独捕获「系统声音」才能录到。
+      </div>
+      <div style="font-weight:700;color:var(--text-1);margin-bottom:6px">点「开始录音」后会弹出共享窗口，按下面选：</div>
+      <ol style="margin:0 0 12px;padding-left:20px">
+        <li>选<b>你正在开会/通话的那个窗口或标签页</b>（推荐选标签页，音频最稳）</li>
+        <li>在弹窗底部<b style="color:#c0392b">勾选「分享音频 / Share audio」</b> —— 这一步漏了就录不到对方</li>
+        <li>如果列表里没有音频开关，换选「标签页」再试</li>
+      </ol>
+      <div style="background:#f2f8ef;border:1px solid #cfe0c8;border-radius:9px;padding:10px 13px;color:#3f6238">
+        开始后先说一句话测试，停几秒听对方说话，看波形有没有跳动。确认两边都有声音再正式谈。
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost sm" onclick="closeShareGuide()">取消</button>
+      <button class="btn primary sm" onclick="proceedShare()">我知道了，开始共享</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-mask" id="settingsMask">
   <div class="modal">
     <div class="modal-head"><h3>设置</h3><div class="spacer"></div><button class="btn ghost sm" id="closeSettings">✕</button></div>
@@ -479,10 +504,10 @@ function renderRecorder(){
       <div class="source-picker">
         <div class="source-title">录音来源</div>
         <div class="source-opts">
-          <button class="source-opt active" data-src="mic"><span class="so-radio"></span><b>仅麦克风</b><small>当面沟通 / 自己备忘</small></button>
-          <button class="source-opt" data-src="mixed"><span class="so-radio"></span><b>系统声音 + 麦克风</b><small>微信电脑版 / 腾讯会议 / 线上通话</small></button>
+          <button class="source-opt" data-src="mic"><span class="so-radio"></span><b>仅麦克风</b><small>当面沟通 / 自己备忘</small></button>
+          <button class="source-opt active" data-src="mixed"><span class="so-radio"></span><b>系统声音 + 麦克风</b><small>微信电脑版 / 腾讯会议 / 线上通话</small></button>
         </div>
-        <div class="source-warn" id="sourceWarn">⚠ 浏览器只能录到麦克风里的声音。电话沟通请改用手机通话录音，再点「导入音频文件」。</div>
+        <div class="source-warn" id="sourceWarn" style="display:none">⚠ 仅麦克风只能录到你自己的声音。线上会议请选「系统声音 + 麦克风」，共享时勾选「分享音频」。</div>
       </div>`}
       <div class="rec-tips">
         <b>按场景怎么录</b><br>
@@ -494,17 +519,26 @@ function renderRecorder(){
     </div>`;
   if(isRecording){$('#stopBtn').onclick=stopRecording;$('#cancelBtn').onclick=cancelRecording;drawWave();}
   else{
-    $('#startBtn').onclick=()=>startRecording(window._recSource||'mic');
+    $('#startBtn').onclick=()=>startRecording(window._recSource||'mixed');
     $('#importBtn2').onclick=()=>$('#fileInput').click();
     document.querySelectorAll('.source-opt').forEach(b=>b.onclick=()=>{
       document.querySelectorAll('.source-opt').forEach(x=>x.classList.remove('active'));
       b.classList.add('active');window._recSource=b.dataset.src;
-      $('#sourceWarn').style.display=b.dataset.src==='mixed'?'none':'block';
+      $('#sourceWarn').style.display=b.dataset.src==='mic'?'block':'none';
     });
   }
 }
 
+/* 共享音频引导：混合音源首次开始时先说清楚怎么勾「分享音频」 */
+function showShareGuide(){ var m=$('#shareGuideMask'); if(m)m.classList.add('show'); }
+function closeShareGuide(){ var m=$('#shareGuideMask'); if(m)m.classList.remove('show'); }
+function proceedShare(){
+  closeShareGuide();
+  window._shareGuideDone=true;
+  startRecording('mixed');
+}
 async function startRecording(source){
+  if(source==='mixed' && !window._shareGuideDone){ showShareGuide(); return; }
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
     alert('当前预览环境不支持麦克风。\n\n请在 Chrome 或 Edge 中直接打开本工具文件：\n' + location.href.split('#')[0] + '\n\n（本地文件路径：record-to-notes/index.html）');
     return;
@@ -533,7 +567,7 @@ async function startRecording(source){
     if(!displayStream.getAudioTracks().length){
       displayStream.getTracks().forEach(t=>t.stop());displayStream=null;
       micStream.getTracks().forEach(t=>t.stop());
-      alert('没有捕获到系统声音。\n\n请重新选择共享窗口，并在弹出的对话框中勾选「分享音频 / Share audio」。');return;
+      alert('没有捕获到对方的声音。\n\n原因是共享时漏勾了「分享音频 / Share audio」。\n\n请点「开始录音」重新选：\n1）优先选「标签页」（微信电脑版/腾讯会议所在标签）\n2）务必勾选弹窗底部的「分享音频」\n3）选完点「开始共享」');return;
     }
     // 混合麦克风 + 系统声音
     try{
