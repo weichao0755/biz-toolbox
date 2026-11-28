@@ -53,9 +53,11 @@ t.render();
 let h=els.sheet.innerHTML;
 ck('render sheet header',h.indexOf('业务链路图')>=0&&h.indexOf('深圳测试科技')>=0&&h.indexOf('赛维 1.0')>=0);
 ck('render 14 nodes',(h.match(/class="node/g)||[]).length===14);
-ck('render 20 edges (all flows on)',(h.match(/class="edge"/g)||[]).length===20);
+ck('render 20 edges (all flows on)',(h.match(/<path d="M[^"]+" fill="none" stroke=/g)||[]).length===20);
 ck('render 5 notes',(h.match(/class="note/g)||[]).length===5);
-ck('render 4 arrow markers',h.indexOf('id="arrow"')>=0&&h.indexOf('id="arrowGoods"')>=0&&h.indexOf('id="arrowFund"')>=0&&h.indexOf('id="arrowInvoice"')>=0);
+ck('render 4 arrow markers',h.indexOf('id="wtrunk"')>=0&&h.indexOf('id="wgoods"')>=0&&h.indexOf('id="wfund"')>=0&&h.indexOf('id="winvoice"')>=0);
+ck('arrows in single SVG defs',h.indexOf('<svg class="wires"')>=0&&h.indexOf('marker-end=')>=0);
+ck('labels layered above nodes',h.indexOf('class="wire-labels"')>=0&&h.indexOf('<text x=')>=0);
 ck('render 3 flow colors',h.indexOf('#2d7fb8')>=0&&h.indexOf('#c0392b')>=0&&h.indexOf('#b8860b')>=0);
 ck('render mode label 协议控制',h.indexOf('协议控制')>=0);
 
@@ -70,7 +72,7 @@ ck('switch mode updates note',h.indexOf('15号文')>=0);
 els.mode.value='m9610';els.cid.value='广州测试贸易';t.render();
 h=els.sheet.innerHTML;
 ck('customs mode renders 11 nodes',(h.match(/class="node/g)||[]).length===11);
-ck('customs mode renders 15 edges',(h.match(/class="edge"/g)||[]).length===15);
+ck('customs mode renders 15 edges',(h.match(/<path d="M[^"]+" fill="none" stroke=/g)||[]).length===15);
 ck('customs mode header',h.indexOf('跨境电商零售出口 9610')>=0&&h.indexOf('广州测试贸易')>=0);
 ck('customs mode 只免不退 note',h.indexOf('只免不退')>=0);
 ck('customs mode no saiwei nodes',h.indexOf('店铺公司群')<0&&h.indexOf('第三方账户主账户')<0);
@@ -85,17 +87,17 @@ ck('FLOW_ON default all true',t.FLOW_ON&&t.FLOW_ON.goods&&t.FLOW_ON.fund&&t.FLOW
 ck('3 flow buttons rendered',(els.flowToggles.innerHTML.match(/class="flow-btn/g)||[]).length===3);
 ck('3 colors distinct',new Set(['#2d7fb8','#c0392b','#b8860b']).size===3);
 t.toggleFlow('goods'); h=els.sheet.innerHTML;
-ck('goods off removes 5 lines',(h.match(/class="edge"/g)||[]).length===15);
+ck('goods off removes 5 lines',(h.match(/<path d="M[^"]+" fill="none" stroke=/g)||[]).length===15);
 ck('goods off removes blue color',h.indexOf('#2d7fb8')<0);
 ck('goods off keeps fund+invoice',h.indexOf('#c0392b')>=0&&h.indexOf('#b8860b')>=0);
 ck('goods button not on',els.flowToggles.innerHTML.indexOf('data-flow="goods"')>=0&&els.flowToggles.innerHTML.indexOf('class="flow-btn on" data-flow="goods"')<0);
 t.toggleFlow('fund'); h=els.sheet.innerHTML;
-ck('goods+fund off leaves 11 lines',(h.match(/class="edge"/g)||[]).length===11&&h.indexOf('#c0392b')<0);
+ck('goods+fund off leaves 11 lines',(h.match(/<path d="M[^"]+" fill="none" stroke=/g)||[]).length===11&&h.indexOf('#c0392b')<0);
 t.toggleFlow('invoice'); h=els.sheet.innerHTML;
-ck('all off leaves 7 trunk lines',(h.match(/class="edge"/g)||[]).length===7&&h.indexOf('#b8860b')<0);
+ck('all off leaves 7 trunk lines',(h.match(/<path d="M[^"]+" fill="none" stroke=/g)||[]).length===7&&h.indexOf('#b8860b')<0);
 ck('all-off legend shown',h.indexOf('未显示流向线')>=0);
 t.toggleFlow('goods');t.toggleFlow('fund');t.toggleFlow('invoice'); h=els.sheet.innerHTML;
-ck('all on again restores 20 lines',(h.match(/class="edge"/g)||[]).length===20);
+ck('all on again restores 20 lines',(h.match(/<path d="M[^"]+" fill="none" stroke=/g)||[]).length===20);
 
 // 5) 连线路径计算
 const p=t.edgePath(t.NODES.find(n=>n.id==='supplier'),t.NODES.find(n=>n.id==='warehouse'),'dash','left');

@@ -43,6 +43,9 @@
   .sheet-hd .meta{font-size:14px;color:#7a6a52;text-align:right;line-height:1.8}
   .sheet-mode{padding:12px 40px 4px;font-size:15px;color:#8a5a15;font-weight:600}
   .canvas-area{position:relative;width:1400px;height:740px}
+  .wires{position:absolute;left:0;top:0;width:1400px;height:740px;z-index:1;overflow:visible;pointer-events:none}
+  .wire-labels{position:absolute;left:0;top:0;width:1400px;height:740px;z-index:3;overflow:visible;pointer-events:none}
+  .node,.note{position:absolute;z-index:2}
   /* 节点 */
   .node{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;
     border:1.5px solid;border-radius:9px;font-size:14px;font-weight:600;padding:4px 8px;line-height:1.4}
@@ -150,6 +153,111 @@ function edgePath(a,b,kind,pathType){
   if(b.id==='drawback'){ x1=a.x+a.w/2; y1=a.y+a.h; x2=b.x+b.w/2; y2=b.y; }
   return {d:'M'+x1+' '+y1+' L '+x2+' '+y2, lx:(x1+x2)/2, ly:(y1+y2)/2-10};
 }
+/* ===== 连线渲染（一张总 SVG：defs + 线 + 标签，箭头可靠、标签避让节点） ===== */
+function labelColor(flow){ return flow?flowColor(flow):'#7a6a52'; }
+/* 检测标签中心是否落在任一节点框内（含内边距），是则上下挪出 */
+function avoidNodes(nodes,lx,ly,w){
+  var pad=6;
+  for(var pass=0;pass<6;pass++){
+    var hit=null;
+    for(var i=0;i<nodes.length;i++){
+      var n=nodes[i];
+      if(lx> n.x-pad && lx< n.x+n.w+pad && ly> n.y-pad && ly< n.y+n.h+pad){ hit=n; break; }
+    }
+    if(!hit) break;
+    /* 优先往上挪；上挪会出界则往下 */
+    var above=hit.y-pad-ly, below=(hit.y+hit.h+pad)-ly;
+    ly += (above>14 || below<14) ? -(above+14) : (below+14);
+    if(ly<12) ly=hit.y+hit.h+pad+14;
+  }
+  return ly;
+}
+/* 统一连线路径：按流走固定通道，减少交叉；返回 path d + 标签建议坐标 */
+function wirePath(a,b,e){
+  var f=e.flow, kind=e.kind;
+  var cx1=a.x+a.w/2, cy1=a.y+a.h/2, cx2=b.x+b.w/2, cy2=b.y+b.h/2;
+  var d='', lx=(cx1+cx2)/2, ly=(cy1+cy2)/2;
+  /* 主干：直线连边缘（按相对位置选起点终点） */
+  if(!f){
+    var x1=cx1,y1=cy1,x2=cx2,y2=cy2;
+    if(Math.abs(cy2-cy1)<Math.abs(cx2-cx1)){
+      x1 = cx2>cx1 ? a.x+a.w : a.x;  x2 = cx2>cx1 ? b.x : b.x+b.w;
+    } else {
+      y1 = cy2>cy1 ? a.y+a.h : a.y;  y2 = cy2>cy1 ? b.y : b.y+b.h;
+    }
+    d='M'+x1+' '+y1+' L '+x2+' '+y2;
+    lx=(x1+x2)/2; ly=(y1+y2)/2-9;
+    return {d:d,lx:lx,ly:ly};
+  }
+  /* 资金流：走上方通道 y=150，从主体上缘上去再下来 */
+  if(f==='fund'){
+    var sy=a.y, ty=b.y;
+    if(e.path==='top'){ sy=a.y; ty=b.y+b.h; }
+    else { sy=a.y; ty=b.y+b.h; }
+    var lane=Math.min(sy,ty)-38;
+    d='M'+cx1+' '+sy+' L '+cx1+' '+lane+' L '+cx2+' '+lane+' L '+cx2+' '+ty;
+    lx=(cx1+cx2)/2; ly=lane-11;
+    return {d:d,lx:lx,ly:ly};
+  }
+  /* 票据流：走中间偏下通道 y=690，从主体下缘走 */
+  if(f==='invoice'){
+    var lane=Math.max(a.y+a.h,b.y+b.h)+34;
+    if(lane>700) lane=700;
+    d='M'+cx1+' '+(a.y+a.h)+' L '+cx1+' '+lane+' L '+cx2+' '+lane+' L '+cx2+' '+(b.y+b.h);
+    lx=(cx1+cx2)/2; ly=lane+15;
+    return {d:d,lx:lx,ly:ly};
+  }
+  /* 货物流：走下方通道 y=530（赛维）或 500（报关），从主体下缘走 */
+  var glane=Math.max(a.y+a.h,b.y+b.h)+46;
+  if(glane>560) glane=560;
+  d='M'+cx1+' '+(a.y+a.h)+' C '+cx1+' '+glane+' '+cx2+' '+glane+' '+cx2+' '+(b.y+b.h);
+  lx=(cx1+cx2)/2; ly=glane-8;
+  return {d:d,lx:lx,ly:ly};
+}
+function renderWires(d,nodes){
+  var parts=[];
+  parts.push('<svg class="wires" viewBox="0 0 1400 740" preserveAspectRatio="none">');
+  parts.push('<defs>');
+  parts.push('<marker id="wtrunk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#8a7a62"/></marker>');
+  FlowData.FLOW_ORDER.forEach(function(f){
+    if(!FLOW_ON[f]) return;
+    parts.push('<marker id="w'+f+'" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="'+flowColor(f)+'"/></marker>');
+  });
+  parts.push('</defs>');
+  /* 先画线（按流分层：主干 → 货物流 → 资金流 → 票据流） */
+  var order=[null,'goods','fund','invoice'];
+  order.forEach(function(f){
+    d.edges.forEach(function(e){
+      if((e.flow||null)!==f) return;
+      if(e.flow && !FLOW_ON[e.flow]) return;
+      var a=nodes.find(function(n){return n.id===e.from;}), b=nodes.find(function(n){return n.id===e.to;});
+      if(!a||!b) return;
+      var p=wirePath(a,b,e);
+      var col=f?flowColor(f):'#8a7a62';
+      var dash=f?FlowData.FLOW_DEFS[f].dash:'none';
+      var marker=f?'url(#w'+f+')':'url(#wtrunk)';
+      parts.push('<path d="'+p.d+'" fill="none" stroke="'+col+'" stroke-width="'+(f?2.2:2)+'" stroke-dasharray="'+dash+'" marker-end="'+marker+'"/>');
+    });
+  });
+  parts.push('</svg>');
+  /* 标签单独一层 SVG（z-index:3，盖在节点之上），带白底、自动避让节点 */
+  var lp=['<svg class="wire-labels" viewBox="0 0 1400 740" preserveAspectRatio="none">'];
+  d.edges.forEach(function(e){
+    if(e.flow && !FLOW_ON[e.flow]) return;
+    if(!e.label) return;
+    var a=nodes.find(function(n){return n.id===e.from;}), b=nodes.find(function(n){return n.id===e.to;});
+    if(!a||!b) return;
+    var p=wirePath(a,b,e);
+    var ly=avoidNodes(nodes,p.lx,p.ly,10);
+    var col=labelColor(e.flow);
+    var wpx=String(e.label).length*12+12;
+    lp.push('<rect x="'+(p.lx-wpx/2)+'" y="'+(ly-10)+'" width="'+wpx+'" height="18" rx="3" fill="#fffefb" opacity="0.94"/>');
+    lp.push('<text x="'+p.lx+'" y="'+(ly+3)+'" text-anchor="middle" font-size="11.5" fill="'+col+'" font-family="Microsoft YaHei, sans-serif">'+esc(e.label)+'</text>');
+  });
+  lp.push('</svg>');
+  return parts.join('')+lp.join('');
+}
+
 /* 三条流向线的显示状态（默认全亮） */
 var FLOW_ON={goods:true,fund:true,invoice:true};
 function flowColor(flow){ var d=FlowData.FLOW_DEFS[flow]; return d?d.color:'#8a7a62'; }
@@ -190,22 +298,7 @@ function render(){
   var d=(mode.charAt(0)==='m'&&FlowData.fillCustom)?FlowData.fillCustom(mode):FlowData.fillMode(mode);
   var cid=val('cid')||'【客户名称】', plat=val('platform');
   var map={};d.nodes.forEach(function(n){map[n.id]=n;});
-  var svgdefs='<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#8a7a62"/></marker>';
-  FlowData.FLOW_ORDER.forEach(function(f){
-    if(!FLOW_ON[f]) return;   /* 关闭的流连箭头 marker 也不输出 */
-    var col=flowColor(f);
-    svgdefs+='<marker id="arrow'+f.charAt(0).toUpperCase()+f.slice(1)+'" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="'+col+'"/></marker>';
-  });
-  svgdefs+='</defs>';
-  var lines='';
-  d.edges.forEach(function(e){
-    if(e.flow && !FLOW_ON[e.flow]) return;   /* 按按钮状态过滤流向线 */
-    var a=map[e.from],b=map[e.to]; if(!a||!b)return;
-    var p=edgePath(a,b,e.kind,e.path), s=edgeStyle(e);
-    var attrs=Object.keys(s).map(function(k){return k+'="'+s[k]+'"';}).join(' ');
-    lines+='<div class="edge" style="left:0;top:0;width:1400px;height:740px"><svg viewBox="0 0 1400 740"><path d="'+p.d+'" fill="none" '+attrs+'/></svg>'
-      +(e.label?'<span class="elabel" style="left:'+p.lx+'px;top:'+p.ly+'px">'+esc(e.label)+'</span>':'')+'</div>';
-  });
+  var wires=renderWires(d,d.nodes);
   var nh='';
   d.notes.forEach(function(n){
     nh+='<div class="note '+(n.id==='third'?'green':'')+'" style="left:'+n.x+'px;top:'+n.y+'px;width:'+n.w+'px;min-height:'+n.h+'px">'
@@ -217,7 +310,7 @@ function render(){
   document.getElementById('sheet').innerHTML=
     '<div class="sheet-hd"><h2>业务链路图</h2><div class="meta">客户：'+esc(cid)+'<br>平台：'+esc(plat)+'　模式：'+esc(d.mode.name)+'</div></div>'
     +'<div class="sheet-mode">'+esc(d.mode.name)+'　'+legend+'　<span style="color:#8a7a62">· 灰实线为主干业务链</span></div>'
-    +'<div class="canvas-area">'+svgdefs+lines+d.nodes.map(nodeHTML).join('')+nh+'</div>'
+    +'<div class="canvas-area">'+wires+d.nodes.map(nodeHTML).join('')+nh+'</div>'
     +'<div class="sheet-ft"><span>金米财税 · 跨境合规业务链路图</span><span>商业保密 · 仅限收件方内部使用</span></div>';
 }
 async function download(){
