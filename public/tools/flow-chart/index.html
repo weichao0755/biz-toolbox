@@ -156,19 +156,22 @@ function edgePath(a,b,kind,pathType){
 /* ===== 连线渲染（一张总 SVG：defs + 线 + 标签，箭头可靠、标签避让节点） ===== */
 function labelColor(flow){ return flow?flowColor(flow):'#7a6a52'; }
 /* 检测标签中心是否落在任一节点框内（含内边距），是则上下挪出 */
-function avoidNodes(nodes,lx,ly,w){
-  var pad=6;
-  for(var pass=0;pass<6;pass++){
+function avoidNodes(nodes,lx,ly,halfW){
+  /* 按标签矩形（不只是中心点）检测与节点框相交，整块挪到节点上方或下方 */
+  var pad=5, hh=10;
+  halfW=halfW||20;
+  for(var pass=0;pass<8;pass++){
     var hit=null;
     for(var i=0;i<nodes.length;i++){
       var n=nodes[i];
-      if(lx> n.x-pad && lx< n.x+n.w+pad && ly> n.y-pad && ly< n.y+n.h+pad){ hit=n; break; }
+      if(lx+halfW> n.x-pad && lx-halfW< n.x+n.w+pad && ly+hh> n.y-pad && ly-hh< n.y+n.h+pad){ hit=n; break; }
     }
     if(!hit) break;
-    /* 优先往上挪；上挪会出界则往下 */
-    var above=hit.y-pad-ly, below=(hit.y+hit.h+pad)-ly;
-    ly += (above>14 || below<14) ? -(above+14) : (below+14);
-    if(ly<12) ly=hit.y+hit.h+pad+14;
+    var above=hit.y-pad-(ly+hh);        /* 挪到框上方所需位移 */
+    var below=(hit.y+hit.h+pad)-(ly-hh);/* 挪到框下方所需位移 */
+    if(above>=12 && (below<12 || above<=below)) ly+=above;
+    else ly+=below;
+    if(ly<14) ly=hit.y+hit.h+pad+hh+4;
   }
   return ly;
 }
@@ -248,9 +251,9 @@ function renderWires(d,nodes){
     var a=nodes.find(function(n){return n.id===e.from;}), b=nodes.find(function(n){return n.id===e.to;});
     if(!a||!b) return;
     var p=wirePath(a,b,e);
-    var ly=avoidNodes(nodes,p.lx,p.ly,10);
     var col=labelColor(e.flow);
     var wpx=String(e.label).length*12+12;
+    var ly=avoidNodes(nodes,p.lx,p.ly,wpx/2+2);
     lp.push('<rect x="'+(p.lx-wpx/2)+'" y="'+(ly-10)+'" width="'+wpx+'" height="18" rx="3" fill="#fffefb" opacity="0.94"/>');
     lp.push('<text x="'+p.lx+'" y="'+(ly+3)+'" text-anchor="middle" font-size="11.5" fill="'+col+'" font-family="Microsoft YaHei, sans-serif">'+esc(e.label)+'</text>');
   });

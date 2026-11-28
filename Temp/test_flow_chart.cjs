@@ -51,6 +51,8 @@ ck('shop group has 4 subs',a.nodes.find(n=>n.id==='shops').subs.length===4);
 els.cid.value='深圳测试科技';els.mode.value='saiwei1';els.platform.value='亚马逊';
 t.render();
 let h=els.sheet.innerHTML;
+const eq=(sb.FlowData.NOTES||[]).find(n=>n.id==='equity');
+ck('equity note moved below, not over buyer',!!eq && eq.y>500 && eq.x+eq.w<=1400);
 ck('render sheet header',h.indexOf('业务链路图')>=0&&h.indexOf('深圳测试科技')>=0&&h.indexOf('赛维 1.0')>=0);
 ck('render 14 nodes',(h.match(/class="node/g)||[]).length===14);
 ck('render 20 edges (all flows on)',(h.match(/<path d="M[^"]+" fill="none" stroke=/g)||[]).length===20);

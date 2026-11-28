@@ -73,7 +73,7 @@ var NOTES=[
   {id:'premise',x:60,  y:30, w:360,h:120,label:'__PREMISE_LABEL__',text:'__PREMISE__'},
   {id:'thirdnote',x:460,y:16, w:280,h:104, text:'__THIRD_NOTE__'},
   {id:'fund',   x:1010,y:16, w:330,h:120,text:'__FUND_NOTE__'},
-  {id:'equity', x:1230,y:230,w:170,h:60, text:'__EQUITY_NOTE__'},
+  {id:'equity', x:1100,y:600,w:280,h:80, text:'__EQUITY_NOTE__'},
   {id:'declare',x:700, y:600, w:400,h:80, text:'__DECLARE_NOTE__'}
 ];
 
