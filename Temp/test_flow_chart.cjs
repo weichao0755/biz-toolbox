@@ -1,0 +1,115 @@
+// 测试：业务链路图生成器（节点/连线/注释、模式切换、渲染、注册）
+const fs=require('fs'),vm=require('vm');
+const DIR='public/tools/flow-chart/';
+const html=fs.readFileSync(DIR+'index.html','utf8');
+const scripts=[...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
+const code=scripts[scripts.length-1];
+function el(){return{value:'',innerHTML:'',textContent:'',style:{},classList:{add(){},remove(){}},appendChild(){},removeChild(){},addEventListener(){},setAttribute(){},click(){}};}
+var els={},store={};
+var ls={getItem(k){return store[k]||null;},setItem(k,v){store[k]=String(v);},removeItem(k){delete store[k];},key(i){return Object.keys(store)[i]||null;},get length(){return Object.keys(store).length;}};
+var sb={document:{getElementById(id){if(!els[id])els[id]=el();return els[id];},querySelector(){return {clientWidth:1300};},createElement(){return el();},body:el(),addEventListener(){}},
+  window:{},localStorage:ls,sessionStorage:ls,navigator:{},console:{log(){},warn(){}},setTimeout,clearTimeout,
+  location:{origin:'http://test'},URL:{createObjectURL(){return 'blob:x';},revokeObjectURL(){}},
+  alert(){},html2canvas:undefined};
+sb.window=sb; sb.window.addEventListener=function(){}; vm.createContext(sb);
+new vm.Script(fs.readFileSync(DIR+'flow-data.js','utf8')).runInContext(sb);
+new vm.Script(code+'\nwindow.__t={render:render,edgePath:edgePath,nodeHTML:nodeHTML,fill:FlowData.fillMode,MODES:FlowData.MODES,NODES:FlowData.NODES,EDGES:FlowData.EDGES,NOTES:FlowData.NOTES,FLOW_ON:FLOW_ON,toggleFlow:toggleFlow,renderToggles:renderToggles};').runInContext(sb);
+const t=sb.__t;
+let pass=true;function ck(n,c){if(!c){console.log('FAIL:',n);pass=false;}else console.log('ok  :',n);}
+
+// 1) 数据结构
+ck('14 nodes',t.NODES.length===14);
+ck('20 edges (7 trunk + 5 goods + 4 fund + 4 invoice)',t.EDGES.length===20&&t.EDGES.filter(e=>e.flow==='goods').length===5&&t.EDGES.filter(e=>e.flow==='fund').length===4&&t.EDGES.filter(e=>e.flow==='invoice').length===4);
+ck('5 notes',t.NOTES.length===5);
+ck('2 saiwei modes',Object.keys(t.MODES).length===2&&!!t.MODES.saiwei1&&!!t.MODES.saiwei2);
+/* 5 种报关模式（数据来自 cross 名词速查，不自造） */
+ck('5 customs modes',Object.keys(sb.FlowData.CUSTOM_MODES||{}).length===5);
+const CM=sb.FlowData.CUSTOM_MODES;
+ck('0110 = 免抵退 (not 免税)',CM.m0110.taxmode==='免抵退'&&CM.m0110.trapNote.indexOf('免抵退')>=0);
+ck('9610 = 只免不退',CM.m9610.taxmode==='无票免税'&&CM.m9610.limitNote.indexOf('只免不退')>=0);
+ck('9710 = B2B 按票退税',CM.m9710.taxmode==='按票退税'&&CM.m9710.defNote.indexOf('B2B')>=0);
+ck('9810 = 离境即退税 + 报关主体前提',CM.m9810.taxmode==='离境即退税'&&CM.m9810.useNote.indexOf('报关主体')>=0&&CM.m9810.trapNote.indexOf('平台代报')>=0);
+ck('1039 = 免征不退 + 15万美元',CM.m1039.taxmode==='免征不退'&&CM.m1039.limitNote.indexOf('15 万美元')>=0);
+const cf=sb.FlowData.fillCustom('m9810');
+ck('custom skeleton 11 nodes / 15 edges / 5 notes',cf.nodes.length===11&&cf.edges.length===15&&cf.notes.length===5);
+ck('custom no placeholder leftover',!/__[A-Z_]+__/.test(JSON.stringify(cf)));
+ck('diamond labels short',cf.nodes.find(n=>n.id==='declare').label==='9810报关'&&cf.nodes.find(n=>n.id==='tax').label==='离境即退税');
+ck('all edge endpoints exist',t.EDGES.every(e=>t.NODES.some(n=>n.id===e.from)&&t.NODES.some(n=>n.id===e.to)));
+
+// 2) 模式切换文案
+const a=t.fill('saiwei1'), b=t.fill('saiwei2');
+ck('saiwei1 premise',a.mode.premiseLabel==='赛维1.0前提条件'&&a.mode.premise.indexOf('店铺群模式')>=0);
+ck('saiwei2 premise',b.mode.premiseLabel==='赛维2.0前提条件'&&b.mode.premise.indexOf('15号文')>=0);
+ck('HK->shop differs',a.edges.find(e=>e.from==='hk'&&e.to==='shops').label==='协议控制'&&b.edges.find(e=>e.from==='hk'&&e.to==='shops').label==='销售');
+ck('withdraw differs',a.edges.find(e=>e.from==='hk'&&e.to==='third').label==='提现至第三方账户主账户'&&b.edges.find(e=>e.from==='hk'&&e.to==='third').label==='提现至本土银行账户');
+ck('fund note 8.25% in 1.0',a.notes.find(n=>n.id==='fund').text.indexOf('8.25%')>=0);
+ck('declare note differs',a.notes.find(n=>n.id==='declare').text.indexOf('0申报')>=0&&b.notes.find(n=>n.id==='declare').text.indexOf('如实申报')>=0);
+ck('no placeholder leftovers',!/__[A-Z_]+__/.test(JSON.stringify(a))&&!/__[A-Z_]+__/.test(JSON.stringify(b)));
+ck('shop group has 4 subs',a.nodes.find(n=>n.id==='shops').subs.length===4);
+
+// 3) 渲染：默认 saiwei1
+els.cid.value='深圳测试科技';els.mode.value='saiwei1';els.platform.value='亚马逊';
+t.render();
+let h=els.sheet.innerHTML;
+ck('render sheet header',h.indexOf('业务链路图')>=0&&h.indexOf('深圳测试科技')>=0&&h.indexOf('赛维 1.0')>=0);
+ck('render 14 nodes',(h.match(/class="node/g)||[]).length===14);
+ck('render 20 edges (all flows on)',(h.match(/class="edge"/g)||[]).length===20);
+ck('render 5 notes',(h.match(/class="note/g)||[]).length===5);
+ck('render 4 arrow markers',h.indexOf('id="arrow"')>=0&&h.indexOf('id="arrowGoods"')>=0&&h.indexOf('id="arrowFund"')>=0&&h.indexOf('id="arrowInvoice"')>=0);
+ck('render 3 flow colors',h.indexOf('#2d7fb8')>=0&&h.indexOf('#c0392b')>=0&&h.indexOf('#b8860b')>=0);
+ck('render mode label 协议控制',h.indexOf('协议控制')>=0);
+
+// 4) 切到 saiwei2 重新渲染
+els.mode.value='saiwei2';els.platform.value='Temu';t.render();
+h=els.sheet.innerHTML;
+ck('switch mode updates header',h.indexOf('赛维 2.0')>=0&&h.indexOf('Temu')>=0);
+ck('switch mode updates label',h.indexOf('本土银行账户')>=0&&h.indexOf('协议控制')<0);
+ck('switch mode updates note',h.indexOf('15号文')>=0);
+
+// 4b) 切到报关模式族：骨架换成 11 节点、文案来自 cross 口径
+els.mode.value='m9610';els.cid.value='广州测试贸易';t.render();
+h=els.sheet.innerHTML;
+ck('customs mode renders 11 nodes',(h.match(/class="node/g)||[]).length===11);
+ck('customs mode renders 15 edges',(h.match(/class="edge"/g)||[]).length===15);
+ck('customs mode header',h.indexOf('跨境电商零售出口 9610')>=0&&h.indexOf('广州测试贸易')>=0);
+ck('customs mode 只免不退 note',h.indexOf('只免不退')>=0);
+ck('customs mode no saiwei nodes',h.indexOf('店铺公司群')<0&&h.indexOf('第三方账户主账户')<0);
+els.mode.value='m9810';t.render();h=els.sheet.innerHTML;
+ck('9810 switches to 离境即退税',h.indexOf('离境即退税')>=0&&h.indexOf('海外仓备案')>=0);
+ck('9810 no 9610 wording',h.indexOf('只免不退')<0);
+els.mode.value='saiwei2';t.render();h=els.sheet.innerHTML;
+ck('switch back to saiwei restores 14 nodes',(h.match(/class="node/g)||[]).length===14&&h.indexOf('店铺公司群')>=0);
+
+// 4c) 三条流开关：默认全亮；关闭某流线数减少且颜色消失；全关只剩主干
+ck('FLOW_ON default all true',t.FLOW_ON&&t.FLOW_ON.goods&&t.FLOW_ON.fund&&t.FLOW_ON.invoice);
+ck('3 flow buttons rendered',(els.flowToggles.innerHTML.match(/class="flow-btn/g)||[]).length===3);
+ck('3 colors distinct',new Set(['#2d7fb8','#c0392b','#b8860b']).size===3);
+t.toggleFlow('goods'); h=els.sheet.innerHTML;
+ck('goods off removes 5 lines',(h.match(/class="edge"/g)||[]).length===15);
+ck('goods off removes blue color',h.indexOf('#2d7fb8')<0);
+ck('goods off keeps fund+invoice',h.indexOf('#c0392b')>=0&&h.indexOf('#b8860b')>=0);
+ck('goods button not on',els.flowToggles.innerHTML.indexOf('data-flow="goods"')>=0&&els.flowToggles.innerHTML.indexOf('class="flow-btn on" data-flow="goods"')<0);
+t.toggleFlow('fund'); h=els.sheet.innerHTML;
+ck('goods+fund off leaves 11 lines',(h.match(/class="edge"/g)||[]).length===11&&h.indexOf('#c0392b')<0);
+t.toggleFlow('invoice'); h=els.sheet.innerHTML;
+ck('all off leaves 7 trunk lines',(h.match(/class="edge"/g)||[]).length===7&&h.indexOf('#b8860b')<0);
+ck('all-off legend shown',h.indexOf('未显示流向线')>=0);
+t.toggleFlow('goods');t.toggleFlow('fund');t.toggleFlow('invoice'); h=els.sheet.innerHTML;
+ck('all on again restores 20 lines',(h.match(/class="edge"/g)||[]).length===20);
+
+// 5) 连线路径计算
+const p=t.edgePath(t.NODES.find(n=>n.id==='supplier'),t.NODES.find(n=>n.id==='warehouse'),'dash','left');
+ck('edgePath returns path+label pos',/^M\d+ \d+ C/.test(p.d)&&typeof p.lx==='number'&&typeof p.ly==='number');
+const pr=t.edgePath(t.NODES.find(n=>n.id==='trade'),t.NODES.find(n=>n.id==='drawback'),'solid','down');
+ck('edgePath downward for drawback',pr.d.indexOf('L')>0);
+
+// 6) 注册检查
+const tools=fs.readFileSync('src/data/tools.js','utf8');
+ck('tools.js registers flow-chart',tools.indexOf("path: '/tools/flow-chart'")>=0&&tools.indexOf('tools/flow-chart/index.html')>=0);
+const bk=fs.readFileSync('src/data/backupKeys.js','utf8');
+ck('flow-chart registered in 合规区(compliance)',/path: '\/tools\/flow-chart'[\s\S]{0,500}?category: 'compliance'/.test(tools));
+ck('backupKeys registers flow_chart_v1',bk.indexOf("'flow_chart_v1'")>=0);
+ck('html2canvas dep copied',fs.existsSync(DIR+'html2canvas.min.js'));
+
+console.log(pass?'\nALL FLOW-CHART CHECKS PASSED':'\nSOME CHECKS FAILED');
+process.exit(pass?0:1);

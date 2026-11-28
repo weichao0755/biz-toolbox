@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>业务链路图生成器</title>
+<script src="html2canvas.min.js"></script>
+<script src="flow-data.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#faf7f2;color:#2a2118;font-size:14px}
+  .wrap{max-width:1120px;margin:0 auto;padding:20px 16px 60px}
+  .hd{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+  .hd h1{font-size:22px;color:#b45309;letter-spacing:.5px}
+  .hd .tag{font-size:12px;color:#8a7a62}
+  .sub{font-size:13px;color:#8a7a62;margin-bottom:18px;line-height:1.7}
+  .card{background:#fffefb;border:1px solid #ece3d6;border-radius:12px;padding:18px 20px;margin-bottom:16px}
+  .card h2{font-size:15px;color:#b45309;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .card h2::before{content:'';width:4px;height:15px;background:#b45309;border-radius:2px}
+  .frow{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+  .fg{flex:1;min-width:180px}
+  .fg label{display:block;font-size:12.5px;color:#7a6a52;margin-bottom:6px;font-weight:600}
+  .fg input,.fg select{width:100%;padding:9px 11px;border:1px solid #e0d5c0;border-radius:8px;background:#fffdf8;color:#2a2118;font-size:13.5px;font-family:inherit;outline:none}
+  .fg input:focus,.fg select:focus{border-color:#b45309;box-shadow:0 0 0 2px rgba(180,83,9,.1)}
+  .btn{padding:10px 22px;border:0;border-radius:8px;background:#b45309;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btn:hover{opacity:.92}
+  .btn.ghost{background:#fff8ec;color:#b45309;border:1px solid #e8d5b8}
+  .hint{font-size:12px;color:#9a8a72;margin-top:10px;line-height:1.7}
+  .flow-toggles{display:flex;flex-wrap:wrap;gap:12px}
+  .flow-btn{border:1.5px solid #ddd2bd;background:#fffdf8;color:#9a8a72;border-radius:999px;padding:9px 18px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;transition:.18s}
+  .flow-btn:hover{opacity:.85}
+  .flow-btn .dot{width:10px;height:10px;border-radius:50%;background:#ddd2bd;transition:.18s}
+  .flow-btn.on{color:#fff;border-color:transparent}
+  .flow-btn.on .dot{background:#fff}
+  .flow-btn[data-flow="goods"].on{background:#2d7fb8}
+  .flow-btn[data-flow="fund"].on{background:#c0392b}
+  .flow-btn[data-flow="invoice"].on{background:#b8860b}
+  .preview-stage{position:relative;width:1400px;transform-origin:top left}
+  .preview-box{overflow:auto;border:1px solid #ece3d6;border-radius:12px;background:#f3eee6;padding:14px;max-height:640px}
+  .sheet{width:1400px;background:#fffefb;position:relative;overflow:hidden}
+  .sheet-hd{padding:20px 40px 14px;border-bottom:2px solid #b45309;display:flex;justify-content:space-between;align-items:flex-end}
+  .sheet-hd h2{font-size:26px;color:#b45309;letter-spacing:1px}
+  .sheet-hd .meta{font-size:14px;color:#7a6a52;text-align:right;line-height:1.8}
+  .sheet-mode{padding:12px 40px 4px;font-size:15px;color:#8a5a15;font-weight:600}
+  .canvas-area{position:relative;width:1400px;height:740px}
+  /* 节点 */
+  .node{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;
+    border:1.5px solid;border-radius:9px;font-size:14px;font-weight:600;padding:4px 8px;line-height:1.4}
+  .node.diamond{border-radius:6px;transform:rotate(0deg)}
+  .node.group{display:block;text-align:left;padding:8px 12px;font-weight:700}
+  .node.group .gt{font-size:14px;margin-bottom:6px;border-bottom:1px dashed rgba(0,0,0,.12);padding-bottom:4px}
+  .node.group .gs{display:flex;flex-wrap:wrap;gap:6px}
+  .node.group .gs span{font-size:11.5px;font-weight:500;border:1px solid rgba(0,0,0,.12);border-radius:5px;padding:4px 7px;background:rgba(255,255,255,.6)}
+  /* 连线 */
+  .edge{position:absolute;overflow:visible}
+  .edge svg{width:100%;height:100%;overflow:visible}
+  .edge .elabel{position:absolute;font-size:11.5px;color:#7a6a52;white-space:nowrap;transform:translate(-50%,-50%);background:rgba(255,254,251,.9);padding:0 3px}
+  /* 注释框 */
+  .note{position:absolute;border:1px dashed #d9c9a8;background:#fffbf0;border-radius:8px;padding:9px 12px;font-size:12px;line-height:1.65;color:#6a5a42;white-space:pre-line}
+  .note b{color:#8a5a15;display:block;margin-bottom:2px;font-size:12.5px}
+  .note.green{background:#f2f8ef;border-color:#bcd8b4;color:#3f6238}
+  .sheet-ft{padding:10px 40px 18px;border-top:1px solid #ece3d6;display:flex;justify-content:space-between;font-size:12px;color:#9a8a72}
+  .toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:#2a2118;color:#fff;font-size:13px;padding:9px 16px;border-radius:999px;opacity:0;transition:.25s;pointer-events:none;z-index:50}
+  .toast.on{opacity:1}
+  #offscreen{position:fixed;left:-10000px;top:0;background:#fff}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd"><h1>业务链路图生成器</h1><span class="tag">选模式 · 填客户 → 一键出图</span></div>
+  <p class="sub">按业务链路示意图还原：节点框 + 实线/虚线/点线箭头 + 注释框。7 种模式（赛维1.0/2.0、0110、9610、9710、9810、1039）一键切换，销售只需选模式、填客户名和平台，即可导出 PNG 发客户或贴方案书。</p>
+
+  <div class="card">
+    <h2>1 · 填写信息</h2>
+    <div class="frow">
+      <div class="fg"><label>客户名称</label><input id="cid" placeholder="如：深圳某某科技有限公司" oninput="save()"></div>
+      <div class="fg"><label>业务模式</label><select id="mode" onchange="save();render()">
+        <option value="saiwei1">赛维 1.0（协议控制 · 第三方账户）</option>
+        <option value="saiwei2">赛维 2.0（本土账户 · 收入申报）</option>
+        <option value="m0110">一般贸易出口 0110（免抵退）</option>
+        <option value="m9610">跨境电商零售出口 9610（清单核放）</option>
+        <option value="m9710">跨境电商 B2B 直接出口 9710</option>
+        <option value="m9810">跨境电商出口海外仓 9810</option>
+        <option value="m1039">市场采购贸易 1039（免征不退）</option>
+      </select></div>
+      <div class="fg"><label>主营平台</label><select id="platform" onchange="save();render()">
+        <option>亚马逊</option><option>TikTok Shop</option><option>Temu</option><option>速卖通</option><option>独立站</option><option>多平台</option>
+      </select></div>
+      <div class="fg" style="flex:0 0 auto"><label>&nbsp;</label><button class="btn ghost" onclick="render()">重新生成</button></div>
+    </div>
+    <div class="hint">示意图节点与文案随模式自动切换；注释框为通用口径，可按客户实情口头解释。</div>
+  </div>
+
+  <div class="card">
+    <h2>2 · 选择要显示的流向线</h2>
+    <div class="flow-toggles" id="flowToggles"></div>
+    <div class="hint">主干业务链始终显示；点亮对应按钮即显示该流向线，可多选、可全关。</div>
+  </div>
+
+  <div class="card">
+    <h2>3 · 预览并导出</h2>
+    <div class="preview-box"><div class="preview-stage" id="stage"><div class="sheet" id="sheet"></div></div></div>
+    <div class="frow" style="margin-top:14px">
+      <button class="btn" onclick="download()">⬇ 下载 PNG</button>
+      <span class="hint" id="hint" style="margin:0">图宽 1400px · 导出 2 倍清晰度</span>
+    </div>
+  </div>
+</div>
+<div id="offscreen"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+var LS='flow_chart_v1';
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function val(id){return document.getElementById(id).value;}
+function save(){try{localStorage.setItem(LS,JSON.stringify({cid:val('cid'),mode:val('mode'),platform:val('platform')}));}catch(e){}}
+function load(){try{var s=JSON.parse(localStorage.getItem(LS)||'{}');if(s.cid)document.getElementById('cid').value=s.cid;if(s.mode)document.getElementById('mode').value=s.mode;if(s.platform)document.getElementById('platform').value=s.platform;}catch(e){}}
+/* 预览区等比缩放适配宽度（仅影响屏幕显示；出图用离屏克隆，不受影响） */
+function fitStage(){
+  var box=document.querySelector('.preview-box'), stage=document.getElementById('stage');
+  if(!box||!stage)return;
+  var avail=box.clientWidth-28, scale=Math.min(1,avail/1400);
+  stage.style.transform='scale('+scale+')';
+  stage.style.height=(740*scale+120)+'px';
+}
+window.addEventListener('resize',fitStage);
+function toast(t){var e=document.getElementById('toast');e.textContent=t;e.classList.add('on');setTimeout(function(){e.classList.remove('on');},2200);}
+
+/* 连线路径：返回 SVG path d 与标签坐标 */
+function edgePath(a,b,kind,pathType){
+  var ax=a.x+a.w/2, ay=a.y+a.h/2, bx=b.x+b.w/2, by=b.y+b.h/2;
+  var x1=ax,y1=ay,x2=bx,y2=by;
+  if(pathType==='left'){ x1=a.x+a.w/2; y1=a.y+a.h; x2=b.x+b.w/2; y2=b.y; }
+  if(pathType==='right'){ x1=a.x+a.w/2; y1=a.y+a.h/2; x2=b.x+b.w/2; y2=b.y+b.h/2; }
+  if(pathType==='top'){ x1=a.x+30; y1=a.y; x2=b.x+30; y2=b.y+b.h; }
+  if(pathType==='top2'){ x1=a.x+a.w-30; y1=a.y; x2=b.x+a.w-30; y2=b.y+b.h; }
+  /* 票据流专用路径：走上下弧线，避开主干实线 */
+  if(pathType==='bottom'){ x1=a.x+a.w/2; y1=a.y+a.h; x2=b.x+b.w/2; y2=b.y+b.h; }
+  if(pathType==='top3'){ x1=a.x+a.w/2; y1=a.y; x2=b.x+b.w/2; y2=b.y; }
+  if(pathType==='right2'){ x1=a.x+a.w; y1=a.y+a.h/2; x2=b.x+b.w; y2=b.y+b.h/2; }
+  if(pathType==='left2'){ x1=a.x; y1=a.y+a.h/2; x2=b.x; y2=b.y+b.h/2; }
+  if(kind==='red-dot') return {d:'M'+x1+' '+y1+' C '+x1+' '+(y1-60)+' '+(x2)+' '+(y2-60)+' '+x2+' '+y2, lx:(x1+x2)/2, ly:Math.min(y1,y2)-42};
+  if(pathType==='bottom') return {d:'M'+x1+' '+y1+' C '+x1+' '+(y1+55)+' '+x2+' '+(y2+55)+' '+x2+' '+y2, lx:(x1+x2)/2, ly:Math.max(y1,y2)+40};
+  if(pathType==='top3') return {d:'M'+x1+' '+y1+' C '+x1+' '+(y1-55)+' '+x2+' '+(y2-55)+' '+x2+' '+y2, lx:(x1+x2)/2, ly:Math.min(y1,y2)-40};
+  if(pathType==='right2') return {d:'M'+x1+' '+y1+' C '+(x1+40)+' '+y1+' '+(x2+40)+' '+y2+' '+x2+' '+y2, lx:Math.max(x1,x2)+28, ly:(y1+y2)/2};
+  if(pathType==='left2') return {d:'M'+x1+' '+y1+' C '+(x1-40)+' '+y1+' '+(x2-40)+' '+y2+' '+x2+' '+y2, lx:Math.min(x1,x2)-28, ly:(y1+y2)/2};
+  if(a.id==='supplier'&&b.id==='warehouse') return {d:'M'+x1+' '+y1+' C '+x1+' '+(y1+80)+' '+x2+' '+(y2-80)+' '+x2+' '+y2, lx:x1-24, ly:(y1+y2)/2};
+  if(a.id==='tax'&&b.id==='buyer') return {d:'M'+x1+' '+y1+' C '+x1+' '+(y1-90)+' '+x2+' '+(y2-90)+' '+x2+' '+y2, lx:x2+18, ly:(y1+y2)/2};
+  // 判断节点向下（如 trade→drawback）
+  if(b.id==='drawback'){ x1=a.x+a.w/2; y1=a.y+a.h; x2=b.x+b.w/2; y2=b.y; }
+  return {d:'M'+x1+' '+y1+' L '+x2+' '+y2, lx:(x1+x2)/2, ly:(y1+y2)/2-10};
+}
+/* 三条流向线的显示状态（默认全亮） */
+var FLOW_ON={goods:true,fund:true,invoice:true};
+function flowColor(flow){ var d=FlowData.FLOW_DEFS[flow]; return d?d.color:'#8a7a62'; }
+function edgeStyle(e){
+  var f=e.flow;
+  if(f){
+    var d=FlowData.FLOW_DEFS[f];
+    var st={stroke:d.color,'stroke-width':2.2,'stroke-dasharray':d.dash};
+    if(f==='fund') st['marker-end']='url(#arrowFund)';
+    else st['marker-end']='url(#arrow'+f.charAt(0).toUpperCase()+f.slice(1)+')';
+    return st;
+  }
+  return {stroke:'#8a7a62','stroke-width':2,'marker-end':'url(#arrow)'};
+}
+function renderToggles(){
+  var el=document.getElementById('flowToggles'); if(!el)return;
+  el.innerHTML=FlowData.FLOW_ORDER.map(function(f){
+    var d=FlowData.FLOW_DEFS[f], on=FLOW_ON[f];
+    return '<button class="flow-btn'+(on?' on':'')+'" data-flow="'+f+'" onclick="toggleFlow(\''+f+'\')" title="点击'+(on?'关闭':'显示')+d.name+'">'
+      +'<span class="dot"></span>'+d.name+(on?' ✓':'')+'</button>';
+  }).join('');
+}
+function toggleFlow(f){ FLOW_ON[f]=!FLOW_ON[f]; renderToggles(); render(); }
+function nodeHTML(n){
+  var T=FlowData.THEME, fill=T[n.kind]||T.orange, line=T[n.kind+'Line']||T.groupLine, text=T[n.kind+'Text']||T.ink;
+  var st='left:'+n.x+'px;top:'+n.y+'px;width:'+n.w+'px;height:'+n.h+'px;background:'+fill+';border-color:'+line+';color:'+text;
+  if(n.shape==='diamond'){
+    return '<div class="node diamond" style="'+st+';clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);border:0;background:'+line+'"><span style="color:#fff;font-size:12.5px">'+esc(n.label)+'</span></div>';
+  }
+  if(n.shape==='group'){
+    return '<div class="node group" style="'+st+'"><div class="gt">'+esc(n.label)+'</div><div class="gs">'+n.subs.map(function(s){return '<span>'+esc(s)+'</span>';}).join('')+'</div></div>';
+  }
+  return '<div class="node" style="'+st+'">'+esc(n.label)+'</div>';
+}
+function render(){
+  var mode=val('mode'), T=FlowData.THEME;
+  /* 赛维族用店群架构骨架；m0110/m9610/m9710/m9810/m1039 用报关出口骨架 */
+  var d=(mode.charAt(0)==='m'&&FlowData.fillCustom)?FlowData.fillCustom(mode):FlowData.fillMode(mode);
+  var cid=val('cid')||'【客户名称】', plat=val('platform');
+  var map={};d.nodes.forEach(function(n){map[n.id]=n;});
+  var svgdefs='<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#8a7a62"/></marker>';
+  FlowData.FLOW_ORDER.forEach(function(f){
+    if(!FLOW_ON[f]) return;   /* 关闭的流连箭头 marker 也不输出 */
+    var col=flowColor(f);
+    svgdefs+='<marker id="arrow'+f.charAt(0).toUpperCase()+f.slice(1)+'" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="'+col+'"/></marker>';
+  });
+  svgdefs+='</defs>';
+  var lines='';
+  d.edges.forEach(function(e){
+    if(e.flow && !FLOW_ON[e.flow]) return;   /* 按按钮状态过滤流向线 */
+    var a=map[e.from],b=map[e.to]; if(!a||!b)return;
+    var p=edgePath(a,b,e.kind,e.path), s=edgeStyle(e);
+    var attrs=Object.keys(s).map(function(k){return k+'="'+s[k]+'"';}).join(' ');
+    lines+='<div class="edge" style="left:0;top:0;width:1400px;height:740px"><svg viewBox="0 0 1400 740"><path d="'+p.d+'" fill="none" '+attrs+'/></svg>'
+      +(e.label?'<span class="elabel" style="left:'+p.lx+'px;top:'+p.ly+'px">'+esc(e.label)+'</span>':'')+'</div>';
+  });
+  var nh='';
+  d.notes.forEach(function(n){
+    nh+='<div class="note '+(n.id==='third'?'green':'')+'" style="left:'+n.x+'px;top:'+n.y+'px;width:'+n.w+'px;min-height:'+n.h+'px">'
+      +(n.label?'<b>'+esc(n.label)+'</b>':'')+esc(n.text)+'</div>';
+  });
+  var legend=FlowData.FLOW_ORDER.filter(function(f){return FLOW_ON[f];}).map(function(f){
+    return '<span style="color:'+flowColor(f)+'">● '+FlowData.FLOW_DEFS[f].name+'</span>';
+  }).join('　')||'<span style="color:#9a8a72">（未显示流向线）</span>';
+  document.getElementById('sheet').innerHTML=
+    '<div class="sheet-hd"><h2>业务链路图</h2><div class="meta">客户：'+esc(cid)+'<br>平台：'+esc(plat)+'　模式：'+esc(d.mode.name)+'</div></div>'
+    +'<div class="sheet-mode">'+esc(d.mode.name)+'　'+legend+'　<span style="color:#8a7a62">· 灰实线为主干业务链</span></div>'
+    +'<div class="canvas-area">'+svgdefs+lines+d.nodes.map(nodeHTML).join('')+nh+'</div>'
+    +'<div class="sheet-ft"><span>金米财税 · 跨境合规业务链路图</span><span>商业保密 · 仅限收件方内部使用</span></div>';
+}
+async function download(){
+  var node=document.getElementById('sheet');
+  if(typeof html2canvas==='undefined'){toast('出图组件未加载，请刷新重试');return;}
+  toast('正在生成图片…');
+  var box=document.getElementById('offscreen'); box.innerHTML='';
+  var clone=node.cloneNode(true);
+  clone.style.transform='none'; clone.style.margin='0'; clone.style.position='static';
+  box.appendChild(clone);
+  try{
+    var canvas=await html2canvas(clone,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,allowTaint:true});
+    var a=document.createElement('a');a.href=canvas.toDataURL('image/png');
+    var nm=(val('cid')||'客户').slice(0,20).replace(/[\\/:*?"<>|]/g,'');
+    a.download='业务链路图-'+nm+'.png';document.body.appendChild(a);a.click();a.remove();
+    toast('已下载 ✅');
+  }catch(e){toast('出图失败：'+(e&&e.message||e));}
+  finally{box.innerHTML='';}
+}
+load();renderToggles();render();fitStage();
+</script>
+</body>
+</html>

@@ -58,6 +58,7 @@ export const BACKUP_KEYS = [
   'cbx_ai_out_v1',     /* AI 五项方案 + 痛点推导结论（按记录存，避免重复烧 token） */
   'cbx_me',
   'cbx_battle_v1',
-  'cross_intake_v1'    /* 跨境电商客户对接表·出图：表单状态自动保存 */
+  'cross_intake_v1',   /* 跨境电商客户对接表·出图：表单状态自动保存 */
+  'flow_chart_v1'      /* 业务链路图生成器：表单状态自动保存 */
 ]
 export default BACKUP_KEYS

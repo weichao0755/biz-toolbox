@@ -313,5 +313,23 @@ export const TOOLS = [
     url: 'tools/plan-doc/index.html',
     component: EmbeddedToolView,
     newTab: true // AI 生成 + Word 导出交互较重，独立标签页体验更稳
+  },
+  {
+    path: '/tools/flow-chart',
+    name: 'flow-chart',
+    title: '业务链路图生成器',
+    desc: '销售只需选业务模式（赛维1.0/2.0、0110/9610/9710/9810/1039）、填客户名和平台，一键生成业务链路图并导出 PNG；货物流/资金流/票据流三色线可分别点亮开关，用于发客户或贴方案书',
+    color: '#b45309',
+    category: 'compliance',
+    iconSvg: svgWrap(`
+      <rect x="2" y="6" width="6" height="5" rx="1"/>
+      <rect x="16" y="6" width="6" height="5" rx="1"/>
+      <rect x="9" y="16" width="6" height="5" rx="1"/>
+      <line x1="8" y1="8.5" x2="16" y2="8.5"/>
+      <path d="M5 11v3h7v2M19 11v3h-7v2"/>
+    `),
+    url: 'tools/flow-chart/index.html',
+    component: EmbeddedToolView,
+    newTab: true // 出图交互，独立标签页体验更稳
   }
 ]
