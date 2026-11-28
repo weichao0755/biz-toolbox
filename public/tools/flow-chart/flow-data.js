@@ -315,8 +315,10 @@ function autoLayout(nodes,edges){
   var keys=Object.keys(cols).map(Number).sort(function(a,b){return a-b;});
   var pos={};
   keys.forEach(function(L){
-    var arr=cols[L], per=Math.max(1,Math.floor(6/arr.length));
-    arr.forEach(function(id,i){ pos[id]={x:60+L*215, y:170+(i-(arr.length-1)/2)*110}; });
+    var arr=cols[L];
+    /* 从固定顶部往下排，不再居中对称——同列节点多时居中会把第一个推成负 y 顶到标题 */
+    var gap=arr.length>1?Math.min(100,Math.floor(560/(arr.length-1))):100;
+    arr.forEach(function(id,i){ pos[id]={x:60+L*215, y:140+i*gap}; });
   });
   return pos;
 }
@@ -336,5 +338,69 @@ function fillCustomUser(data){
   };
 }
 
-scope.FlowData={NODES:NODES,EDGES:EDGES,NOTES:NOTES,MODES:MODES,CUSTOM_MODES:CUSTOM_MODES,THEME:THEME,FLOW_DEFS:FLOW_DEFS,FLOW_ORDER:FLOW_ORDER,fillMode:fillMode,fillCustom:fillCustom,CUSTOM_KEY:CUSTOM_KEY,CUSTOM_DEFAULT:CUSTOM_DEFAULT,loadCustom:loadCustom,saveCustom:saveCustom,autoLayout:autoLayout,fillCustomUser:fillCustomUser};
+/* ===== 自定义链路图历史记录（localStorage + 导出/导入 JSON） =====
+ * key = flow_history_v1，已登记 backupKeys → 自动进入「数据备份与恢复」与首页「本地文件夹同步」。
+ * 只存填写数据（nodes/edges），不存图片；点历史条目即可恢复编辑、重新出图。
+ */
+var HISTORY_KEY='flow_history_v1';
+var HISTORY_MAX=100;
+function loadHistory(){
+  try{
+    var a=JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');
+    return Array.isArray(a)?a:[];
+  }catch(e){ return []; }
+}
+function saveHistory(arr){
+  try{ localStorage.setItem(HISTORY_KEY,JSON.stringify(arr.slice(0,HISTORY_MAX))); }
+  catch(e){}
+}
+function historyStamp(){
+  var d=new Date();
+  function p(n){return String(n).padStart(2,'0');}
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+}
+function pushHistory(data,title){
+  var arr=loadHistory();
+  var rec={
+    id:'h'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+    time:historyStamp(),
+    title:String(title||'自定义链路图').slice(0,40),
+    nodes:JSON.parse(JSON.stringify(data.nodes||[])),
+    edges:JSON.parse(JSON.stringify(data.edges||[]))
+  };
+  arr.unshift(rec);
+  saveHistory(arr);
+  return rec;
+}
+function deleteHistory(id){ saveHistory(loadHistory().filter(function(r){return r.id!==id;})); }
+function exportHistoryJSON(){
+  return JSON.stringify({app:'biz-toolbox/flow-chart',version:1,exportedAt:historyStamp(),records:loadHistory()},null,2);
+}
+/* 兼容多种导入格式：本工具导出包 / 裸数组 / 单条 {nodes,edges} */
+function parseHistoryJSON(text){
+  var j=JSON.parse(text), recs=[];
+  if(Array.isArray(j)) recs=j;
+  else if(j&&Array.isArray(j.records)) recs=j.records;
+  else if(j&&Array.isArray(j.nodes)&&Array.isArray(j.edges)) recs=[j];
+  else throw new Error('不是有效的链路图历史文件');
+  var valid=recs.filter(function(r){ return r&&Array.isArray(r.nodes)&&Array.isArray(r.edges); }).map(function(r,i){
+    return {
+      id:r.id||('imp'+Date.now().toString(36)+i),
+      time:r.time||historyStamp(),
+      title:String(r.title||'导入的链路图').slice(0,40),
+      nodes:r.nodes, edges:r.edges
+    };
+  });
+  if(!valid.length) throw new Error('文件里没有可导入的链路图记录');
+  return valid;
+}
+function importHistoryJSON(text){
+  var incoming=parseHistoryJSON(text), arr=loadHistory();
+  var seen={}; arr.forEach(function(r){seen[r.id]=1;});
+  incoming.forEach(function(r){ if(seen[r.id]) r.id=r.id+'_'+Date.now().toString(36).slice(-4); arr.unshift(r); });
+  saveHistory(arr);
+  return incoming.length;
+}
+
+scope.FlowData={NODES:NODES,EDGES:EDGES,NOTES:NOTES,MODES:MODES,CUSTOM_MODES:CUSTOM_MODES,THEME:THEME,FLOW_DEFS:FLOW_DEFS,FLOW_ORDER:FLOW_ORDER,fillMode:fillMode,fillCustom:fillCustom,CUSTOM_KEY:CUSTOM_KEY,CUSTOM_DEFAULT:CUSTOM_DEFAULT,loadCustom:loadCustom,saveCustom:saveCustom,autoLayout:autoLayout,fillCustomUser:fillCustomUser,HISTORY_KEY:HISTORY_KEY,loadHistory:loadHistory,saveHistory:saveHistory,pushHistory:pushHistory,deleteHistory:deleteHistory,exportHistoryJSON:exportHistoryJSON,parseHistoryJSON:parseHistoryJSON,importHistoryJSON:importHistoryJSON};
 })(typeof window!=='undefined'?window:globalThis);

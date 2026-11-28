@@ -134,6 +134,14 @@ const edited={nodes:[{id:'a',name:'工厂'},{id:'b',name:'外贸'},{id:'c',name:
 const ef=F.fillCustomUser(edited);
 ck('user filled nodes render by name',ef.nodes.length===3&&ef.nodes[0].label==='工厂'&&ef.nodes[2].label==='客户');
 ck('user filled edges keep labels',ef.edges[0].label==='卖'&&ef.edges[1].flow==='fund');
+
+/* 同列多节点不得顶出画布（老板截图反馈：供应商节点顶到标题上） */
+const colNodes=[1,2,3,4,5,6].map(i=>({id:'c'+i,name:'列节点'+i}));
+const colEdges=[1,2,3,4,5].map(i=>({from:'c'+i,to:'c6',flow:'',label:''}));
+const colPos=F.autoLayout(colNodes,colEdges);
+const colYs=[1,2,3,4,5].map(i=>colPos['c'+i].y);
+ck('same-column nodes start at y=140 (no negative)',colYs[0]===140);
+ck('same-column nodes all fit canvas',colYs.every(y=>y>=130&&y+52<=740));
 /* 端到端：切到自定义模式渲染 */
 els.mode.value='user';els.flowToggles.innerHTML='';t.render();
 h=els.sheet.innerHTML;
@@ -143,6 +151,27 @@ ck('user mode header 自定义链路图',h.indexOf('自定义链路图')>=0&&h.i
 /* 切回固定模式恢复 */
 els.mode.value='m9610';t.render();
 ck('switch back from custom to fixed',(els.sheet.innerHTML.match(/class="node/g)||[]).length===11);
+
+// 8) 历史记录（本地 + 导出/导入 + 兼容本地文件夹同步）
+ck('history key registered in backupKeys',bk.indexOf("'flow_history_v1'")>=0);
+ck('HISTORY_KEY correct',F.HISTORY_KEY==='flow_history_v1');
+ck('history UI exists',html.indexOf('id="histList"')>=0&&html.indexOf('histExport()')>=0&&html.indexOf('histImport(event)')>=0&&html.indexOf('应用到图（保存历史）')>=0);
+var before=F.loadHistory().length;
+var rec=F.pushHistory(F.CUSTOM_DEFAULT,'测试历史链路');
+ck('pushHistory adds record',F.loadHistory().length===before+1&&rec.nodes.length===6&&rec.edges.length===7);
+ck('record has title+time+id',!!rec.id&&!!rec.time&&rec.title==='测试历史链路');
+var exp=F.exportHistoryJSON();
+ck('export JSON format',exp.indexOf('"app": "biz-toolbox/flow-chart"')>=0&&exp.indexOf('测试历史链路')>=0);
+var parsed=F.parseHistoryJSON(exp);
+ck('parse exported JSON',parsed.length===F.loadHistory().length);
+var imp=F.importHistoryJSON(exp);
+ck('import JSON adds records',imp===parsed.length&&F.loadHistory().length>=imp);
+ck('import compatible with bare array',F.parseHistoryJSON(JSON.stringify([{nodes:[],edges:[]}])).length===1);
+ck('import compatible with single record',F.parseHistoryJSON(JSON.stringify({nodes:[],edges:[]})).length===1);
+var badImport=false;try{F.parseHistoryJSON('{}')}catch(e){badImport=true}
+ck('invalid JSON rejected',badImport);
+F.deleteHistory(rec.id);
+ck('deleteHistory removes record',!F.loadHistory().some(function(r){return r.id===rec.id;}));
 
 console.log(pass?'\nALL FLOW-CHART CHECKS PASSED':'\nSOME CHECKS FAILED');
 process.exit(pass?0:1);

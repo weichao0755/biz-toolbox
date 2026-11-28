@@ -217,6 +217,23 @@ export const TOOLS = [
     newTab: true // 高频复制粘贴、需常驻配合微信，独立标签页打开体验更好、剪贴板权限完整
   },
   {
+    path: '/tools/record-notes',
+    name: 'record-notes',
+    title: '录音纪要助手',
+    desc: '录音/导入音频 → 转写整理成可直接发客户的微信版沟通纪要；支持麦克风与系统声音混合录制，音频仅存本机',
+    color: '#ea580c',
+    category: 'sales',
+    iconSvg: svgWrap(`
+      <rect x="4" y="6" width="13" height="12" rx="2"/>
+      <path d="M17 10l3-2v8l-3-2"/>
+      <line x1="7" y1="11" x2="14" y2="11"/>
+      <line x1="7" y1="14" x2="11" y2="14"/>
+    `),
+    url: 'tools/record-notes/index.html',
+    component: EmbeddedToolView,
+    newTab: true // 录音需麦克风/屏幕共享权限，iframe 内嵌会被浏览器拦截，独立标签页打开
+  },
+  {
     // 注意：路由不能用 /tools/cross，会和分类路由 /tools/:cat 撞车（跨境区固定占 /tools/cross）
     path: '/tools/cross-trainer',
     name: 'cross-trainer',

@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>录音纪要助手</title>
+<style>
+  :root{
+    --bg:#faf7f2; --surface:#ffffff; --surface-2:#f6f1e9; --surface-3:#efe8dc;
+    --border:#e8dfd2; --border-strong:#d8cbb8;
+    --text:#2b2520; --text-2:#6d6358; --text-3:#9a9086;
+    --accent:#b45309; --accent-hover:#964506; --accent-soft:#fdf2e6; --accent-line:#f0d9bd;
+    --success:#2f7a4d; --success-soft:#eaf5ee;
+    --info:#35679c; --info-soft:#eaf1f8;
+    --danger:#b9392b; --danger-soft:#fbedeb;
+    --shadow:0 1px 2px rgba(60,40,20,.05), 0 6px 20px rgba(60,40,20,.05);
+    --radius:14px; --radius-sm:9px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{
+    font-family:system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Source Han Sans SC",sans-serif;
+    background:var(--bg); color:var(--text); font-size:14px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  button,input,textarea,select{font-family:inherit;font-size:inherit;color:inherit;}
+  button{cursor:pointer;}
+  ::-webkit-scrollbar{width:9px;height:9px;}
+  ::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:9px;border:2px solid var(--bg);}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  .app{height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+  header{
+    height:62px;flex:none;background:var(--surface);border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:14px;padding:0 22px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;letter-spacing:.2px;}
+  .brand-mark{
+    width:30px;height:30px;border-radius:9px;background:var(--accent);color:#fff;
+    display:grid;place-items:center;font-size:15px;
+  }
+  .brand-sub{font-size:12px;color:var(--text-3);font-weight:400;margin-left:2px;}
+  .header-spacer{flex:1;}
+  .mode-pill{
+    display:flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--border);
+    padding:4px 5px;border-radius:999px;font-size:12px;
+  }
+  .mode-pill button{border:0;background:transparent;padding:4px 12px;border-radius:999px;color:var(--text-2);font-size:12px;}
+  .mode-pill button.active{background:var(--surface);color:var(--accent);font-weight:600;box-shadow:0 1px 3px rgba(60,40,20,.1);}
+  .btn{
+    border:1px solid var(--border);background:var(--surface);border-radius:var(--radius-sm);
+    padding:8px 14px;font-size:13px;font-weight:500;transition:.15s;white-space:nowrap;
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .btn:hover{border-color:var(--border-strong);background:var(--surface-2);}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .btn.primary:hover{background:var(--accent-hover);border-color:var(--accent-hover);}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--text-2);}
+  .btn.ghost:hover{background:var(--surface-2);}
+  .btn.danger{color:var(--danger);}
+  .btn.sm{padding:5px 10px;font-size:12px;}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+
+  .layout{flex:1;display:flex;min-height:0;}
+  .sidebar{
+    width:288px;flex:none;background:var(--surface);border-right:1px solid var(--border);
+    display:flex;flex-direction:column;min-height:0;
+  }
+  .side-head{padding:16px 16px 10px;display:flex;gap:8px;}
+  .side-head .btn{flex:1;justify-content:center;}
+  .side-title{
+    padding:8px 18px 6px;font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text-3);
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .list{flex:1;overflow-y:auto;padding:0 10px 14px;}
+  .item{
+    padding:11px 12px;border-radius:10px;cursor:pointer;margin-bottom:4px;border:1px solid transparent;
+    display:flex;gap:10px;align-items:flex-start;transition:.12s;
+  }
+  .item:hover{background:var(--surface-2);}
+  .item.active{background:var(--accent-soft);border-color:var(--accent-line);}
+  .item-icon{
+    width:30px;height:30px;flex:none;border-radius:8px;background:var(--surface-3);
+    display:grid;place-items:center;font-size:14px;color:var(--text-2);
+  }
+  .item.active .item-icon{background:#fff;color:var(--accent);}
+  .item-body{min-width:0;flex:1;}
+  .item-title{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .item-meta{font-size:11px;color:var(--text-3);margin-top:2px;display:flex;gap:8px;align-items:center;}
+  .badge{font-size:10px;padding:1px 6px;border-radius:999px;background:var(--surface-3);color:var(--text-2);font-weight:600;}
+  .badge.transcribed{background:var(--info-soft);color:var(--info);}
+  .badge.drafted{background:var(--success-soft);color:var(--success);}
+  .item-del{opacity:0;border:0;background:transparent;color:var(--text-3);font-size:15px;line-height:1;padding:2px 4px;border-radius:5px;}
+  .item:hover .item-del{opacity:1;}
+  .item-del:hover{background:var(--danger-soft);color:var(--danger);}
+  .side-foot{padding:12px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--text-3);}
+
+  .main{flex:1;min-width:0;overflow-y:auto;padding:26px 30px 40px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+
+  .recorder{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:44px;text-align:center;
+  }
+  .rec-order-ring{
+    width:112px;height:112px;margin:0 auto 22px;border-radius:50%;
+    background:var(--accent-soft);border:1px solid var(--accent-line);
+    display:grid;place-items:center;position:relative;
+  }
+  .rec-order-ring.recording{background:#fdecea;border-color:#f3c9c4;}
+  .rec-dot{width:34px;height:34px;border-radius:50%;background:var(--accent);}
+  .recording .rec-dot{background:var(--danger);animation:pulse 1.4s infinite;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(185,57,43,.35);}50%{box-shadow:0 0 0 14px rgba(185,57,43,0);}}
+  .rec-title{font-size:19px;font-weight:700;margin:0 0 6px;}
+  .rec-desc{color:var(--text-2);font-size:13px;margin:0 0 24px;}
+  .rec-time{font-size:30px;font-variant-numeric:tabular-nums;font-weight:600;letter-spacing:1px;margin:4px 0 14px;}
+  canvas#wave{width:100%;max-width:420px;height:56px;display:block;margin:0 auto 18px;}
+  .rec-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+  .rec-tips{margin-top:26px;font-size:12px;color:var(--text-3);line-height:1.9;text-align:left;max-width:520px;margin-left:auto;margin-right:auto;background:var(--surface-2);padding:14px 18px;border-radius:10px;}
+  .rec-tips b{color:var(--text-2);}
+  .source-picker{max-width:520px;margin:0 auto;text-align:left;}
+  .source-title{font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text-3);margin-bottom:8px;}
+  .source-opts{display:flex;gap:8px;}
+  .source-opt{
+    flex:1;text-align:left;background:#fff;border:1px solid var(--border);border-radius:10px;
+    padding:10px 12px;display:block;transition:.15s;position:relative;
+  }
+  .source-opt:hover{border-color:var(--border-strong);}
+  .source-opt.active{border-color:var(--accent);background:var(--accent-soft);}
+  .source-opt b{display:block;font-size:13px;font-weight:600;}
+  .source-opt small{display:block;font-size:11px;color:var(--text-3);margin-top:2px;line-height:1.5;}
+  .so-radio{
+    position:absolute;right:10px;top:11px;width:13px;height:13px;border-radius:50%;
+    border:1.5px solid var(--border-strong);
+  }
+  .source-opt.active .so-radio{border-color:var(--accent);background:var(--accent);box-shadow:inset 0 0 0 3px #fff;}
+  .source-warn{
+    margin-top:9px;font-size:11.5px;color:#9a5b0c;background:#fff8ec;border:1px solid var(--accent-line);
+    padding:7px 11px;border-radius:8px;line-height:1.6;
+  }
+
+  .detail-head{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:18px;}
+  .detail-head h2{font-size:20px;margin:0 0 4px;font-weight:700;}
+  .detail-sub{font-size:12px;color:var(--text-3);}
+  .detail-head .spacer{flex:1;}
+
+  .hint{
+    background:var(--accent-soft);border:1px solid var(--accent-line);color:#7a4410;
+    border-radius:10px;padding:10px 14px;font-size:12.5px;margin-bottom:16px;line-height:1.7;
+  }
+  .hint b{color:var(--accent);}
+  .hint.auto{background:var(--success-soft);border-color:#cbe5d5;color:#225c3a;}
+
+  .card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden;
+  }
+  .card-head{
+    padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;
+    background:linear-gradient(180deg,#fff,#fdfbf8);
+  }
+  .card-head h3{margin:0;font-size:13px;font-weight:700;}
+  .card-head .spacer{flex:1;}
+  .step-num{
+    width:20px;height:20px;border-radius:6px;background:var(--accent-soft);color:var(--accent);
+    display:grid;place-items:center;font-size:11px;font-weight:700;flex:none;
+  }
+  .card-body{padding:16px 18px;}
+  .player{width:100%;height:38px;}
+  audio{width:100%;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media(max-width:980px){.grid2{grid-template-columns:1fr;}}
+
+  textarea.field{
+    width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:12px 14px;resize:vertical;background:#fff;line-height:1.75;font-size:13px;
+    min-height:300px;outline:none;transition:.15s;
+  }
+  textarea.field:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(180,83,9,.08);}
+  .field-foot{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;}
+  .field-foot .spacer{flex:1;}
+  .mini-note{font-size:11px;color:var(--text-3);}
+
+  .input-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .input-row label{font-size:12px;color:var(--text-2);}
+  input.txt{
+    border:1px solid var(--border);border-radius:8px;padding:6px 10px;background:#fff;outline:none;min-width:0;
+  }
+  input.txt:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(180,83,9,.08);}
+
+  .progress{display:none;align-items:center;gap:9px;font-size:12px;color:var(--accent);margin-top:10px;}
+  .progress.show{display:flex;}
+  .spinner{width:13px;height:13px;border:2px solid var(--accent-line);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .empty{padding:70px 20px;text-align:center;color:var(--text-3);}
+  .empty-icon{font-size:34px;margin-bottom:10px;opacity:.5;}
+
+  .modal-mask{
+    position:fixed;inset:0;background:rgba(43,37,32,.4);display:none;align-items:center;justify-content:center;
+    z-index:50;padding:20px;backdrop-filter:blur(2px);
+  }
+  .modal-mask.show{display:flex;}
+  .modal{
+    background:var(--surface);border-radius:16px;width:min(680px,100%);max-height:88vh;overflow-y:auto;
+    box-shadow:0 20px 60px rgba(43,37,32,.25);
+  }
+  .modal-head{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;}
+  .modal-head h3{margin:0;font-size:16px;}
+  .modal-head .spacer{flex:1;}
+  .modal-body{padding:20px 22px;}
+  .modal-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+  .form-group{margin-bottom:18px;}
+  .form-group label{display:block;font-size:12px;font-weight:700;margin-bottom:6px;color:var(--text-2);}
+  .form-group .desc{font-size:11px;color:var(--text-3);margin-top:5px;line-height:1.6;}
+  .form-group input,.form-group textarea,.form-group select{
+    width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 11px;background:#fff;outline:none;
+  }
+  .form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(180,83,9,.08);}
+  .form-group textarea{min-height:240px;resize:vertical;font-size:12px;line-height:1.7;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;}
+  .section-label{font-size:11px;font-weight:700;letter-spacing:1px;color:var(--accent);text-transform:uppercase;margin:24px 0 12px;padding-bottom:7px;border-bottom:1px solid var(--border);}
+  .section-label:first-child{margin-top:0;}
+  .grid3{display:grid;grid-template-columns:2fr 1fr;gap:12px;}
+
+  .toast{
+    position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--text);color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;
+    opacity:0;pointer-events:none;transition:.25s;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.2);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand"><div class="brand-mark">录</div>录音纪要助手<span class="brand-sub">录音 → 转写 → 客户文稿</span></div>
+    <div class="header-spacer"></div>
+    <div class="mode-pill" title="半自动零配置；全自动需填写 API 密钥">
+      <button id="modeSemi" class="active">半自动</button>
+      <button id="modeAuto">全自动</button>
+    </div>
+    <button class="btn" id="btnSettings">⚙ 设置</button>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="side-head">
+        <button class="btn primary" id="btnNew">● 新建录音</button>
+        <button class="btn" id="btnImport" title="导入已有音频文件">＋ 导入</button>
+      </div>
+      <input type="file" id="fileInput" accept="audio/*,.m4a,.mp3,.wav,.webm,.aac,.ogg,.flac" hidden>
+      <div class="side-title"><span>录音存档</span><span id="countLabel">0 条</span></div>
+      <div class="list" id="list"></div>
+      <div class="side-foot">音频与文稿仅保存在本机浏览器，不上传任何服务器。</div>
+    </aside>
+
+    <main class="main">
+      <div class="wrap" id="content"></div>
+    </main>
+  </div>
+</div>
+
+<div class="modal-mask" id="settingsMask">
+  <div class="modal">
+    <div class="modal-head"><h3>设置</h3><div class="spacer"></div><button class="btn ghost sm" id="closeSettings">✕</button></div>
+    <div class="modal-body">
+      <div class="section-label">通用</div>
+      <div class="form-group">
+        <label>默认客户称呼</label>
+        <input id="cfgCustomer" placeholder="例如：张总">
+        <div class="desc">生成文稿时自动填入开头，可在每条录音里单独覆盖。</div>
+      </div>
+
+      <div class="section-label">全自动模式 · 语音转写（ASR）</div>
+      <div class="form-group">
+        <label>接口地址（OpenAI 兼容 /audio/transcriptions）</label>
+        <input id="cfgAsrUrl" placeholder="https://api.xxx.com/v1/audio/transcriptions">
+      </div>
+      <div class="grid3">
+        <div class="form-group"><label>API Key</label><input id="cfgAsrKey" type="password" placeholder="sk-..."></div>
+        <div class="form-group"><label>模型名</label><input id="cfgAsrModel" placeholder="SenseVoiceSmall"></div>
+      </div>
+      <div class="desc" style="margin-top:-8px;margin-bottom:4px;">支持任何 OpenAI 兼容的转写接口（硅基流动、MiniMax、自建服务等）。</div>
+
+      <div class="section-label">全自动模式 · 文稿生成（LLM）</div>
+      <div class="form-group">
+        <label>接口地址（OpenAI 兼容 /chat/completions）</label>
+        <input id="cfgLlmUrl" placeholder="https://api.deepseek.com/v1/chat/completions">
+      </div>
+      <div class="grid3">
+        <div class="form-group"><label>API Key</label><input id="cfgLlmKey" type="password" placeholder="sk-..."></div>
+        <div class="form-group"><label>模型名</label><input id="cfgLlmModel" placeholder="deepseek-chat"></div>
+      </div>
+
+      <div class="section-label">文稿生成提示词</div>
+      <div class="form-group">
+        <label>系统提示词（决定文稿长什么样，可按需调整）</label>
+        <textarea id="cfgPrompt"></textarea>
+        <div class="desc">{client} 会替换为该条录音的客户称呼；{date} 替换为录音日期。</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" id="btnResetPrompt">恢复默认提示词</button>
+      <button class="btn primary" id="saveSettings">保存设置</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DB_NAME='record_to_notes', STORE='items', SETTINGS_KEY='rtn_settings_v1';
+const DEFAULT_PROMPT = `你是一名财税服务顾问的助理。请根据下面这段顾问与客户沟通的录音转写文本，整理一份可以直接通过微信发给客户的沟通纪要，帮助客户回忆我们辅助沟通的内容。
+
+输出格式严格如下，不要输出任何额外说明：
+
+【沟通纪要 · {date}】
+
+{client}，今天聊的重点给您整理好了：
+
+**您这边的情况**
+- （客户背景、需求、规模、当前痛点，3-5条）
+- ...
+
+**我们给的方案**
+- （我们给出的建议、方案要点、为什么这么做，3-6条）
+- ...
+
+**接着要做的**
+- （我方要做什么、客户要做什么、时间节点，2-5条）
+- ...
+
+有出入的地方您随时说，我再调。
+
+硬性要求：
+1. 用"您"称呼客户，"我们"指我方；不要出现"客户""对方"等第三人称。
+2. 每段每条一行，简短口语化，整份文稿一屏内能读完。
+3. 修正转写中的同音字、口误和重复啰嗦；按语境判断说话人身份。
+4. 不要输出逐字稿，只保留对客户有价值的信息。
+5. 其他客户公司名称、内部报价底线等敏感信息做模糊处理。
+6. 得到的文稿必须能独立读懂——客户即便只收到这条微信，也清楚聊了什么、接下来做什么。
+
+以下是录音转写文本：
+
+`;
+
+const $=s=>document.querySelector(s);
+let db=null, items=[], currentId=null, settings=null;
+let mediaRecorder=null, audioChunks=[], stream=null, displayStream=null, audioCtx=null, analyser=null, rafId=null, timerId=null, recStart=0, isRecording=false;
+
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmtDur(sec){sec=Math.max(0,Math.floor(sec));const m=Math.floor(sec/60),s=sec%60;return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+function fmtDate(iso){const d=new Date(iso);return (d.getMonth()+1)+'月'+d.getDate()+'日 '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+function fmtDateShort(iso){const d=new Date(iso);return (d.getMonth()+1)+'月'+d.getDate()+'日';}
+function makeMD(){const d=new Date();return (d.getMonth()+1)+'月'+d.getDate()+'日';}
+
+function defaultSettings(){return {mode:'semi',customer:'',asr:{url:'',key:'',model:'SenseVoiceSmall'},llm:{url:'',key:'',model:'deepseek-chat'},prompt:DEFAULT_PROMPT};}
+function loadSettings(){
+  try{const raw=localStorage.getItem(SETTINGS_KEY);const s=raw?JSON.parse(raw):null;settings=Object.assign(defaultSettings(),s||{});settings.asr=Object.assign(defaultSettings().asr,s?.asr||{});settings.llm=Object.assign(defaultSettings().llm,s?.llm||{});}
+  catch(e){settings=window._memSettings||defaultSettings();}
+}
+function saveSettings(){try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));}catch(e){}window._memSettings=settings;}
+
+const memStore=new Map();
+function openDB(){return new Promise((res)=>{try{const r=indexedDB.open(DB_NAME,1);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains(STORE))d.createObjectStore(STORE,{keyPath:'id'});};r.onsuccess=()=>res(r.result);r.onerror=()=>res(null);r.onblocked=()=>res(null);}catch(e){res(null);}});}
+function dbPut(item){memStore.set(item.id,item);if(!db)return Promise.resolve();return new Promise((res)=>{try{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put(item);t.oncomplete=res;t.onerror=res;}catch(e){res();}});}
+function dbGetAll(){if(!db)return Promise.resolve([...memStore.values()]);return new Promise((res)=>{try{const t=db.transaction(STORE,'readonly');const q=t.objectStore(STORE).getAll();q.onsuccess=()=>res((q.result||[]).map(x=>memStore.get(x.id)||x));q.onerror=()=>res([...memStore.values()]);}catch(e){res([...memStore.values()]);}});}
+function dbDelete(id){memStore.delete(id);if(!db)return Promise.resolve();return new Promise((res)=>{try{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).delete(id);t.oncomplete=res;t.onerror=res;}catch(e){res();}});}
+
+async function loadList(){
+  try{items=(await dbGetAll()).sort((a,b)=>new Date(b.date)-new Date(a.date));}
+  catch(e){items=[...memStore.values()].sort((a,b)=>new Date(b.date)-new Date(a.date));}
+  renderList();const c=$('#countLabel');if(c)c.textContent=items.length+' 条';
+}
+function renderList(){
+  const el=$('#list');
+  if(!items.length){el.innerHTML='<div style="padding:26px 14px;text-align:center;color:var(--text-3);font-size:12px;line-height:1.8;">还没有录音<br>点上面「新建录音」开始</div>';return;}
+  el.innerHTML=items.map(it=>{
+    const st=it.draft?'drafted':(it.transcript?'transcribed':'');
+    const label=st==='drafted'?'已生成':(st==='transcribed'?'已转写':'待处理');
+    return `<div class="item ${it.id===currentId?'active':''}" data-id="${it.id}">
+      <div class="item-icon">${it.type==='import'?'📄':'🎙'}</div>
+      <div class="item-body">
+        <div class="item-title">${esc(it.title)}</div>
+        <div class="item-meta"><span>${fmtDate(it.date)}</span><span>${fmtDur(it.duration||0)}</span><span class="badge ${st}">${label}</span></div>
+      </div>
+      <button class="item-del" data-del="${it.id}" title="删除">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function render(){
+  const it=items.find(x=>x.id===currentId);
+  if(!it){renderRecorder();return;}
+  const semi=settings.mode==='semi';
+  const hint=semi
+    ? `<div class="hint"><b>半自动模式</b>　① 点「导出音频」下载 → ② 把音频发给 WorkBuddy 并说"按沟通纪要模板整理" → ③ 把返回的文稿粘贴到右侧「客户文稿」框。转写文本框也可以直接粘贴转写结果。</div>`
+    : `<div class="hint auto"><b>全自动模式</b>　已配置 API 的话，点「一键转写并生成文稿」即可自动完成。未配置请到右上角「设置」填写。</div>`;
+  $('#content').innerHTML=`
+    <div class="detail-head">
+      <div><h2>${esc(it.title)}</h2><div class="detail-sub">${fmtDate(it.date)} · 时长 ${fmtDur(it.duration||0)} · ${it.type==='import'?'导入音频':'本机录音'}</div></div>
+      <div class="spacer"></div>
+      <button class="btn sm" id="backBtn">← 返回录音台</button>
+      <button class="btn sm danger" id="delBtn">删除</button>
+    </div>
+    ${hint}
+    <div class="card">
+      <div class="card-head"><div class="step-num">0</div><h3>音频</h3><div class="spacer"></div><button class="btn sm" id="exportAudio">↓ 导出音频</button></div>
+      <div class="card-body"><audio controls src="${URL.createObjectURL(it.blob)}"></audio></div>
+    </div>
+    <div class="input-row" style="margin-bottom:16px;">
+      <label>客户称呼</label>
+      <input class="txt" id="customerInput" style="width:140px;" value="${esc(it.customer||settings.customer||'')}" placeholder="例如：张总">
+      <span class="mini-note">用于文稿开头问候语</span>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-head"><div class="step-num">1</div><h3>转写文本</h3><div class="spacer"></div><span class="mini-note">可编辑</span></div>
+        <div class="card-body">
+          <textarea class="field" id="transcript" placeholder="半自动：把转写结果粘贴到这里&#10;全自动：点下方按钮自动生成">${esc(it.transcript||'')}</textarea>
+          <div class="field-foot">
+            <button class="btn sm" id="copyPrompt">复制处理指令</button>
+            <div class="spacer"></div>
+            <span class="mini-note" id="transCount">${(it.transcript||'').length} 字</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="step-num">2</div><h3>客户文稿（可直接发微信）</h3><div class="spacer"></div><span class="mini-note">可编辑</span></div>
+        <div class="card-body">
+          <textarea class="field" id="draft" placeholder="点「一键生成文稿」自动套模板，或把 WorkBuddy 返回的文稿粘贴到这里">${esc(it.draft||'')}</textarea>
+          <div class="field-foot">
+            <button class="btn primary sm" id="genBtn">${semi?'一键生成文稿':'⚡ 一键转写并生成文稿'}</button>
+            <button class="btn sm" id="copyDraft">复制文稿</button>
+            <button class="btn sm" id="downloadDraft">下载 .md</button>
+            <div class="spacer"></div>
+            <span class="mini-note" id="draftCount">${(it.draft||'') .length} 字</span>
+          </div>
+          <div class="progress" id="progress"><span class="spinner"></span><span id="progressText">正在转写…</span></div>
+        </div>
+      </div>
+    </div>`;
+
+  $('#backBtn').onclick=()=>{currentId=null;render();};
+  $('#delBtn').onclick=async()=>{if(!confirm('确定删除这条录音及文稿？'))return;await dbDelete(it.id);currentId=null;await loadList();render();toast('已删除');};
+  $('#exportAudio').onclick=()=>exportAudio(it);
+  $('#copyPrompt').onclick=()=>copyText(buildInstruction(it),'处理指令已复制，连同音频一起发给 WorkBuddy');
+  $('#copyDraft').onclick=()=>copyText($('#draft').value,'文稿已复制，可直接发微信');
+  $('#downloadDraft').onclick=()=>downloadDraft(it,$('#draft').value);
+  $('#genBtn').onclick=()=>semi?genDraftLocally(it):autoGenerate(it);
+  $('#transcript').oninput=e=>{it.transcript=e.target.value;$('#transCount').textContent=e.target.value.length+' 字';debounceSave(it);};
+  $('#draft').oninput=e=>{it.draft=e.target.value;$('#draftCount').textContent=e.target.value.length+' 字';debounceSave(it);};
+  $('#customerInput').oninput=e=>{it.customer=e.target.value;debounceSave(it);};
+}
+
+const saveTimers={};
+function debounceSave(it){clearTimeout(saveTimers[it.id]);saveTimers[it.id]=setTimeout(()=>dbPut(it),400);}
+
+function buildInstruction(it){
+  return `请处理这段录音，按「沟通纪要」微信版模板整理成一份可以直接发给客户的文稿（客户称呼：${it.customer||settings.customer||'X总'}）。\n\n要求：\n1. 三段式：您这边的情况 / 我们给的方案 / 接着要做的\n2. 简洁口语化，一屏能读完，用"您"和"我们"\n3. 修正口误和同音字，不要逐字稿\n4. 敏感信息模糊处理\n\n音频文件我随后发给你。`;
+}
+
+function renderRecorder(){
+  $('#content').innerHTML=`
+    <div class="recorder">
+      <div class="rec-order-ring ${isRecording?'recording':''}" id="ring"><div class="rec-dot"></div></div>
+      <h2 class="rec-title">${isRecording?'正在录音':'开始一段录音'}</h2>
+      <p class="rec-desc">${isRecording?'聊完后点「停止录音」，音频会自动存档':'与客户沟通时点下方按钮，录完自动生成可发送的客户文稿'}</p>
+      <div class="rec-time" id="recTime">${fmtDur(isRecording?(Date.now()-recStart)/1000:0)}</div>
+      <canvas id="wave" width="840" height="112"></canvas>
+      <div class="rec-actions">
+        ${isRecording
+          ? `<button class="btn primary" id="stopBtn">■ 停止并保存</button><button class="btn" id="cancelBtn">取消</button>`
+          : `<button class="btn primary" id="startBtn">● 开始录音</button><button class="btn" id="importBtn2">＋ 导入音频文件</button>`}
+      </div>
+      ${isRecording?'':`
+      <div class="source-picker">
+        <div class="source-title">录音来源</div>
+        <div class="source-opts">
+          <button class="source-opt active" data-src="mic"><span class="so-radio"></span><b>仅麦克风</b><small>当面沟通 / 自己备忘</small></button>
+          <button class="source-opt" data-src="mixed"><span class="so-radio"></span><b>系统声音 + 麦克风</b><small>微信电脑版 / 腾讯会议 / 线上通话</small></button>
+        </div>
+        <div class="source-warn" id="sourceWarn">⚠ 浏览器只能录到麦克风里的声音。电话沟通请改用手机通话录音，再点「导入音频文件」。</div>
+      </div>`}
+      <div class="rec-tips">
+        <b>按场景怎么录</b><br>
+        · <b>当面沟通</b>：选「仅麦克风」，手机或电脑放桌中间，能录到双方。<br>
+        · <b>微信电脑版 / 线上会议</b>：选「系统声音 + 麦克风」，浏览器会让你选共享哪个窗口，记得勾选「分享音频」——这样对方的声音（系统播放）和你的声音（麦克风）都会录进去。<br>
+        · <b>手机电话</b>：浏览器录不到对方声音，请用手机自带通话录音，录完把文件拖进来「导入音频文件」。<br>
+        · <b>微信语音条</b>：长按收藏或转发给自己，用电脑端导出音频后导入。
+      </div>
+    </div>`;
+  if(isRecording){$('#stopBtn').onclick=stopRecording;$('#cancelBtn').onclick=cancelRecording;drawWave();}
+  else{
+    $('#startBtn').onclick=()=>startRecording(window._recSource||'mic');
+    $('#importBtn2').onclick=()=>$('#fileInput').click();
+    document.querySelectorAll('.source-opt').forEach(b=>b.onclick=()=>{
+      document.querySelectorAll('.source-opt').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');window._recSource=b.dataset.src;
+      $('#sourceWarn').style.display=b.dataset.src==='mixed'?'none':'block';
+    });
+  }
+}
+
+async function startRecording(source){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    alert('当前预览环境不支持麦克风。\n\n请在 Chrome 或 Edge 中直接打开本工具文件：\n' + location.href.split('#')[0] + '\n\n（本地文件路径：record-to-notes/index.html）');
+    return;
+  }
+  let micStream=null;
+  try{
+    micStream=await navigator.mediaDevices.getUserMedia({audio:true});
+  }catch(e){
+    if(e.name==='NotAllowedError')alert('麦克风权限被拒绝。请在浏览器地址栏左侧允许麦克风权限后重试。');
+    else if(window.isSecureContext===false)alert('当前页面不是安全上下文，浏览器禁止录音。\n\n请用 Chrome / Edge 直接打开本地文件，或部署到 HTTPS 地址。');
+    else toast('无法访问麦克风：'+e.message);
+    return;
+  }
+
+  if(source==='mixed'){
+    if(!navigator.mediaDevices.getDisplayMedia){
+      micStream.getTracks().forEach(t=>t.stop());
+      alert('当前浏览器不支持捕获系统声音。请用 Chrome / Edge 打开。');return;
+    }
+    try{
+      displayStream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true});
+    }catch(e){
+      micStream.getTracks().forEach(t=>t.stop());
+      toast('已取消共享屏幕');return;
+    }
+    if(!displayStream.getAudioTracks().length){
+      displayStream.getTracks().forEach(t=>t.stop());displayStream=null;
+      micStream.getTracks().forEach(t=>t.stop());
+      alert('没有捕获到系统声音。\n\n请重新选择共享窗口，并在弹出的对话框中勾选「分享音频 / Share audio」。');return;
+    }
+    // 混合麦克风 + 系统声音
+    try{
+      const mixCtx=new (window.AudioContext||window.webkitAudioContext)();
+      const dest=mixCtx.createMediaStreamDestination();
+      mixCtx.createMediaStreamSource(micStream).connect(dest);
+      mixCtx.createMediaStreamSource(displayStream).connect(dest);
+      stream=dest.stream;
+      stream._mixCtx=mixCtx;
+      stream._extraStreams=[micStream,displayStream];
+      displayStream.getVideoTracks().forEach(t=>{
+        t.addEventListener('ended',()=>{if(isRecording)stopRecording();});
+      });
+    }catch(e){
+      micStream.getTracks().forEach(t=>t.stop());
+      displayStream.getTracks().forEach(t=>t.stop());displayStream=null;
+      alert('音源混合失败：'+e.message);return;
+    }
+  }else{
+    stream=micStream;
+  }
+  const mimes=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/mpeg'];
+  const mime=mimes.find(m=>window.MediaRecorder&&MediaRecorder.isTypeSupported(m))||'';
+  audioChunks=[];
+  mediaRecorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
+  mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size)audioChunks.push(e.data);};
+  mediaRecorder.onstop=async()=>{
+    const blob=new Blob(audioChunks,{type:mime||'audio/webm'});
+    const dur=(Date.now()-recStart)/1000;
+    cleanupAudio();
+    if(blob.size<1000){toast('录音太短，已取消');return;}
+    await saveNewItem(blob,'录音 · '+fmtDateTime(new Date()),dur,'record');
+  };
+  recStart=Date.now();isRecording=true;render();
+  mediaRecorder.start(250);
+  timerId=setInterval(()=>{const el=$('#recTime');if(el)el.textContent=fmtDur((Date.now()-recStart)/1000);},300);
+  try{
+    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    analyser=audioCtx.createAnalyser();analyser.fftSize=1024;
+    audioCtx.createMediaStreamSource(stream).connect(analyser);
+  }catch(e){}
+}
+function fmtDateTime(d){return (d.getMonth()+1)+'月'+d.getDate()+'日 '+String(d.getHours()).padStart(2,'0')+'点'+String(d.getMinutes()).padStart(2,'0')+'分';}
+function cleanupAudio(){
+  clearInterval(timerId);timerId=null;
+  if(rafId)cancelAnimationFrame(rafId);rafId=null;
+  try{stream?._extraStreams?.forEach(s=>s.getTracks().forEach(t=>t.stop()));}catch(e){}
+  try{stream?._mixCtx?.close();}catch(e){}
+  try{stream?.getTracks().forEach(t=>t.stop());}catch(e){}
+  try{displayStream?.getTracks().forEach(t=>t.stop());}catch(e){}
+  try{audioCtx?.close();}catch(e){}
+  stream=null;displayStream=null;audioCtx=null;analyser=null;
+}
+function stopRecording(){if(!mediaRecorder||mediaRecorder.state==='inactive')return;clearInterval(timerId);isRecording=false;mediaRecorder.stop();renderRecorder();}
+function cancelRecording(){
+  if(!mediaRecorder)return;
+  clearInterval(timerId);isRecording=false;
+  mediaRecorder.onstop=null;
+  if(mediaRecorder.state!=='inactive')mediaRecorder.stop();
+  cleanupAudio();render();toast('已取消');
+}
+function drawWave(){
+  const cv=$('#wave');if(!cv||!analyser)return;
+  const ctx=cv.getContext('2d');const W=cv.width,H=cv.height;
+  const buf=new Uint8Array(analyser.fftSize);
+  const draw=()=>{
+    if(!isRecording)return;
+    analyser.getByteTimeDomainData(buf);
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle='#e8dfd2';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
+    ctx.strokeStyle='#b45309';ctx.lineWidth=2.5;ctx.beginPath();
+    const step=W/buf.length;
+    for(let i=0;i<buf.length;i++){const v=(buf[i]-128)/128;const y=H/2+v*H*0.42;i?ctx.lineTo(i*step,y):ctx.moveTo(0,y);}
+    ctx.stroke();
+    rafId=requestAnimationFrame(draw);
+  };
+  draw();
+}
+
+async function saveNewItem(blob,title,duration,type){
+  const it={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),title,date:new Date().toISOString(),duration:duration||0,type,blob,transcript:'',draft:'',customer:settings.customer||''};
+  await dbPut(it);currentId=it.id;await loadList();render();toast('已保存到录音存档');
+}
+
+function exportAudio(it){
+  const ext=(it.blob.type.includes('mpeg')?'mp3':it.blob.type.includes('mp4')?'m4a':it.blob.type.includes('wav')?'wav':'webm');
+  const a=document.createElement('a');a.href=URL.createObjectURL(it.blob);
+  a.download=`录音_${new Date(it.date).toISOString().slice(0,10)}_${String(it.title).replace(/[\\/:*?"<>|]/g,'')}.${ext}`;
+  a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+function copyText(text,msg){
+  if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(text).then(()=>toast(msg)).catch(()=>fallbackCopy(text,msg));}
+  else fallbackCopy(text,msg);
+}
+function fallbackCopy(text,msg){
+  const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast(msg);}catch(e){toast('复制失败，请手动选择');}
+  document.body.removeChild(ta);
+}
+function downloadDraft(it,text){
+  if(!text.trim()){toast('文稿是空的');return;}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'text/markdown;charset=utf-8'}));
+  a.download=`沟通纪要_${new Date(it.date).toISOString().slice(0,10)}.md`;
+  a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+
+function genDraftLocally(it){
+  const t=$('#transcript').value.trim();
+  const c=$('#customerInput').value.trim()||settings.customer||'X总';
+  if(!t){
+    toast('半自动模式：请先导出音频发给 WorkBuddy，或把转写结果粘贴到左侧');
+    return;
+  }
+  const text=`请把下面的录音转写文本，按「沟通纪要」微信版模板整理成一份可以直接发给客户的文稿。\n客户称呼：${c}\n\n要求：\n1. 三段式：您这边的情况 / 我们给的方案 / 接着要做的\n2. 简洁口语化，一屏能读完，用"您"和"我们"\n3. 修正口误和同音字，不要逐字稿；敏感信息模糊处理\n\n转写文本：\n${t}`;
+  copyText(text,'已复制：转写文本 + 整理指令，粘贴给 WorkBuddy 即可');
+}
+
+function showProgress(text){$('#progress').classList.add('show');$('#progressText').textContent=text;$('#genBtn').disabled=true;}
+function hideProgress(){$('#progress').classList.remove('show');$('#genBtn').disabled=false;}
+
+async function autoGenerate(it){
+  const s=settings;
+  if(!s.asr.url||!s.asr.key){toast('请先到「设置」填写转写接口');openSettings();return;}
+  if(!s.llm.url||!s.llm.key){toast('请先到「设置」填写文稿生成接口');openSettings();return;}
+  const c=$('#customerInput').value.trim()||s.customer||'X总';
+  const date=fmtDateShort(it.date);
+  showProgress('正在转写音频…');
+  try{
+    const fd=new FormData();
+    const ext=(it.blob.type.includes('mpeg')?'mp3':it.blob.type.includes('mp4')?'m4a':'webm');
+    fd.append('file',it.blob,`audio.${ext}`);fd.append('model',s.asr.model);
+    const r1=await fetch(s.asr.url,{method:'POST',headers:{Authorization:'Bearer '+s.asr.key},body:fd});
+    const j1=await r1.json();
+    if(!r1.ok)throw new Error(j1.error?.message||JSON.stringify(j1).slice(0,120));
+    const transcript=j1.text||'';
+    it.transcript=transcript;$('#transcript').value=transcript;$('#transCount').textContent=transcript.length+' 字';
+    showProgress('正在生成客户文稿…');
+    const prompt=(s.prompt||DEFAULT_PROMPT).replace(/\{client\}/g,c).replace(/\{date\}/g,date);
+    const r2=await fetch(s.llm.url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+s.llm.key},body:JSON.stringify({model:s.llm.model,messages:[{role:'system',content:prompt},{role:'user',content:transcript}],temperature:0.3})});
+    const j2=await r2.json();
+    if(!r2.ok)throw new Error(j2.error?.message||JSON.stringify(j2).slice(0,120));
+    const draft=j2.choices?.[0]?.message?.content||'';
+    it.draft=draft;$('#draft').value=draft;$('#draftCount').textContent=draft.length+' 字';
+    it.customer=c;await dbPut(it);await loadList();
+    toast('转写与文稿生成完成');
+  }catch(e){
+    toast('失败：'+e.message);
+    alert('自动处理失败：\n'+e.message+'\n\n请检查接口地址、密钥和模型名是否正确，或切回半自动模式。');
+  }finally{hideProgress();}
+}
+
+function openSettings(){
+  $('#cfgCustomer').value=settings.customer||'';
+  $('#cfgAsrUrl').value=settings.asr.url||'';$('#cfgAsrKey').value=settings.asr.key||'';$('#cfgAsrModel').value=settings.asr.model||'';
+  $('#cfgLlmUrl').value=settings.llm.url||'';$('#cfgLlmKey').value=settings.llm.key||'';$('#cfgLlmModel').value=settings.llm.model||'';
+  $('#cfgPrompt').value=settings.prompt||DEFAULT_PROMPT;
+  $('#settingsMask').classList.add('show');
+}
+function closeSettings(){$('#settingsMask').classList.remove('show');}
+function setMode(m){
+  settings.mode=m;saveSettings();
+  $('#modeSemi').classList.toggle('active',m==='semi');$('#modeAuto').classList.toggle('active',m==='auto');
+  render();toast(m==='semi'?'已切换到半自动模式':'已切换到全自动模式');
+}
+
+async function init(){
+  // 按钮绑定优先，避免存储初始化失败导致整个界面失灵
+  bindGlobalEvents();
+  try{db=await openDB();}catch(e){db=null;}
+  try{loadSettings();}catch(e){settings=defaultSettings();}
+  try{await loadList();}catch(e){items=[];}
+  $('#modeSemi').classList.toggle('active',settings.mode==='semi');
+  $('#modeAuto').classList.toggle('active',settings.mode==='auto');
+  render();
+}
+function bindGlobalEvents(){
+  $('#btnNew').onclick=()=>{currentId=null;render();};
+  $('#btnImport').onclick=()=>$('#fileInput').click();
+  $('#fileInput').onchange=async e=>{
+    const f=e.target.files?.[0];if(!f)return;
+    await saveNewItem(f,f.name.replace(/\.[^.]+$/,''),0,'import');e.target.value='';
+  };
+  $('#btnSettings').onclick=openSettings;
+  $('#closeSettings').onclick=closeSettings;
+  $('#settingsMask').onclick=e=>{if(e.target.id==='settingsMask')closeSettings();};
+  $('#saveSettings').onclick=()=>{
+    settings.customer=$('#cfgCustomer').value.trim();
+    settings.asr={url:$('#cfgAsrUrl').value.trim(),key:$('#cfgAsrKey').value.trim(),model:$('#cfgAsrModel').value.trim()};
+    settings.llm={url:$('#cfgLlmUrl').value.trim(),key:$('#cfgLlmKey').value.trim(),model:$('#cfgLlmModel').value.trim()};
+    settings.prompt=$('#cfgPrompt').value;
+    saveSettings();closeSettings();render();toast('设置已保存');
+  };
+  $('#btnResetPrompt').onclick=()=>{if(confirm('恢复默认提示词？你当前的修改会被覆盖。'))$('#cfgPrompt').value=DEFAULT_PROMPT;};
+  $('#modeSemi').onclick=()=>setMode('semi');
+  $('#modeAuto').onclick=()=>setMode('auto');
+  $('#list').addEventListener('click',e=>{
+    const del=e.target.closest('[data-del]');
+    if(del){e.stopPropagation();const id=del.dataset.del;if(confirm('确定删除这条录音及文稿？'))dbDelete(id).then(async()=>{if(currentId===id)currentId=null;await loadList();render();toast('已删除');});return;}
+    const item=e.target.closest('.item');if(item){currentId=item.dataset.id;render();}
+  });
+  document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();const it=items.find(x=>x.id===currentId);if(it&&$('#draft')){it.draft=$('#draft').value;dbPut(it);toast('已保存');}}});
+}
+init();
+</script>
+</body>
+</html>

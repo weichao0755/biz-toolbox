@@ -9,6 +9,7 @@
 <script src="deep-engine.js"></script>
 <script src="fields.js"></script>
 <script src="cross-template.js"></script>
+<script src="../gen-history.js"></script>
 <style>
   :root{
     --bg:#faf7f2; --surface:#fffefb; --surface-2:#fdf6ec; --border:#ece3d6;
@@ -145,7 +146,7 @@
     <p class="desc">可直接在下方修改文字，改完再导出——改过的内容会原样进 Word。</p>
     <div class="out" id="outBox" contenteditable="true" spellcheck="false"></div>
     <div class="bar" style="margin-top:14px">
-      <button class="btn" id="docBtn" onclick="genWord()" disabled>导出 Word 方案书</button>
+      <button class="btn" id="docBtn" onclick="genWord()" disabled>导出 Word 方案书</button><span id="planHistHost"></span>
       <span class="hint-sm" id="outHint"></span>
     </div>
   </div>
@@ -467,7 +468,8 @@ function renderInds(){
 }
 function pickInd(k){
   curInd=k; DATA.industry=INDUSTRIES[k].name;
-  renderInds(); renderForm();
+  renderInds();
+  renderForm();
   document.getElementById('indBadge').textContent=INDUSTRIES[k].name;
   document.getElementById('genBtn').disabled=false;
   document.getElementById('genStatus').textContent='';
@@ -800,6 +802,8 @@ async function genOutline(){
 /* ============ Word 生成（复用 cross 的 docx 排版风格） ============ */
 async function genWord(){
   if(!OUTTEXT.trim()){ return; }
+  /* 生成即存历史（自动同步到「储存」文件夹） */
+  try{ var ind=INDUSTRIES[curInd]?INDUSTRIES[curInd].name:curInd; GenHistory.save('plan_doc_records_v1',ind+' · '+(DATA.cid||'未命名客户'),{DATA:DATA,curInd:curInd,out:OUTTEXT},{customer:DATA.cid||'',industry:ind}); }catch(e){}
   if(typeof docx==='undefined'){ alert('Word 组件未加载，请刷新页面重试'); return; }
   var btn=document.getElementById('docBtn'), ot=btn.textContent;
   btn.disabled=true; btn.textContent='生成中…';
@@ -870,6 +874,18 @@ async function genWord(){
   finally{ btn.disabled=false; btn.textContent=ot; }
 }
 
+/* 生成历史（自动同步到「储存」文件夹） */
+if(typeof GenHistory!=='undefined'){
+  GenHistory.mount('plan_doc_records_v1','planHistHost');
+  window.GEN_RESTORE=function(s){
+    if(!s)return;
+    DATA=s.DATA||{}; curInd=s.curInd||curInd; OUTTEXT=s.out||'';
+    renderInds(); renderForm();
+    document.getElementById('outBox').innerText=OUTTEXT;
+    document.getElementById('docBtn').disabled=false;
+    document.getElementById('indBadge').textContent=INDUSTRIES[curInd].name;
+  };
+}
 /* 初始化 */
 aiLoad(); renderInds(); renderForm();
 </script>

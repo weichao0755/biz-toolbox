@@ -17,9 +17,11 @@ export const BACKUP_KEYS = [
   'qref_records_v1',
   'qual_search_config',
   'qref_local_data',
+  'qref_shared_cache',
   'quote_tool_data_v2',
   'quote_records_v1',
   'quote_price_lib_v1',
+  'quote_ai_config',
   'installment_tool_data_v1',
   'installment_records_v1',
   'sales_cases_v1',
@@ -29,6 +31,8 @@ export const BACKUP_KEYS = [
   'todo_v1',
   'todo_lists_v1',
   'huashu_v1',
+  'huashu_gh_token',   /* 话术工具：公众号 token（用户设定，纳入同步） */
+  'huashu_shared_cache',
   'huashu_cats_v1',
   'huashu_vars_v1',
   'huashu_favs_v1',
@@ -59,7 +63,12 @@ export const BACKUP_KEYS = [
   'cbx_me',
   'cbx_battle_v1',
   'cross_intake_v1',   /* 跨境电商客户对接表·出图：表单状态自动保存 */
+  'cross_intake_records_v1',  /* 客户对接表 PNG 生成历史 */
+  'contract_screen_records_v1', /* 合同筛查 Word 生成历史 */
   'flow_chart_v1',     /* 业务链路图生成器：表单状态自动保存 */
-  'flow_custom_v1'     /* 业务链路图生成器：自定义模式的节点与连线数据 */
+  'flow_custom_v1',    /* 业务链路图生成器：自定义模式的节点与连线数据 */
+  'flow_history_v1',   /* 业务链路图生成器：自定义链路图历史记录（可恢复编辑） */
+  'plan_doc_records_v1', /* 方案书生成：Word 生成历史（自动同步到储存文件夹） */
+  'rtn_settings_v1'    /* 录音纪要助手：客户称呼 + 全自动 ASR/LLM 接口配置（音频本体存 IndexedDB，不随此同步） */
 ]
 export default BACKUP_KEYS

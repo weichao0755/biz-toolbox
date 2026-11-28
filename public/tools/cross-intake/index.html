@@ -185,13 +185,14 @@
     </div>
     <div class="nav2">
       <button class="btn ghost" id="btnBack">← 返回修改</button>
-      <button class="btn" id="btnImg">下载图片 PNG</button>
+      <button class="btn" id="btnImg">下载图片 PNG</button><span id="intakeHistHost"></span>
     </div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
 
 <script src="html2canvas.min.js"></script>
+<script src="../gen-history.js"></script>
 <script>
 (function(){
   "use strict";
@@ -285,6 +286,7 @@
   /* ---------- 出图 ---------- */
   function download(){
     renderPreview();
+    try{ if(typeof GenHistory!=='undefined'){ var f=readAll(); GenHistory.save('cross_intake_records_v1',(f.custName||'未命名客户')+' · 对接表',{f:f,platforms:chipState.platforms.slice(),S:JSON.parse(JSON.stringify(S))},{customer:f.custName||''}); } }catch(e){}
     if(typeof html2canvas==='undefined'){toast('出图组件未加载，请刷新重试');return;}
     toast('正在生成图片…');
     // 关键：克隆 #sheet 到脱离缩放环境的离屏容器（自然 720px、无 transform），
@@ -425,6 +427,16 @@
       document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on');});
       $('pane-form').classList.add('on');
     };
+    if(typeof GenHistory!=='undefined'){
+      GenHistory.mount('cross_intake_records_v1','intakeHistHost');
+      window.GEN_RESTORE=function(s){
+        if(!s||!s.f)return;
+        Object.keys(s.f).forEach(function(k){var e=$(k);if(e)e.value=s.f[k]||'';});
+        chipState.platforms=(s.platforms||[]).slice(); syncChips();
+        if(s.S){S=Object.assign(S,s.S);syncToggles();}
+        renderPreview();
+      };
+    }
     $('btnImg').onclick=download;
     $('btnSample').onclick=loadSample;
     $('btnClear').onclick=clearAll;

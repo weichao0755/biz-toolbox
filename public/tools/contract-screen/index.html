@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>合同法务筛选 · 金米启航</title>
 <script src="docx.umd.js"></script>
+<script src="../gen-history.js"></script>
 <style>
 :root{
   --accent:#b45309; --accent-2:#e0901a; --accent-grad:linear-gradient(135deg,#e0901a,#b45309);
@@ -201,7 +202,7 @@ input[type=text]:focus,select:focus{outline:none;border-color:var(--accent-2)}
     <h2><span class="n">4</span>产出文件</h2>
     <p class="hint">一键生成两份 Word 文档：①风险详解与修改意见书 ②已修改版本的成型文件。</p>
     <div class="btn-row">
-      <button class="btn" id="genBtn" onclick="generateBoth()">⬇ 生成并下载两份文件</button>
+      <button class="btn" id="genBtn" onclick="generateBoth()">⬇ 生成并下载两份文件</button><span id="csHistHost"></span>
       <button class="btn sec" onclick="goStep(3)">← 返回筛查结果</button>
     </div>
     <div class="disclaimer">
@@ -744,6 +745,13 @@ function revisedChildren(){
 async function generateBoth(){
   if(!state.findings.length && !contractText().trim()){ toast('暂无可生成的审查结果'); return }
   if(!docxReady()){ alert('Word 组件（docx.umd.js）未加载，请刷新页面后重试。'); return }
+  /* 生成即存历史（自动同步到储存文件夹） */
+  try{
+    if(typeof GenHistory!=='undefined'){
+      GenHistory.save('contract_screen_records_v1',(state.contractName||'未命名合同')+' · 风险筛查',
+        {state:JSON.parse(JSON.stringify(state))},{customer:state.contractName||''});
+    }
+  }catch(e){}
   const btn = $('genBtn'); btn.disabled = true; btn.textContent = '生成中…'
   try{
     const name = state.contractName ? state.contractName.replace(/[\\/:*?"<>|]/g,'') : '合同'
@@ -774,6 +782,16 @@ function init(){
   if(state.findings.length){ renderResults() }
 }
 init()
+
+/* 生成历史：自动同步到「储存」文件夹 */
+if(typeof GenHistory!=='undefined'){
+  GenHistory.mount('contract_screen_records_v1','csHistHost');
+  window.GEN_RESTORE=function(s){
+    if(!s||!s.state)return;
+    Object.keys(state).forEach(function(k){ if(s.state[k]!==undefined) state[k]=s.state[k]; });
+    renderFiles(); renderResults(); goStep(3);
+  };
+}
 </script>
 </body>
 </html>
